@@ -7,7 +7,7 @@ use solana_program::clock::UnixTimestamp;
 pub enum StakeInstruction {
     /// Creates Stake config account which controls staking parameters
     ///
-    /// 0. `[writable]` Stake config account
+    /// 0. `[w]` Stake config account
     /// 1. `[]` Slash authority, may be a PDA for a governance program
     /// 2. `[]` Config authority, may be a PDA for a governance program
     /// 3. `[]` Stake Token Mint
@@ -24,7 +24,7 @@ pub enum StakeInstruction {
     /// defaults to the validator withdraw authority.
     ///
     /// 0. `[]` Stake config account
-    /// 1. `[writable]` Validator stake account
+    /// 1. `[w]` Validator stake account
     ///     * PDA seeds: ['stake', validator, config_account]
     /// 2. `[]` Validator vote account
     /// 3. `[]` System program
@@ -38,11 +38,11 @@ pub enum StakeInstruction {
     /// like native staking, because the validator can take control of staked
     /// tokens by deactivating and withdrawing.
     ///
-    /// 0. `[writable]` Stake config account
-    /// 1. `[writable]` Validator stake account
+    /// 0. `[w]` Stake config account
+    /// 1. `[w]` Validator stake account
     ///     * PDA seeds: ['stake', validator, config_account]
-    /// 2. `[writable]` Token Account
-    /// 3. `[signer]` Owner or delegate of the token account
+    /// 2. `[w]` Token Account
+    /// 3. `[s]` Owner or delegate of the token account
     /// 4. `[]` Validator vote account
     /// 3. `[]` Stake Token Mint
     /// 4. `[]` Stake Token Vault, to hold all staked tokens.
@@ -59,8 +59,8 @@ pub enum StakeInstruction {
     /// with an active deactivation, it will succeed, but reset the amount and
     /// timestamp.
     ///
-    /// 0. `[writable]` Validator stake account
-    /// 1. `[signer]` Authority on validator stake account
+    /// 0. `[w]` Validator stake account
+    /// 1. `[s]` Authority on validator stake account
     ///
     /// Instruction data: amount of tokens to deactivate, as a little-endian u64
     DeactivateStake(u64),
@@ -73,8 +73,8 @@ pub enum StakeInstruction {
     /// NOTE: This instruction is permissionless, so anybody can finish
     /// deactivating someone's tokens, preparing them to be withdrawn.
     ///
-    /// 0. `[writable]` Stake config account
-    /// 1. `[writable]` Validator stake account
+    /// 0. `[w]` Stake config account
+    /// 1. `[w]` Validator stake account
     InactivateStake,
 
     /// Withdraw inactive staked tokens from the vault
@@ -82,11 +82,11 @@ pub enum StakeInstruction {
     /// After a deactivation has gone through the cooldown period and been
     /// "inactivated", the authority may move the tokens out of the vault.
     ///
-    /// 0. `[writable]` Config account
-    /// 1. `[writable]` Stake account
-    /// 2. `[writable]` Vault token account
-    /// 3. `[writable]` Destination token account
-    /// 4. `[signer]` Stake authority
+    /// 0. `[w]` Config account
+    /// 1. `[w]` Stake account
+    /// 2. `[w]` Vault token account
+    /// 3. `[w]` Destination token account
+    /// 4. `[s]` Stake authority
     /// 5. `[]` Vault authority, PDA with seeds `['token-owner', stake_config]`
     /// 6. `[]` SPL Token program
     /// 7.. Extra required accounts for transfer hook
@@ -105,11 +105,11 @@ pub enum StakeInstruction {
     /// `HarvestRewards` on the vault account before this.
     ///
     /// 0. `[]` Config account
-    /// 1. `[writable]` Stake account
-    /// 2. `[writable]` Vault token account
+    /// 1. `[w]` Stake account
+    /// 2. `[w]` Vault token account
     /// 3. `[]` Holder rewards account for vault token account
-    /// 4. `[writable]` Destination account for withdrawn lamports
-    /// 5. `[signer]` Stake authority
+    /// 4. `[w]` Destination account for withdrawn lamports
+    /// 5. `[s]` Stake authority
     /// 6. `[]` Vault authority, PDA with seeds `['token-owner', stake_config]`
     /// 7. `[]` Stake token mint, to get total supply
     /// 8. `[]` SPL Token program
@@ -122,8 +122,8 @@ pub enum StakeInstruction {
     /// based on the proportion of total stake.
     ///
     /// 0. `[]` Config account
-    /// 1. `[writable]` Stake account
-    /// 2. `[writable]` SOL staking rewards account
+    /// 1. `[w]` Stake account
+    /// 2. `[w]` SOL staking rewards account
     ///    (TODO for discussion: we need a way to also track total staking rewards
     ///    so stakers can know their allotted proportion of staking rewards,
     ///    which are separate from the holder rewards. This means that the distribution
@@ -131,7 +131,7 @@ pub enum StakeInstruction {
     ///    of staking rewards. I couldn't come up with a way to combine these two,
     ///    since the proportion allocated to the different groups is *not* meant
     ///    to be fixed forever.)
-    /// 3. `[signer]` Stake authority
+    /// 3. `[s]` Stake authority
     /// 4. `[]` Staking rewards authority
     ///    (TODO per the above point, what should this be? Some PDA for this
     ///    program?)
@@ -143,10 +143,10 @@ pub enum StakeInstruction {
     /// Burns the given amount of tokens from the vault account, and reduces the
     /// amount in the stake account.
     ///
-    /// 0. `[writable]` Config account
-    /// 1. `[writable]` Stake account
-    /// 2. `[signer]` Slash authority
-    /// 3. `[writable]` Vault token account
+    /// 0. `[w]` Config account
+    /// 1. `[w]` Stake account
+    /// 2. `[s]` Slash authority
+    /// 3. `[w]` Vault token account
     /// 4. `[]` Vault authority, PDA with seeds `['token-owner', stake_config]`
     /// 5. `[]` SPL Token program
     ///
@@ -155,15 +155,15 @@ pub enum StakeInstruction {
 
     /// Sets new authority on a config or stake account
     ///
-    /// 0. `[writable]` Config or stake account
-    /// 1. `[signer]` Current authority
+    /// 0. `[w]` Config or stake account
+    /// 1. `[s]` Current authority
     /// 2. `[]` New authority
     SetAuthority(Authority),
 
     /// Updates configuration parameters
     ///
-    /// 0. `[writable]` Config account
-    /// 1. `[signer]` Config authority
+    /// 0. `[w]` Config account
+    /// 1. `[s]` Config authority
     UpdateConfig(ConfigField),
 }
 
