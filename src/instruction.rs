@@ -20,8 +20,9 @@ pub enum StakeInstruction {
 
     /// Initializes stake account data for a validator.
     ///
-    /// NOTE: Anybody can create the stake account for a validator. The authority
-    /// defaults to the validator withdraw authority.
+    /// NOTE: Anybody can create the stake account for a validator. For new
+    /// accounts, the authority is initialized to the validator vote account's
+    /// withdraw authority.
     ///
     /// 0. `[]` Stake config account
     /// 1. `[w]` Validator stake account
