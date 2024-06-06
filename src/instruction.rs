@@ -122,21 +122,10 @@ pub enum StakeInstruction {
     /// staking rewards are held in a separate account, they must be distributed
     /// based on the proportion of total stake.
     ///
-    /// 0. `[]` Config account
+    /// 0. `[w]` Config account
     /// 1. `[w]` Stake account
-    /// 2. `[w]` SOL staking rewards account
-    ///    (TODO for discussion: we need a way to also track total staking rewards
-    ///    so stakers can know their allotted proportion of staking rewards,
-    ///    which are separate from the holder rewards. This means that the distribution
-    ///    logic in the Rewards program *also* needs to update some running total
-    ///    of staking rewards. I couldn't come up with a way to combine these two,
-    ///    since the proportion allocated to the different groups is *not* meant
-    ///    to be fixed forever.)
+    /// 2. `[w]` Destination account
     /// 3. `[s]` Stake authority
-    /// 4. `[]` Staking rewards authority
-    ///    (TODO per the above point, what should this be? Some PDA for this
-    ///    program?)
-    /// 6. `[]` Rewards program
     HarvestStakeRewards,
 
     /// Slashes a stake account for the given amount
@@ -166,6 +155,15 @@ pub enum StakeInstruction {
     /// 0. `[w]` Config account
     /// 1. `[s]` Config authority
     UpdateConfig(ConfigField),
+
+    /// Moves SOL rewards to the config and updates the stake rewards total
+    ///
+    /// Accounts expected by this instruction:
+    ///
+    /// 0. `[w,s]` Reward payer
+    /// 1. `[w]` Config account
+    /// 2. `[]` System Program
+    DistributeRewards(u64),
 }
 
 /// Enum defining all authorities in the program

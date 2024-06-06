@@ -30,6 +30,8 @@ pub struct Config {
     slash_authority: OptionalNonZeroPubkey,
     /// Token account storing all stake
     vault_token_account: Pubkey,
+    /// Running total of all stake rewards distributed
+    total_stake_rewards: u64,
 }
 
 /// Data for an amount of tokens staked with a validator
@@ -47,7 +49,7 @@ pub struct Stake {
     inactive_amount: u64,
     /// Authority permitted to deactivate and withdraw stake
     authority: Pubkey,
-    /// The address of the validator vote account (TODO this might not be needed)
+    /// The address of the validator vote account
     validator: Pubkey,
     /// Stores the "last_seen_holder_rewards" just for this stake account, allowing
     /// stakers to withdraw rewards whenever, just like normal token users
