@@ -34,7 +34,7 @@ import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 export type DeactivateStakeInstruction<
   TProgram extends string = typeof STAKE_PROGRAM_ADDRESS,
   TAccountStake extends string | IAccountMeta<string> = string,
-  TAccountAuthority extends string | IAccountMeta<string> = string,
+  TAccountStakeAuthority extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -43,10 +43,10 @@ export type DeactivateStakeInstruction<
       TAccountStake extends string
         ? WritableAccount<TAccountStake>
         : TAccountStake,
-      TAccountAuthority extends string
-        ? ReadonlySignerAccount<TAccountAuthority> &
-            IAccountSignerMeta<TAccountAuthority>
-        : TAccountAuthority,
+      TAccountStakeAuthority extends string
+        ? ReadonlySignerAccount<TAccountStakeAuthority> &
+            IAccountSignerMeta<TAccountStakeAuthority>
+        : TAccountStakeAuthority,
       ...TRemainingAccounts,
     ]
   >;
@@ -87,24 +87,24 @@ export function getDeactivateStakeInstructionDataCodec(): Codec<
 
 export type DeactivateStakeInput<
   TAccountStake extends string = string,
-  TAccountAuthority extends string = string,
+  TAccountStakeAuthority extends string = string,
 > = {
   /** Validator stake account */
   stake: Address<TAccountStake>;
   /** Authority on validator stake account */
-  authority: TransactionSigner<TAccountAuthority>;
+  stakeAuthority: TransactionSigner<TAccountStakeAuthority>;
   args: DeactivateStakeInstructionDataArgs['args'];
 };
 
 export function getDeactivateStakeInstruction<
   TAccountStake extends string,
-  TAccountAuthority extends string,
+  TAccountStakeAuthority extends string,
 >(
-  input: DeactivateStakeInput<TAccountStake, TAccountAuthority>
+  input: DeactivateStakeInput<TAccountStake, TAccountStakeAuthority>
 ): DeactivateStakeInstruction<
   typeof STAKE_PROGRAM_ADDRESS,
   TAccountStake,
-  TAccountAuthority
+  TAccountStakeAuthority
 > {
   // Program address.
   const programAddress = STAKE_PROGRAM_ADDRESS;
@@ -112,7 +112,7 @@ export function getDeactivateStakeInstruction<
   // Original accounts.
   const originalAccounts = {
     stake: { value: input.stake ?? null, isWritable: true },
-    authority: { value: input.authority ?? null, isWritable: false },
+    stakeAuthority: { value: input.stakeAuthority ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -126,7 +126,7 @@ export function getDeactivateStakeInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.stake),
-      getAccountMeta(accounts.authority),
+      getAccountMeta(accounts.stakeAuthority),
     ],
     programAddress,
     data: getDeactivateStakeInstructionDataEncoder().encode(
@@ -135,7 +135,7 @@ export function getDeactivateStakeInstruction<
   } as DeactivateStakeInstruction<
     typeof STAKE_PROGRAM_ADDRESS,
     TAccountStake,
-    TAccountAuthority
+    TAccountStakeAuthority
   >;
 
   return instruction;
@@ -150,7 +150,7 @@ export type ParsedDeactivateStakeInstruction<
     /** Validator stake account */
     stake: TAccountMetas[0];
     /** Authority on validator stake account */
-    authority: TAccountMetas[1];
+    stakeAuthority: TAccountMetas[1];
   };
   data: DeactivateStakeInstructionData;
 };
@@ -177,7 +177,7 @@ export function parseDeactivateStakeInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       stake: getNextAccount(),
-      authority: getNextAccount(),
+      stakeAuthority: getNextAccount(),
     },
     data: getDeactivateStakeInstructionDataDecoder().decode(instruction.data),
   };

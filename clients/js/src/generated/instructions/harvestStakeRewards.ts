@@ -34,7 +34,7 @@ export type HarvestStakeRewardsInstruction<
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountStake extends string | IAccountMeta<string> = string,
   TAccountDestination extends string | IAccountMeta<string> = string,
-  TAccountAuthority extends string | IAccountMeta<string> = string,
+  TAccountStakeAuthority extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -49,10 +49,10 @@ export type HarvestStakeRewardsInstruction<
       TAccountDestination extends string
         ? WritableAccount<TAccountDestination>
         : TAccountDestination,
-      TAccountAuthority extends string
-        ? ReadonlySignerAccount<TAccountAuthority> &
-            IAccountSignerMeta<TAccountAuthority>
-        : TAccountAuthority,
+      TAccountStakeAuthority extends string
+        ? ReadonlySignerAccount<TAccountStakeAuthority> &
+            IAccountSignerMeta<TAccountStakeAuthority>
+        : TAccountStakeAuthority,
       ...TRemainingAccounts,
     ]
   >;
@@ -86,7 +86,7 @@ export type HarvestStakeRewardsInput<
   TAccountConfig extends string = string,
   TAccountStake extends string = string,
   TAccountDestination extends string = string,
-  TAccountAuthority extends string = string,
+  TAccountStakeAuthority extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
@@ -95,27 +95,27 @@ export type HarvestStakeRewardsInput<
   /** Destination account for withdrawn lamports */
   destination: Address<TAccountDestination>;
   /** Stake authority */
-  authority: TransactionSigner<TAccountAuthority>;
+  stakeAuthority: TransactionSigner<TAccountStakeAuthority>;
 };
 
 export function getHarvestStakeRewardsInstruction<
   TAccountConfig extends string,
   TAccountStake extends string,
   TAccountDestination extends string,
-  TAccountAuthority extends string,
+  TAccountStakeAuthority extends string,
 >(
   input: HarvestStakeRewardsInput<
     TAccountConfig,
     TAccountStake,
     TAccountDestination,
-    TAccountAuthority
+    TAccountStakeAuthority
   >
 ): HarvestStakeRewardsInstruction<
   typeof STAKE_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountStake,
   TAccountDestination,
-  TAccountAuthority
+  TAccountStakeAuthority
 > {
   // Program address.
   const programAddress = STAKE_PROGRAM_ADDRESS;
@@ -125,7 +125,7 @@ export function getHarvestStakeRewardsInstruction<
     config: { value: input.config ?? null, isWritable: true },
     stake: { value: input.stake ?? null, isWritable: true },
     destination: { value: input.destination ?? null, isWritable: true },
-    authority: { value: input.authority ?? null, isWritable: false },
+    stakeAuthority: { value: input.stakeAuthority ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -138,7 +138,7 @@ export function getHarvestStakeRewardsInstruction<
       getAccountMeta(accounts.config),
       getAccountMeta(accounts.stake),
       getAccountMeta(accounts.destination),
-      getAccountMeta(accounts.authority),
+      getAccountMeta(accounts.stakeAuthority),
     ],
     programAddress,
     data: getHarvestStakeRewardsInstructionDataEncoder().encode({}),
@@ -147,7 +147,7 @@ export function getHarvestStakeRewardsInstruction<
     TAccountConfig,
     TAccountStake,
     TAccountDestination,
-    TAccountAuthority
+    TAccountStakeAuthority
   >;
 
   return instruction;
@@ -166,7 +166,7 @@ export type ParsedHarvestStakeRewardsInstruction<
     /** Destination account for withdrawn lamports */
     destination: TAccountMetas[2];
     /** Stake authority */
-    authority: TAccountMetas[3];
+    stakeAuthority: TAccountMetas[3];
   };
   data: HarvestStakeRewardsInstructionData;
 };
@@ -195,7 +195,7 @@ export function parseHarvestStakeRewardsInstruction<
       config: getNextAccount(),
       stake: getNextAccount(),
       destination: getNextAccount(),
-      authority: getNextAccount(),
+      stakeAuthority: getNextAccount(),
     },
     data: getHarvestStakeRewardsInstructionDataDecoder().decode(
       instruction.data

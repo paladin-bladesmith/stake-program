@@ -132,7 +132,7 @@ pub fn process_initialize_config(
     let config = bytemuck::from_bytes_mut::<Config>(&mut data);
 
     config.account_type = AccountType::Config;
-    config.authority = OptionalNonZeroPubkey(*ctx.accounts.authority.key);
+    config.authority = OptionalNonZeroPubkey(*ctx.accounts.config_authority.key);
     config.slash_authority = OptionalNonZeroPubkey(*ctx.accounts.slash_authority.key);
     config.vault_token = *ctx.accounts.vault_token.key;
     config.vault_bump = bump;

@@ -35,13 +35,15 @@ import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 export type StakeTokensInstruction<
   TProgram extends string = typeof STAKE_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
-  TAccountValidatorStake extends string | IAccountMeta<string> = string,
-  TAccountToken extends string | IAccountMeta<string> = string,
+  TAccountStake extends string | IAccountMeta<string> = string,
+  TAccountSourceToken extends string | IAccountMeta<string> = string,
   TAccountTokenAuthority extends string | IAccountMeta<string> = string,
   TAccountValidatorVote extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountVaultToken extends string | IAccountMeta<string> = string,
-  TAccountSplToken extends string | IAccountMeta<string> = string,
+  TAccountSplTokenProgram extends
+    | string
+    | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -50,12 +52,12 @@ export type StakeTokensInstruction<
       TAccountConfig extends string
         ? WritableAccount<TAccountConfig>
         : TAccountConfig,
-      TAccountValidatorStake extends string
-        ? WritableAccount<TAccountValidatorStake>
-        : TAccountValidatorStake,
-      TAccountToken extends string
-        ? WritableAccount<TAccountToken>
-        : TAccountToken,
+      TAccountStake extends string
+        ? WritableAccount<TAccountStake>
+        : TAccountStake,
+      TAccountSourceToken extends string
+        ? WritableAccount<TAccountSourceToken>
+        : TAccountSourceToken,
       TAccountTokenAuthority extends string
         ? ReadonlySignerAccount<TAccountTokenAuthority> &
             IAccountSignerMeta<TAccountTokenAuthority>
@@ -69,9 +71,9 @@ export type StakeTokensInstruction<
       TAccountVaultToken extends string
         ? WritableAccount<TAccountVaultToken>
         : TAccountVaultToken,
-      TAccountSplToken extends string
-        ? ReadonlyAccount<TAccountSplToken>
-        : TAccountSplToken,
+      TAccountSplTokenProgram extends string
+        ? ReadonlyAccount<TAccountSplTokenProgram>
+        : TAccountSplTokenProgram,
       ...TRemainingAccounts,
     ]
   >;
@@ -112,63 +114,63 @@ export function getStakeTokensInstructionDataCodec(): Codec<
 
 export type StakeTokensInput<
   TAccountConfig extends string = string,
-  TAccountValidatorStake extends string = string,
-  TAccountToken extends string = string,
+  TAccountStake extends string = string,
+  TAccountSourceToken extends string = string,
   TAccountTokenAuthority extends string = string,
   TAccountValidatorVote extends string = string,
   TAccountMint extends string = string,
   TAccountVaultToken extends string = string,
-  TAccountSplToken extends string = string,
+  TAccountSplTokenProgram extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
   /** Validator stake account */
-  validatorStake: Address<TAccountValidatorStake>;
+  stake: Address<TAccountStake>;
   /** Token account */
-  token: Address<TAccountToken>;
+  sourceToken: Address<TAccountSourceToken>;
   /** Owner or delegate of the token account */
   tokenAuthority: TransactionSigner<TAccountTokenAuthority>;
   /** Validator vote account */
   validatorVote: Address<TAccountValidatorVote>;
   /** Stake Token Mint */
   mint: Address<TAccountMint>;
-  /** Stake Token Vault */
+  /** Stake token Vault */
   vaultToken: Address<TAccountVaultToken>;
   /** SPL Token 2022 program */
-  splToken: Address<TAccountSplToken>;
+  splTokenProgram?: Address<TAccountSplTokenProgram>;
   args: StakeTokensInstructionDataArgs['args'];
 };
 
 export function getStakeTokensInstruction<
   TAccountConfig extends string,
-  TAccountValidatorStake extends string,
-  TAccountToken extends string,
+  TAccountStake extends string,
+  TAccountSourceToken extends string,
   TAccountTokenAuthority extends string,
   TAccountValidatorVote extends string,
   TAccountMint extends string,
   TAccountVaultToken extends string,
-  TAccountSplToken extends string,
+  TAccountSplTokenProgram extends string,
 >(
   input: StakeTokensInput<
     TAccountConfig,
-    TAccountValidatorStake,
-    TAccountToken,
+    TAccountStake,
+    TAccountSourceToken,
     TAccountTokenAuthority,
     TAccountValidatorVote,
     TAccountMint,
     TAccountVaultToken,
-    TAccountSplToken
+    TAccountSplTokenProgram
   >
 ): StakeTokensInstruction<
   typeof STAKE_PROGRAM_ADDRESS,
   TAccountConfig,
-  TAccountValidatorStake,
-  TAccountToken,
+  TAccountStake,
+  TAccountSourceToken,
   TAccountTokenAuthority,
   TAccountValidatorVote,
   TAccountMint,
   TAccountVaultToken,
-  TAccountSplToken
+  TAccountSplTokenProgram
 > {
   // Program address.
   const programAddress = STAKE_PROGRAM_ADDRESS;
@@ -176,13 +178,16 @@ export function getStakeTokensInstruction<
   // Original accounts.
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
-    validatorStake: { value: input.validatorStake ?? null, isWritable: true },
-    token: { value: input.token ?? null, isWritable: true },
+    stake: { value: input.stake ?? null, isWritable: true },
+    sourceToken: { value: input.sourceToken ?? null, isWritable: true },
     tokenAuthority: { value: input.tokenAuthority ?? null, isWritable: false },
     validatorVote: { value: input.validatorVote ?? null, isWritable: false },
     mint: { value: input.mint ?? null, isWritable: false },
     vaultToken: { value: input.vaultToken ?? null, isWritable: true },
-    splToken: { value: input.splToken ?? null, isWritable: false },
+    splTokenProgram: {
+      value: input.splTokenProgram ?? null,
+      isWritable: false,
+    },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -192,17 +197,23 @@ export function getStakeTokensInstruction<
   // Original args.
   const args = { ...input };
 
+  // Resolve default values.
+  if (!accounts.splTokenProgram.value) {
+    accounts.splTokenProgram.value =
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+  }
+
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
       getAccountMeta(accounts.config),
-      getAccountMeta(accounts.validatorStake),
-      getAccountMeta(accounts.token),
+      getAccountMeta(accounts.stake),
+      getAccountMeta(accounts.sourceToken),
       getAccountMeta(accounts.tokenAuthority),
       getAccountMeta(accounts.validatorVote),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.vaultToken),
-      getAccountMeta(accounts.splToken),
+      getAccountMeta(accounts.splTokenProgram),
     ],
     programAddress,
     data: getStakeTokensInstructionDataEncoder().encode(
@@ -211,13 +222,13 @@ export function getStakeTokensInstruction<
   } as StakeTokensInstruction<
     typeof STAKE_PROGRAM_ADDRESS,
     TAccountConfig,
-    TAccountValidatorStake,
-    TAccountToken,
+    TAccountStake,
+    TAccountSourceToken,
     TAccountTokenAuthority,
     TAccountValidatorVote,
     TAccountMint,
     TAccountVaultToken,
-    TAccountSplToken
+    TAccountSplTokenProgram
   >;
 
   return instruction;
@@ -232,19 +243,19 @@ export type ParsedStakeTokensInstruction<
     /** Stake config account */
     config: TAccountMetas[0];
     /** Validator stake account */
-    validatorStake: TAccountMetas[1];
+    stake: TAccountMetas[1];
     /** Token account */
-    token: TAccountMetas[2];
+    sourceToken: TAccountMetas[2];
     /** Owner or delegate of the token account */
     tokenAuthority: TAccountMetas[3];
     /** Validator vote account */
     validatorVote: TAccountMetas[4];
     /** Stake Token Mint */
     mint: TAccountMetas[5];
-    /** Stake Token Vault */
+    /** Stake token Vault */
     vaultToken: TAccountMetas[6];
     /** SPL Token 2022 program */
-    splToken: TAccountMetas[7];
+    splTokenProgram: TAccountMetas[7];
   };
   data: StakeTokensInstructionData;
 };
@@ -271,13 +282,13 @@ export function parseStakeTokensInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       config: getNextAccount(),
-      validatorStake: getNextAccount(),
-      token: getNextAccount(),
+      stake: getNextAccount(),
+      sourceToken: getNextAccount(),
       tokenAuthority: getNextAccount(),
       validatorVote: getNextAccount(),
       mint: getNextAccount(),
       vaultToken: getNextAccount(),
-      splToken: getNextAccount(),
+      splTokenProgram: getNextAccount(),
     },
     data: getStakeTokensInstructionDataDecoder().decode(instruction.data),
   };

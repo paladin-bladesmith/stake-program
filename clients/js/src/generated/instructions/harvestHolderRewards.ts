@@ -35,10 +35,10 @@ export type HarvestHolderRewardsInstruction<
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountStake extends string | IAccountMeta<string> = string,
   TAccountVaultToken extends string | IAccountMeta<string> = string,
+  TAccountVaultAuthority extends string | IAccountMeta<string> = string,
   TAccountHolderRewards extends string | IAccountMeta<string> = string,
   TAccountDestination extends string | IAccountMeta<string> = string,
-  TAccountAuthority extends string | IAccountMeta<string> = string,
-  TAccountVaultAuthority extends string | IAccountMeta<string> = string,
+  TAccountStakeAuthority extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountSplTokenProgram extends
     | string
@@ -57,22 +57,21 @@ export type HarvestHolderRewardsInstruction<
       TAccountVaultToken extends string
         ? WritableAccount<TAccountVaultToken>
         : TAccountVaultToken,
+      TAccountVaultAuthority extends string
+        ? ReadonlyAccount<TAccountVaultAuthority>
+        : TAccountVaultAuthority,
       TAccountHolderRewards extends string
         ? ReadonlyAccount<TAccountHolderRewards>
         : TAccountHolderRewards,
       TAccountDestination extends string
         ? WritableAccount<TAccountDestination>
         : TAccountDestination,
-      TAccountAuthority extends string
-        ? ReadonlySignerAccount<TAccountAuthority> &
-            IAccountSignerMeta<TAccountAuthority>
-        : TAccountAuthority,
-      TAccountVaultAuthority extends string
-        ? ReadonlySignerAccount<TAccountVaultAuthority> &
-            IAccountSignerMeta<TAccountVaultAuthority>
-        : TAccountVaultAuthority,
+      TAccountStakeAuthority extends string
+        ? ReadonlySignerAccount<TAccountStakeAuthority> &
+            IAccountSignerMeta<TAccountStakeAuthority>
+        : TAccountStakeAuthority,
       TAccountMint extends string
-        ? ReadonlySignerAccount<TAccountMint> & IAccountSignerMeta<TAccountMint>
+        ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
       TAccountSplTokenProgram extends string
         ? ReadonlyAccount<TAccountSplTokenProgram>
@@ -110,10 +109,10 @@ export type HarvestHolderRewardsInput<
   TAccountConfig extends string = string,
   TAccountStake extends string = string,
   TAccountVaultToken extends string = string,
+  TAccountVaultAuthority extends string = string,
   TAccountHolderRewards extends string = string,
   TAccountDestination extends string = string,
-  TAccountAuthority extends string = string,
-  TAccountVaultAuthority extends string = string,
+  TAccountStakeAuthority extends string = string,
   TAccountMint extends string = string,
   TAccountSplTokenProgram extends string = string,
 > = {
@@ -123,16 +122,16 @@ export type HarvestHolderRewardsInput<
   stake: Address<TAccountStake>;
   /** Vault token account */
   vaultToken: Address<TAccountVaultToken>;
+  /** Vault authority */
+  vaultAuthority: Address<TAccountVaultAuthority>;
   /** Holder rewards account for vault token account */
   holderRewards: Address<TAccountHolderRewards>;
   /** Destination account for withdrawn lamports */
   destination: Address<TAccountDestination>;
   /** Stake authority */
-  authority: TransactionSigner<TAccountAuthority>;
-  /** Vault authority */
-  vaultAuthority: TransactionSigner<TAccountVaultAuthority>;
+  stakeAuthority: TransactionSigner<TAccountStakeAuthority>;
   /** Stake token mint */
-  mint: TransactionSigner<TAccountMint>;
+  mint: Address<TAccountMint>;
   /** SPL Token program */
   splTokenProgram?: Address<TAccountSplTokenProgram>;
 };
@@ -141,10 +140,10 @@ export function getHarvestHolderRewardsInstruction<
   TAccountConfig extends string,
   TAccountStake extends string,
   TAccountVaultToken extends string,
+  TAccountVaultAuthority extends string,
   TAccountHolderRewards extends string,
   TAccountDestination extends string,
-  TAccountAuthority extends string,
-  TAccountVaultAuthority extends string,
+  TAccountStakeAuthority extends string,
   TAccountMint extends string,
   TAccountSplTokenProgram extends string,
 >(
@@ -152,10 +151,10 @@ export function getHarvestHolderRewardsInstruction<
     TAccountConfig,
     TAccountStake,
     TAccountVaultToken,
+    TAccountVaultAuthority,
     TAccountHolderRewards,
     TAccountDestination,
-    TAccountAuthority,
-    TAccountVaultAuthority,
+    TAccountStakeAuthority,
     TAccountMint,
     TAccountSplTokenProgram
   >
@@ -164,10 +163,10 @@ export function getHarvestHolderRewardsInstruction<
   TAccountConfig,
   TAccountStake,
   TAccountVaultToken,
+  TAccountVaultAuthority,
   TAccountHolderRewards,
   TAccountDestination,
-  TAccountAuthority,
-  TAccountVaultAuthority,
+  TAccountStakeAuthority,
   TAccountMint,
   TAccountSplTokenProgram
 > {
@@ -179,10 +178,10 @@ export function getHarvestHolderRewardsInstruction<
     config: { value: input.config ?? null, isWritable: false },
     stake: { value: input.stake ?? null, isWritable: true },
     vaultToken: { value: input.vaultToken ?? null, isWritable: true },
+    vaultAuthority: { value: input.vaultAuthority ?? null, isWritable: false },
     holderRewards: { value: input.holderRewards ?? null, isWritable: false },
     destination: { value: input.destination ?? null, isWritable: true },
-    authority: { value: input.authority ?? null, isWritable: false },
-    vaultAuthority: { value: input.vaultAuthority ?? null, isWritable: false },
+    stakeAuthority: { value: input.stakeAuthority ?? null, isWritable: false },
     mint: { value: input.mint ?? null, isWritable: false },
     splTokenProgram: {
       value: input.splTokenProgram ?? null,
@@ -206,10 +205,10 @@ export function getHarvestHolderRewardsInstruction<
       getAccountMeta(accounts.config),
       getAccountMeta(accounts.stake),
       getAccountMeta(accounts.vaultToken),
+      getAccountMeta(accounts.vaultAuthority),
       getAccountMeta(accounts.holderRewards),
       getAccountMeta(accounts.destination),
-      getAccountMeta(accounts.authority),
-      getAccountMeta(accounts.vaultAuthority),
+      getAccountMeta(accounts.stakeAuthority),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.splTokenProgram),
     ],
@@ -220,10 +219,10 @@ export function getHarvestHolderRewardsInstruction<
     TAccountConfig,
     TAccountStake,
     TAccountVaultToken,
+    TAccountVaultAuthority,
     TAccountHolderRewards,
     TAccountDestination,
-    TAccountAuthority,
-    TAccountVaultAuthority,
+    TAccountStakeAuthority,
     TAccountMint,
     TAccountSplTokenProgram
   >;
@@ -243,14 +242,14 @@ export type ParsedHarvestHolderRewardsInstruction<
     stake: TAccountMetas[1];
     /** Vault token account */
     vaultToken: TAccountMetas[2];
-    /** Holder rewards account for vault token account */
-    holderRewards: TAccountMetas[3];
-    /** Destination account for withdrawn lamports */
-    destination: TAccountMetas[4];
-    /** Stake authority */
-    authority: TAccountMetas[5];
     /** Vault authority */
-    vaultAuthority: TAccountMetas[6];
+    vaultAuthority: TAccountMetas[3];
+    /** Holder rewards account for vault token account */
+    holderRewards: TAccountMetas[4];
+    /** Destination account for withdrawn lamports */
+    destination: TAccountMetas[5];
+    /** Stake authority */
+    stakeAuthority: TAccountMetas[6];
     /** Stake token mint */
     mint: TAccountMetas[7];
     /** SPL Token program */
@@ -283,10 +282,10 @@ export function parseHarvestHolderRewardsInstruction<
       config: getNextAccount(),
       stake: getNextAccount(),
       vaultToken: getNextAccount(),
+      vaultAuthority: getNextAccount(),
       holderRewards: getNextAccount(),
       destination: getNextAccount(),
-      authority: getNextAccount(),
-      vaultAuthority: getNextAccount(),
+      stakeAuthority: getNextAccount(),
       mint: getNextAccount(),
       splTokenProgram: getNextAccount(),
     },

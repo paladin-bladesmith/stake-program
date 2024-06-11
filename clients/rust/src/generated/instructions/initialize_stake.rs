@@ -12,8 +12,8 @@ use borsh::BorshSerialize;
 pub struct InitializeStake {
     /// Stake config account
     pub config: solana_program::pubkey::Pubkey,
-    /// Validator stake account (pda of `['stake', validator, config]`)
-    pub validator_stake: solana_program::pubkey::Pubkey,
+    /// Validator stake account (pda of `['stake', config, validator]`)
+    pub stake: solana_program::pubkey::Pubkey,
     /// Validator vote account
     pub validator_vote: solana_program::pubkey::Pubkey,
     /// System program account
@@ -35,8 +35,7 @@ impl InitializeStake {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.validator_stake,
-            false,
+            self.stake, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.validator_vote,
@@ -79,13 +78,13 @@ impl Default for InitializeStakeInstructionData {
 /// ### Accounts:
 ///
 ///   0. `[]` config
-///   1. `[writable]` validator_stake
+///   1. `[writable]` stake
 ///   2. `[]` validator_vote
 ///   3. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct InitializeStakeBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
-    validator_stake: Option<solana_program::pubkey::Pubkey>,
+    stake: Option<solana_program::pubkey::Pubkey>,
     validator_vote: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
@@ -101,13 +100,10 @@ impl InitializeStakeBuilder {
         self.config = Some(config);
         self
     }
-    /// Validator stake account (pda of `['stake', validator, config]`)
+    /// Validator stake account (pda of `['stake', config, validator]`)
     #[inline(always)]
-    pub fn validator_stake(
-        &mut self,
-        validator_stake: solana_program::pubkey::Pubkey,
-    ) -> &mut Self {
-        self.validator_stake = Some(validator_stake);
+    pub fn stake(&mut self, stake: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.stake = Some(stake);
         self
     }
     /// Validator vote account
@@ -145,7 +141,7 @@ impl InitializeStakeBuilder {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = InitializeStake {
             config: self.config.expect("config is not set"),
-            validator_stake: self.validator_stake.expect("validator_stake is not set"),
+            stake: self.stake.expect("stake is not set"),
             validator_vote: self.validator_vote.expect("validator_vote is not set"),
             system_program: self
                 .system_program
@@ -160,8 +156,8 @@ impl InitializeStakeBuilder {
 pub struct InitializeStakeCpiAccounts<'a, 'b> {
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake account (pda of `['stake', validator, config]`)
-    pub validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Validator stake account (pda of `['stake', config, validator]`)
+    pub stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Validator vote account
     pub validator_vote: &'b solana_program::account_info::AccountInfo<'a>,
     /// System program account
@@ -174,8 +170,8 @@ pub struct InitializeStakeCpi<'a, 'b> {
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake account (pda of `['stake', validator, config]`)
-    pub validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Validator stake account (pda of `['stake', config, validator]`)
+    pub stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Validator vote account
     pub validator_vote: &'b solana_program::account_info::AccountInfo<'a>,
     /// System program account
@@ -190,7 +186,7 @@ impl<'a, 'b> InitializeStakeCpi<'a, 'b> {
         Self {
             __program: program,
             config: accounts.config,
-            validator_stake: accounts.validator_stake,
+            stake: accounts.stake,
             validator_vote: accounts.validator_vote,
             system_program: accounts.system_program,
         }
@@ -234,7 +230,7 @@ impl<'a, 'b> InitializeStakeCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.validator_stake.key,
+            *self.stake.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -262,7 +258,7 @@ impl<'a, 'b> InitializeStakeCpi<'a, 'b> {
         let mut account_infos = Vec::with_capacity(4 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.config.clone());
-        account_infos.push(self.validator_stake.clone());
+        account_infos.push(self.stake.clone());
         account_infos.push(self.validator_vote.clone());
         account_infos.push(self.system_program.clone());
         remaining_accounts
@@ -282,7 +278,7 @@ impl<'a, 'b> InitializeStakeCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[]` config
-///   1. `[writable]` validator_stake
+///   1. `[writable]` stake
 ///   2. `[]` validator_vote
 ///   3. `[]` system_program
 #[derive(Clone, Debug)]
@@ -295,7 +291,7 @@ impl<'a, 'b> InitializeStakeCpiBuilder<'a, 'b> {
         let instruction = Box::new(InitializeStakeCpiBuilderInstruction {
             __program: program,
             config: None,
-            validator_stake: None,
+            stake: None,
             validator_vote: None,
             system_program: None,
             __remaining_accounts: Vec::new(),
@@ -311,13 +307,10 @@ impl<'a, 'b> InitializeStakeCpiBuilder<'a, 'b> {
         self.instruction.config = Some(config);
         self
     }
-    /// Validator stake account (pda of `['stake', validator, config]`)
+    /// Validator stake account (pda of `['stake', config, validator]`)
     #[inline(always)]
-    pub fn validator_stake(
-        &mut self,
-        validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.validator_stake = Some(validator_stake);
+    pub fn stake(&mut self, stake: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.stake = Some(stake);
         self
     }
     /// Validator vote account
@@ -384,10 +377,7 @@ impl<'a, 'b> InitializeStakeCpiBuilder<'a, 'b> {
 
             config: self.instruction.config.expect("config is not set"),
 
-            validator_stake: self
-                .instruction
-                .validator_stake
-                .expect("validator_stake is not set"),
+            stake: self.instruction.stake.expect("stake is not set"),
 
             validator_vote: self
                 .instruction
@@ -410,7 +400,7 @@ impl<'a, 'b> InitializeStakeCpiBuilder<'a, 'b> {
 struct InitializeStakeCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    validator_stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     validator_vote: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.

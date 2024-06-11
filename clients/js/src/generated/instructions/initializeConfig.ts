@@ -36,7 +36,7 @@ import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 export type InitializeConfigInstruction<
   TProgram extends string = typeof STAKE_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
-  TAccountAuthority extends string | IAccountMeta<string> = string,
+  TAccountConfigAuthority extends string | IAccountMeta<string> = string,
   TAccountSlashAuthority extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountVaultToken extends string | IAccountMeta<string> = string,
@@ -51,9 +51,9 @@ export type InitializeConfigInstruction<
         ? WritableSignerAccount<TAccountConfig> &
             IAccountSignerMeta<TAccountConfig>
         : TAccountConfig,
-      TAccountAuthority extends string
-        ? ReadonlyAccount<TAccountAuthority>
-        : TAccountAuthority,
+      TAccountConfigAuthority extends string
+        ? ReadonlyAccount<TAccountConfigAuthority>
+        : TAccountConfigAuthority,
       TAccountSlashAuthority extends string
         ? ReadonlyAccount<TAccountSlashAuthority>
         : TAccountSlashAuthority,
@@ -116,7 +116,7 @@ export function getInitializeConfigInstructionDataCodec(): Codec<
 
 export type InitializeConfigInput<
   TAccountConfig extends string = string,
-  TAccountAuthority extends string = string,
+  TAccountConfigAuthority extends string = string,
   TAccountSlashAuthority extends string = string,
   TAccountMint extends string = string,
   TAccountVaultToken extends string = string,
@@ -126,7 +126,7 @@ export type InitializeConfigInput<
   /** Stake config account */
   config: TransactionSigner<TAccountConfig>;
   /** Config authority */
-  authority: Address<TAccountAuthority>;
+  configAuthority: Address<TAccountConfigAuthority>;
   /** Slash authority */
   slashAuthority: Address<TAccountSlashAuthority>;
   /** Stake token mint */
@@ -143,7 +143,7 @@ export type InitializeConfigInput<
 
 export function getInitializeConfigInstruction<
   TAccountConfig extends string,
-  TAccountAuthority extends string,
+  TAccountConfigAuthority extends string,
   TAccountSlashAuthority extends string,
   TAccountMint extends string,
   TAccountVaultToken extends string,
@@ -152,7 +152,7 @@ export function getInitializeConfigInstruction<
 >(
   input: InitializeConfigInput<
     TAccountConfig,
-    TAccountAuthority,
+    TAccountConfigAuthority,
     TAccountSlashAuthority,
     TAccountMint,
     TAccountVaultToken,
@@ -162,7 +162,7 @@ export function getInitializeConfigInstruction<
 ): InitializeConfigInstruction<
   typeof STAKE_PROGRAM_ADDRESS,
   TAccountConfig,
-  TAccountAuthority,
+  TAccountConfigAuthority,
   TAccountSlashAuthority,
   TAccountMint,
   TAccountVaultToken,
@@ -175,7 +175,10 @@ export function getInitializeConfigInstruction<
   // Original accounts.
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
-    authority: { value: input.authority ?? null, isWritable: false },
+    configAuthority: {
+      value: input.configAuthority ?? null,
+      isWritable: false,
+    },
     slashAuthority: { value: input.slashAuthority ?? null, isWritable: false },
     mint: { value: input.mint ?? null, isWritable: false },
     vaultToken: { value: input.vaultToken ?? null, isWritable: false },
@@ -194,7 +197,7 @@ export function getInitializeConfigInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.config),
-      getAccountMeta(accounts.authority),
+      getAccountMeta(accounts.configAuthority),
       getAccountMeta(accounts.slashAuthority),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.vaultToken),
@@ -208,7 +211,7 @@ export function getInitializeConfigInstruction<
   } as InitializeConfigInstruction<
     typeof STAKE_PROGRAM_ADDRESS,
     TAccountConfig,
-    TAccountAuthority,
+    TAccountConfigAuthority,
     TAccountSlashAuthority,
     TAccountMint,
     TAccountVaultToken,
@@ -228,7 +231,7 @@ export type ParsedInitializeConfigInstruction<
     /** Stake config account */
     config: TAccountMetas[0];
     /** Config authority */
-    authority: TAccountMetas[1];
+    configAuthority: TAccountMetas[1];
     /** Slash authority */
     slashAuthority: TAccountMetas[2];
     /** Stake token mint */
@@ -271,7 +274,7 @@ export function parseInitializeConfigInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       config: getNextAccount(),
-      authority: getNextAccount(),
+      configAuthority: getNextAccount(),
       slashAuthority: getNextAccount(),
       mint: getNextAccount(),
       vaultToken: getNextAccount(),

@@ -44,7 +44,7 @@ async fn create() {
 
     let ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
-        .authority(authority)
+        .config_authority(authority)
         .slash_authority(authority)
         .mint(mint.pubkey())
         .vault_token(token.pubkey())

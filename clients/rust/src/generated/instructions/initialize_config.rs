@@ -13,7 +13,7 @@ pub struct InitializeConfig {
     /// Stake config account
     pub config: solana_program::pubkey::Pubkey,
     /// Config authority
-    pub authority: solana_program::pubkey::Pubkey,
+    pub config_authority: solana_program::pubkey::Pubkey,
     /// Slash authority
     pub slash_authority: solana_program::pubkey::Pubkey,
     /// Stake token mint
@@ -45,7 +45,7 @@ impl InitializeConfig {
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.authority,
+            self.config_authority,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -120,7 +120,7 @@ pub struct InitializeConfigInstructionArgs {
 /// ### Accounts:
 ///
 ///   0. `[writable, signer]` config
-///   1. `[]` authority
+///   1. `[]` config_authority
 ///   2. `[]` slash_authority
 ///   3. `[]` mint
 ///   4. `[]` vault_token
@@ -129,7 +129,7 @@ pub struct InitializeConfigInstructionArgs {
 #[derive(Clone, Debug, Default)]
 pub struct InitializeConfigBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
-    authority: Option<solana_program::pubkey::Pubkey>,
+    config_authority: Option<solana_program::pubkey::Pubkey>,
     slash_authority: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
     vault_token: Option<solana_program::pubkey::Pubkey>,
@@ -152,8 +152,11 @@ impl InitializeConfigBuilder {
     }
     /// Config authority
     #[inline(always)]
-    pub fn authority(&mut self, authority: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.authority = Some(authority);
+    pub fn config_authority(
+        &mut self,
+        config_authority: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.config_authority = Some(config_authority);
         self
     }
     /// Slash authority
@@ -229,7 +232,7 @@ impl InitializeConfigBuilder {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = InitializeConfig {
             config: self.config.expect("config is not set"),
-            authority: self.authority.expect("authority is not set"),
+            config_authority: self.config_authority.expect("config_authority is not set"),
             slash_authority: self.slash_authority.expect("slash_authority is not set"),
             mint: self.mint.expect("mint is not set"),
             vault_token: self.vault_token.expect("vault_token is not set"),
@@ -256,7 +259,7 @@ pub struct InitializeConfigCpiAccounts<'a, 'b> {
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
     /// Config authority
-    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
+    pub config_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Slash authority
     pub slash_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake token mint
@@ -276,7 +279,7 @@ pub struct InitializeConfigCpi<'a, 'b> {
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
     /// Config authority
-    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
+    pub config_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Slash authority
     pub slash_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake token mint
@@ -300,7 +303,7 @@ impl<'a, 'b> InitializeConfigCpi<'a, 'b> {
         Self {
             __program: program,
             config: accounts.config,
-            authority: accounts.authority,
+            config_authority: accounts.config_authority,
             slash_authority: accounts.slash_authority,
             mint: accounts.mint,
             vault_token: accounts.vault_token,
@@ -348,7 +351,7 @@ impl<'a, 'b> InitializeConfigCpi<'a, 'b> {
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.authority.key,
+            *self.config_authority.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -403,7 +406,7 @@ impl<'a, 'b> InitializeConfigCpi<'a, 'b> {
         let mut account_infos = Vec::with_capacity(7 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.config.clone());
-        account_infos.push(self.authority.clone());
+        account_infos.push(self.config_authority.clone());
         account_infos.push(self.slash_authority.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.vault_token.clone());
@@ -430,7 +433,7 @@ impl<'a, 'b> InitializeConfigCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[writable, signer]` config
-///   1. `[]` authority
+///   1. `[]` config_authority
 ///   2. `[]` slash_authority
 ///   3. `[]` mint
 ///   4. `[]` vault_token
@@ -446,7 +449,7 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
         let instruction = Box::new(InitializeConfigCpiBuilderInstruction {
             __program: program,
             config: None,
-            authority: None,
+            config_authority: None,
             slash_authority: None,
             mint: None,
             vault_token: None,
@@ -469,11 +472,11 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
     }
     /// Config authority
     #[inline(always)]
-    pub fn authority(
+    pub fn config_authority(
         &mut self,
-        authority: &'b solana_program::account_info::AccountInfo<'a>,
+        config_authority: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.authority = Some(authority);
+        self.instruction.config_authority = Some(config_authority);
         self
     }
     /// Slash authority
@@ -591,7 +594,10 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
 
             config: self.instruction.config.expect("config is not set"),
 
-            authority: self.instruction.authority.expect("authority is not set"),
+            config_authority: self
+                .instruction
+                .config_authority
+                .expect("config_authority is not set"),
 
             slash_authority: self
                 .instruction
@@ -621,7 +627,7 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
 struct InitializeConfigCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    config_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     slash_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault_token: Option<&'b solana_program::account_info::AccountInfo<'a>>,

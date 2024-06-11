@@ -14,7 +14,7 @@
           ]
         },
         {
-          "name": "authority",
+          "name": "configAuthority",
           "isMut": false,
           "isSigner": false,
           "docs": [
@@ -91,11 +91,11 @@
           ]
         },
         {
-          "name": "validatorStake",
+          "name": "stake",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake', validator, config]`)"
+            "Validator stake account (pda of `['stake', config, validator]`)"
           ]
         },
         {
@@ -133,7 +133,7 @@
           ]
         },
         {
-          "name": "validatorStake",
+          "name": "stake",
           "isMut": true,
           "isSigner": false,
           "docs": [
@@ -141,7 +141,7 @@
           ]
         },
         {
-          "name": "token",
+          "name": "sourceToken",
           "isMut": true,
           "isSigner": false,
           "docs": [
@@ -177,11 +177,11 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Stake Token Vault"
+            "Stake token Vault"
           ]
         },
         {
-          "name": "splToken",
+          "name": "splTokenProgram",
           "isMut": false,
           "isSigner": false,
           "docs": [
@@ -212,7 +212,7 @@
           ]
         },
         {
-          "name": "authority",
+          "name": "stakeAuthority",
           "isMut": false,
           "isSigner": true,
           "docs": [
@@ -277,22 +277,6 @@
           ]
         },
         {
-          "name": "vaultToken",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Vault token account"
-          ]
-        },
-        {
-          "name": "destinationToken",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Destination token account"
-          ]
-        },
-        {
           "name": "stakeAuthority",
           "isMut": false,
           "isSigner": true,
@@ -306,6 +290,22 @@
           "isSigner": false,
           "docs": [
             "Vault authority"
+          ]
+        },
+        {
+          "name": "vaultToken",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Vault token account"
+          ]
+        },
+        {
+          "name": "destinationToken",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Destination token account"
           ]
         },
         {
@@ -356,6 +356,14 @@
           ]
         },
         {
+          "name": "vaultAuthority",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Vault authority"
+          ]
+        },
+        {
           "name": "holderRewards",
           "isMut": false,
           "isSigner": false,
@@ -372,7 +380,7 @@
           ]
         },
         {
-          "name": "authority",
+          "name": "stakeAuthority",
           "isMut": false,
           "isSigner": true,
           "docs": [
@@ -380,17 +388,9 @@
           ]
         },
         {
-          "name": "vaultAuthority",
-          "isMut": false,
-          "isSigner": true,
-          "docs": [
-            "Vault authority"
-          ]
-        },
-        {
           "name": "mint",
           "isMut": false,
-          "isSigner": true,
+          "isSigner": false,
           "docs": [
             "Stake token mint"
           ]
@@ -438,7 +438,7 @@
           ]
         },
         {
-          "name": "authority",
+          "name": "stakeAuthority",
           "isMut": false,
           "isSigner": true,
           "docs": [

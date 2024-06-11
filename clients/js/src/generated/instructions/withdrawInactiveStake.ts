@@ -36,10 +36,10 @@ export type WithdrawInactiveStakeInstruction<
   TProgram extends string = typeof STAKE_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountStake extends string | IAccountMeta<string> = string,
-  TAccountVaultToken extends string | IAccountMeta<string> = string,
-  TAccountDestinationToken extends string | IAccountMeta<string> = string,
   TAccountStakeAuthority extends string | IAccountMeta<string> = string,
   TAccountVaultAuthority extends string | IAccountMeta<string> = string,
+  TAccountVaultToken extends string | IAccountMeta<string> = string,
+  TAccountDestinationToken extends string | IAccountMeta<string> = string,
   TAccountSplTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
@@ -54,12 +54,6 @@ export type WithdrawInactiveStakeInstruction<
       TAccountStake extends string
         ? WritableAccount<TAccountStake>
         : TAccountStake,
-      TAccountVaultToken extends string
-        ? WritableAccount<TAccountVaultToken>
-        : TAccountVaultToken,
-      TAccountDestinationToken extends string
-        ? WritableAccount<TAccountDestinationToken>
-        : TAccountDestinationToken,
       TAccountStakeAuthority extends string
         ? ReadonlySignerAccount<TAccountStakeAuthority> &
             IAccountSignerMeta<TAccountStakeAuthority>
@@ -67,6 +61,12 @@ export type WithdrawInactiveStakeInstruction<
       TAccountVaultAuthority extends string
         ? ReadonlyAccount<TAccountVaultAuthority>
         : TAccountVaultAuthority,
+      TAccountVaultToken extends string
+        ? WritableAccount<TAccountVaultToken>
+        : TAccountVaultToken,
+      TAccountDestinationToken extends string
+        ? WritableAccount<TAccountDestinationToken>
+        : TAccountDestinationToken,
       TAccountSplTokenProgram extends string
         ? ReadonlyAccount<TAccountSplTokenProgram>
         : TAccountSplTokenProgram,
@@ -113,24 +113,24 @@ export function getWithdrawInactiveStakeInstructionDataCodec(): Codec<
 export type WithdrawInactiveStakeInput<
   TAccountConfig extends string = string,
   TAccountStake extends string = string,
-  TAccountVaultToken extends string = string,
-  TAccountDestinationToken extends string = string,
   TAccountStakeAuthority extends string = string,
   TAccountVaultAuthority extends string = string,
+  TAccountVaultToken extends string = string,
+  TAccountDestinationToken extends string = string,
   TAccountSplTokenProgram extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
   /** Stake account */
   stake: Address<TAccountStake>;
-  /** Vault token account */
-  vaultToken: Address<TAccountVaultToken>;
-  /** Destination token account */
-  destinationToken: Address<TAccountDestinationToken>;
   /** Stake authority */
   stakeAuthority: TransactionSigner<TAccountStakeAuthority>;
   /** Vault authority */
   vaultAuthority: Address<TAccountVaultAuthority>;
+  /** Vault token account */
+  vaultToken: Address<TAccountVaultToken>;
+  /** Destination token account */
+  destinationToken: Address<TAccountDestinationToken>;
   /** SPL Token program */
   splTokenProgram?: Address<TAccountSplTokenProgram>;
   args: WithdrawInactiveStakeInstructionDataArgs['args'];
@@ -139,29 +139,29 @@ export type WithdrawInactiveStakeInput<
 export function getWithdrawInactiveStakeInstruction<
   TAccountConfig extends string,
   TAccountStake extends string,
-  TAccountVaultToken extends string,
-  TAccountDestinationToken extends string,
   TAccountStakeAuthority extends string,
   TAccountVaultAuthority extends string,
+  TAccountVaultToken extends string,
+  TAccountDestinationToken extends string,
   TAccountSplTokenProgram extends string,
 >(
   input: WithdrawInactiveStakeInput<
     TAccountConfig,
     TAccountStake,
-    TAccountVaultToken,
-    TAccountDestinationToken,
     TAccountStakeAuthority,
     TAccountVaultAuthority,
+    TAccountVaultToken,
+    TAccountDestinationToken,
     TAccountSplTokenProgram
   >
 ): WithdrawInactiveStakeInstruction<
   typeof STAKE_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountStake,
-  TAccountVaultToken,
-  TAccountDestinationToken,
   TAccountStakeAuthority,
   TAccountVaultAuthority,
+  TAccountVaultToken,
+  TAccountDestinationToken,
   TAccountSplTokenProgram
 > {
   // Program address.
@@ -171,13 +171,13 @@ export function getWithdrawInactiveStakeInstruction<
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
     stake: { value: input.stake ?? null, isWritable: true },
+    stakeAuthority: { value: input.stakeAuthority ?? null, isWritable: false },
+    vaultAuthority: { value: input.vaultAuthority ?? null, isWritable: false },
     vaultToken: { value: input.vaultToken ?? null, isWritable: true },
     destinationToken: {
       value: input.destinationToken ?? null,
       isWritable: true,
     },
-    stakeAuthority: { value: input.stakeAuthority ?? null, isWritable: false },
-    vaultAuthority: { value: input.vaultAuthority ?? null, isWritable: false },
     splTokenProgram: {
       value: input.splTokenProgram ?? null,
       isWritable: false,
@@ -202,10 +202,10 @@ export function getWithdrawInactiveStakeInstruction<
     accounts: [
       getAccountMeta(accounts.config),
       getAccountMeta(accounts.stake),
-      getAccountMeta(accounts.vaultToken),
-      getAccountMeta(accounts.destinationToken),
       getAccountMeta(accounts.stakeAuthority),
       getAccountMeta(accounts.vaultAuthority),
+      getAccountMeta(accounts.vaultToken),
+      getAccountMeta(accounts.destinationToken),
       getAccountMeta(accounts.splTokenProgram),
     ],
     programAddress,
@@ -216,10 +216,10 @@ export function getWithdrawInactiveStakeInstruction<
     typeof STAKE_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountStake,
-    TAccountVaultToken,
-    TAccountDestinationToken,
     TAccountStakeAuthority,
     TAccountVaultAuthority,
+    TAccountVaultToken,
+    TAccountDestinationToken,
     TAccountSplTokenProgram
   >;
 
@@ -236,14 +236,14 @@ export type ParsedWithdrawInactiveStakeInstruction<
     config: TAccountMetas[0];
     /** Stake account */
     stake: TAccountMetas[1];
-    /** Vault token account */
-    vaultToken: TAccountMetas[2];
-    /** Destination token account */
-    destinationToken: TAccountMetas[3];
     /** Stake authority */
-    stakeAuthority: TAccountMetas[4];
+    stakeAuthority: TAccountMetas[2];
     /** Vault authority */
-    vaultAuthority: TAccountMetas[5];
+    vaultAuthority: TAccountMetas[3];
+    /** Vault token account */
+    vaultToken: TAccountMetas[4];
+    /** Destination token account */
+    destinationToken: TAccountMetas[5];
     /** SPL Token program */
     splTokenProgram: TAccountMetas[6];
   };
@@ -273,10 +273,10 @@ export function parseWithdrawInactiveStakeInstruction<
     accounts: {
       config: getNextAccount(),
       stake: getNextAccount(),
-      vaultToken: getNextAccount(),
-      destinationToken: getNextAccount(),
       stakeAuthority: getNextAccount(),
       vaultAuthority: getNextAccount(),
+      vaultToken: getNextAccount(),
+      destinationToken: getNextAccount(),
       splTokenProgram: getNextAccount(),
     },
     data: getWithdrawInactiveStakeInstructionDataDecoder().decode(

@@ -30,7 +30,7 @@ import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 export type InitializeStakeInstruction<
   TProgram extends string = typeof STAKE_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
-  TAccountValidatorStake extends string | IAccountMeta<string> = string,
+  TAccountStake extends string | IAccountMeta<string> = string,
   TAccountValidatorVote extends string | IAccountMeta<string> = string,
   TAccountSystemProgram extends
     | string
@@ -43,9 +43,9 @@ export type InitializeStakeInstruction<
       TAccountConfig extends string
         ? ReadonlyAccount<TAccountConfig>
         : TAccountConfig,
-      TAccountValidatorStake extends string
-        ? WritableAccount<TAccountValidatorStake>
-        : TAccountValidatorStake,
+      TAccountStake extends string
+        ? WritableAccount<TAccountStake>
+        : TAccountStake,
       TAccountValidatorVote extends string
         ? ReadonlyAccount<TAccountValidatorVote>
         : TAccountValidatorVote,
@@ -83,14 +83,14 @@ export function getInitializeStakeInstructionDataCodec(): Codec<
 
 export type InitializeStakeInput<
   TAccountConfig extends string = string,
-  TAccountValidatorStake extends string = string,
+  TAccountStake extends string = string,
   TAccountValidatorVote extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
-  /** Validator stake account (pda of `['stake', validator, config]`) */
-  validatorStake: Address<TAccountValidatorStake>;
+  /** Validator stake account (pda of `['stake', config, validator]`) */
+  stake: Address<TAccountStake>;
   /** Validator vote account */
   validatorVote: Address<TAccountValidatorVote>;
   /** System program account */
@@ -99,20 +99,20 @@ export type InitializeStakeInput<
 
 export function getInitializeStakeInstruction<
   TAccountConfig extends string,
-  TAccountValidatorStake extends string,
+  TAccountStake extends string,
   TAccountValidatorVote extends string,
   TAccountSystemProgram extends string,
 >(
   input: InitializeStakeInput<
     TAccountConfig,
-    TAccountValidatorStake,
+    TAccountStake,
     TAccountValidatorVote,
     TAccountSystemProgram
   >
 ): InitializeStakeInstruction<
   typeof STAKE_PROGRAM_ADDRESS,
   TAccountConfig,
-  TAccountValidatorStake,
+  TAccountStake,
   TAccountValidatorVote,
   TAccountSystemProgram
 > {
@@ -122,7 +122,7 @@ export function getInitializeStakeInstruction<
   // Original accounts.
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
-    validatorStake: { value: input.validatorStake ?? null, isWritable: true },
+    stake: { value: input.stake ?? null, isWritable: true },
     validatorVote: { value: input.validatorVote ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
@@ -141,7 +141,7 @@ export function getInitializeStakeInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.config),
-      getAccountMeta(accounts.validatorStake),
+      getAccountMeta(accounts.stake),
       getAccountMeta(accounts.validatorVote),
       getAccountMeta(accounts.systemProgram),
     ],
@@ -150,7 +150,7 @@ export function getInitializeStakeInstruction<
   } as InitializeStakeInstruction<
     typeof STAKE_PROGRAM_ADDRESS,
     TAccountConfig,
-    TAccountValidatorStake,
+    TAccountStake,
     TAccountValidatorVote,
     TAccountSystemProgram
   >;
@@ -166,8 +166,8 @@ export type ParsedInitializeStakeInstruction<
   accounts: {
     /** Stake config account */
     config: TAccountMetas[0];
-    /** Validator stake account (pda of `['stake', validator, config]`) */
-    validatorStake: TAccountMetas[1];
+    /** Validator stake account (pda of `['stake', config, validator]`) */
+    stake: TAccountMetas[1];
     /** Validator vote account */
     validatorVote: TAccountMetas[2];
     /** System program account */
@@ -198,7 +198,7 @@ export function parseInitializeStakeInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       config: getNextAccount(),
-      validatorStake: getNextAccount(),
+      stake: getNextAccount(),
       validatorVote: getNextAccount(),
       systemProgram: getNextAccount(),
     },
