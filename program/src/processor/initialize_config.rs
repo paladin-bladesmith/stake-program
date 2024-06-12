@@ -63,7 +63,7 @@ pub fn process_initialize_config(
 
     require!(
         token.base.owner == vault,
-        ProgramError::InvalidAccountOwner,
+        StakeError::InvalidTokenOwner,
         "vault_token"
     );
 

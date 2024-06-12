@@ -11,6 +11,10 @@ pub enum StakeError {
     /// 0 - Amount cannot be greater than zero
     #[error("Amount cannot be greater than zero")]
     AmountGreaterThanZero,
+
+    /// 1 - Invalid token owner
+    #[error("Invalid token owner")]
+    InvalidTokenOwner,
 }
 
 impl PrintProgramError for StakeError {

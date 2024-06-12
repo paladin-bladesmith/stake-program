@@ -8,13 +8,18 @@
 
 /** AmountGreaterThanZero: Amount cannot be greater than zero */
 export const STAKE_ERROR__AMOUNT_GREATER_THAN_ZERO = 0x0; // 0
+/** InvalidTokenOwner: Invalid token owner */
+export const STAKE_ERROR__INVALID_TOKEN_OWNER = 0x1; // 1
 
-export type StakeError = typeof STAKE_ERROR__AMOUNT_GREATER_THAN_ZERO;
+export type StakeError =
+  | typeof STAKE_ERROR__AMOUNT_GREATER_THAN_ZERO
+  | typeof STAKE_ERROR__INVALID_TOKEN_OWNER;
 
 let stakeErrorMessages: Record<StakeError, string> | undefined;
 if (__DEV__) {
   stakeErrorMessages = {
     [STAKE_ERROR__AMOUNT_GREATER_THAN_ZERO]: `Amount cannot be greater than zero`,
+    [STAKE_ERROR__INVALID_TOKEN_OWNER]: `Invalid token owner`,
   };
 }
 

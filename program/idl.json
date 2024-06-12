@@ -673,6 +673,11 @@
       "code": 0,
       "name": "AmountGreaterThanZero",
       "msg": "Amount cannot be greater than zero"
+    },
+    {
+      "code": 1,
+      "name": "InvalidTokenOwner",
+      "msg": "Invalid token owner"
     }
   ],
   "metadata": {

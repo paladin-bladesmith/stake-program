@@ -15,9 +15,11 @@ pub struct Config {
     pub account_type: AccountType,
 
     /// Authority that can modify any elements in the config.
+    // TODO: does this need to be optional?
     pub authority: OptionalNonZeroPubkey,
 
     /// Authority that can slash any stake.
+    // TODO: does this need to be optional?
     pub slash_authority: OptionalNonZeroPubkey,
 
     /// Token account storing all stake.

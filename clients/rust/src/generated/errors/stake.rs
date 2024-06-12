@@ -13,6 +13,9 @@ pub enum StakeError {
     /// 0 - Amount cannot be greater than zero
     #[error("Amount cannot be greater than zero")]
     AmountGreaterThanZero = 0x0,
+    /// 1 - Invalid token owner
+    #[error("Invalid token owner")]
+    InvalidTokenOwner = 0x1,
 }
 
 impl solana_program::program_error::PrintProgramError for StakeError {
