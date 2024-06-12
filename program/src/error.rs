@@ -15,6 +15,10 @@ pub enum StakeError {
     /// 1 - Invalid token owner
     #[error("Invalid token owner")]
     InvalidTokenOwner,
+
+    /// 2 - Invalid authority
+    #[error("Invalid authority")]
+    InvalidAuthority,
 }
 
 impl PrintProgramError for StakeError {

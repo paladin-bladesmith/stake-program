@@ -97,6 +97,7 @@ pub async fn create_token(
     context.banks_client.process_transaction(tx).await
 }
 
+#[allow(dead_code)]
 pub async fn mint_to(
     context: &mut ProgramTestContext,
     mint: &Keypair,

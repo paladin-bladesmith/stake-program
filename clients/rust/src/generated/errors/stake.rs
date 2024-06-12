@@ -16,6 +16,9 @@ pub enum StakeError {
     /// 1 - Invalid token owner
     #[error("Invalid token owner")]
     InvalidTokenOwner = 0x1,
+    /// 2 - Invalid authority
+    #[error("Invalid authority")]
+    InvalidAuthority = 0x2,
 }
 
 impl solana_program::program_error::PrintProgramError for StakeError {

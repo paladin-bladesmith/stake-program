@@ -43,3 +43,18 @@ macro_rules! assert_custom_error {
         };
     };
 }
+
+#[macro_export]
+macro_rules! get_account {
+    ( $context:expr, $pubkey:expr ) => {{
+        let account = $context
+            .banks_client
+            .get_account($pubkey)
+            .await
+            .expect(&format!("account not found: {}", $pubkey));
+
+        assert!(account.is_some());
+
+        account.unwrap()
+    }};
+}

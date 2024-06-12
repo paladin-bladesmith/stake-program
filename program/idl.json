@@ -678,6 +678,11 @@
       "code": 1,
       "name": "InvalidTokenOwner",
       "msg": "Invalid token owner"
+    },
+    {
+      "code": 2,
+      "name": "InvalidAuthority",
+      "msg": "Invalid authority"
     }
   ],
   "metadata": {
