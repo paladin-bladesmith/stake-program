@@ -96,3 +96,30 @@ pub async fn create_token(
 
     context.banks_client.process_transaction(tx).await
 }
+
+pub async fn mint_to(
+    context: &mut ProgramTestContext,
+    mint: &Keypair,
+    mint_authority: &Keypair,
+    token: &Pubkey,
+    amount: u64,
+    decimals: u8,
+) -> Result<(), BanksClientError> {
+    let tx = Transaction::new_signed_with_payer(
+        &[spl_token_2022::instruction::mint_to_checked(
+            &spl_token_2022::ID,
+            &mint.pubkey(),
+            token,
+            &mint_authority.pubkey(),
+            &[],
+            amount,
+            decimals,
+        )
+        .unwrap()],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, mint_authority],
+        context.last_blockhash,
+    );
+
+    context.banks_client.process_transaction(tx).await
+}
