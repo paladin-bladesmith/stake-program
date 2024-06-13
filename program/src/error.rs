@@ -7,7 +7,23 @@ use solana_program::{
 use thiserror::Error;
 
 #[derive(Error, Clone, Debug, Eq, PartialEq, FromPrimitive)]
-pub enum StakeError {}
+pub enum StakeError {
+    /// 0 - Amount cannot be greater than zero
+    #[error("Amount cannot be greater than zero")]
+    AmountGreaterThanZero,
+
+    /// 1 - Invalid token owner
+    #[error("Invalid token owner")]
+    InvalidTokenOwner,
+
+    /// 2 - Invalid authority
+    #[error("Invalid authority")]
+    InvalidAuthority,
+
+    /// 3 - Invalid transfer hook program id
+    #[error("Invalid transfer hook program id")]
+    InvalidTransferHookProgramId,
+}
 
 impl PrintProgramError for StakeError {
     fn print<E>(&self) {
