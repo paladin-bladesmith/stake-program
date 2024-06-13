@@ -7,66 +7,121 @@ import { renderVisitor as renderRustVisitor } from "@kinobi-so/renderers-rust";
 import { getAllProgramIdls } from "./utils.mjs";
 
 // Instanciate Kinobi.
-const [idl, ...additionalIdls] = getAllProgramIdls().map(idl => rootNodeFromAnchor(require(idl)))
+const [idl, ...additionalIdls] = getAllProgramIdls().map((idl) =>
+  rootNodeFromAnchor(require(idl))
+);
 const kinobi = k.createFromRoot(idl, additionalIdls);
 
 // Update programs.
 kinobi.update(
   k.updateProgramsVisitor({
-    "stakeProgram": { name: "stake" },
+    stakeProgram: { name: "stake" },
   })
 );
 
-// Update accounts.
+// Add missing types from the IDL.
 kinobi.update(
-  k.updateAccountsVisitor({
-    counter: {
-      seeds: [
-        k.constantPdaSeedNodeFromString("utf8", "counter"),
-        k.variablePdaSeedNode(
-          "authority",
-          k.publicKeyTypeNode(),
-          "The authority of the counter account"
-        ),
-      ],
-    },
-  })
-);
+  k.bottomUpTransformerVisitor([
+    {
+      select: "[programNode]stake",
+      transform: (node) => {
+        k.assertIsNode(node, "programNode");
+        return {
+          ...node,
+          accounts: [
+            ...node.accounts,
+            // config
+            k.accountNode({
+              name: "config",
+              size: 124,
+              data: k.structTypeNode([
+                k.structFieldTypeNode({
+                  name: "accountType",
+                  type: k.definedTypeLinkNode("AccountType"),
+                }),
+                k.structFieldTypeNode({
+                  name: "authority",
+                  type: k.publicKeyTypeNode(),
+                }),
+                k.structFieldTypeNode({
+                  name: "slashAuthority",
+                  type: k.publicKeyTypeNode(),
+                }),
+                k.structFieldTypeNode({
+                  name: "vaultToken",
+                  type: k.publicKeyTypeNode(),
+                }),
+                k.structFieldTypeNode({
+                  name: "vaultBump",
+                  type: k.numberTypeNode("u8"),
+                }),
+                k.structFieldTypeNode({
+                  name: "cooldownTimeSeconds",
+                  type: k.numberTypeNode("u64"),
+                }),
+                k.structFieldTypeNode({
+                  name: "maxDeactivationBasisPoints",
+                  type: k.numberTypeNode("u16"),
+                }),
+                k.structFieldTypeNode({
+                  name: "tokenAmountDelegated",
+                  type: k.numberTypeNode("u64"),
+                }),
 
-// Update instructions.
-kinobi.update(
-  k.updateInstructionsVisitor({
-    create: {
-      byteDeltas: [k.instructionByteDeltaNode(k.accountLinkNode("counter"))],
-      accounts: {
-        counter: { defaultValue: k.pdaValueNode("counter") },
-        payer: { defaultValue: k.accountValueNode("authority") },
+                k.structFieldTypeNode({
+                  name: "totalStakeRewards",
+                  type: k.numberTypeNode("u64"),
+                }),
+              ]),
+            }),
+          ],
+          definedTypes: [
+            ...node.definedTypes,
+            // discriminator
+            k.definedTypeNode({
+              name: "accountType",
+              type: k.enumTypeNode([
+                k.enumEmptyVariantTypeNode("Uninitialized"),
+                k.enumEmptyVariantTypeNode("Config"),
+                k.enumEmptyVariantTypeNode("Stake"),
+              ]),
+            }),
+          ],
+          pdas: [
+            k.pdaNode({
+              name: "vault",
+              seeds: [
+                k.constantPdaSeedNodeFromString("utf8", "token-vault"),
+                k.variablePdaSeedNode(
+                  "configAuthority",
+                  k.publicKeyTypeNode(),
+                  "Config authority"
+                ),
+              ],
+            }),
+          ],
+        };
       },
     },
-    increment: {
-      accounts: {
-        counter: { defaultValue: k.pdaValueNode("counter") },
-      },
-      arguments: {
-        amount: { defaultValue: k.noneValueNode() },
-      },
-    },
-  })
+  ])
 );
 
 // Set account discriminators.
-const key = (name) => ({ field: "key", value: k.enumValueNode("Key", name) });
+const key = (name) => ({
+  field: "accountType",
+  value: k.enumValueNode("AccountType", name),
+});
 kinobi.update(
   k.setAccountDiscriminatorFromFieldVisitor({
-    counter: key("counter"),
+    config: key("config"),
   })
 );
 
 // Render JavaScript.
 const jsClient = path.join(__dirname, "..", "clients", "js");
 kinobi.accept(
-  renderJavaScriptVisitor(path.join(jsClient, "src", "generated"), { 
-    prettier: require(path.join(jsClient, ".prettierrc.json"))
+  renderJavaScriptVisitor(path.join(jsClient, "src", "generated"), {
+    prettier: require(path.join(jsClient, ".prettierrc.json")),
   })
 );
 
