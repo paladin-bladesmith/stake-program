@@ -4,9 +4,14 @@ use solana_sdk::{
     transaction::Transaction,
 };
 use spl_token_2022::{
-    extension::ExtensionType,
+    extension::{transfer_hook, ExtensionType},
     state::{Account, Mint},
 };
+
+pub const MINT_EXTENSIONS: &[ExtensionType] = &[ExtensionType::TransferHook];
+
+pub const TOKEN_ACCOUNT_EXTENSIONS: &[ExtensionType] =
+    &[ExtensionType::TransferHook, ExtensionType::ImmutableOwner];
 
 pub async fn create_mint(
     context: &mut ProgramTestContext,
@@ -19,26 +24,40 @@ pub async fn create_mint(
     let account_size = ExtensionType::try_calculate_account_len::<Mint>(extensions).unwrap();
     let rent = context.banks_client.get_rent().await.unwrap();
 
-    // TODO: initialize extensions
+    let mut instructions = vec![system_instruction::create_account(
+        &context.payer.pubkey(),
+        &mint.pubkey(),
+        rent.minimum_balance(account_size),
+        account_size as u64,
+        &spl_token_2022::ID,
+    )];
 
-    let tx = Transaction::new_signed_with_payer(
-        &[
-            system_instruction::create_account(
-                &context.payer.pubkey(),
-                &mint.pubkey(),
-                rent.minimum_balance(account_size),
-                account_size as u64,
-                &spl_token_2022::ID,
-            ),
-            spl_token_2022::instruction::initialize_mint(
+    if extensions.contains(&ExtensionType::TransferHook) {
+        instructions.push(
+            transfer_hook::instruction::initialize(
                 &spl_token_2022::ID,
                 &mint.pubkey(),
-                mint_authority,
-                freeze_authority,
-                decimals,
+                Some(*mint_authority),
+                // TODO: change program id to Rewards program
+                Some(paladin_stake::ID),
             )
             .unwrap(),
-        ],
+        );
+    }
+
+    instructions.push(
+        spl_token_2022::instruction::initialize_mint(
+            &spl_token_2022::ID,
+            &mint.pubkey(),
+            mint_authority,
+            freeze_authority,
+            decimals,
+        )
+        .unwrap(),
+    );
+
+    let tx = Transaction::new_signed_with_payer(
+        &instructions,
         Some(&context.payer.pubkey()),
         &[&context.payer, mint],
         context.last_blockhash,

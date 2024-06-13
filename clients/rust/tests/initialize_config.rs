@@ -13,9 +13,10 @@ use solana_sdk::{
     system_instruction,
     transaction::Transaction,
 };
-use spl_token_2022::extension::ExtensionType;
 
 mod initialize_config {
+    use setup::{MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS};
+
     use super::*;
 
     #[tokio::test]
@@ -30,9 +31,16 @@ mod initialize_config {
         let authority = Keypair::new().pubkey();
 
         let mint = Keypair::new();
-        create_mint(&mut context, &mint, &authority, Some(&authority), 0, &[])
-            .await
-            .unwrap();
+        create_mint(
+            &mut context,
+            &mint,
+            &authority,
+            Some(&authority),
+            0,
+            MINT_EXTENSIONS,
+        )
+        .await
+        .unwrap();
 
         let token = Keypair::new();
         create_token(
@@ -40,7 +48,7 @@ mod initialize_config {
             &find_vault_pda(&config.pubkey()).0,
             &token,
             &mint.pubkey(),
-            &[ExtensionType::ImmutableOwner],
+            TOKEN_ACCOUNT_EXTENSIONS,
         )
         .await
         .unwrap();
@@ -102,9 +110,16 @@ mod initialize_config {
         let authority = Keypair::new().pubkey();
 
         let mint = Keypair::new();
-        create_mint(&mut context, &mint, &authority, Some(&authority), 0, &[])
-            .await
-            .unwrap();
+        create_mint(
+            &mut context,
+            &mint,
+            &authority,
+            Some(&authority),
+            0,
+            MINT_EXTENSIONS,
+        )
+        .await
+        .unwrap();
 
         let token = Keypair::new();
         create_token(
@@ -112,7 +127,7 @@ mod initialize_config {
             &authority, // <-- wrong authority
             &token,
             &mint.pubkey(),
-            &[ExtensionType::ImmutableOwner],
+            TOKEN_ACCOUNT_EXTENSIONS,
         )
         .await
         .unwrap();
@@ -179,7 +194,7 @@ mod initialize_config {
             &authority_pubkey,
             Some(&authority_pubkey),
             0,
-            &[],
+            MINT_EXTENSIONS,
         )
         .await
         .unwrap();
@@ -190,7 +205,7 @@ mod initialize_config {
             &find_vault_pda(&config.pubkey()).0,
             &token,
             &mint.pubkey(),
-            &[ExtensionType::ImmutableOwner],
+            TOKEN_ACCOUNT_EXTENSIONS,
         )
         .await
         .unwrap();

@@ -16,9 +16,10 @@ use solana_sdk::{
     system_instruction,
     transaction::Transaction,
 };
-use spl_token_2022::extension::ExtensionType;
 
 mod update_config {
+    use setup::{MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS};
+
     use super::*;
 
     #[tokio::test]
@@ -39,7 +40,7 @@ mod update_config {
             &authority.pubkey(),
             Some(&authority.pubkey()),
             0,
-            &[],
+            MINT_EXTENSIONS,
         )
         .await
         .unwrap();
@@ -50,7 +51,7 @@ mod update_config {
             &find_vault_pda(&config.pubkey()).0,
             &token,
             &mint.pubkey(),
-            &[ExtensionType::ImmutableOwner],
+            TOKEN_ACCOUNT_EXTENSIONS,
         )
         .await
         .unwrap();
@@ -133,7 +134,7 @@ mod update_config {
             &authority.pubkey(),
             Some(&authority.pubkey()),
             0,
-            &[],
+            MINT_EXTENSIONS,
         )
         .await
         .unwrap();
@@ -144,7 +145,7 @@ mod update_config {
             &find_vault_pda(&config.pubkey()).0,
             &token,
             &mint.pubkey(),
-            &[ExtensionType::ImmutableOwner],
+            TOKEN_ACCOUNT_EXTENSIONS,
         )
         .await
         .unwrap();

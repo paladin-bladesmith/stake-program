@@ -1,7 +1,7 @@
-use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey};
+use solana_program::{entrypoint::ProgramResult, msg, program_error::ProgramError, pubkey::Pubkey};
 use spl_pod::{optional_keys::OptionalNonZeroPubkey, primitives::PodU64};
 use spl_token_2022::{
-    extension::PodStateWithExtensions,
+    extension::{transfer_hook::TransferHook, BaseStateWithExtensions, PodStateWithExtensions},
     pod::{PodAccount, PodMint},
 };
 
@@ -37,9 +37,24 @@ pub fn process_initialize_config(
 
     let mint_data = ctx.accounts.mint.try_borrow_data()?;
     // unpack checks if the mint is initialized
-    let _mint = PodStateWithExtensions::<PodMint>::unpack(&mint_data)?;
+    let mint = PodStateWithExtensions::<PodMint>::unpack(&mint_data)?;
 
-    // TODO: validate the mint (e.g., transfer hook)
+    // ensure the mint is configured with the `TransferHook` extension
+    //
+    // TODO: check transfer hook program id == Rewards program when we
+    // have a crate for it
+    //
+    msg!("mint.extensions: {:?}", mint.get_extension_types());
+    let transfer_hook = mint.get_extension::<TransferHook>()?;
+    let hook_program_id: Option<Pubkey> = transfer_hook.program_id.into();
+
+    require!(
+        hook_program_id == Some(*program_id),
+        StakeError::InvalidTransferHookProgramId,
+        "expected {}, found {:?}",
+        program_id,
+        hook_program_id
+    );
 
     let token_data = ctx.accounts.vault_token.try_borrow_data()?;
     let token = PodStateWithExtensions::<PodAccount>::unpack(&token_data)?;
@@ -81,6 +96,8 @@ pub fn process_initialize_config(
         "config"
     );
 
+    // Initialize the stake config account.
+
     let config = bytemuck::from_bytes_mut::<Config>(&mut data);
 
     require!(
@@ -88,8 +105,6 @@ pub fn process_initialize_config(
         ProgramError::AccountAlreadyInitialized,
         "config"
     );
-
-    // Initialize the stake config account.
 
     config.account_type = AccountType::Config;
     config.authority = OptionalNonZeroPubkey(*ctx.accounts.config_authority.key);
