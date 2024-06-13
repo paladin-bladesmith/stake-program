@@ -1,4 +1,4 @@
-use solana_program::{entrypoint::ProgramResult, msg, program_error::ProgramError, pubkey::Pubkey};
+use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey};
 use spl_pod::{optional_keys::OptionalNonZeroPubkey, primitives::PodU64};
 use spl_token_2022::{
     extension::{transfer_hook::TransferHook, BaseStateWithExtensions, PodStateWithExtensions},
@@ -44,7 +44,6 @@ pub fn process_initialize_config(
     // TODO: check transfer hook program id == Rewards program when we
     // have a crate for it
     //
-    msg!("mint.extensions: {:?}", mint.get_extension_types());
     let transfer_hook = mint.get_extension::<TransferHook>()?;
     let hook_program_id: Option<Pubkey> = transfer_hook.program_id.into();
 
