@@ -1,173 +1,107 @@
-//! Program instructions
+use borsh::{BorshDeserialize, BorshSerialize};
+use shank::{ShankContext, ShankInstruction};
 
-use solana_program::clock::UnixTimestamp;
-
-/// Instructions supported by the staking program
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum StakeInstruction {
-    /// Creates Stake config account which controls staking parameters
-    ///
-    /// 0. `[w]` Stake config account
-    /// 1. `[]` Slash authority, may be a PDA for a governance program
-    /// 2. `[]` Config authority, may be a PDA for a governance program
-    /// 3. `[]` Stake Token Mint
-    /// 4. `[]` Stake Token Vault, to hold all staked tokens.
-    ///   Must be empty and owned by PDA with seeds `['token-owner', stake_config]`
+/// Enum defining all instructions in the Stake program.
+#[rustfmt::skip]
+#[derive(BorshDeserialize, BorshSerialize, Clone, Debug, ShankContext, ShankInstruction)]
+pub enum Instruction {
+    /// Creates Stake config account which controls staking parameters.
+    #[account(0, signer, writable, name="config", desc="Stake config account")]
+    #[account(1, name="config_authority", desc="Config authority")]
+    #[account(2, name="slash_authority", desc="Slash authority")]
+    #[account(3, name="mint", desc="Stake token mint")]
+    #[account(4, name="vault_token", desc="Stake token vault")]
     InitializeConfig {
-        cooldown_time: UnixTimestamp,
+        cooldown_time_seconds: u64,
         max_deactivation_basis_points: u16,
     },
 
     /// Initializes stake account data for a validator.
-    ///
-    /// NOTE: Anybody can create the stake account for a validator. For new
-    /// accounts, the authority is initialized to the validator vote account's
-    /// withdraw authority.
-    ///
-    /// 0. `[]` Stake config account
-    /// 1. `[w]` Validator stake account
-    ///     * PDA seeds: ['stake', validator, config_account]
-    /// 2. `[]` Validator vote account
-    /// 3. `[]` System program
+    #[account(0, name="config", desc="Stake config account")]
+    #[account(1, writable, name="stake", desc="Validator stake account (pda of `['stake', config, validator]`)")]
+    #[account(2, name="validator_vote", desc="Validator vote account")]
+    #[account(3, name="system_program", desc="System program account")]
     InitializeStake,
 
     /// Stakes tokens with the given config.
-    ///
-    /// Limited to the current amount of SOL staked to the validator.
-    ///
-    /// NOTE: Anybody can stake tokens to a validator, but this does not work
-    /// like native staking, because the validator can take control of staked
-    /// tokens by deactivating and withdrawing.
-    ///
-    /// 0. `[w]` Stake config account
-    /// 1. `[w]` Validator stake account
-    ///     * PDA seeds: ['stake', validator, config_account]
-    /// 2. `[w]` Token Account
-    /// 3. `[s]` Owner or delegate of the token account
-    /// 4. `[]` Validator vote account
-    /// 3. `[]` Stake Token Mint
-    /// 4. `[]` Stake Token Vault, to hold all staked tokens.
-    ///   Must be the token account on the stake config account
-    /// 5. `[]` Token program
-    /// 6.. Extra accounts required for the transfer hook
-    ///
-    /// Instruction data: amount of tokens to stake, as a little-endian u64
+    #[account(0, writable, name="config", desc="Stake config account")]
+    #[account(1, writable, name="stake", desc="Validator stake account")]
+    #[account(2, writable, name="source_token", desc="Token account")]
+    #[account(3, signer, name="token_authority", desc="Owner or delegate of the token account")]
+    #[account(4, name="validator_vote", desc="Validator vote account")] // <- needed?
+    #[account(5, name="mint", desc="Stake Token Mint")]
+    #[account(6, writable, name="vault_token", desc="Stake token Vault")]
+    #[account(7, name="spl_token_program", desc="SPL Token 2022 program")]
     StakeTokens(u64),
 
     /// Deactivate staked tokens for the validator.
-    ///
-    /// Only one deactivation may be in-flight at once, so if this is called
-    /// with an active deactivation, it will succeed, but reset the amount and
-    /// timestamp.
-    ///
-    /// 0. `[w]` Validator stake account
-    /// 1. `[s]` Authority on validator stake account
-    ///
-    /// Instruction data: amount of tokens to deactivate, as a little-endian u64
+    #[account(0, writable, name="stake", desc="Validator stake account")]
+    #[account(1, signer, name="stake_authority", desc="Authority on validator stake account")]
     DeactivateStake(u64),
 
     /// Move tokens from deactivating to inactive.
-    ///
-    /// Reduces the total voting power for the stake account and the total staked
-    /// amount on the system.
-    ///
-    /// NOTE: This instruction is permissionless, so anybody can finish
-    /// deactivating someone's tokens, preparing them to be withdrawn.
-    ///
-    /// 0. `[w]` Stake config account
-    /// 1. `[w]` Validator stake account
+    #[account(0, writable, name="config", desc="Stake config account")]
+    #[account(1, writable, name="stake", desc="Validator stake account")]
     InactivateStake,
 
-    /// Withdraw inactive staked tokens from the vault
-    ///
-    /// After a deactivation has gone through the cooldown period and been
-    /// "inactivated", the authority may move the tokens out of the vault.
-    ///
-    /// 0. `[w]` Config account
-    /// 1. `[w]` Stake account
-    /// 2. `[w]` Vault token account
-    /// 3. `[w]` Destination token account
-    /// 4. `[s]` Stake authority
-    /// 5. `[]` Vault authority, PDA with seeds `['token-owner', stake_config]`
-    /// 6. `[]` SPL Token program
-    /// 7.. Extra required accounts for transfer hook
-    ///
-    /// Instruction data: amount of tokens to move
+    /// Withdraw inactive staked tokens from the vault.
+    #[account(0, writable, name="config", desc="Stake config account")]
+    #[account(1, writable, name="stake", desc="Stake account")]
+    #[account(2, signer, name="stake_authority", desc="Stake authority")]
+    #[account(3, name="vault_authority", desc="Vault authority")]
+    #[account(4, writable, name="vault_token", desc="Vault token account")]
+    #[account(5, writable, name="destination_token", desc="Destination token account")]
+    #[account(6, name="spl_token_program", desc="SPL Token program")]
     WithdrawInactiveStake(u64),
 
     /// Harvests holder SOL rewards earned by the given stake account.
-    ///
-    /// NOTE: This mostly replicates the logic in the rewards program. Since the
-    /// staked tokens are all held by this program, stakers need a way to access
-    /// their portion of holder rewards.
-    ///
-    /// This instruction requires that `unclaimed_rewards` be equal to `0` in
-    /// the token vault account. For ease of use, be sure to call the
-    /// `HarvestRewards` on the vault account before this.
-    ///
-    /// 0. `[]` Config account
-    /// 1. `[w]` Stake account
-    /// 2. `[w]` Vault token account
-    /// 3. `[]` Holder rewards account for vault token account
-    /// 4. `[w]` Destination account for withdrawn lamports
-    /// 5. `[s]` Stake authority
-    /// 6. `[]` Vault authority, PDA with seeds `['token-owner', stake_config]`
-    /// 7. `[]` Stake token mint, to get total supply
-    /// 8. `[]` SPL Token program
+    #[account(0, name="config", desc="Stake config account")]
+    #[account(1, writable, name="stake", desc="Stake account")]
+    #[account(2, writable, name="vault_token", desc="Vault token account")]
+    #[account(3, name="vault_authority", desc="Vault authority")]
+    #[account(4, name="holder_rewards", desc="Holder rewards account for vault token account")]
+    #[account(5, writable, name="destination", desc="Destination account for withdrawn lamports")]
+    #[account(6, signer, name="stake_authority", desc="Stake authority")]
+    #[account(7, name="mint", desc="Stake token mint")]
+    #[account(8, name="spl_token_program", desc="SPL Token program")]
     HarvestHolderRewards,
 
     /// Harvests stake SOL rewards earned by the given stake account.
-    ///
-    /// NOTE: This is very similar to the logic in the rewards program. Since the
-    /// staking rewards are held in a separate account, they must be distributed
-    /// based on the proportion of total stake.
-    ///
-    /// 0. `[w]` Config account
-    /// 1. `[w]` Stake account
-    /// 2. `[w]` Destination account
-    /// 3. `[s]` Stake authority
+    #[account(0, writable, name="config", desc="Stake config account")]
+    #[account(1, writable, name="stake", desc="Stake account")]
+    #[account(2, writable, name="destination", desc="Destination account for withdrawn lamports")]
+    #[account(3, signer, name="stake_authority", desc="Stake authority")]
     HarvestStakeRewards,
 
     /// Slashes a stake account for the given amount
-    ///
-    /// Burns the given amount of tokens from the vault account, and reduces the
-    /// amount in the stake account.
-    ///
-    /// 0. `[w]` Config account
-    /// 1. `[w]` Stake account
-    /// 2. `[s]` Slash authority
-    /// 3. `[w]` Vault token account
-    /// 4. `[]` Vault authority, PDA with seeds `['token-owner', stake_config]`
-    /// 5. `[]` SPL Token program
-    ///
-    /// Instruction data: amount of tokens to slash
+    #[account(0, writable, name="config", desc="Stake config account")]
+    #[account(1, writable, name="stake", desc="Stake account")]
+    #[account(2, signer, name="slash_authority", desc="Stake account")]
+    #[account(3, writable, name="vault_token", desc="Vault token account")]
+    #[account(4, name="vault_authority", desc="Vault authority")]
+    #[account(5, name="spl_token_program", desc="SPL Token program")]
     Slash(u64),
 
     /// Sets new authority on a config or stake account
-    ///
-    /// 0. `[w]` Config or stake account
-    /// 1. `[s]` Current authority
-    /// 2. `[]` New authority
+    #[account(0, writable, name="config", desc="Stake config account")]
+    #[account(1, signer, name="config_authority", desc="Stake config authority")]
+    #[account(2, name="new_authority", desc="Authority to set")]
     SetAuthority(Authority),
 
     /// Updates configuration parameters
-    ///
-    /// 0. `[w]` Config account
-    /// 1. `[s]` Config authority
+    #[account(0, writable, name="config", desc="Stake config account")]
+    #[account(1, signer, name="config_authority", desc="Stake config authority")]
     UpdateConfig(ConfigField),
 
     /// Moves SOL rewards to the config and updates the stake rewards total
-    ///
-    /// Accounts expected by this instruction:
-    ///
-    /// 0. `[w,s]` Reward payer
-    /// 1. `[w]` Config account
-    /// 2. `[]` System Program
+    #[account(0, writable, name="config", desc="Stake config account")]
+    #[account(1, writable, signer, name="payer", desc="Reward payer")]
+    #[account(2, name="system_program", desc="System program account")]
     DistributeRewards(u64),
 }
 
 /// Enum defining all authorities in the program
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(BorshDeserialize, BorshSerialize, Clone, Debug, PartialEq, Eq)]
 pub enum Authority {
     Config,
     Slash,
@@ -175,10 +109,10 @@ pub enum Authority {
 }
 
 /// Enum to allow updating the config account in the same instruction
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(BorshDeserialize, BorshSerialize, Clone, Debug, PartialEq, Eq)]
 pub enum ConfigField {
     /// Amount of seconds between deactivation and inactivation
-    CooldownTimeSecs(u64),
+    CooldownTimeSeconds(u64),
     /// Total proportion that can be deactivated at once, in basis points
     MaxDeactivationBasisPoints(u16),
 }
