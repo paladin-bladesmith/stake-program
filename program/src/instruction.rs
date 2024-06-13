@@ -11,8 +11,6 @@ pub enum Instruction {
     #[account(2, name="slash_authority", desc="Slash authority")]
     #[account(3, name="mint", desc="Stake token mint")]
     #[account(4, name="vault_token", desc="Stake token vault")]
-    #[account(5, optional, signer, writable, name="payer", desc="Payer account for rent fees")]
-    #[account(6, optional, name="system_program", desc="System program account")]
     InitializeConfig {
         cooldown_time: u64,
         max_deactivation_basis_points: u16,

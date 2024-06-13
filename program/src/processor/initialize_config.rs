@@ -1,7 +1,4 @@
-use solana_program::{
-    entrypoint::ProgramResult, program::invoke, program_error::ProgramError, pubkey::Pubkey,
-    rent::Rent, system_instruction, system_program, sysvar::Sysvar,
-};
+use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey};
 use spl_pod::{optional_keys::OptionalNonZeroPubkey, primitives::PodU64};
 use spl_token_2022::{
     extension::PodStateWithExtensions,
@@ -9,7 +6,6 @@ use spl_token_2022::{
 };
 
 use crate::{
-    err,
     error::StakeError,
     instruction::accounts::{Context, InitializeConfigAccounts},
     require,
@@ -20,13 +16,11 @@ use crate::{
 ///
 /// ### Accounts:
 ///
-///   0. `[w, s]` config
+///   0. `[w]` config
 ///   1. `[]` authority
 ///   2. `[]` slash_authority
 ///   3. `[]` mint
 ///   4. `[]` vault_token
-///   5. `[optional]` payer
-///   6. `[optional]` system_program
 pub fn process_initialize_config(
     program_id: &Pubkey,
     ctx: Context<InitializeConfigAccounts>,
@@ -34,12 +28,6 @@ pub fn process_initialize_config(
     max_deactivation_basis_points: u16,
 ) -> ProgramResult {
     // Accounts validation.
-
-    require!(
-        ctx.accounts.config.is_signer,
-        ProgramError::MissingRequiredSignature,
-        "config"
-    );
 
     require!(
         ctx.accounts.mint.owner == &spl_token_2022::ID,
@@ -79,57 +67,29 @@ pub fn process_initialize_config(
         "vault_token"
     );
 
-    if ctx.accounts.config.data_is_empty() {
-        let payer = {
-            require!(
-                ctx.accounts.payer.is_some(),
-                ProgramError::NotEnoughAccountKeys,
-                "payer"
-            );
+    let mut data = ctx.accounts.config.try_borrow_mut_data()?;
 
-            ctx.accounts.payer.unwrap()
-        };
+    require!(
+        ctx.accounts.config.owner == program_id,
+        ProgramError::InvalidAccountOwner,
+        "config"
+    );
 
-        require!(
-            payer.is_signer,
-            ProgramError::MissingRequiredSignature,
-            "payer"
-        );
+    require!(
+        data.len() == Config::LEN,
+        ProgramError::AccountDataTooSmall,
+        "config"
+    );
 
-        let system_program = {
-            require!(
-                ctx.accounts.system_program.is_some(),
-                ProgramError::NotEnoughAccountKeys,
-                "system_program"
-            );
+    let config = bytemuck::from_bytes_mut::<Config>(&mut data);
 
-            ctx.accounts.system_program.unwrap()
-        };
-
-        require!(
-            system_program.key == &system_program::ID,
-            ProgramError::IncorrectProgramId,
-            "system_program"
-        );
-
-        invoke(
-            &system_instruction::create_account(
-                payer.key,
-                ctx.accounts.config.key,
-                Rent::get()?.minimum_balance(Config::LEN),
-                Config::LEN as u64,
-                program_id,
-            ),
-            &[payer.clone(), ctx.accounts.config.clone()],
-        )?;
-    } else {
-        return err!(ProgramError::AccountAlreadyInitialized);
-    }
+    require!(
+        config.account_type == AccountType::Uninitialized,
+        ProgramError::AccountAlreadyInitialized,
+        "config"
+    );
 
     // Initialize the stake config account.
-
-    let mut data = ctx.accounts.config.try_borrow_mut_data()?;
-    let config = bytemuck::from_bytes_mut::<Config>(&mut data);
 
     config.account_type = AccountType::Config;
     config.authority = OptionalNonZeroPubkey(*ctx.accounts.config_authority.key);

@@ -20,10 +20,6 @@ pub struct InitializeConfig {
     pub mint: solana_program::pubkey::Pubkey,
     /// Stake token vault
     pub vault_token: solana_program::pubkey::Pubkey,
-    /// Payer account for rent fees
-    pub payer: Option<solana_program::pubkey::Pubkey>,
-    /// System program account
-    pub system_program: Option<solana_program::pubkey::Pubkey>,
 }
 
 impl InitializeConfig {
@@ -39,7 +35,7 @@ impl InitializeConfig {
         args: InitializeConfigInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.config,
             true,
@@ -59,25 +55,6 @@ impl InitializeConfig {
             self.vault_token,
             false,
         ));
-        if let Some(payer) = self.payer {
-            accounts.push(solana_program::instruction::AccountMeta::new(payer, true));
-        } else {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::STAKE_ID,
-                false,
-            ));
-        }
-        if let Some(system_program) = self.system_program {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                system_program,
-                false,
-            ));
-        } else {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::STAKE_ID,
-                false,
-            ));
-        }
         accounts.extend_from_slice(remaining_accounts);
         let mut data = InitializeConfigInstructionData::new().try_to_vec().unwrap();
         let mut args = args.try_to_vec().unwrap();
@@ -124,8 +101,6 @@ pub struct InitializeConfigInstructionArgs {
 ///   2. `[]` slash_authority
 ///   3. `[]` mint
 ///   4. `[]` vault_token
-///   5. `[writable, signer, optional]` payer
-///   6. `[optional]` system_program
 #[derive(Clone, Debug, Default)]
 pub struct InitializeConfigBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
@@ -133,8 +108,6 @@ pub struct InitializeConfigBuilder {
     slash_authority: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
     vault_token: Option<solana_program::pubkey::Pubkey>,
-    payer: Option<solana_program::pubkey::Pubkey>,
-    system_program: Option<solana_program::pubkey::Pubkey>,
     cooldown_time: Option<u64>,
     max_deactivation_basis_points: Option<u16>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
@@ -180,23 +153,6 @@ impl InitializeConfigBuilder {
         self.vault_token = Some(vault_token);
         self
     }
-    /// `[optional account]`
-    /// Payer account for rent fees
-    #[inline(always)]
-    pub fn payer(&mut self, payer: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
-        self.payer = payer;
-        self
-    }
-    /// `[optional account]`
-    /// System program account
-    #[inline(always)]
-    pub fn system_program(
-        &mut self,
-        system_program: Option<solana_program::pubkey::Pubkey>,
-    ) -> &mut Self {
-        self.system_program = system_program;
-        self
-    }
     #[inline(always)]
     pub fn cooldown_time(&mut self, cooldown_time: u64) -> &mut Self {
         self.cooldown_time = Some(cooldown_time);
@@ -236,8 +192,6 @@ impl InitializeConfigBuilder {
             slash_authority: self.slash_authority.expect("slash_authority is not set"),
             mint: self.mint.expect("mint is not set"),
             vault_token: self.vault_token.expect("vault_token is not set"),
-            payer: self.payer,
-            system_program: self.system_program,
         };
         let args = InitializeConfigInstructionArgs {
             cooldown_time: self
@@ -266,10 +220,6 @@ pub struct InitializeConfigCpiAccounts<'a, 'b> {
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake token vault
     pub vault_token: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Payer account for rent fees
-    pub payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    /// System program account
-    pub system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 }
 
 /// `initialize_config` CPI instruction.
@@ -286,10 +236,6 @@ pub struct InitializeConfigCpi<'a, 'b> {
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake token vault
     pub vault_token: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Payer account for rent fees
-    pub payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    /// System program account
-    pub system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The arguments for the instruction.
     pub __args: InitializeConfigInstructionArgs,
 }
@@ -307,8 +253,6 @@ impl<'a, 'b> InitializeConfigCpi<'a, 'b> {
             slash_authority: accounts.slash_authority,
             mint: accounts.mint,
             vault_token: accounts.vault_token,
-            payer: accounts.payer,
-            system_program: accounts.system_program,
             __args: args,
         }
     }
@@ -345,7 +289,7 @@ impl<'a, 'b> InitializeConfigCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.config.key,
             true,
@@ -366,27 +310,6 @@ impl<'a, 'b> InitializeConfigCpi<'a, 'b> {
             *self.vault_token.key,
             false,
         ));
-        if let Some(payer) = self.payer {
-            accounts.push(solana_program::instruction::AccountMeta::new(
-                *payer.key, true,
-            ));
-        } else {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::STAKE_ID,
-                false,
-            ));
-        }
-        if let Some(system_program) = self.system_program {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                *system_program.key,
-                false,
-            ));
-        } else {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::STAKE_ID,
-                false,
-            ));
-        }
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -403,19 +326,13 @@ impl<'a, 'b> InitializeConfigCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(7 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(5 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.config.clone());
         account_infos.push(self.config_authority.clone());
         account_infos.push(self.slash_authority.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.vault_token.clone());
-        if let Some(payer) = self.payer {
-            account_infos.push(payer.clone());
-        }
-        if let Some(system_program) = self.system_program {
-            account_infos.push(system_program.clone());
-        }
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -437,8 +354,6 @@ impl<'a, 'b> InitializeConfigCpi<'a, 'b> {
 ///   2. `[]` slash_authority
 ///   3. `[]` mint
 ///   4. `[]` vault_token
-///   5. `[writable, signer, optional]` payer
-///   6. `[optional]` system_program
 #[derive(Clone, Debug)]
 pub struct InitializeConfigCpiBuilder<'a, 'b> {
     instruction: Box<InitializeConfigCpiBuilderInstruction<'a, 'b>>,
@@ -453,8 +368,6 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
             slash_authority: None,
             mint: None,
             vault_token: None,
-            payer: None,
-            system_program: None,
             cooldown_time: None,
             max_deactivation_basis_points: None,
             __remaining_accounts: Vec::new(),
@@ -501,26 +414,6 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
         vault_token: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.vault_token = Some(vault_token);
-        self
-    }
-    /// `[optional account]`
-    /// Payer account for rent fees
-    #[inline(always)]
-    pub fn payer(
-        &mut self,
-        payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    ) -> &mut Self {
-        self.instruction.payer = payer;
-        self
-    }
-    /// `[optional account]`
-    /// System program account
-    #[inline(always)]
-    pub fn system_program(
-        &mut self,
-        system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    ) -> &mut Self {
-        self.instruction.system_program = system_program;
         self
     }
     #[inline(always)]
@@ -610,10 +503,6 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
                 .instruction
                 .vault_token
                 .expect("vault_token is not set"),
-
-            payer: self.instruction.payer,
-
-            system_program: self.instruction.system_program,
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -631,8 +520,6 @@ struct InitializeConfigCpiBuilderInstruction<'a, 'b> {
     slash_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault_token: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     cooldown_time: Option<u64>,
     max_deactivation_basis_points: Option<u16>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.

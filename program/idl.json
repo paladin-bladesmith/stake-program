@@ -44,24 +44,6 @@
           "docs": [
             "Stake token vault"
           ]
-        },
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true,
-          "isOptional": true,
-          "docs": [
-            "Payer account for rent fees"
-          ]
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true,
-          "docs": [
-            "System program account"
-          ]
         }
       ],
       "args": [
@@ -683,6 +665,11 @@
       "code": 2,
       "name": "InvalidAuthority",
       "msg": "Invalid authority"
+    },
+    {
+      "code": 3,
+      "name": "InvalidTransferHookProgramId",
+      "msg": "Invalid transfer hook program id"
     }
   ],
   "metadata": {

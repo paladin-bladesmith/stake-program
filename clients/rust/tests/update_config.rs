@@ -13,7 +13,7 @@ use setup::{create_mint, create_token};
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
     signature::{Keypair, Signer},
-    system_program,
+    system_instruction,
     transaction::Transaction,
 };
 use spl_token_2022::extension::ExtensionType;
@@ -57,20 +57,31 @@ mod update_config {
 
         // And we create a config.
 
-        let ix = InitializeConfigBuilder::new()
+        let create_ix = system_instruction::create_account(
+            &context.payer.pubkey(),
+            &config.pubkey(),
+            context
+                .banks_client
+                .get_rent()
+                .await
+                .unwrap()
+                .minimum_balance(Config::LEN),
+            Config::LEN as u64,
+            &paladin_stake::ID,
+        );
+
+        let initialize_ix = InitializeConfigBuilder::new()
             .config(config.pubkey())
             .config_authority(authority.pubkey())
             .slash_authority(authority.pubkey())
             .mint(mint.pubkey())
             .vault_token(token.pubkey())
-            .payer(Some(context.payer.pubkey()))
-            .system_program(Some(system_program::ID))
             .cooldown_time(1) // 1 second
             .max_deactivation_basis_points(500) // 5%
             .instruction();
 
         let tx = Transaction::new_signed_with_payer(
-            &[ix],
+            &[create_ix, initialize_ix],
             Some(&context.payer.pubkey()),
             &[&context.payer, &config],
             context.last_blockhash,
@@ -140,20 +151,31 @@ mod update_config {
 
         // And we create a config.
 
-        let ix = InitializeConfigBuilder::new()
+        let create_ix = system_instruction::create_account(
+            &context.payer.pubkey(),
+            &config.pubkey(),
+            context
+                .banks_client
+                .get_rent()
+                .await
+                .unwrap()
+                .minimum_balance(Config::LEN),
+            Config::LEN as u64,
+            &paladin_stake::ID,
+        );
+
+        let initialize_ix = InitializeConfigBuilder::new()
             .config(config.pubkey())
             .config_authority(authority.pubkey())
             .slash_authority(authority.pubkey())
             .mint(mint.pubkey())
             .vault_token(token.pubkey())
-            .payer(Some(context.payer.pubkey()))
-            .system_program(Some(system_program::ID))
             .cooldown_time(1) // 1 second
             .max_deactivation_basis_points(500) // 5%
             .instruction();
 
         let tx = Transaction::new_signed_with_payer(
-            &[ix],
+            &[create_ix, initialize_ix],
             Some(&context.payer.pubkey()),
             &[&context.payer, &config],
             context.last_blockhash,

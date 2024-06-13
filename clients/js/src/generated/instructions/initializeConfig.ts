@@ -40,8 +40,6 @@ export type InitializeConfigInstruction<
   TAccountSlashAuthority extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountVaultToken extends string | IAccountMeta<string> = string,
-  TAccountPayer extends string | IAccountMeta<string> = string,
-  TAccountSystemProgram extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -63,13 +61,6 @@ export type InitializeConfigInstruction<
       TAccountVaultToken extends string
         ? ReadonlyAccount<TAccountVaultToken>
         : TAccountVaultToken,
-      TAccountPayer extends string
-        ? WritableSignerAccount<TAccountPayer> &
-            IAccountSignerMeta<TAccountPayer>
-        : TAccountPayer,
-      TAccountSystemProgram extends string
-        ? ReadonlyAccount<TAccountSystemProgram>
-        : TAccountSystemProgram,
       ...TRemainingAccounts,
     ]
   >;
@@ -120,8 +111,6 @@ export type InitializeConfigInput<
   TAccountSlashAuthority extends string = string,
   TAccountMint extends string = string,
   TAccountVaultToken extends string = string,
-  TAccountPayer extends string = string,
-  TAccountSystemProgram extends string = string,
 > = {
   /** Stake config account */
   config: TransactionSigner<TAccountConfig>;
@@ -133,10 +122,6 @@ export type InitializeConfigInput<
   mint: Address<TAccountMint>;
   /** Stake token vault */
   vaultToken: Address<TAccountVaultToken>;
-  /** Payer account for rent fees */
-  payer?: TransactionSigner<TAccountPayer>;
-  /** System program account */
-  systemProgram?: Address<TAccountSystemProgram>;
   cooldownTime: InitializeConfigInstructionDataArgs['cooldownTime'];
   maxDeactivationBasisPoints: InitializeConfigInstructionDataArgs['maxDeactivationBasisPoints'];
 };
@@ -147,17 +132,13 @@ export function getInitializeConfigInstruction<
   TAccountSlashAuthority extends string,
   TAccountMint extends string,
   TAccountVaultToken extends string,
-  TAccountPayer extends string,
-  TAccountSystemProgram extends string,
 >(
   input: InitializeConfigInput<
     TAccountConfig,
     TAccountConfigAuthority,
     TAccountSlashAuthority,
     TAccountMint,
-    TAccountVaultToken,
-    TAccountPayer,
-    TAccountSystemProgram
+    TAccountVaultToken
   >
 ): InitializeConfigInstruction<
   typeof STAKE_PROGRAM_ADDRESS,
@@ -165,9 +146,7 @@ export function getInitializeConfigInstruction<
   TAccountConfigAuthority,
   TAccountSlashAuthority,
   TAccountMint,
-  TAccountVaultToken,
-  TAccountPayer,
-  TAccountSystemProgram
+  TAccountVaultToken
 > {
   // Program address.
   const programAddress = STAKE_PROGRAM_ADDRESS;
@@ -182,8 +161,6 @@ export function getInitializeConfigInstruction<
     slashAuthority: { value: input.slashAuthority ?? null, isWritable: false },
     mint: { value: input.mint ?? null, isWritable: false },
     vaultToken: { value: input.vaultToken ?? null, isWritable: false },
-    payer: { value: input.payer ?? null, isWritable: true },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -201,8 +178,6 @@ export function getInitializeConfigInstruction<
       getAccountMeta(accounts.slashAuthority),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.vaultToken),
-      getAccountMeta(accounts.payer),
-      getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
     data: getInitializeConfigInstructionDataEncoder().encode(
@@ -214,9 +189,7 @@ export function getInitializeConfigInstruction<
     TAccountConfigAuthority,
     TAccountSlashAuthority,
     TAccountMint,
-    TAccountVaultToken,
-    TAccountPayer,
-    TAccountSystemProgram
+    TAccountVaultToken
   >;
 
   return instruction;
@@ -238,10 +211,6 @@ export type ParsedInitializeConfigInstruction<
     mint: TAccountMetas[3];
     /** Stake token vault */
     vaultToken: TAccountMetas[4];
-    /** Payer account for rent fees */
-    payer?: TAccountMetas[5] | undefined;
-    /** System program account */
-    systemProgram?: TAccountMetas[6] | undefined;
   };
   data: InitializeConfigInstructionData;
 };
@@ -254,7 +223,7 @@ export function parseInitializeConfigInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedInitializeConfigInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 7) {
+  if (instruction.accounts.length < 5) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -264,12 +233,6 @@ export function parseInitializeConfigInstruction<
     accountIndex += 1;
     return accountMeta;
   };
-  const getNextOptionalAccount = () => {
-    const accountMeta = getNextAccount();
-    return accountMeta.address === STAKE_PROGRAM_ADDRESS
-      ? undefined
-      : accountMeta;
-  };
   return {
     programAddress: instruction.programAddress,
     accounts: {
@@ -278,8 +241,6 @@ export function parseInitializeConfigInstruction<
       slashAuthority: getNextAccount(),
       mint: getNextAccount(),
       vaultToken: getNextAccount(),
-      payer: getNextOptionalAccount(),
-      systemProgram: getNextOptionalAccount(),
     },
     data: getInitializeConfigInstructionDataDecoder().decode(instruction.data),
   };

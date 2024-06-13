@@ -19,6 +19,9 @@ pub enum StakeError {
     /// 2 - Invalid authority
     #[error("Invalid authority")]
     InvalidAuthority = 0x2,
+    /// 3 - Invalid transfer hook program id
+    #[error("Invalid transfer hook program id")]
+    InvalidTransferHookProgramId = 0x3,
 }
 
 impl solana_program::program_error::PrintProgramError for StakeError {
