@@ -6,7 +6,7 @@ use paladin_stake::{
     accounts::Config, errors::StakeError, instructions::InitializeConfigBuilder,
     pdas::find_vault_pda, types::AccountType,
 };
-use setup::{create_mint, create_token, mint_to};
+use setup::{create_mint, create_token, mint_to, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS};
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
     signature::{Keypair, Signer},
@@ -15,8 +15,6 @@ use solana_sdk::{
 };
 
 mod initialize_config {
-    use setup::{MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS};
-
     use super::*;
 
     #[tokio::test]
@@ -92,10 +90,10 @@ mod initialize_config {
         assert_eq!(account.data.len(), Config::LEN);
 
         let account_data = account.data.as_ref();
-        let counter = Config::from_bytes(account_data).unwrap();
-        assert_eq!(counter.account_type, AccountType::Config);
-        assert_eq!(counter.slash_authority, authority);
-        assert_eq!(counter.authority, authority);
+        let config_account = Config::from_bytes(account_data).unwrap();
+        assert_eq!(config_account.account_type, AccountType::Config);
+        assert_eq!(config_account.slash_authority, authority);
+        assert_eq!(config_account.authority, authority);
     }
 
     #[tokio::test]
