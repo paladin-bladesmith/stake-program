@@ -83,8 +83,8 @@ pub enum Instruction {
     Slash(u64),
 
     /// Sets new authority on a config or stake account
-    #[account(0, writable, name="config", desc="Stake config account")]
-    #[account(1, signer, name="config_authority", desc="Stake config authority")]
+    #[account(0, writable, name="account", desc="Config or Stake config account")]
+    #[account(1, signer, name="authority", desc="Current authority on the account")]
     #[account(2, name="new_authority", desc="Authority to set")]
     SetAuthority(Authority),
 
