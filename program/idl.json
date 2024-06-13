@@ -1,0 +1,659 @@
+{
+  "version": "0.0.0",
+  "name": "stake_program",
+  "instructions": [
+    {
+      "name": "InitializeConfig",
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "Stake config account"
+          ]
+        },
+        {
+          "name": "configAuthority",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Config authority"
+          ]
+        },
+        {
+          "name": "slashAuthority",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Slash authority"
+          ]
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Stake token mint"
+          ]
+        },
+        {
+          "name": "vaultToken",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Stake token vault"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "cooldownTimeSeconds",
+          "type": "u64"
+        },
+        {
+          "name": "maxDeactivationBasisPoints",
+          "type": "u16"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 0
+      }
+    },
+    {
+      "name": "InitializeStake",
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Stake config account"
+          ]
+        },
+        {
+          "name": "stake",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Validator stake account (pda of `['stake', config, validator]`)"
+          ]
+        },
+        {
+          "name": "validatorVote",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Validator vote account"
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "System program account"
+          ]
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 1
+      }
+    },
+    {
+      "name": "StakeTokens",
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Stake config account"
+          ]
+        },
+        {
+          "name": "stake",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Validator stake account"
+          ]
+        },
+        {
+          "name": "sourceToken",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Token account"
+          ]
+        },
+        {
+          "name": "tokenAuthority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "Owner or delegate of the token account"
+          ]
+        },
+        {
+          "name": "validatorVote",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Validator vote account"
+          ]
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Stake Token Mint"
+          ]
+        },
+        {
+          "name": "vaultToken",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Stake token Vault"
+          ]
+        },
+        {
+          "name": "splTokenProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "SPL Token 2022 program"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": "u64"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 2
+      }
+    },
+    {
+      "name": "DeactivateStake",
+      "accounts": [
+        {
+          "name": "stake",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Validator stake account"
+          ]
+        },
+        {
+          "name": "stakeAuthority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "Authority on validator stake account"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": "u64"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 3
+      }
+    },
+    {
+      "name": "InactivateStake",
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Stake config account"
+          ]
+        },
+        {
+          "name": "stake",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Validator stake account"
+          ]
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 4
+      }
+    },
+    {
+      "name": "WithdrawInactiveStake",
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Stake config account"
+          ]
+        },
+        {
+          "name": "stake",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Stake account"
+          ]
+        },
+        {
+          "name": "stakeAuthority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "Stake authority"
+          ]
+        },
+        {
+          "name": "vaultAuthority",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Vault authority"
+          ]
+        },
+        {
+          "name": "vaultToken",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Vault token account"
+          ]
+        },
+        {
+          "name": "destinationToken",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Destination token account"
+          ]
+        },
+        {
+          "name": "splTokenProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "SPL Token program"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": "u64"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 5
+      }
+    },
+    {
+      "name": "HarvestHolderRewards",
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Stake config account"
+          ]
+        },
+        {
+          "name": "stake",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Stake account"
+          ]
+        },
+        {
+          "name": "vaultToken",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Vault token account"
+          ]
+        },
+        {
+          "name": "vaultAuthority",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Vault authority"
+          ]
+        },
+        {
+          "name": "holderRewards",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Holder rewards account for vault token account"
+          ]
+        },
+        {
+          "name": "destination",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Destination account for withdrawn lamports"
+          ]
+        },
+        {
+          "name": "stakeAuthority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "Stake authority"
+          ]
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Stake token mint"
+          ]
+        },
+        {
+          "name": "splTokenProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "SPL Token program"
+          ]
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 6
+      }
+    },
+    {
+      "name": "HarvestStakeRewards",
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Stake config account"
+          ]
+        },
+        {
+          "name": "stake",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Stake account"
+          ]
+        },
+        {
+          "name": "destination",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Destination account for withdrawn lamports"
+          ]
+        },
+        {
+          "name": "stakeAuthority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "Stake authority"
+          ]
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 7
+      }
+    },
+    {
+      "name": "Slash",
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Stake config account"
+          ]
+        },
+        {
+          "name": "stake",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Stake account"
+          ]
+        },
+        {
+          "name": "slashAuthority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "Stake account"
+          ]
+        },
+        {
+          "name": "vaultToken",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Vault token account"
+          ]
+        },
+        {
+          "name": "vaultAuthority",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Vault authority"
+          ]
+        },
+        {
+          "name": "splTokenProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "SPL Token program"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": "u64"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 8
+      }
+    },
+    {
+      "name": "SetAuthority",
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Stake config account"
+          ]
+        },
+        {
+          "name": "configAuthority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "Stake config authority"
+          ]
+        },
+        {
+          "name": "newAuthority",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Authority to set"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "authority",
+          "type": {
+            "defined": "Authority"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 9
+      }
+    },
+    {
+      "name": "UpdateConfig",
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Stake config account"
+          ]
+        },
+        {
+          "name": "configAuthority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "Stake config authority"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "configField",
+          "type": {
+            "defined": "ConfigField"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 10
+      }
+    },
+    {
+      "name": "DistributeRewards",
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Stake config account"
+          ]
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "Reward payer"
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "System program account"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": "u64"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 11
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "Authority",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Config"
+          },
+          {
+            "name": "Slash"
+          },
+          {
+            "name": "Stake"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ConfigField",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "CooldownTimeSeconds",
+            "fields": [
+              "u64"
+            ]
+          },
+          {
+            "name": "MaxDeactivationBasisPoints",
+            "fields": [
+              "u16"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "origin": "shank",
+    "address": "PStake1111111111111111111111111111111111111",
+    "binaryVersion": "0.4.2",
+    "libVersion": "^0.4.2"
+  }
+}
