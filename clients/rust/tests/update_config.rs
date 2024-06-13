@@ -9,7 +9,7 @@ use paladin_stake::{
     pdas::find_vault_pda,
     types::ConfigField,
 };
-use setup::{create_mint, create_token};
+use setup::{create_mint, create_token, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS};
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
     signature::{Keypair, Signer},
@@ -18,8 +18,6 @@ use solana_sdk::{
 };
 
 mod update_config {
-    use setup::{MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS};
-
     use super::*;
 
     #[tokio::test]
