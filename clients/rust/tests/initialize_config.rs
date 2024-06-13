@@ -18,7 +18,7 @@ mod initialize_config {
     use super::*;
 
     #[tokio::test]
-    async fn initialize_config() {
+    async fn initialize_config_with_mint_and_token() {
         let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
             .start_with_context()
             .await;
