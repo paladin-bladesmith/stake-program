@@ -7,5 +7,5 @@
  */
 
 export * from './accountType';
-export * from './authority';
+export * from './authorityType';
 export * from './configField';

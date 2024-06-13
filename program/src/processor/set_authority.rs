@@ -5,7 +5,7 @@ use crate::{
     error::StakeError,
     instruction::{
         accounts::{Context, SetAuthorityAccounts},
-        Authority,
+        AuthorityType,
     },
     require,
     state::{AccountType, Config, Stake},
@@ -21,7 +21,7 @@ use crate::{
 pub fn process_set_authority(
     program_id: &Pubkey,
     ctx: Context<SetAuthorityAccounts>,
-    authority_type: Authority,
+    authority_type: AuthorityType,
 ) -> ProgramResult {
     // Accounts validation.
 
@@ -46,7 +46,7 @@ pub fn process_set_authority(
     );
 
     match authority_type {
-        Authority::Config | Authority::Slash => {
+        AuthorityType::Config | AuthorityType::Slash => {
             require!(
                 AccountType::Config == data[0].into(),
                 ProgramError::InvalidAccountData,
@@ -71,10 +71,10 @@ pub fn process_set_authority(
                 );
 
                 match authority_type {
-                    Authority::Config => {
+                    AuthorityType::Config => {
                         config.authority = OptionalNonZeroPubkey(*ctx.accounts.new_authority.key)
                     }
-                    Authority::Slash => {
+                    AuthorityType::Slash => {
                         config.slash_authority =
                             OptionalNonZeroPubkey(*ctx.accounts.new_authority.key)
                     }
@@ -82,7 +82,7 @@ pub fn process_set_authority(
                 }
             }
         }
-        Authority::Stake => {
+        AuthorityType::Stake => {
             require!(
                 AccountType::Stake == data[0].into(),
                 ProgramError::InvalidAccountData,

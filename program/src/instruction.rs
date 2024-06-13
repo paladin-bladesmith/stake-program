@@ -86,7 +86,7 @@ pub enum Instruction {
     #[account(0, writable, name="account", desc="Config or Stake config account")]
     #[account(1, signer, name="authority", desc="Current authority on the account")]
     #[account(2, name="new_authority", desc="Authority to set")]
-    SetAuthority(Authority),
+    SetAuthority(AuthorityType),
 
     /// Updates configuration parameters
     #[account(0, writable, name="config", desc="Stake config account")]
@@ -102,7 +102,7 @@ pub enum Instruction {
 
 /// Enum defining all authorities in the program
 #[derive(BorshDeserialize, BorshSerialize, Clone, Debug, PartialEq, Eq)]
-pub enum Authority {
+pub enum AuthorityType {
     Config,
     Slash,
     Stake,

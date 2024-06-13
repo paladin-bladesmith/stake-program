@@ -501,19 +501,19 @@
       "name": "SetAuthority",
       "accounts": [
         {
-          "name": "config",
+          "name": "account",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Stake config account"
+            "Config or Stake config account"
           ]
         },
         {
-          "name": "configAuthority",
+          "name": "authority",
           "isMut": false,
           "isSigner": true,
           "docs": [
-            "Stake config authority"
+            "Current authority on the account"
           ]
         },
         {
@@ -527,9 +527,9 @@
       ],
       "args": [
         {
-          "name": "authority",
+          "name": "authorityType",
           "type": {
-            "defined": "Authority"
+            "defined": "AuthorityType"
           }
         }
       ],
@@ -613,7 +613,7 @@
   ],
   "types": [
     {
-      "name": "Authority",
+      "name": "AuthorityType",
       "type": {
         "kind": "enum",
         "variants": [

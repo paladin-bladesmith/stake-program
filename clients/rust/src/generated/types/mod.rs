@@ -6,9 +6,9 @@
 //!
 
 pub(crate) mod r#account_type;
-pub(crate) mod r#authority;
+pub(crate) mod r#authority_type;
 pub(crate) mod r#config_field;
 
 pub use self::r#account_type::*;
-pub use self::r#authority::*;
+pub use self::r#authority_type::*;
 pub use self::r#config_field::*;

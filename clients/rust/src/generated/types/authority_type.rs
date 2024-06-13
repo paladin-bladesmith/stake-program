@@ -22,7 +22,7 @@ use num_derive::FromPrimitive;
     FromPrimitive,
 )]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum Authority {
+pub enum AuthorityType {
     Config,
     Slash,
     Stake,

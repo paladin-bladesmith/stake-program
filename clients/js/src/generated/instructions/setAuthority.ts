@@ -30,29 +30,29 @@ import {
 import { STAKE_PROGRAM_ADDRESS } from '../programs';
 import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 import {
-  Authority,
-  AuthorityArgs,
-  getAuthorityDecoder,
-  getAuthorityEncoder,
+  AuthorityType,
+  AuthorityTypeArgs,
+  getAuthorityTypeDecoder,
+  getAuthorityTypeEncoder,
 } from '../types';
 
 export type SetAuthorityInstruction<
   TProgram extends string = typeof STAKE_PROGRAM_ADDRESS,
-  TAccountConfig extends string | IAccountMeta<string> = string,
-  TAccountConfigAuthority extends string | IAccountMeta<string> = string,
+  TAccountAccount extends string | IAccountMeta<string> = string,
+  TAccountAuthority extends string | IAccountMeta<string> = string,
   TAccountNewAuthority extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
-      TAccountConfig extends string
-        ? WritableAccount<TAccountConfig>
-        : TAccountConfig,
-      TAccountConfigAuthority extends string
-        ? ReadonlySignerAccount<TAccountConfigAuthority> &
-            IAccountSignerMeta<TAccountConfigAuthority>
-        : TAccountConfigAuthority,
+      TAccountAccount extends string
+        ? WritableAccount<TAccountAccount>
+        : TAccountAccount,
+      TAccountAuthority extends string
+        ? ReadonlySignerAccount<TAccountAuthority> &
+            IAccountSignerMeta<TAccountAuthority>
+        : TAccountAuthority,
       TAccountNewAuthority extends string
         ? ReadonlyAccount<TAccountNewAuthority>
         : TAccountNewAuthority,
@@ -62,16 +62,18 @@ export type SetAuthorityInstruction<
 
 export type SetAuthorityInstructionData = {
   discriminator: number;
-  authority: Authority;
+  authorityType: AuthorityType;
 };
 
-export type SetAuthorityInstructionDataArgs = { authority: AuthorityArgs };
+export type SetAuthorityInstructionDataArgs = {
+  authorityType: AuthorityTypeArgs;
+};
 
 export function getSetAuthorityInstructionDataEncoder(): Encoder<SetAuthorityInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
-      ['authority', getAuthorityEncoder()],
+      ['authorityType', getAuthorityTypeEncoder()],
     ]),
     (value) => ({ ...value, discriminator: 9 })
   );
@@ -80,7 +82,7 @@ export function getSetAuthorityInstructionDataEncoder(): Encoder<SetAuthorityIns
 export function getSetAuthorityInstructionDataDecoder(): Decoder<SetAuthorityInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
-    ['authority', getAuthorityDecoder()],
+    ['authorityType', getAuthorityTypeDecoder()],
   ]);
 }
 
@@ -95,33 +97,33 @@ export function getSetAuthorityInstructionDataCodec(): Codec<
 }
 
 export type SetAuthorityInput<
-  TAccountConfig extends string = string,
-  TAccountConfigAuthority extends string = string,
+  TAccountAccount extends string = string,
+  TAccountAuthority extends string = string,
   TAccountNewAuthority extends string = string,
 > = {
-  /** Stake config account */
-  config: Address<TAccountConfig>;
-  /** Stake config authority */
-  configAuthority: TransactionSigner<TAccountConfigAuthority>;
+  /** Config or Stake config account */
+  account: Address<TAccountAccount>;
+  /** Current authority on the account */
+  authority: TransactionSigner<TAccountAuthority>;
   /** Authority to set */
   newAuthority: Address<TAccountNewAuthority>;
-  authority: SetAuthorityInstructionDataArgs['authority'];
+  authorityType: SetAuthorityInstructionDataArgs['authorityType'];
 };
 
 export function getSetAuthorityInstruction<
-  TAccountConfig extends string,
-  TAccountConfigAuthority extends string,
+  TAccountAccount extends string,
+  TAccountAuthority extends string,
   TAccountNewAuthority extends string,
 >(
   input: SetAuthorityInput<
-    TAccountConfig,
-    TAccountConfigAuthority,
+    TAccountAccount,
+    TAccountAuthority,
     TAccountNewAuthority
   >
 ): SetAuthorityInstruction<
   typeof STAKE_PROGRAM_ADDRESS,
-  TAccountConfig,
-  TAccountConfigAuthority,
+  TAccountAccount,
+  TAccountAuthority,
   TAccountNewAuthority
 > {
   // Program address.
@@ -129,11 +131,8 @@ export function getSetAuthorityInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    config: { value: input.config ?? null, isWritable: true },
-    configAuthority: {
-      value: input.configAuthority ?? null,
-      isWritable: false,
-    },
+    account: { value: input.account ?? null, isWritable: true },
+    authority: { value: input.authority ?? null, isWritable: false },
     newAuthority: { value: input.newAuthority ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -147,8 +146,8 @@ export function getSetAuthorityInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
-      getAccountMeta(accounts.config),
-      getAccountMeta(accounts.configAuthority),
+      getAccountMeta(accounts.account),
+      getAccountMeta(accounts.authority),
       getAccountMeta(accounts.newAuthority),
     ],
     programAddress,
@@ -157,8 +156,8 @@ export function getSetAuthorityInstruction<
     ),
   } as SetAuthorityInstruction<
     typeof STAKE_PROGRAM_ADDRESS,
-    TAccountConfig,
-    TAccountConfigAuthority,
+    TAccountAccount,
+    TAccountAuthority,
     TAccountNewAuthority
   >;
 
@@ -171,10 +170,10 @@ export type ParsedSetAuthorityInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    /** Stake config account */
-    config: TAccountMetas[0];
-    /** Stake config authority */
-    configAuthority: TAccountMetas[1];
+    /** Config or Stake config account */
+    account: TAccountMetas[0];
+    /** Current authority on the account */
+    authority: TAccountMetas[1];
     /** Authority to set */
     newAuthority: TAccountMetas[2];
   };
@@ -202,8 +201,8 @@ export function parseSetAuthorityInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      config: getNextAccount(),
-      configAuthority: getNextAccount(),
+      account: getNextAccount(),
+      authority: getNextAccount(),
       newAuthority: getNextAccount(),
     },
     data: getSetAuthorityInstructionDataDecoder().decode(instruction.data),

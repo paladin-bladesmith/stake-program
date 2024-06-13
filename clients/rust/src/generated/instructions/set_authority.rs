@@ -5,16 +5,16 @@
 //! <https://github.com/kinobi-so/kinobi>
 //!
 
-use crate::generated::types::Authority;
+use crate::generated::types::AuthorityType;
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 
 /// Accounts.
 pub struct SetAuthority {
-    /// Stake config account
-    pub config: solana_program::pubkey::Pubkey,
-    /// Stake config authority
-    pub config_authority: solana_program::pubkey::Pubkey,
+    /// Config or Stake config account
+    pub account: solana_program::pubkey::Pubkey,
+    /// Current authority on the account
+    pub authority: solana_program::pubkey::Pubkey,
     /// Authority to set
     pub new_authority: solana_program::pubkey::Pubkey,
 }
@@ -34,11 +34,11 @@ impl SetAuthority {
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.config,
+            self.account,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.config_authority,
+            self.authority,
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -78,22 +78,22 @@ impl Default for SetAuthorityInstructionData {
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SetAuthorityInstructionArgs {
-    pub authority: Authority,
+    pub authority_type: AuthorityType,
 }
 
 /// Instruction builder for `SetAuthority`.
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` config
-///   1. `[signer]` config_authority
+///   0. `[writable]` account
+///   1. `[signer]` authority
 ///   2. `[]` new_authority
 #[derive(Clone, Debug, Default)]
 pub struct SetAuthorityBuilder {
-    config: Option<solana_program::pubkey::Pubkey>,
-    config_authority: Option<solana_program::pubkey::Pubkey>,
+    account: Option<solana_program::pubkey::Pubkey>,
+    authority: Option<solana_program::pubkey::Pubkey>,
     new_authority: Option<solana_program::pubkey::Pubkey>,
-    authority: Option<Authority>,
+    authority_type: Option<AuthorityType>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -101,19 +101,16 @@ impl SetAuthorityBuilder {
     pub fn new() -> Self {
         Self::default()
     }
-    /// Stake config account
+    /// Config or Stake config account
     #[inline(always)]
-    pub fn config(&mut self, config: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.config = Some(config);
+    pub fn account(&mut self, account: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.account = Some(account);
         self
     }
-    /// Stake config authority
+    /// Current authority on the account
     #[inline(always)]
-    pub fn config_authority(
-        &mut self,
-        config_authority: solana_program::pubkey::Pubkey,
-    ) -> &mut Self {
-        self.config_authority = Some(config_authority);
+    pub fn authority(&mut self, authority: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.authority = Some(authority);
         self
     }
     /// Authority to set
@@ -123,8 +120,8 @@ impl SetAuthorityBuilder {
         self
     }
     #[inline(always)]
-    pub fn authority(&mut self, authority: Authority) -> &mut Self {
-        self.authority = Some(authority);
+    pub fn authority_type(&mut self, authority_type: AuthorityType) -> &mut Self {
+        self.authority_type = Some(authority_type);
         self
     }
     /// Add an aditional account to the instruction.
@@ -148,12 +145,15 @@ impl SetAuthorityBuilder {
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = SetAuthority {
-            config: self.config.expect("config is not set"),
-            config_authority: self.config_authority.expect("config_authority is not set"),
+            account: self.account.expect("account is not set"),
+            authority: self.authority.expect("authority is not set"),
             new_authority: self.new_authority.expect("new_authority is not set"),
         };
         let args = SetAuthorityInstructionArgs {
-            authority: self.authority.clone().expect("authority is not set"),
+            authority_type: self
+                .authority_type
+                .clone()
+                .expect("authority_type is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -162,10 +162,10 @@ impl SetAuthorityBuilder {
 
 /// `set_authority` CPI accounts.
 pub struct SetAuthorityCpiAccounts<'a, 'b> {
-    /// Stake config account
-    pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Stake config authority
-    pub config_authority: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Config or Stake config account
+    pub account: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Current authority on the account
+    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Authority to set
     pub new_authority: &'b solana_program::account_info::AccountInfo<'a>,
 }
@@ -174,10 +174,10 @@ pub struct SetAuthorityCpiAccounts<'a, 'b> {
 pub struct SetAuthorityCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Stake config account
-    pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Stake config authority
-    pub config_authority: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Config or Stake config account
+    pub account: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Current authority on the account
+    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Authority to set
     pub new_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
@@ -192,8 +192,8 @@ impl<'a, 'b> SetAuthorityCpi<'a, 'b> {
     ) -> Self {
         Self {
             __program: program,
-            config: accounts.config,
-            config_authority: accounts.config_authority,
+            account: accounts.account,
+            authority: accounts.authority,
             new_authority: accounts.new_authority,
             __args: args,
         }
@@ -233,11 +233,11 @@ impl<'a, 'b> SetAuthorityCpi<'a, 'b> {
     ) -> solana_program::entrypoint::ProgramResult {
         let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.config.key,
+            *self.account.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.config_authority.key,
+            *self.authority.key,
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -262,8 +262,8 @@ impl<'a, 'b> SetAuthorityCpi<'a, 'b> {
         };
         let mut account_infos = Vec::with_capacity(3 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
-        account_infos.push(self.config.clone());
-        account_infos.push(self.config_authority.clone());
+        account_infos.push(self.account.clone());
+        account_infos.push(self.authority.clone());
         account_infos.push(self.new_authority.clone());
         remaining_accounts
             .iter()
@@ -281,8 +281,8 @@ impl<'a, 'b> SetAuthorityCpi<'a, 'b> {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` config
-///   1. `[signer]` config_authority
+///   0. `[writable]` account
+///   1. `[signer]` authority
 ///   2. `[]` new_authority
 #[derive(Clone, Debug)]
 pub struct SetAuthorityCpiBuilder<'a, 'b> {
@@ -293,30 +293,30 @@ impl<'a, 'b> SetAuthorityCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
         let instruction = Box::new(SetAuthorityCpiBuilderInstruction {
             __program: program,
-            config: None,
-            config_authority: None,
-            new_authority: None,
+            account: None,
             authority: None,
+            new_authority: None,
+            authority_type: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
     }
-    /// Stake config account
+    /// Config or Stake config account
     #[inline(always)]
-    pub fn config(
+    pub fn account(
         &mut self,
-        config: &'b solana_program::account_info::AccountInfo<'a>,
+        account: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.config = Some(config);
+        self.instruction.account = Some(account);
         self
     }
-    /// Stake config authority
+    /// Current authority on the account
     #[inline(always)]
-    pub fn config_authority(
+    pub fn authority(
         &mut self,
-        config_authority: &'b solana_program::account_info::AccountInfo<'a>,
+        authority: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.config_authority = Some(config_authority);
+        self.instruction.authority = Some(authority);
         self
     }
     /// Authority to set
@@ -329,8 +329,8 @@ impl<'a, 'b> SetAuthorityCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn authority(&mut self, authority: Authority) -> &mut Self {
-        self.instruction.authority = Some(authority);
+    pub fn authority_type(&mut self, authority_type: AuthorityType) -> &mut Self {
+        self.instruction.authority_type = Some(authority_type);
         self
     }
     /// Add an additional account to the instruction.
@@ -375,21 +375,18 @@ impl<'a, 'b> SetAuthorityCpiBuilder<'a, 'b> {
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
         let args = SetAuthorityInstructionArgs {
-            authority: self
+            authority_type: self
                 .instruction
-                .authority
+                .authority_type
                 .clone()
-                .expect("authority is not set"),
+                .expect("authority_type is not set"),
         };
         let instruction = SetAuthorityCpi {
             __program: self.instruction.__program,
 
-            config: self.instruction.config.expect("config is not set"),
+            account: self.instruction.account.expect("account is not set"),
 
-            config_authority: self
-                .instruction
-                .config_authority
-                .expect("config_authority is not set"),
+            authority: self.instruction.authority.expect("authority is not set"),
 
             new_authority: self
                 .instruction
@@ -407,10 +404,10 @@ impl<'a, 'b> SetAuthorityCpiBuilder<'a, 'b> {
 #[derive(Clone, Debug)]
 struct SetAuthorityCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
-    config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    config_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     new_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    authority: Option<Authority>,
+    authority_type: Option<AuthorityType>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,
