@@ -16,9 +16,11 @@ crate-type = ["cdylib", "lib"]
 
 [dependencies]
 borsh = "^0.10"
+bytemuck = "1.16.0"
 shank = "^0.4.2"
 num-derive = "^0.3"
 num-traits = "^0.2"
 solana-program = "1.18.14"
+spl-discriminator = "0.2.2"
 spl-pod = "0.2.2"
 thiserror = "^1.0"
