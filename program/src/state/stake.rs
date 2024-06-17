@@ -6,7 +6,7 @@ use spl_discriminator::SplDiscriminate;
 /// Data for an amount of tokens staked with a validator
 #[repr(C)]
 #[derive(Clone, Copy, Pod, ShankAccount, SplDiscriminate, Zeroable)]
-#[discriminator_hash_input("stake::account")]
+#[discriminator_hash_input("stake::state::stake")]
 pub struct Stake {
     /// Account disciminator.
     ///
