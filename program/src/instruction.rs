@@ -52,7 +52,7 @@ pub enum Instruction {
         1,
         writable,
         name = "stake",
-        desc = "Validator stake account (pda of `['stake', config, validator]`)"
+        desc = "Validator stake account (pda of `['stake', validator, config]`)"
     )]
     #[account(
         2,
