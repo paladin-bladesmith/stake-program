@@ -95,7 +95,7 @@ pub enum Instruction {
     #[account(
         3,
         signer,
-        name = "token_authority",
+        name = "token_account_authority",
         desc = "Owner or delegate of the token account"
     )]
     #[account(
