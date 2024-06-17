@@ -1,4 +1,3 @@
-use borsh::BorshDeserialize;
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError,
     pubkey::Pubkey,
@@ -83,7 +82,7 @@ pub fn process_instruction<'a>(
             initialize_config::process_initialize_config(
                 program_id,
                 InitializeConfigAccounts::context(accounts)?,
-                cooldown_time_seconds,
+                cooldown_time_seconds as u64,
                 max_deactivation_basis_points,
             )
         }
