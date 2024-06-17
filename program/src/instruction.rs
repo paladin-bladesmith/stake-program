@@ -190,7 +190,7 @@ pub enum Instruction {
     #[account(
         3,
         writable,
-        name = "destination_token",
+        name = "destination_token_account",
         desc = "Destination token account"
     )]
     #[account(
