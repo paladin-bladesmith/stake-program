@@ -7,14 +7,14 @@ use spl_pod::optional_keys::OptionalNonZeroPubkey;
 /// Configuration for a staking system.
 #[repr(C)]
 #[derive(Clone, Copy, Pod, ShankAccount, SplDiscriminate, Zeroable)]
-#[discriminator_hash_input("config::account")]
+#[discriminator_hash_input("stake::config")]
 pub struct Config {
     /// Account disciminator.
     ///
     /// The discriminator is equal to `ArrayDiscriminator:: UNINITIALIZED` when
     /// the account is empty, and equal to `Config::DISCRIMINATOR` when the account
     /// is initialized.
-    pub discriminator: [u8; 8],
+    discriminator: [u8; 8],
 
     /// Authority that can modify any elements in the config.
     // TODO: does this need to be optional?
@@ -25,7 +25,7 @@ pub struct Config {
     pub slash_authority: OptionalNonZeroPubkey,
 
     /// Token account storing all stake.
-    pub vault_token: Pubkey,
+    pub vault: Pubkey,
 
     /// After a deactivation, defines the number of seconds that must pass before
     /// the stake is inactive and able to be withdrawn.
@@ -44,7 +44,7 @@ pub struct Config {
     pub max_deactivation_basis_points: u16,
 
     /// Padding for alignment.
-    pub _padding: [u8; 6],
+    _padding: [u8; 6],
 }
 
 impl Config {
