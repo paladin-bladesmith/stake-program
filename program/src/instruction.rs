@@ -61,7 +61,7 @@ pub enum Instruction {
     #[account(
         3,
         name = "system_program",
-        desc = "System program account"
+        desc = "System program"
     )]
     InitializeStake,
 
@@ -397,7 +397,7 @@ pub enum Instruction {
     #[account(
         2,
         name = "system_program",
-        desc = "System program account"
+        desc = "System program"
     )]
     DistributeRewards(u64),
 }
