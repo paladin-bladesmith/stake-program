@@ -1,5 +1,6 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use shank::{ShankContext, ShankInstruction};
+use solana_program::clock::UnixTimestamp;
 
 /// Enum defining all instructions in the Stake program.
 #[rustfmt::skip]
@@ -33,7 +34,7 @@ pub enum Instruction {
         desc = "Stake token vault"
     )]
     InitializeConfig {
-        cooldown_time_seconds: u64,
+        cooldown_time_seconds: UnixTimestamp,
         max_deactivation_basis_points: u16,
     },
 
