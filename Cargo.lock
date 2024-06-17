@@ -5136,6 +5136,7 @@ dependencies = [
  "solana-program",
  "spl-discriminator 0.2.2",
  "spl-pod 0.2.2",
+ "spl-program-error 0.4.1",
  "thiserror",
 ]
 
