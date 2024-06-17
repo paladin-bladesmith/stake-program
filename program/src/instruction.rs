@@ -38,6 +38,10 @@ pub enum Instruction {
     },
 
     /// Initializes stake account data for a validator.
+    /// 
+    /// NOTE: Anybody can create the stake account for a validator. For new
+    /// accounts, the authority is initialized to the validator vote account's
+    /// withdraw authority.
     #[account(
         0,
         name = "config",
@@ -62,6 +66,14 @@ pub enum Instruction {
     InitializeStake,
 
     /// Stakes tokens with the given config.
+    /// 
+    /// Limited to the current amount of SOL staked to the validator.
+    ///
+    /// NOTE: Anybody can stake tokens to a validator, but this does not work
+    /// like native staking, because the validator can take control of staked
+    /// tokens by deactivating and withdrawing.
+    /// 
+    /// Instruction data: amount of tokens to stake, as a little-endian `u64`.
     #[account(
         0,
         writable,
@@ -110,6 +122,12 @@ pub enum Instruction {
     StakeTokens(u64),
 
     /// Deactivate staked tokens for the validator.
+    /// 
+    /// Only one deactivation may be in-flight at once, so if this is called
+    /// with an active deactivation, it will succeed, but reset the amount and
+    /// timestamp.
+    /// 
+    /// Instruction data: amount of tokens to deactivate, as a little-endian `u64``.
     #[account(
         0,
         writable,
@@ -125,6 +143,12 @@ pub enum Instruction {
     DeactivateStake(u64),
 
     /// Move tokens from deactivating to inactive.
+    /// 
+    /// Reduces the total voting power for the stake account and the total staked
+    /// amount on the system.
+    /// 
+    /// NOTE: This instruction is permissionless, so anybody can finish
+    /// deactivating someone's tokens, preparing them to be withdrawn.
     #[account(
         0,
         writable,
@@ -140,6 +164,11 @@ pub enum Instruction {
     InactivateStake,
 
     /// Withdraw inactive staked tokens from the vault.
+    /// 
+    /// After a deactivation has gone through the cooldown period and been
+    /// "inactivated", the authority may move the tokens out of the vault.
+    /// 
+    /// Instruction data: amount of tokens to move.
     #[account(
         0,
         writable,
@@ -183,6 +212,14 @@ pub enum Instruction {
     WithdrawInactiveStake(u64),
 
     /// Harvests holder SOL rewards earned by the given stake account.
+    /// 
+    /// NOTE: This mostly replicates the logic in the rewards program. Since the
+    /// staked tokens are all held by this program, stakers need a way to access
+    /// their portion of holder rewards.
+    ///
+    /// This instruction requires that `unclaimed_rewards` be equal to `0` in
+    /// the token vault account. For ease of use, be sure to call the
+    /// `HarvestRewards` on the vault account before this.
     #[account(
         0,
         name = "config",
@@ -235,6 +272,10 @@ pub enum Instruction {
     HarvestHolderRewards,
 
     /// Harvests stake SOL rewards earned by the given stake account.
+    /// 
+    /// NOTE: This is very similar to the logic in the rewards program. Since the
+    /// staking rewards are held in a separate account, they must be distributed
+    /// based on the proportion of total stake.
     #[account(
         0,
         writable,
@@ -261,7 +302,12 @@ pub enum Instruction {
     )]
     HarvestStakeRewards,
 
-    /// Slashes a stake account for the given amount
+    /// Slashes a stake account for the given amount.
+    /// 
+    /// Burns the given amount of tokens from the vault account, and reduces the
+    /// amount in the stake account.
+    /// 
+    /// Instruction data: amount of tokens to slash.
     #[account(
         0,
         writable,
@@ -298,7 +344,7 @@ pub enum Instruction {
     )]
     Slash(u64),
 
-    /// Sets new authority on a config or stake account
+    /// Sets new authority on a config or stake account.
     #[account(
         0,
         writable,
@@ -318,7 +364,7 @@ pub enum Instruction {
     )]
     SetAuthority(AuthorityType),
 
-    /// Updates configuration parameters
+    /// Updates configuration parameters.
     #[account(
         0,
         writable,
@@ -333,7 +379,7 @@ pub enum Instruction {
     )]
     UpdateConfig(ConfigField),
 
-    /// Moves SOL rewards to the config and updates the stake rewards total
+    /// Moves SOL rewards to the config and updates the stake rewards total.
     #[account(
         0,
         writable,
