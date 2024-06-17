@@ -29,7 +29,7 @@ pub enum Instruction {
     )]
     #[account(
         4,
-        name = "vault_token",
+        name = "vault",
         desc = "Stake token vault"
     )]
     InitializeConfig {
@@ -111,7 +111,7 @@ pub enum Instruction {
     #[account(
         6,
         writable,
-        name = "vault_token",
+        name = "vault",
         desc = "Stake token Vault"
     )]
     #[account(
@@ -184,7 +184,7 @@ pub enum Instruction {
     #[account(
         2,
         writable,
-        name = "vault_token",
+        name = "vault",
         desc = "Vault token account"
     )]
     #[account(
@@ -235,7 +235,7 @@ pub enum Instruction {
     #[account(
         2,
         writable,
-        name = "vault_token",
+        name = "vault",
         desc = "Vault token account"
     )]
     #[account(
@@ -330,7 +330,7 @@ pub enum Instruction {
     #[account(
         3,
         writable,
-        name = "vault_token",
+        name = "vault",
         desc = "Vault token account"
     )]
     #[account(
