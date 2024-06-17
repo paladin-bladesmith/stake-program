@@ -30,7 +30,7 @@ pub enum Instruction {
     #[account(
         4,
         name = "vault",
-        desc = "Stake token vault"
+        desc = "Stake vault token account"
     )]
     InitializeConfig {
         cooldown_time_seconds: UnixTimestamp,
@@ -325,7 +325,7 @@ pub enum Instruction {
         2,
         signer,
         name = "slash_authority",
-        desc = "Stake account"
+        desc = "Config slash authority"
     )]
     #[account(
         3,
