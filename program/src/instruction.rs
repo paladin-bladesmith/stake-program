@@ -89,7 +89,7 @@ pub enum Instruction {
     #[account(
         2,
         writable,
-        name = "source_token",
+        name = "source_token_account",
         desc = "Token account"
     )]
     #[account(
