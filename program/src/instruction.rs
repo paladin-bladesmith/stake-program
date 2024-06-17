@@ -51,7 +51,7 @@ pub enum Instruction {
         1,
         writable,
         name = "stake",
-        desc = "Validator stake account (pda of `['stake', validator, config]`)"
+        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
     )]
     #[account(
         2,
@@ -84,7 +84,7 @@ pub enum Instruction {
         1,
         writable,
         name = "stake",
-        desc = "Validator stake account"
+        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
     )]
     #[account(
         2,
@@ -132,7 +132,7 @@ pub enum Instruction {
         0,
         writable,
         name = "stake",
-        desc = "Validator stake account"
+        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
     )]
     #[account(
         1,
@@ -159,7 +159,7 @@ pub enum Instruction {
         1,
         writable,
         name = "stake",
-        desc = "Validator stake account"
+        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
     )]
     InactivateStake,
 
@@ -179,7 +179,7 @@ pub enum Instruction {
         1,
         writable,
         name = "stake",
-        desc = "Stake account"
+        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
     )]
     #[account(
         2,
@@ -230,7 +230,7 @@ pub enum Instruction {
         1,
         writable,
         name = "stake",
-        desc = "Stake account"
+        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
     )]
     #[account(
         2,
@@ -287,7 +287,7 @@ pub enum Instruction {
         1,
         writable,
         name = "stake",
-        desc = "Stake account"
+        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
     )]
     #[account(
         2,
@@ -319,7 +319,7 @@ pub enum Instruction {
         1,
         writable,
         name = "stake",
-        desc = "Stake account"
+        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
     )]
     #[account(
         2,
