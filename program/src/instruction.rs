@@ -127,7 +127,7 @@ pub enum Instruction {
     /// with an active deactivation, it will succeed, but reset the amount and
     /// timestamp.
     /// 
-    /// Instruction data: amount of tokens to deactivate, as a little-endian `u64``.
+    /// Instruction data: amount of tokens to deactivate, as a little-endian `u64`.
     #[account(
         0,
         writable,
