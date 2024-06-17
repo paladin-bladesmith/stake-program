@@ -202,7 +202,7 @@ pub enum Instruction {
     #[account(
         5,
         name = "vault_authority",
-        desc = "Vault authority"
+        desc = "Vault authority (pda of `['token-owner', config]`)"
     )]
     
     #[account(
@@ -258,12 +258,12 @@ pub enum Instruction {
     #[account(
         6,
         name = "vault_authority",
-        desc = "Vault authority"
+        desc = "Vault authority (pda of `['token-owner', config]`)"
     )]
     #[account(
         7,
         name = "mint",
-        desc="Stake token mint"
+        desc = "Stake token mint"
     )]
     #[account(
         8,
@@ -336,7 +336,7 @@ pub enum Instruction {
     #[account(
         4,
         name = "vault_authority",
-        desc = "Vault authority"
+        desc = "Vault authority (pda of `['token-owner', config]`)"
     )]
     #[account(
         5,
