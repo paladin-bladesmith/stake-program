@@ -13,7 +13,7 @@ pub struct Stake {
     /// The discriminator is equal to `ArrayDiscriminator:: UNINITIALIZED` when
     /// the account is empty, and equal to `Stake::DISCRIMINATOR` when the account
     /// is initialized.
-    pub discriminator: [u8; 8],
+    discriminator: [u8; 8],
 
     /// Amount of staked tokens currently active
     pub amount: u64,

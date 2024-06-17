@@ -14,7 +14,7 @@ pub struct Config {
     /// The discriminator is equal to `ArrayDiscriminator:: UNINITIALIZED` when
     /// the account is empty, and equal to `Config::DISCRIMINATOR` when the account
     /// is initialized.
-    pub discriminator: [u8; 8],
+    discriminator: [u8; 8],
 
     /// Authority that can modify any elements in the config.
     // TODO: does this need to be optional?
@@ -44,7 +44,7 @@ pub struct Config {
     pub max_deactivation_basis_points: u16,
 
     /// Padding for alignment.
-    pub _padding: [u8; 6],
+    _padding: [u8; 6],
 }
 
 impl Config {
