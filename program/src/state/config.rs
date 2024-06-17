@@ -25,7 +25,7 @@ pub struct Config {
     pub slash_authority: OptionalNonZeroPubkey,
 
     /// Token account storing all stake.
-    pub vault_token: Pubkey,
+    pub vault: Pubkey,
 
     /// After a deactivation, defines the number of seconds that must pass before
     /// the stake is inactive and able to be withdrawn.
