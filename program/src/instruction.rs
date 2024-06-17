@@ -116,8 +116,8 @@ pub enum Instruction {
     )]
     #[account(
         7,
-        name = "spl_token_program",
-        desc = "SPL Token 2022 program"
+        name = "token_program",
+        desc = "Token program"
     )]
     StakeTokens(u64),
 
@@ -207,8 +207,8 @@ pub enum Instruction {
     
     #[account(
         6,
-        name = "spl_token_program",
-        desc = "SPL Token program"
+        name = "token_program",
+        desc = "Token program"
     )]
     WithdrawInactiveStake(u64),
 
@@ -267,8 +267,8 @@ pub enum Instruction {
     )]
     #[account(
         8,
-        name = "spl_token_program",
-        desc = "SPL Token program"
+        name = "token_program",
+        desc = "Token program"
     )]
     HarvestHolderRewards,
 
@@ -340,8 +340,8 @@ pub enum Instruction {
     )]
     #[account(
         5,
-        name = "spl_token_program",
-        desc = "SPL Token program"
+        name = "token_program",
+        desc = "Token program"
     )]
     Slash(u64),
 
