@@ -1,10 +1,9 @@
-use borsh::{BorshDeserialize, BorshSerialize};
-use shank::{ShankContext, ShankInstruction};
+use shank::{ShankContext, ShankInstruction, ShankType};
 use solana_program::clock::UnixTimestamp;
 
 /// Enum defining all instructions in the Stake program.
 #[rustfmt::skip]
-#[derive(BorshDeserialize, BorshSerialize, Clone, Debug, ShankContext, ShankInstruction)]
+#[derive(Clone, Debug, ShankContext, ShankInstruction)]
 pub enum Instruction {
     /// Creates Stake config account which controls staking parameters.
     #[account(
@@ -403,7 +402,7 @@ pub enum Instruction {
 }
 
 /// Enum defining all authorities in the program
-#[derive(BorshDeserialize, BorshSerialize, Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Eq, PartialEq, ShankType)]
 pub enum AuthorityType {
     Config,
     Slash,
@@ -411,7 +410,7 @@ pub enum AuthorityType {
 }
 
 /// Enum to allow updating the config account in the same instruction
-#[derive(BorshDeserialize, BorshSerialize, Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Eq, PartialEq, ShankType)]
 pub enum ConfigField {
     /// Amount of seconds between deactivation and inactivation
     CooldownTimeSeconds(u64),
