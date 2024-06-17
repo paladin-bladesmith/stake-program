@@ -14,13 +14,13 @@ pub enum Instruction {
     )]
     #[account(
         1,
-        name = "config_authority",
-        desc = "Config authority"
+        name = "slash_authority",
+        desc = "Slash authority"
     )]
     #[account(
         2,
-        name = "slash_authority",
-        desc = "Slash authority"
+        name = "config_authority",
+        desc = "Config authority"
     )]
     #[account(
         3,
@@ -183,27 +183,28 @@ pub enum Instruction {
     )]
     #[account(
         2,
-        signer,
-        name = "stake_authority",
-        desc = "Stake authority"
-    )]
-    #[account(
-        3,
-        name = "vault_authority",
-        desc = "Vault authority"
-    )]
-    #[account(
-        4,
         writable,
         name = "vault_token",
         desc = "Vault token account"
     )]
     #[account(
-        5,
+        3,
         writable,
         name = "destination_token",
         desc = "Destination token account"
     )]
+    #[account(
+        4,
+        signer,
+        name = "stake_authority",
+        desc = "Stake authority"
+    )]
+    #[account(
+        5,
+        name = "vault_authority",
+        desc = "Vault authority"
+    )]
+    
     #[account(
         6,
         name = "spl_token_program",
@@ -239,25 +240,25 @@ pub enum Instruction {
     )]
     #[account(
         3,
-        name = "vault_authority",
-        desc = "Vault authority"
-    )]
-    #[account(
-        4,
         name = "holder_rewards",
         desc = "Holder rewards account for vault token account"
     )]
     #[account(
-        5,
+        4,
         writable,
         name = "destination", 
         desc = "Destination account for withdrawn lamports"
     )]
     #[account(
-        6,
+        5,
         signer,
         name = "stake_authority",
         desc = "Stake authority"
+    )]
+    #[account(
+        6,
+        name = "vault_authority",
+        desc = "Vault authority"
     )]
     #[account(
         7,
@@ -383,15 +384,15 @@ pub enum Instruction {
     #[account(
         0,
         writable,
-        name = "config",
-        desc = "Stake config account"
+        signer,
+        name = "payer",
+        desc = "Reward payer"
     )]
     #[account(
         1,
         writable,
-        signer,
-        name = "payer",
-        desc = "Reward payer"
+        name = "config",
+        desc = "Stake config account"
     )]
     #[account(
         2,
