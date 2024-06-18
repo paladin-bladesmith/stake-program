@@ -6,7 +6,7 @@ use spl_pod::optional_keys::OptionalNonZeroPubkey;
 
 /// Configuration for a staking system.
 #[repr(C)]
-#[derive(Clone, Copy, Pod, ShankAccount, SplDiscriminate, Zeroable)]
+#[derive(Clone, Copy, Default, Pod, ShankAccount, SplDiscriminate, Zeroable)]
 #[discriminator_hash_input("stake::state::config")]
 pub struct Config {
     /// Account disciminator.
