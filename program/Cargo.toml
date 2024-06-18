@@ -18,6 +18,7 @@ crate-type = ["cdylib", "lib"]
 bpf-entrypoint = []
 
 [dependencies]
+arrayref = "0.3.7"
 borsh = "^0.10"
 bytemuck = "1.16.0"
 shank = "^0.4.2"

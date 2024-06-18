@@ -1,9 +1,13 @@
+use arrayref::array_ref;
+use num_derive::FromPrimitive;
+use num_traits::FromPrimitive;
 use shank::{ShankContext, ShankInstruction, ShankType};
-use solana_program::clock::UnixTimestamp;
+use solana_program::{clock::UnixTimestamp, program_error::ProgramError};
 
 /// Enum defining all instructions in the Stake program.
-#[rustfmt::skip]
+#[repr(C)]
 #[derive(Clone, Debug, ShankContext, ShankInstruction)]
+#[rustfmt::skip]
 pub enum StakeInstruction {
     /// Creates Stake config account which controls staking parameters.
     #[account(
@@ -402,8 +406,74 @@ pub enum StakeInstruction {
     DistributeRewards(u64),
 }
 
+impl StakeInstruction {
+    /// Unpacks a byte buffer into a
+    /// [PaladinRewardsInstruction](enum.PaladinRewardsInstruction.html).
+    pub fn unpack(input: &[u8]) -> Result<Self, ProgramError> {
+        match input.split_first() {
+            // 0 - InitializeConfig: u64 (8) + u16 (2)
+            Some((&0, rest)) if rest.len() == 10 => Ok(StakeInstruction::InitializeConfig {
+                cooldown_time_seconds: i64::from_le_bytes(*array_ref![rest, 0, 8]),
+                max_deactivation_basis_points: u16::from_le_bytes(*array_ref![rest, 8, 2]),
+            }),
+            // 1 - InitializeStake
+            Some((&1, _)) => Ok(StakeInstruction::InitializeStake),
+            // 2- StakeTokens: u64 (8)
+            Some((&2, rest)) if rest.len() == 8 => Ok(StakeInstruction::StakeTokens(
+                u64::from_le_bytes(*array_ref![rest, 0, 8]),
+            )),
+            // 3 - DeactivateStake: u64 (8)
+            Some((&3, rest)) if rest.len() == 8 => Ok(StakeInstruction::DeactivateStake(
+                u64::from_le_bytes(*array_ref![rest, 0, 8]),
+            )),
+            // 4 - InactivateStake
+            Some((&4, _)) => Ok(StakeInstruction::InactivateStake),
+            // 5 - WithdrawInactiveStake: u64 (8)
+            Some((&5, rest)) if rest.len() == 8 => Ok(StakeInstruction::WithdrawInactiveStake(
+                u64::from_le_bytes(*array_ref![rest, 0, 8]),
+            )),
+            // 6 - HarvestHolderRewards
+            Some((&6, _)) => Ok(StakeInstruction::HarvestHolderRewards),
+            // 7 - HarvestStakeRewards
+            Some((&7, _)) => Ok(StakeInstruction::HarvestStakeRewards),
+            // 8 - Slash: u64 (8)
+            Some((&8, rest)) if rest.len() == 8 => {
+                Ok(StakeInstruction::Slash(u64::from_le_bytes(*array_ref![
+                    rest, 0, 8
+                ])))
+            }
+            // 9 - SetAuthority: AuthorityType (u8))
+            Some((&9, rest)) if rest.len() == 1 => Ok(StakeInstruction::SetAuthority(
+                FromPrimitive::from_u8(rest[0]).ok_or(ProgramError::InvalidInstructionData)?,
+            )),
+            // 10 - UpdateConfig: ConfigField (u64 or u16)
+            Some((&10, rest)) => {
+                let field = match rest.split_first() {
+                    Some((&0, rest)) if rest.len() == 8 => {
+                        ConfigField::CooldownTimeSeconds(u64::from_le_bytes(*array_ref![
+                            rest, 0, 8
+                        ]))
+                    }
+                    Some((&1, rest)) if rest.len() == 2 => {
+                        ConfigField::MaxDeactivationBasisPoints(u16::from_le_bytes(*array_ref![
+                            rest, 0, 2
+                        ]))
+                    }
+                    _ => return Err(ProgramError::InvalidInstructionData),
+                };
+                Ok(StakeInstruction::UpdateConfig(field))
+            }
+            // 11 - DistributeRewards: u64 (8)
+            Some((&11, rest)) if rest.len() == 8 => Ok(StakeInstruction::DistributeRewards(
+                u64::from_le_bytes(*array_ref![rest, 0, 8]),
+            )),
+            _ => Err(ProgramError::InvalidInstructionData),
+        }
+    }
+}
+
 /// Enum defining all authorities in the program
-#[derive(Clone, Debug, Eq, PartialEq, ShankType)]
+#[derive(Clone, Debug, Eq, FromPrimitive, PartialEq, ShankType)]
 pub enum AuthorityType {
     Config,
     Slash,

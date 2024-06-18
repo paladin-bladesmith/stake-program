@@ -1,7 +1,4 @@
-use solana_program::{
-    account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError,
-    pubkey::Pubkey,
-};
+use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey};
 
 use crate::instruction::{
     accounts::{
@@ -10,7 +7,7 @@ use crate::instruction::{
         InitializeStakeAccounts, SetAuthorityAccounts, SlashAccounts, StakeTokensAccounts,
         UpdateConfigAccounts, WithdrawInactiveStakeAccounts,
     },
-    Instruction,
+    StakeInstruction,
 };
 
 mod deactivate_stake;
@@ -32,12 +29,10 @@ pub fn process_instruction<'a>(
     accounts: &'a [AccountInfo<'a>],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    // TODO: should use Pod types for instruction data?
-    let instruction: Instruction = Instruction::try_from_slice(instruction_data)
-        .map_err(|_| ProgramError::InvalidInstructionData)?;
+    let instruction = StakeInstruction::unpack(instruction_data)?;
 
     match instruction {
-        Instruction::DeactivateStake(amount) => {
+        StakeInstruction::DeactivateStake(amount) => {
             msg!("Instruction: DeactivateStake");
             deactivate_stake::process_deactivate_stake(
                 program_id,
@@ -45,7 +40,7 @@ pub fn process_instruction<'a>(
                 amount,
             )
         }
-        Instruction::DistributeRewards(amount) => {
+        StakeInstruction::DistributeRewards(amount) => {
             msg!("Instruction: DistributeRewards");
             distribute_rewards::process_distribute_rewards(
                 program_id,
@@ -53,28 +48,28 @@ pub fn process_instruction<'a>(
                 amount,
             )
         }
-        Instruction::HarvestHolderRewards => {
+        StakeInstruction::HarvestHolderRewards => {
             msg!("Instruction: HarvestHolderRewards");
             harvest_holder_rewards::process_harvest_holder_rewards(
                 program_id,
                 HarvestHolderRewardsAccounts::context(accounts)?,
             )
         }
-        Instruction::HarvestStakeRewards => {
+        StakeInstruction::HarvestStakeRewards => {
             msg!("Instruction: HarvestStakeRewards");
             harvest_stake_rewards::process_harvest_stake_rewards(
                 program_id,
                 HarvestStakeRewardsAccounts::context(accounts)?,
             )
         }
-        Instruction::InactivateStake => {
+        StakeInstruction::InactivateStake => {
             msg!("Instruction: InactivateStake");
             inactivate_stake::process_inactivate_stake(
                 program_id,
                 InactivateStakeAccounts::context(accounts)?,
             )
         }
-        Instruction::InitializeConfig {
+        StakeInstruction::InitializeConfig {
             cooldown_time_seconds,
             max_deactivation_basis_points,
         } => {
@@ -86,14 +81,14 @@ pub fn process_instruction<'a>(
                 max_deactivation_basis_points,
             )
         }
-        Instruction::InitializeStake => {
+        StakeInstruction::InitializeStake => {
             msg!("Instruction: InitializeStake");
             initialize_stake::process_initialize_stake(
                 program_id,
                 InitializeStakeAccounts::context(accounts)?,
             )
         }
-        Instruction::SetAuthority(authority) => {
+        StakeInstruction::SetAuthority(authority) => {
             msg!("Instruction: SetAuthority");
             set_authority::process_set_authority(
                 program_id,
@@ -101,11 +96,11 @@ pub fn process_instruction<'a>(
                 authority,
             )
         }
-        Instruction::Slash(amount) => {
+        StakeInstruction::Slash(amount) => {
             msg!("Instruction: Slash");
             slash::process_slash(program_id, SlashAccounts::context(accounts)?, amount)
         }
-        Instruction::StakeTokens(amount) => {
+        StakeInstruction::StakeTokens(amount) => {
             msg!("Instruction: StakeTokens");
             stake_tokens::process_stake_tokens(
                 program_id,
@@ -113,7 +108,7 @@ pub fn process_instruction<'a>(
                 amount,
             )
         }
-        Instruction::UpdateConfig(field) => {
+        StakeInstruction::UpdateConfig(field) => {
             msg!("Instruction: UpdateConfig");
             update_config::process_update_config(
                 program_id,
@@ -121,7 +116,7 @@ pub fn process_instruction<'a>(
                 field,
             )
         }
-        Instruction::WithdrawInactiveStake(amount) => {
+        StakeInstruction::WithdrawInactiveStake(amount) => {
             msg!("Instruction: WithdrawInactiveStake");
             withdraw_inactive_stake::process_withdraw_inactive_stake(
                 program_id,
