@@ -6,7 +6,7 @@ use spl_pod::optional_keys::OptionalNonZeroPubkey;
 
 /// Configuration for a staking system.
 #[repr(C)]
-#[derive(Clone, Copy, Pod, ShankAccount, SplDiscriminate, Zeroable)]
+#[derive(Clone, Copy, Default, Pod, ShankAccount, SplDiscriminate, Zeroable)]
 #[discriminator_hash_input("stake::state::config")]
 pub struct Config {
     /// Account disciminator.
@@ -17,11 +17,9 @@ pub struct Config {
     discriminator: [u8; 8],
 
     /// Authority that can modify any elements in the config.
-    // TODO: does this need to be optional?
     pub authority: OptionalNonZeroPubkey,
 
     /// Authority that can slash any stake.
-    // TODO: does this need to be optional?
     pub slash_authority: OptionalNonZeroPubkey,
 
     /// Token account storing all stake.

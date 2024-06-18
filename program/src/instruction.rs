@@ -30,7 +30,7 @@ pub enum Instruction {
     #[account(
         4,
         name = "vault",
-        desc = "Stake token vault"
+        desc = "Stake vault token account"
     )]
     InitializeConfig {
         cooldown_time_seconds: UnixTimestamp,
@@ -51,7 +51,7 @@ pub enum Instruction {
         1,
         writable,
         name = "stake",
-        desc = "Validator stake account (pda of `['stake', validator, config]`)"
+        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
     )]
     #[account(
         2,
@@ -61,7 +61,7 @@ pub enum Instruction {
     #[account(
         3,
         name = "system_program",
-        desc = "System program account"
+        desc = "System program"
     )]
     InitializeStake,
 
@@ -84,18 +84,18 @@ pub enum Instruction {
         1,
         writable,
         name = "stake",
-        desc = "Validator stake account"
+        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
     )]
     #[account(
         2,
         writable,
-        name = "source_token",
+        name = "source_token_account",
         desc = "Token account"
     )]
     #[account(
         3,
         signer,
-        name = "token_authority",
+        name = "token_account_authority",
         desc = "Owner or delegate of the token account"
     )]
     #[account(
@@ -116,8 +116,8 @@ pub enum Instruction {
     )]
     #[account(
         7,
-        name = "spl_token_program",
-        desc = "SPL Token 2022 program"
+        name = "token_program",
+        desc = "Token program"
     )]
     StakeTokens(u64),
 
@@ -127,12 +127,12 @@ pub enum Instruction {
     /// with an active deactivation, it will succeed, but reset the amount and
     /// timestamp.
     /// 
-    /// Instruction data: amount of tokens to deactivate, as a little-endian `u64``.
+    /// Instruction data: amount of tokens to deactivate, as a little-endian `u64`.
     #[account(
         0,
         writable,
         name = "stake",
-        desc = "Validator stake account"
+        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
     )]
     #[account(
         1,
@@ -159,7 +159,7 @@ pub enum Instruction {
         1,
         writable,
         name = "stake",
-        desc = "Validator stake account"
+        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
     )]
     InactivateStake,
 
@@ -179,7 +179,7 @@ pub enum Instruction {
         1,
         writable,
         name = "stake",
-        desc = "Stake account"
+        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
     )]
     #[account(
         2,
@@ -190,7 +190,7 @@ pub enum Instruction {
     #[account(
         3,
         writable,
-        name = "destination_token",
+        name = "destination_token_account",
         desc = "Destination token account"
     )]
     #[account(
@@ -202,13 +202,13 @@ pub enum Instruction {
     #[account(
         5,
         name = "vault_authority",
-        desc = "Vault authority"
+        desc = "Vault authority (pda of `['token-owner', config]`)"
     )]
     
     #[account(
         6,
-        name = "spl_token_program",
-        desc = "SPL Token program"
+        name = "token_program",
+        desc = "Token program"
     )]
     WithdrawInactiveStake(u64),
 
@@ -230,7 +230,7 @@ pub enum Instruction {
         1,
         writable,
         name = "stake",
-        desc = "Stake account"
+        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
     )]
     #[account(
         2,
@@ -258,17 +258,17 @@ pub enum Instruction {
     #[account(
         6,
         name = "vault_authority",
-        desc = "Vault authority"
+        desc = "Vault authority (pda of `['token-owner', config]`)"
     )]
     #[account(
         7,
         name = "mint",
-        desc="Stake token mint"
+        desc = "Stake token mint"
     )]
     #[account(
         8,
-        name = "spl_token_program",
-        desc = "SPL Token program"
+        name = "token_program",
+        desc = "Token program"
     )]
     HarvestHolderRewards,
 
@@ -287,7 +287,7 @@ pub enum Instruction {
         1,
         writable,
         name = "stake",
-        desc = "Stake account"
+        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
     )]
     #[account(
         2,
@@ -319,13 +319,13 @@ pub enum Instruction {
         1,
         writable,
         name = "stake",
-        desc = "Stake account"
+        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
     )]
     #[account(
         2,
         signer,
         name = "slash_authority",
-        desc = "Stake account"
+        desc = "Config slash authority"
     )]
     #[account(
         3,
@@ -336,12 +336,12 @@ pub enum Instruction {
     #[account(
         4,
         name = "vault_authority",
-        desc = "Vault authority"
+        desc = "Vault authority (pda of `['token-owner', config]`)"
     )]
     #[account(
         5,
-        name = "spl_token_program",
-        desc = "SPL Token program"
+        name = "token_program",
+        desc = "Token program"
     )]
     Slash(u64),
 
@@ -397,7 +397,7 @@ pub enum Instruction {
     #[account(
         2,
         name = "system_program",
-        desc = "System program account"
+        desc = "System program"
     )]
     DistributeRewards(u64),
 }
