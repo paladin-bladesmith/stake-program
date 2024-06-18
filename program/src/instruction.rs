@@ -407,6 +407,81 @@ pub enum StakeInstruction {
 }
 
 impl StakeInstruction {
+    /// Packs a [StakeInstruction](enum.StakeInstruction.html) into a byte buffer.
+    pub fn pack(&self) -> Vec<u8> {
+        match self {
+            StakeInstruction::InitializeConfig {
+                cooldown_time_seconds,
+                max_deactivation_basis_points,
+            } => {
+                let mut data = Vec::with_capacity(11);
+                data.push(0);
+                data.extend_from_slice(&cooldown_time_seconds.to_le_bytes());
+                data.extend_from_slice(&max_deactivation_basis_points.to_le_bytes());
+                data
+            }
+            StakeInstruction::InitializeStake => vec![1],
+            StakeInstruction::StakeTokens(amount) => {
+                let mut data = Vec::with_capacity(9);
+                data.push(2);
+                data.extend_from_slice(&amount.to_le_bytes());
+                data
+            }
+            StakeInstruction::DeactivateStake(amount) => {
+                let mut data = Vec::with_capacity(9);
+                data.push(3);
+                data.extend_from_slice(&amount.to_le_bytes());
+                data
+            }
+            StakeInstruction::InactivateStake => vec![4],
+            StakeInstruction::WithdrawInactiveStake(amount) => {
+                let mut data = Vec::with_capacity(9);
+                data.push(5);
+                data.extend_from_slice(&amount.to_le_bytes());
+                data
+            }
+            StakeInstruction::HarvestHolderRewards => vec![6],
+            StakeInstruction::HarvestStakeRewards => vec![7],
+            StakeInstruction::Slash(amount) => {
+                let mut data = Vec::with_capacity(9);
+                data.push(8);
+                data.extend_from_slice(&amount.to_le_bytes());
+                data
+            }
+            StakeInstruction::SetAuthority(authority_type) => {
+                vec![
+                    9,
+                    match authority_type {
+                        AuthorityType::Config => 0,
+                        AuthorityType::Slash => 1,
+                        AuthorityType::Stake => 2,
+                    },
+                ]
+            }
+            StakeInstruction::UpdateConfig(field) => {
+                let mut data = Vec::with_capacity(11);
+                data.push(10);
+                match field {
+                    ConfigField::CooldownTimeSeconds(value) => {
+                        data.push(0);
+                        data.extend_from_slice(&value.to_le_bytes());
+                    }
+                    ConfigField::MaxDeactivationBasisPoints(value) => {
+                        data.push(1);
+                        data.extend_from_slice(&value.to_le_bytes());
+                    }
+                }
+                data
+            }
+            StakeInstruction::DistributeRewards(amount) => {
+                let mut data = Vec::with_capacity(9);
+                data.push(11);
+                data.extend_from_slice(&amount.to_le_bytes());
+                data
+            }
+        }
+    }
+
     /// Unpacks a byte buffer into a [StakeInstruction](enum.StakeInstruction.html).
     pub fn unpack(input: &[u8]) -> Result<Self, ProgramError> {
         match input.split_first() {
