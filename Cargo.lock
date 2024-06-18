@@ -5129,7 +5129,6 @@ name = "stake-program"
 version = "0.0.0"
 dependencies = [
  "arrayref",
- "borsh 0.10.3",
  "bytemuck",
  "num-derive 0.3.3",
  "num-traits",
