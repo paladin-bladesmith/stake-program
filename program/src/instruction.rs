@@ -4,7 +4,7 @@ use solana_program::clock::UnixTimestamp;
 /// Enum defining all instructions in the Stake program.
 #[rustfmt::skip]
 #[derive(Clone, Debug, ShankContext, ShankInstruction)]
-pub enum Instruction {
+pub enum StakeInstruction {
     /// Creates Stake config account which controls staking parameters.
     #[account(
         0,
