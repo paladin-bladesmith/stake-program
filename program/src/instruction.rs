@@ -6,7 +6,7 @@ use solana_program::{clock::UnixTimestamp, program_error::ProgramError};
 
 /// Enum defining all instructions in the Stake program.
 #[repr(C)]
-#[derive(Clone, Debug, ShankContext, ShankInstruction)]
+#[derive(Clone, Debug, Eq, PartialEq, ShankContext, ShankInstruction)]
 #[rustfmt::skip]
 pub enum StakeInstruction {
     /// Creates Stake config account which controls staking parameters.
@@ -577,4 +577,113 @@ pub enum ConfigField {
     CooldownTimeSeconds(u64),
     /// Total proportion that can be deactivated at once, in basis points
     MaxDeactivationBasisPoints(u16),
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_pack_unpack_initialize_config() {
+        let original = StakeInstruction::InitializeConfig {
+            cooldown_time_seconds: 120,
+            max_deactivation_basis_points: 500,
+        };
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_pack_unpack_initialize_stake() {
+        let original = StakeInstruction::InitializeStake;
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_pack_unpack_stake_tokens() {
+        let original = StakeInstruction::StakeTokens(100);
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_pack_unpack_deactivate_stake() {
+        let original = StakeInstruction::DeactivateStake(100);
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_pack_unpack_inactivate_stake() {
+        let original = StakeInstruction::InactivateStake;
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_pack_unpack_withdraw_inactive_stake() {
+        let original = StakeInstruction::WithdrawInactiveStake(100);
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_pack_unpack_harvest_holder_rewards() {
+        let original = StakeInstruction::HarvestHolderRewards;
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_pack_unpack_harvest_stake_rewards() {
+        let original = StakeInstruction::HarvestStakeRewards;
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_pack_unpack_slash() {
+        let original = StakeInstruction::Slash(100);
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_pack_unpack_set_authority() {
+        let original = StakeInstruction::SetAuthority(AuthorityType::Config);
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_pack_unpack_update_config() {
+        let original = StakeInstruction::UpdateConfig(ConfigField::CooldownTimeSeconds(120));
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+
+        let original = StakeInstruction::UpdateConfig(ConfigField::MaxDeactivationBasisPoints(500));
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_pack_unpack_distribute_rewards() {
+        let original = StakeInstruction::DistributeRewards(100);
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
 }
