@@ -7,66 +7,95 @@ import { renderVisitor as renderRustVisitor } from "@kinobi-so/renderers-rust";
 import { getAllProgramIdls } from "./utils.mjs";
 
 // Instanciate Kinobi.
-const [idl, ...additionalIdls] = getAllProgramIdls().map(idl => rootNodeFromAnchor(require(idl)))
+const [idl, ...additionalIdls] = getAllProgramIdls().map((idl) =>
+  rootNodeFromAnchor(require(idl))
+);
 const kinobi = k.createFromRoot(idl, additionalIdls);
 
 // Update programs.
 kinobi.update(
   k.updateProgramsVisitor({
-    "stakeProgram": { name: "stake" },
+    stakeProgram: { name: "stake" },
   })
 );
 
-// Update accounts.
+// Add PDA information.
 kinobi.update(
-  k.updateAccountsVisitor({
-    counter: {
-      seeds: [
-        k.constantPdaSeedNodeFromString("utf8", "counter"),
-        k.variablePdaSeedNode(
-          "authority",
-          k.publicKeyTypeNode(),
-          "The authority of the counter account"
-        ),
-      ],
+  k.bottomUpTransformerVisitor([
+    {
+      select: "[programNode]stake",
+      transform: (node) => {
+        k.assertIsNode(node, "programNode");
+        return {
+          ...node,
+          pdas: [
+            k.pdaNode({
+              name: "vault",
+              seeds: [
+                k.constantPdaSeedNodeFromString("utf8", "token-vault"),
+                k.variablePdaSeedNode(
+                  "authority",
+                  k.publicKeyTypeNode(),
+                  "Config authority"
+                ),
+              ],
+            }),
+          ],
+        };
+      },
     },
-  })
+  ])
 );
 
-// Update instructions.
+// Add missing types from the IDL.
 kinobi.update(
-  k.updateInstructionsVisitor({
-    create: {
-      byteDeltas: [k.instructionByteDeltaNode(k.accountLinkNode("counter"))],
-      accounts: {
-        counter: { defaultValue: k.pdaValueNode("counter") },
-        payer: { defaultValue: k.accountValueNode("authority") },
+  k.bottomUpTransformerVisitor([
+    {
+      // OptionalNonZeroPubkey -> NullableAddress
+      select: (node) => {
+        const names = ["authority", "slashAuthority"];
+        return (
+          names.includes(node.name) &&
+          k.isNode(node, ["structFieldTypeNode"]) &&
+          k.isNode(node.type, "definedTypeLinkNode") &&
+          node.type.name === "optionalNonZeroPubkey"
+        );
+      },
+      transform: (node) => {
+        k.assertIsNode(node, "structFieldTypeNode");
+        return {
+          ...node,
+          type: k.definedTypeLinkNode("nullableAddress", "hooked"),
+        };
       },
     },
-    increment: {
-      accounts: {
-        counter: { defaultValue: k.pdaValueNode("counter") },
+    {
+      // UnixTimestamp -> i64
+      select: (node) => {
+        const names = ["cooldownTimeSeconds", "deactivationTimestamp"];
+        return (
+          names.includes(node.name) &&
+          k.isNode(node, ["structFieldTypeNode"]) &&
+          k.isNode(node.type, "definedTypeLinkNode") &&
+          node.type.name === "unixTimestamp"
+        );
       },
-      arguments: {
-        amount: { defaultValue: k.noneValueNode() },
+      transform: (node) => {
+        k.assertIsNode(node, "structFieldTypeNode");
+        return {
+          ...node,
+          type: k.numberTypeNode("i64"),
+        };
       },
     },
-  })
-);
-
-// Set account discriminators.
-const key = (name) => ({ field: "key", value: k.enumValueNode("Key", name) });
-kinobi.update(
-  k.setAccountDiscriminatorFromFieldVisitor({
-    counter: key("counter"),
-  })
+  ])
 );
 
 // Render JavaScript.
 const jsClient = path.join(__dirname, "..", "clients", "js");
 kinobi.accept(
-  renderJavaScriptVisitor(path.join(jsClient, "src", "generated"), { 
-    prettier: require(path.join(jsClient, ".prettierrc.json"))
+  renderJavaScriptVisitor(path.join(jsClient, "src", "generated"), {
+    prettier: require(path.join(jsClient, ".prettierrc.json")),
   })
 );
 
