@@ -1,9 +1,13 @@
+use arrayref::array_ref;
+use num_derive::FromPrimitive;
+use num_traits::FromPrimitive;
 use shank::{ShankContext, ShankInstruction, ShankType};
-use solana_program::clock::UnixTimestamp;
+use solana_program::{clock::UnixTimestamp, program_error::ProgramError};
 
 /// Enum defining all instructions in the Stake program.
+#[repr(C)]
+#[derive(Clone, Debug, Eq, PartialEq, ShankContext, ShankInstruction)]
 #[rustfmt::skip]
-#[derive(Clone, Debug, ShankContext, ShankInstruction)]
 pub enum StakeInstruction {
     /// Creates Stake config account which controls staking parameters.
     #[account(
@@ -402,8 +406,164 @@ pub enum StakeInstruction {
     DistributeRewards(u64),
 }
 
+impl StakeInstruction {
+    /// Packs a [StakeInstruction](enum.StakeInstruction.html) into a byte buffer.
+    pub fn pack(&self) -> Vec<u8> {
+        match self {
+            StakeInstruction::InitializeConfig {
+                cooldown_time_seconds,
+                max_deactivation_basis_points,
+            } => {
+                let mut data = Vec::with_capacity(11);
+                data.push(0);
+                data.extend_from_slice(&cooldown_time_seconds.to_le_bytes());
+                data.extend_from_slice(&max_deactivation_basis_points.to_le_bytes());
+                data
+            }
+            StakeInstruction::InitializeStake => vec![1],
+            StakeInstruction::StakeTokens(amount) => {
+                let mut data = Vec::with_capacity(9);
+                data.push(2);
+                data.extend_from_slice(&amount.to_le_bytes());
+                data
+            }
+            StakeInstruction::DeactivateStake(amount) => {
+                let mut data = Vec::with_capacity(9);
+                data.push(3);
+                data.extend_from_slice(&amount.to_le_bytes());
+                data
+            }
+            StakeInstruction::InactivateStake => vec![4],
+            StakeInstruction::WithdrawInactiveStake(amount) => {
+                let mut data = Vec::with_capacity(9);
+                data.push(5);
+                data.extend_from_slice(&amount.to_le_bytes());
+                data
+            }
+            StakeInstruction::HarvestHolderRewards => vec![6],
+            StakeInstruction::HarvestStakeRewards => vec![7],
+            StakeInstruction::Slash(amount) => {
+                let mut data = Vec::with_capacity(9);
+                data.push(8);
+                data.extend_from_slice(&amount.to_le_bytes());
+                data
+            }
+            StakeInstruction::SetAuthority(authority_type) => {
+                vec![
+                    9,
+                    match authority_type {
+                        AuthorityType::Config => 0,
+                        AuthorityType::Slash => 1,
+                        AuthorityType::Stake => 2,
+                    },
+                ]
+            }
+            StakeInstruction::UpdateConfig(field) => {
+                let mut data = Vec::with_capacity(11);
+                data.push(10);
+                match field {
+                    ConfigField::CooldownTimeSeconds(value) => {
+                        data.push(0);
+                        data.extend_from_slice(&value.to_le_bytes());
+                    }
+                    ConfigField::MaxDeactivationBasisPoints(value) => {
+                        data.push(1);
+                        data.extend_from_slice(&value.to_le_bytes());
+                    }
+                }
+                data
+            }
+            StakeInstruction::DistributeRewards(amount) => {
+                let mut data = Vec::with_capacity(9);
+                data.push(11);
+                data.extend_from_slice(&amount.to_le_bytes());
+                data
+            }
+        }
+    }
+
+    /// Unpacks a byte buffer into a [StakeInstruction](enum.StakeInstruction.html).
+    pub fn unpack(input: &[u8]) -> Result<Self, ProgramError> {
+        match input.split_first() {
+            // 0 - InitializeConfig: u64 (8) + u16 (2)
+            Some((&0, rest)) if rest.len() == 10 => {
+                let cooldown_time_seconds = i64::from_le_bytes(*array_ref![rest, 0, 8]);
+                let max_deactivation_basis_points = u16::from_le_bytes(*array_ref![rest, 8, 2]);
+
+                Ok(StakeInstruction::InitializeConfig {
+                    cooldown_time_seconds,
+                    max_deactivation_basis_points,
+                })
+            }
+            // 1 - InitializeStake
+            Some((&1, _)) => Ok(StakeInstruction::InitializeStake),
+            // 2 - StakeTokens: u64 (8)
+            Some((&2, rest)) if rest.len() == 8 => {
+                let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
+
+                Ok(StakeInstruction::StakeTokens(amount))
+            }
+            // 3 - DeactivateStake: u64 (8)
+            Some((&3, rest)) if rest.len() == 8 => {
+                let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
+
+                Ok(StakeInstruction::DeactivateStake(amount))
+            }
+            // 4 - InactivateStake
+            Some((&4, _)) => Ok(StakeInstruction::InactivateStake),
+            // 5 - WithdrawInactiveStake: u64 (8)
+            Some((&5, rest)) if rest.len() == 8 => {
+                let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
+
+                Ok(StakeInstruction::WithdrawInactiveStake(amount))
+            }
+            // 6 - HarvestHolderRewards
+            Some((&6, _)) => Ok(StakeInstruction::HarvestHolderRewards),
+            // 7 - HarvestStakeRewards
+            Some((&7, _)) => Ok(StakeInstruction::HarvestStakeRewards),
+            // 8 - Slash: u64 (8)
+            Some((&8, rest)) if rest.len() == 8 => {
+                let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
+
+                Ok(StakeInstruction::Slash(amount))
+            }
+            // 9 - SetAuthority: AuthorityType (u8))
+            Some((&9, rest)) if rest.len() == 1 => {
+                let authority_type =
+                    FromPrimitive::from_u8(rest[0]).ok_or(ProgramError::InvalidInstructionData)?;
+                Ok(StakeInstruction::SetAuthority(authority_type))
+            }
+            // 10 - UpdateConfig: ConfigField (u64 or u16)
+            Some((&10, rest)) => {
+                let field = match rest.split_first() {
+                    Some((&0, rest)) if rest.len() == 8 => {
+                        ConfigField::CooldownTimeSeconds(u64::from_le_bytes(*array_ref![
+                            rest, 0, 8
+                        ]))
+                    }
+                    Some((&1, rest)) if rest.len() == 2 => {
+                        ConfigField::MaxDeactivationBasisPoints(u16::from_le_bytes(*array_ref![
+                            rest, 0, 2
+                        ]))
+                    }
+                    _ => return Err(ProgramError::InvalidInstructionData),
+                };
+
+                Ok(StakeInstruction::UpdateConfig(field))
+            }
+            // 11 - DistributeRewards: u64 (8)
+            Some((&11, rest)) if rest.len() == 8 => {
+                let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
+
+                Ok(StakeInstruction::DistributeRewards(amount))
+            }
+            _ => Err(ProgramError::InvalidInstructionData),
+        }
+    }
+}
+
 /// Enum defining all authorities in the program
-#[derive(Clone, Debug, Eq, PartialEq, ShankType)]
+#[derive(Clone, Debug, Eq, FromPrimitive, PartialEq, ShankType)]
 pub enum AuthorityType {
     Config,
     Slash,
@@ -417,4 +577,113 @@ pub enum ConfigField {
     CooldownTimeSeconds(u64),
     /// Total proportion that can be deactivated at once, in basis points
     MaxDeactivationBasisPoints(u16),
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_pack_unpack_initialize_config() {
+        let original = StakeInstruction::InitializeConfig {
+            cooldown_time_seconds: 120,
+            max_deactivation_basis_points: 500,
+        };
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_pack_unpack_initialize_stake() {
+        let original = StakeInstruction::InitializeStake;
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_pack_unpack_stake_tokens() {
+        let original = StakeInstruction::StakeTokens(100);
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_pack_unpack_deactivate_stake() {
+        let original = StakeInstruction::DeactivateStake(100);
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_pack_unpack_inactivate_stake() {
+        let original = StakeInstruction::InactivateStake;
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_pack_unpack_withdraw_inactive_stake() {
+        let original = StakeInstruction::WithdrawInactiveStake(100);
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_pack_unpack_harvest_holder_rewards() {
+        let original = StakeInstruction::HarvestHolderRewards;
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_pack_unpack_harvest_stake_rewards() {
+        let original = StakeInstruction::HarvestStakeRewards;
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_pack_unpack_slash() {
+        let original = StakeInstruction::Slash(100);
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_pack_unpack_set_authority() {
+        let original = StakeInstruction::SetAuthority(AuthorityType::Config);
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_pack_unpack_update_config() {
+        let original = StakeInstruction::UpdateConfig(ConfigField::CooldownTimeSeconds(120));
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+
+        let original = StakeInstruction::UpdateConfig(ConfigField::MaxDeactivationBasisPoints(500));
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_pack_unpack_distribute_rewards() {
+        let original = StakeInstruction::DistributeRewards(100);
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
 }
