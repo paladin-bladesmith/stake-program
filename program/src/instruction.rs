@@ -213,7 +213,7 @@ pub enum StakeInstruction {
     WithdrawInactiveStake(u64),
 
     /// Harvests holder SOL rewards earned by the given stake account.
-    ///
+    /// 
     /// NOTE: This mostly replicates the logic in the rewards program. Since the
     /// staked tokens are all held by this program, stakers need a way to access
     /// their portion of holder rewards.

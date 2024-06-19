@@ -4863,7 +4863,18 @@ checksum = "cce5d563b58ef1bb2cdbbfe0dfb9ffdc24903b10ae6a4df2d8f425ece375033f"
 dependencies = [
  "bytemuck",
  "solana-program",
- "spl-discriminator-derive",
+ "spl-discriminator-derive 0.1.2",
+]
+
+[[package]]
+name = "spl-discriminator"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "34d1814406e98b08c5cd02c1126f83fd407ad084adce0b05fda5730677822eac"
+dependencies = [
+ "bytemuck",
+ "solana-program",
+ "spl-discriminator-derive 0.2.0",
 ]
 
 [[package]]
@@ -4873,7 +4884,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "07fd7858fc4ff8fb0e34090e41d7eb06a823e1057945c26d480bfc21d2338a93"
 dependencies = [
  "quote",
- "spl-discriminator-syn",
+ "spl-discriminator-syn 0.1.2",
+ "syn 2.0.66",
+]
+
+[[package]]
+name = "spl-discriminator-derive"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d9e8418ea6269dcfb01c712f0444d2c75542c04448b480e87de59d2865edc750"
+dependencies = [
+ "quote",
+ "spl-discriminator-syn 0.2.0",
  "syn 2.0.66",
 ]
 
@@ -4882,6 +4904,19 @@ name = "spl-discriminator-syn"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "18fea7be851bd98d10721782ea958097c03a0c2a07d8d4997041d0ece6319a63"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "sha2 0.10.8",
+ "syn 2.0.66",
+ "thiserror",
+]
+
+[[package]]
+name = "spl-discriminator-syn"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8c1f05593b7ca9eac7caca309720f2eafb96355e037e6d373b909a80fe7b69b9"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4982,7 +5017,7 @@ checksum = "56f335787add7fa711819f9e7c573f8145a5358a709446fe2d24bf2a88117c90"
 dependencies = [
  "bytemuck",
  "solana-program",
- "spl-discriminator",
+ "spl-discriminator 0.1.0",
  "spl-pod 0.1.0",
  "spl-program-error 0.3.0",
  "spl-type-length-value",
@@ -5035,7 +5070,7 @@ checksum = "b889509d49fa74a4a033ca5dae6c2307e9e918122d97e58562f5c4ffa795c75d"
 dependencies = [
  "bytemuck",
  "solana-program",
- "spl-discriminator",
+ "spl-discriminator 0.1.0",
  "spl-pod 0.1.0",
  "spl-program-error 0.3.0",
 ]
@@ -5048,7 +5083,7 @@ checksum = "4c16ce3ba6979645fb7627aa1e435576172dd63088dc7848cb09aa331fa1fe4f"
 dependencies = [
  "borsh 0.10.3",
  "solana-program",
- "spl-discriminator",
+ "spl-discriminator 0.1.0",
  "spl-pod 0.1.0",
  "spl-program-error 0.3.0",
  "spl-type-length-value",
@@ -5063,7 +5098,7 @@ dependencies = [
  "arrayref",
  "bytemuck",
  "solana-program",
- "spl-discriminator",
+ "spl-discriminator 0.1.0",
  "spl-pod 0.1.0",
  "spl-program-error 0.3.0",
  "spl-tlv-account-resolution",
@@ -5078,7 +5113,7 @@ checksum = "a468e6f6371f9c69aae760186ea9f1a01c2908351b06a5e0026d21cfc4d7ecac"
 dependencies = [
  "bytemuck",
  "solana-program",
- "spl-discriminator",
+ "spl-discriminator 0.1.0",
  "spl-pod 0.1.0",
  "spl-program-error 0.3.0",
 ]
@@ -5094,10 +5129,12 @@ name = "stake-program"
 version = "0.0.0"
 dependencies = [
  "borsh 0.10.3",
+ "bytemuck",
  "num-derive 0.3.3",
  "num-traits",
  "shank",
  "solana-program",
+ "spl-discriminator 0.2.2",
  "spl-pod 0.2.2",
  "thiserror",
 ]
