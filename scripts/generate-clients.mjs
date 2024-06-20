@@ -56,7 +56,7 @@ kinobi.update(
         const names = ["authority", "slashAuthority"];
         return (
           names.includes(node.name) &&
-          k.isNode(node, ["structFieldTypeNode"]) &&
+          k.isNode(node, "structFieldTypeNode") &&
           k.isNode(node.type, "definedTypeLinkNode") &&
           node.type.name === "optionalNonZeroPubkey"
         );
@@ -75,7 +75,7 @@ kinobi.update(
         const names = ["cooldownTimeSeconds", "deactivationTimestamp"];
         return (
           names.includes(node.name) &&
-          k.isNode(node, ["structFieldTypeNode"]) &&
+          k.isNode(node, "structFieldTypeNode") &&
           k.isNode(node.type, "definedTypeLinkNode") &&
           node.type.name === "unixTimestamp"
         );
