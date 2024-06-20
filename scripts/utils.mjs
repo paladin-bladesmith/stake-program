@@ -81,3 +81,12 @@ export function getCargo(folder) {
     )
   );
 }
+
+export function getNightlyToolchain() {
+  return parseToml(
+    fs.readFileSync(
+      path.join(workingDirectory, 'rust-nightly-toolchain.toml'),
+      'utf8'
+    )
+  ).toolchain.channel;
+}
