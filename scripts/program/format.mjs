@@ -9,5 +9,5 @@ import {
 // Format the programs.
 for (const folder of getProgramFolders()) {
   cd(`${path.join(workingDirectory, folder)}`);
-  await $`cargo +${getRustfmtToolchain()} fmt ${process.argv.slice(3)}`;
+  await $`cargo ${getRustfmtToolchain()} fmt ${process.argv.slice(3)}`;
 }
