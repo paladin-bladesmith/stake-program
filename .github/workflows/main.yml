@@ -182,7 +182,7 @@ jobs:
         run: pnpm clients:rust:test
 
   lint_rust:
-    name: Lint Rust client
+    name: Lint Rust
     needs: build_programs
     runs-on: ubuntu-latest
     steps:
@@ -192,5 +192,14 @@ jobs:
         uses: ./.github/actions/setup
         with:
           node: ${{ env.NODE_VERSION }}
-      - name: Lint Rust client
+      - name: Setup variables
+        run: |
+          pnpm zx ./scripts/env-variables.mjs >> $GITHUB_ENV
+      - uses: metaplex-foundation/actions/install-rust@v1
+        with:
+          toolchain: ${{ env.RUST_FMT_TOOLCHAIN }}
+          components: clippy,rustfmt
+      - name: Programs
+        run: pnpm programs:lint
+      - name: Client
         run: pnpm clients:rust:lint
