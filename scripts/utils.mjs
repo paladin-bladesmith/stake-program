@@ -82,7 +82,7 @@ export function getCargo(folder) {
   );
 }
 
-export function getCargoToolchainFromChannel(channel) {
+export function getToolchainArg(channel) {
   return channel ? `+${channel}` : '';
 }
 
@@ -92,11 +92,9 @@ export function getCargoMetadata(folder) {
 }
 
 export function getClippyToolchain(folder) {
-  const channel = getCargoMetadata(folder).scripts?.clippy?.toolchain?.channel;
-  return getCargoToolchainFromChannel(channel);
+  return getCargoMetadata(folder).scripts?.clippy?.toolchain?.channel;
 }
 
 export function getRustfmtToolchain(folder) {
-  const channel = getCargoMetadata(folder).scripts?.rustfmt?.toolchain?.channel;
-  return getCargoToolchainFromChannel(channel);
+  return getCargoMetadata(folder).scripts?.rustfmt?.toolchain?.channel;
 }

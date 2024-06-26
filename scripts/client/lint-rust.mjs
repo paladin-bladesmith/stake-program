@@ -1,8 +1,13 @@
 #!/usr/bin/env zx
-import 'zx/globals';
-import { getClippyToolchain, workingDirectory } from '../utils.mjs';
+import "zx/globals";
+import {
+  getClippyToolchain,
+  getToolchainArg,
+  workingDirectory,
+} from "../utils.mjs";
 
-// Check the client using clippy.
-cd(path.join(workingDirectory, 'clients', 'rust'));
-await $`cargo ${getClippyToolchain()} fmt --check ${process.argv.slice(3)}`;
-await $`cargo ${getClippyToolchain()} clippy ${process.argv.slice(3)}`;
+const toolchain = getToolchainArg(getClippyToolchain());
+// Check the client using rust fmt and clippy.
+cd(path.join(workingDirectory, "clients", "rust"));
+await $`cargo ${toolchain} fmt --check ${process.argv.slice(3)}`;
+await $`cargo ${toolchain} clippy ${process.argv.slice(3)}`;

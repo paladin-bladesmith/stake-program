@@ -192,13 +192,19 @@ jobs:
         uses: ./.github/actions/setup
         with:
           node: ${{ env.NODE_VERSION }}
-      - name: Setup variables
-        run: |
-          pnpm zx ./scripts/env-variables.mjs >> $GITHUB_ENV
-      - uses: metaplex-foundation/actions/install-rust@v1
+      - name: Set environment variables
+        shell: bash
+        run: pnpm zx ./scripts/ci/set-variables.mjs
+      - name: Install Rustfmt
+        uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: ${{ env.RUST_FMT_TOOLCHAIN }}
-          components: clippy,rustfmt
+          toolchain: ${{ env.RUSTFMT_TOOLCHAIN }}
+          components: rustfmt
+      - name: Install Clippy
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.CLIPPY_TOOLCHAIN }}
+          components: clippy
       - name: Programs
         run: pnpm programs:lint
       - name: Client
