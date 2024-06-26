@@ -17,9 +17,69 @@ env:
     target/
 
 jobs:
+  rust_fmt_check:
+    name: Check Rust formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          node: ${{ env.NODE_VERSION }}
+      - name: Set environment variables
+        shell: bash
+        run: pnpm zx ./scripts/ci/set-variables.mjs
+      - name: Install Rustfmt
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUSTFMT_TOOLCHAIN }}
+          components: rustfmt
+      - name: Check programs
+        run: pnpm programs:format --check
+      - name: Check client
+        run: pnpm clients:rust:format --check
+
+  rust_clippy_check:
+      name: Check Rust clippy
+      runs-on: ubuntu-latest
+      steps:
+        - name: Git checkout
+          uses: actions/checkout@v4
+        - name: Setup environment
+          uses: ./.github/actions/setup
+          with:
+            node: ${{ env.NODE_VERSION }}
+        - name: Set environment variables
+          shell: bash
+          run: pnpm zx ./scripts/ci/set-variables.mjs
+        - name: Install Clippy
+          uses: dtolnay/rust-toolchain@master
+          with:
+            toolchain: ${{ env.CLIPPY_TOOLCHAIN }}
+            components: clippy
+        - name: Check programs
+          run: pnpm programs:clippy
+        - name: Check client
+          run: pnpm clients:rust:clippy
+
+  lint_js:
+    name: Lint JS client
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          node: ${{ env.NODE_VERSION }}
+      - name: Lint JS client
+        run: pnpm clients:js:lint
+
   build_programs:
     name: Build programs
     runs-on: ubuntu-latest
+    needs: [rust_fmt_check, rust_clippy_check, lint_js]
     steps:
       - name: Git checkout
         uses: actions/checkout@v4
@@ -51,6 +111,7 @@ jobs:
   test_programs:
     name: Test programs
     runs-on: ubuntu-latest
+    needs: [rust_fmt_check, rust_clippy_check, lint_js]
     steps:
       - name: Git checkout
         uses: actions/checkout@v4
@@ -141,20 +202,6 @@ jobs:
       - name: Test JS client
         run: pnpm clients:js:test
 
-  lint_js:
-    name: Lint JS client
-    needs: build_programs
-    runs-on: ubuntu-latest
-    steps:
-      - name: Git checkout
-        uses: actions/checkout@v4
-      - name: Setup environment
-        uses: ./.github/actions/setup
-        with:
-          node: ${{ env.NODE_VERSION }}
-      - name: Lint JS client
-        run: pnpm clients:js:lint
-
   test_rust:
     name: Test Rust client
     needs: build_programs
@@ -180,17 +227,3 @@ jobs:
           key: ${{ runner.os }}-builds-${{ github.sha }}
       - name: Test Rust client
         run: pnpm clients:rust:test
-
-  lint_rust:
-    name: Lint Rust client
-    needs: build_programs
-    runs-on: ubuntu-latest
-    steps:
-      - name: Git checkout
-        uses: actions/checkout@v4
-      - name: Setup environment
-        uses: ./.github/actions/setup
-        with:
-          node: ${{ env.NODE_VERSION }}
-      - name: Lint Rust client
-        run: pnpm clients:rust:lint
