@@ -1,5 +1,5 @@
 import "zx/globals";
-import { getClippyToolchain, getRustfmtToolchain } from "./utils.mjs";
+import { getCargoMetadata } from "./utils.mjs";
 
 // RUST_FMT_TOOLCHAIN
 const fmtToolchain =
