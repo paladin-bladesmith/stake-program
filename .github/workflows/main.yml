@@ -35,9 +35,9 @@ jobs:
         with:
           toolchain: ${{ env.RUSTFMT_TOOLCHAIN }}
           components: rustfmt
-      - name: Programs
+      - name: Check programs
         run: pnpm programs:format --check
-      - name: Client
+      - name: Check client
         run: pnpm clients:rust:format --check
 
   rust_clippy_check:
@@ -58,9 +58,9 @@ jobs:
           with:
             toolchain: ${{ env.CLIPPY_TOOLCHAIN }}
             components: clippy
-        - name: Programs
+        - name: Check programs
           run: pnpm programs:clippy
-        - name: Client
+        - name: Check client
           run: pnpm clients:rust:clippy
 
   lint_js:
