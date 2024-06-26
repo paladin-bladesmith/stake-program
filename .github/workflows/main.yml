@@ -206,6 +206,10 @@ jobs:
           toolchain: ${{ env.CLIPPY_TOOLCHAIN }}
           components: clippy
       - name: Programs
-        run: pnpm programs:lint
+        run: |
+          pnpm programs:format --check
+          pnpm programs:clippy
       - name: Client
-        run: pnpm clients:rust:lint
+        run: |
+          pnpm clients:rust:format --check
+          pnpm clients:rust:clippy
