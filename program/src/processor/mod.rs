@@ -77,7 +77,7 @@ pub fn process_instruction<'a>(
             initialize_config::process_initialize_config(
                 program_id,
                 InitializeConfigAccounts::context(accounts)?,
-                cooldown_time_seconds as u64,
+                cooldown_time_seconds,
                 max_deactivation_basis_points,
             )
         }

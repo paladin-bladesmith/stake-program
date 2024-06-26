@@ -2,7 +2,7 @@ use arrayref::array_ref;
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
 use shank::{ShankContext, ShankInstruction, ShankType};
-use solana_program::{clock::UnixTimestamp, program_error::ProgramError};
+use solana_program::program_error::ProgramError;
 
 /// Enum defining all instructions in the Stake program.
 #[repr(C)]
@@ -37,7 +37,7 @@ pub enum StakeInstruction {
         desc = "Stake vault token account"
     )]
     InitializeConfig {
-        cooldown_time_seconds: UnixTimestamp,
+        cooldown_time_seconds: u64,
         max_deactivation_basis_points: u16,
     },
 
@@ -487,7 +487,7 @@ impl StakeInstruction {
         match input.split_first() {
             // 0 - InitializeConfig: u64 (8) + u16 (2)
             Some((&0, rest)) if rest.len() == 10 => {
-                let cooldown_time_seconds = i64::from_le_bytes(*array_ref![rest, 0, 8]);
+                let cooldown_time_seconds = u64::from_le_bytes(*array_ref![rest, 0, 8]);
                 let max_deactivation_basis_points = u16::from_le_bytes(*array_ref![rest, 8, 2]);
 
                 Ok(StakeInstruction::InitializeConfig {
