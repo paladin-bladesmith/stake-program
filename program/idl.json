@@ -800,6 +800,11 @@
     },
     {
       "code": 6,
+      "name": "InvalidAuthority",
+      "msg": "Invalid authority"
+    },
+    {
+      "code": 6,
       "name": "CloseAuthorityNotNone",
       "msg": "Close authority must be none"
     },

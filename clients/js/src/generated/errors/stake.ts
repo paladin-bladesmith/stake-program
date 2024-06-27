@@ -18,6 +18,8 @@ export const STAKE_ERROR__INVALID_ACCOUNT_DATA_LENGTH = 0x3; // 3
 export const STAKE_ERROR__INVALID_MINT = 0x4; // 4
 /** MissingTransferHook: Missing transfer hook */
 export const STAKE_ERROR__MISSING_TRANSFER_HOOK = 0x5; // 5
+/** InvalidAuthority: Invalid authority */
+export const STAKE_ERROR__INVALID_AUTHORITY = 0x6; // 6
 /** CloseAuthorityNotNone: Close authority must be none */
 export const STAKE_ERROR__CLOSE_AUTHORITY_NOT_NONE = 0x6; // 6
 /** DelegateNotNone: Delegate must be none */
@@ -32,6 +34,7 @@ export type StakeError =
   | typeof STAKE_ERROR__CLOSE_AUTHORITY_NOT_NONE
   | typeof STAKE_ERROR__DELEGATE_NOT_NONE
   | typeof STAKE_ERROR__INVALID_ACCOUNT_DATA_LENGTH
+  | typeof STAKE_ERROR__INVALID_AUTHORITY
   | typeof STAKE_ERROR__INVALID_MINT
   | typeof STAKE_ERROR__INVALID_TOKEN_ACCOUNT_EXTENSION
   | typeof STAKE_ERROR__INVALID_TOKEN_OWNER
@@ -46,6 +49,7 @@ if (__DEV__) {
     [STAKE_ERROR__CLOSE_AUTHORITY_NOT_NONE]: `Close authority must be none`,
     [STAKE_ERROR__DELEGATE_NOT_NONE]: `Delegate must be none`,
     [STAKE_ERROR__INVALID_ACCOUNT_DATA_LENGTH]: `Invalid account data length`,
+    [STAKE_ERROR__INVALID_AUTHORITY]: `Invalid authority`,
     [STAKE_ERROR__INVALID_MINT]: `Invalid mint`,
     [STAKE_ERROR__INVALID_TOKEN_ACCOUNT_EXTENSION]: `Invalid token account extension`,
     [STAKE_ERROR__INVALID_TOKEN_OWNER]: `Invalid token owner`,

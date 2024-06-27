@@ -28,6 +28,9 @@ pub enum StakeError {
     /// 5 - Missing transfer hook
     #[error("Missing transfer hook")]
     MissingTransferHook = 0x5,
+    /// 6 - Invalid authority
+    #[error("Invalid authority")]
+    InvalidAuthority = 0x6,
     /// 6 - Close authority must be none
     #[error("Close authority must be none")]
     CloseAuthorityNotNone = 0x6,
