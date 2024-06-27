@@ -1,4 +1,6 @@
-use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey};
+use solana_program::{
+    account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey, pubkey::Pubkey,
+};
 
 use crate::instruction::{
     accounts::{
@@ -22,6 +24,9 @@ mod slash;
 mod stake_tokens;
 mod update_config;
 mod withdraw_inactive_stake;
+
+// TODO: Replace this with the actual Rewards program ID
+const REWARDS_PROGRAM_ID: Pubkey = pubkey!("PStake1111111111111111111111111111111111111");
 
 #[inline(always)]
 pub fn process_instruction<'a>(
@@ -125,4 +130,22 @@ pub fn process_instruction<'a>(
             )
         }
     }
+}
+
+#[macro_export]
+macro_rules! require {
+    ( $constraint:expr, $error:expr $(,)? ) => {
+        if !$constraint {
+            return Err($error.into());
+        }
+    };
+    ( $constraint:expr, $error:expr, $message:expr $(,)? ) => {
+        if !$constraint {
+            solana_program::msg!("Constraint failed: {}", $message);
+            return Err($error.into());
+        }
+    };
+    ( $constraint:expr, $error:expr, $message:literal, $($args:tt)+ ) => {
+        require!( $constraint, $error, format!($message, $($args)+) );
+    };
 }

@@ -14,7 +14,7 @@ pub struct Config {
     /// The discriminator is equal to `ArrayDiscriminator:: UNINITIALIZED` when
     /// the account is empty, and equal to `Config::DISCRIMINATOR` when the account
     /// is initialized.
-    discriminator: [u8; 8],
+    pub(crate) discriminator: [u8; 8],
 
     /// Authority that can modify any elements in the config.
     pub authority: OptionalNonZeroPubkey,
@@ -42,9 +42,24 @@ pub struct Config {
     pub max_deactivation_basis_points: u16,
 
     /// Padding for alignment.
-    _padding: [u8; 6],
+    pub(crate) _padding: [u8; 6],
 }
 
 impl Config {
     pub const LEN: usize = std::mem::size_of::<Config>();
+
+    #[inline(always)]
+    pub fn is_initialized(&self) -> bool {
+        self.discriminator.as_slice() == Config::SPL_DISCRIMINATOR_SLICE
+    }
+
+    #[inline(always)]
+    pub fn get_signer_bump(&self) -> u8 {
+        self._padding[0]
+    }
+
+    #[inline(always)]
+    pub fn set_signer_bump(&mut self, bump: u8) {
+        self._padding[0] = bump;
+    }
 }
