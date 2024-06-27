@@ -6,8 +6,7 @@
 //!
 
 use crate::generated::types::AuthorityType;
-use borsh::BorshDeserialize;
-use borsh::BorshSerialize;
+use borsh::{BorshDeserialize, BorshSerialize};
 
 /// Accounts.
 pub struct SetAuthority {

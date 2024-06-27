@@ -8,5 +8,4 @@
 pub(crate) mod r#config;
 pub(crate) mod r#stake;
 
-pub use self::r#config::*;
-pub use self::r#stake::*;
+pub use self::{r#config::*, r#stake::*};

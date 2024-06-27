@@ -18,15 +18,9 @@ pub(crate) mod r#stake_tokens;
 pub(crate) mod r#update_config;
 pub(crate) mod r#withdraw_inactive_stake;
 
-pub use self::r#deactivate_stake::*;
-pub use self::r#distribute_rewards::*;
-pub use self::r#harvest_holder_rewards::*;
-pub use self::r#harvest_stake_rewards::*;
-pub use self::r#inactivate_stake::*;
-pub use self::r#initialize_config::*;
-pub use self::r#initialize_stake::*;
-pub use self::r#set_authority::*;
-pub use self::r#slash::*;
-pub use self::r#stake_tokens::*;
-pub use self::r#update_config::*;
-pub use self::r#withdraw_inactive_stake::*;
+pub use self::{
+    r#deactivate_stake::*, r#distribute_rewards::*, r#harvest_holder_rewards::*,
+    r#harvest_stake_rewards::*, r#inactivate_stake::*, r#initialize_config::*,
+    r#initialize_stake::*, r#set_authority::*, r#slash::*, r#stake_tokens::*, r#update_config::*,
+    r#withdraw_inactive_stake::*,
+};

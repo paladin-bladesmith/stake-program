@@ -5,8 +5,7 @@
 //! <https://github.com/kinobi-so/kinobi>
 //!
 
-use borsh::BorshDeserialize;
-use borsh::BorshSerialize;
+use borsh::{BorshDeserialize, BorshSerialize};
 
 /// Accounts.
 pub struct DeactivateStake {

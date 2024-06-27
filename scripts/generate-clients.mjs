@@ -114,5 +114,6 @@ kinobi.accept(
   renderRustVisitor(path.join(rustClient, "src", "generated"), {
     formatCode: true,
     crateFolder: rustClient,
+    toolchain: "+nightly-2023-10-05",
   })
 );

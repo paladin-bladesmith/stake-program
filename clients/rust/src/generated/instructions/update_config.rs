@@ -6,8 +6,7 @@
 //!
 
 use crate::generated::types::ConfigField;
-use borsh::BorshDeserialize;
-use borsh::BorshSerialize;
+use borsh::{BorshDeserialize, BorshSerialize};
 
 /// Accounts.
 pub struct UpdateConfig {
