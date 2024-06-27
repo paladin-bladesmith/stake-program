@@ -9,6 +9,7 @@ use paladin_stake::{
 use setup::{create_mint, create_token, mint_to, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS};
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
+    instruction::InstructionError,
     signature::{Keypair, Signer},
     system_instruction,
     transaction::Transaction,
@@ -255,5 +256,326 @@ mod initialize_config {
         // Then we expect an error.
 
         assert_custom_error!(err, StakeError::AmountGreaterThanZero);
+    }
+
+    #[tokio::test]
+    async fn fail_initialize_config_without_transfer_hook() {
+        let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
+            .start_with_context()
+            .await;
+
+        // Given an empty config account and a mint without a transfer hook.
+
+        let config = Keypair::new();
+        let authority = Keypair::new();
+        let authority_pubkey = authority.pubkey();
+
+        let mint = Keypair::new();
+        create_mint(
+            &mut context,
+            &mint,
+            &authority_pubkey,
+            Some(&authority_pubkey),
+            0,
+            &[], // <-- no transfer hook
+        )
+        .await
+        .unwrap();
+
+        let token = Keypair::new();
+        create_token(
+            &mut context,
+            &find_vault_pda(&config.pubkey()).0,
+            &token,
+            &mint.pubkey(),
+            TOKEN_ACCOUNT_EXTENSIONS,
+        )
+        .await
+        .unwrap();
+
+        let create_ix = system_instruction::create_account(
+            &context.payer.pubkey(),
+            &config.pubkey(),
+            context
+                .banks_client
+                .get_rent()
+                .await
+                .unwrap()
+                .minimum_balance(Config::LEN),
+            Config::LEN as u64,
+            &paladin_stake::ID,
+        );
+
+        let intialize_ix = InitializeConfigBuilder::new()
+            .config(config.pubkey())
+            .config_authority(authority_pubkey)
+            .slash_authority(authority_pubkey)
+            .mint(mint.pubkey())
+            .vault(token.pubkey())
+            .cooldown_time_seconds(1) // 1 second
+            .max_deactivation_basis_points(500) // 5%
+            .instruction();
+
+        // When we try to initialize the config with the mint without a transfer hook.
+
+        let tx = Transaction::new_signed_with_payer(
+            &[create_ix, intialize_ix],
+            Some(&context.payer.pubkey()),
+            &[&context.payer, &config],
+            context.last_blockhash,
+        );
+
+        let err = context
+            .banks_client
+            .process_transaction(tx)
+            .await
+            .unwrap_err();
+
+        // Then we expect an error.
+
+        assert_custom_error!(err, StakeError::MissingTransferHook);
+    }
+
+    #[tokio::test]
+    async fn fail_initialize_config_with_unitialized_mint() {
+        let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
+            .start_with_context()
+            .await;
+
+        // Given an empty config account and a mint.
+
+        let config = Keypair::new();
+        let authority = Keypair::new().pubkey();
+
+        let mint = Keypair::new();
+        let token = Keypair::new();
+        let rent = context.banks_client.get_rent().await.unwrap();
+
+        let create_mint_ix = system_instruction::create_account(
+            &context.payer.pubkey(),
+            &mint.pubkey(),
+            rent.minimum_balance(Config::LEN),
+            Config::LEN as u64,
+            &spl_token_2022::ID,
+        );
+
+        let create_ix = system_instruction::create_account(
+            &context.payer.pubkey(),
+            &config.pubkey(),
+            context
+                .banks_client
+                .get_rent()
+                .await
+                .unwrap()
+                .minimum_balance(Config::LEN),
+            Config::LEN as u64,
+            &paladin_stake::ID,
+        );
+
+        let initialize_ix = InitializeConfigBuilder::new()
+            .config(config.pubkey())
+            .config_authority(authority)
+            .slash_authority(authority)
+            .mint(mint.pubkey())
+            .vault(token.pubkey())
+            .cooldown_time_seconds(1) // 1 second
+            .max_deactivation_basis_points(500) // 5%
+            .instruction();
+
+        // When we try to initialize the config with the wrong token authority.
+
+        let tx = Transaction::new_signed_with_payer(
+            &[create_mint_ix, create_ix, initialize_ix],
+            Some(&context.payer.pubkey()),
+            &[&context.payer, &mint, &config],
+            context.last_blockhash,
+        );
+
+        let err = context
+            .banks_client
+            .process_transaction(tx)
+            .await
+            .unwrap_err();
+
+        // Then we expect an error.
+
+        assert_instruction_error!(err, InstructionError::UninitializedAccount);
+    }
+
+    #[tokio::test]
+    async fn fail_initialize_config_with_wrong_account_length() {
+        let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
+            .start_with_context()
+            .await;
+
+        // Given an empty config account and a mint.
+
+        let config = Keypair::new();
+        let authority = Keypair::new();
+        let authority_pubkey = authority.pubkey();
+
+        let mint = Keypair::new();
+        create_mint(
+            &mut context,
+            &mint,
+            &authority_pubkey,
+            Some(&authority_pubkey),
+            0,
+            MINT_EXTENSIONS,
+        )
+        .await
+        .unwrap();
+
+        let token = Keypair::new();
+        create_token(
+            &mut context,
+            &find_vault_pda(&config.pubkey()).0,
+            &token,
+            &mint.pubkey(),
+            TOKEN_ACCOUNT_EXTENSIONS,
+        )
+        .await
+        .unwrap();
+
+        let create_ix = system_instruction::create_account(
+            &context.payer.pubkey(),
+            &config.pubkey(),
+            context
+                .banks_client
+                .get_rent()
+                .await
+                .unwrap()
+                .minimum_balance(Config::LEN + 100),
+            (Config::LEN + 100) as u64, // <-- wrong length
+            &paladin_stake::ID,
+        );
+
+        let intialize_ix = InitializeConfigBuilder::new()
+            .config(config.pubkey())
+            .config_authority(authority_pubkey)
+            .slash_authority(authority_pubkey)
+            .mint(mint.pubkey())
+            .vault(token.pubkey())
+            .cooldown_time_seconds(1) // 1 second
+            .max_deactivation_basis_points(500) // 5%
+            .instruction();
+
+        // When we try to initialize the config with a non-empty token.
+
+        let tx = Transaction::new_signed_with_payer(
+            &[create_ix, intialize_ix],
+            Some(&context.payer.pubkey()),
+            &[&context.payer, &config],
+            context.last_blockhash,
+        );
+
+        let err = context
+            .banks_client
+            .process_transaction(tx)
+            .await
+            .unwrap_err();
+
+        // Then we expect an error.
+
+        assert_custom_error!(err, StakeError::InvalidAccountDataLength);
+    }
+
+    #[tokio::test]
+    async fn fail_initialize_config_with_initialized_account() {
+        let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
+            .start_with_context()
+            .await;
+
+        // Given an empty config account with an associated vault and a mint.
+
+        let config = Keypair::new();
+        let authority = Keypair::new().pubkey();
+
+        let mint = Keypair::new();
+        create_mint(
+            &mut context,
+            &mint,
+            &authority,
+            Some(&authority),
+            0,
+            MINT_EXTENSIONS,
+        )
+        .await
+        .unwrap();
+
+        let token = Keypair::new();
+        create_token(
+            &mut context,
+            &find_vault_pda(&config.pubkey()).0,
+            &token,
+            &mint.pubkey(),
+            TOKEN_ACCOUNT_EXTENSIONS,
+        )
+        .await
+        .unwrap();
+
+        let create_ix = system_instruction::create_account(
+            &context.payer.pubkey(),
+            &config.pubkey(),
+            context
+                .banks_client
+                .get_rent()
+                .await
+                .unwrap()
+                .minimum_balance(Config::LEN),
+            Config::LEN as u64,
+            &paladin_stake::ID,
+        );
+
+        // And we initialize a config.
+
+        let initialize_ix = InitializeConfigBuilder::new()
+            .config(config.pubkey())
+            .config_authority(authority)
+            .slash_authority(authority)
+            .mint(mint.pubkey())
+            .vault(token.pubkey())
+            .cooldown_time_seconds(1) // 1 second
+            .max_deactivation_basis_points(500) // 5%
+            .instruction();
+
+        let tx = Transaction::new_signed_with_payer(
+            &[create_ix, initialize_ix],
+            Some(&context.payer.pubkey()),
+            &[&context.payer, &config],
+            context.last_blockhash,
+        );
+        context.banks_client.process_transaction(tx).await.unwrap();
+
+        let account = get_account!(context, config.pubkey());
+        assert_eq!(account.data.len(), Config::LEN);
+
+        // When we try to initialize the config again.
+
+        let initialize_ix = InitializeConfigBuilder::new()
+            .config(config.pubkey())
+            .config_authority(authority)
+            .slash_authority(authority)
+            .mint(mint.pubkey())
+            .vault(token.pubkey())
+            .cooldown_time_seconds(1)
+            .max_deactivation_basis_points(500)
+            .instruction();
+
+        let tx = Transaction::new_signed_with_payer(
+            &[initialize_ix],
+            Some(&context.payer.pubkey()),
+            &[&context.payer],
+            context.last_blockhash,
+        );
+        let err = context
+            .banks_client
+            .process_transaction(tx)
+            .await
+            .unwrap_err();
+
+        // Then we expect an error.
+
+        assert_instruction_error!(err, InstructionError::AccountAlreadyInitialized);
     }
 }
