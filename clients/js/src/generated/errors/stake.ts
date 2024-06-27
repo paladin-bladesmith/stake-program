@@ -18,10 +18,13 @@ export const STAKE_ERROR__INVALID_ACCOUNT_DATA_LENGTH = 0x3; // 3
 export const STAKE_ERROR__INVALID_MINT = 0x4; // 4
 /** MissingTransferHook: Missing transfer hook */
 export const STAKE_ERROR__MISSING_TRANSFER_HOOK = 0x5; // 5
+/** InvalidAuthority: Invalid authority */
+export const STAKE_ERROR__INVALID_AUTHORITY = 0x6; // 6
 
 export type StakeError =
   | typeof STAKE_ERROR__AMOUNT_GREATER_THAN_ZERO
   | typeof STAKE_ERROR__INVALID_ACCOUNT_DATA_LENGTH
+  | typeof STAKE_ERROR__INVALID_AUTHORITY
   | typeof STAKE_ERROR__INVALID_MINT
   | typeof STAKE_ERROR__INVALID_TOKEN_OWNER
   | typeof STAKE_ERROR__INVALID_TRANSFER_HOOK_PROGRAM_ID
@@ -32,6 +35,7 @@ if (__DEV__) {
   stakeErrorMessages = {
     [STAKE_ERROR__AMOUNT_GREATER_THAN_ZERO]: `Amount cannot be greater than zero`,
     [STAKE_ERROR__INVALID_ACCOUNT_DATA_LENGTH]: `Invalid account data length`,
+    [STAKE_ERROR__INVALID_AUTHORITY]: `Invalid authority`,
     [STAKE_ERROR__INVALID_MINT]: `Invalid mint`,
     [STAKE_ERROR__INVALID_TOKEN_OWNER]: `Invalid token owner`,
     [STAKE_ERROR__INVALID_TRANSFER_HOOK_PROGRAM_ID]: `Invalid transfer hook program id`,

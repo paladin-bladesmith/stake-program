@@ -793,6 +793,11 @@
       "code": 5,
       "name": "MissingTransferHook",
       "msg": "Missing transfer hook"
+    },
+    {
+      "code": 6,
+      "name": "InvalidAuthority",
+      "msg": "Invalid authority"
     }
   ],
   "metadata": {

@@ -28,6 +28,9 @@ pub enum StakeError {
     /// 5 - Missing transfer hook
     #[error("Missing transfer hook")]
     MissingTransferHook = 0x5,
+    /// 6 - Invalid authority
+    #[error("Invalid authority")]
+    InvalidAuthority = 0x6,
 }
 
 impl solana_program::program_error::PrintProgramError for StakeError {
