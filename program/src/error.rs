@@ -44,10 +44,6 @@ pub enum StakeError {
     /// 8 - Invalid token account extension
     #[error("Invalid token account extension")]
     InvalidTokenAccountExtension,
-
-    /// 9 - Missing token account extensions
-    #[error("Missing token account extensions")]
-    MissingTokenAccountExtensions,
 }
 
 impl PrintProgramError for StakeError {
