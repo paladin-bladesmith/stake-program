@@ -32,6 +32,10 @@ pub enum StakeError {
     /// 5 - Missing transfer hook
     #[error("Missing transfer hook")]
     MissingTransferHook,
+
+    /// 6 - Invalid authority
+    #[error("Invalid authority")]
+    InvalidAuthority,
 }
 
 impl PrintProgramError for StakeError {
