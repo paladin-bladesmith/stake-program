@@ -162,7 +162,9 @@ jobs:
       - name: Generate IDLs
         run: pnpm generate:idls
       - name: Ensure working directory is clean
-        run: test -z "$(git status --porcelain)"
+        run: |
+          git status --porcelain
+          test -z "$(git status --porcelain)"
 
   generate_clients:
     name: Check client generation
@@ -179,7 +181,9 @@ jobs:
       - name: Generate clients
         run: pnpm generate:clients
       - name: Ensure working directory is clean
-        run: test -z "$(git status --porcelain)"
+        run: |
+          git status --porcelain
+          test -z "$(git status --porcelain)"
 
   test_js:
     name: Test JS client
