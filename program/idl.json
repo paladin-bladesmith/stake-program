@@ -763,6 +763,33 @@
       }
     }
   ],
+  "errors": [
+    {
+      "code": 0,
+      "name": "AmountGreaterThanZero",
+      "msg": "Amount cannot be greater than zero"
+    },
+    {
+      "code": 1,
+      "name": "InvalidTokenOwner",
+      "msg": "Invalid token owner"
+    },
+    {
+      "code": 2,
+      "name": "InvalidTransferHookProgramId",
+      "msg": "Invalid transfer hook program id"
+    },
+    {
+      "code": 3,
+      "name": "InvalidAccountDataLength",
+      "msg": "Invalid account data length"
+    },
+    {
+      "code": 4,
+      "name": "InvalidMint",
+      "msg": "Invalid mint"
+    }
+  ],
   "metadata": {
     "origin": "shank",
     "address": "PStake1111111111111111111111111111111111111",

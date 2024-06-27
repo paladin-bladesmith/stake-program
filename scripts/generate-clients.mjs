@@ -91,6 +91,15 @@ kinobi.update(
   ])
 );
 
+// Update accounts.
+kinobi.update(
+  k.updateAccountsVisitor({
+    config: {
+      size: 136,
+    },
+  })
+);
+
 // Render JavaScript.
 const jsClient = path.join(__dirname, "..", "clients", "js");
 kinobi.accept(
