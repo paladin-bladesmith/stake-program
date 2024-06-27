@@ -1,5 +1,10 @@
+#![allow(unused)]
+
 pub mod token;
 pub use token::*;
+
+use solana_program_test::{BanksClientError, ProgramTestContext};
+use solana_sdk::{pubkey::Pubkey, signer::Signer, system_instruction, transaction::Transaction};
 
 #[macro_export]
 macro_rules! assert_instruction_error {
@@ -57,4 +62,24 @@ macro_rules! get_account {
 
         account.unwrap()
     }};
+}
+
+pub async fn airdrop(
+    context: &mut ProgramTestContext,
+    receiver: &Pubkey,
+    amount: u64,
+) -> Result<(), BanksClientError> {
+    let tx = Transaction::new_signed_with_payer(
+        &[system_instruction::transfer(
+            &context.payer.pubkey(),
+            receiver,
+            amount,
+        )],
+        Some(&context.payer.pubkey()),
+        &[&context.payer],
+        context.last_blockhash,
+    );
+
+    context.banks_client.process_transaction(tx).await.unwrap();
+    Ok(())
 }
