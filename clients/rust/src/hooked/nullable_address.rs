@@ -14,3 +14,15 @@ impl NullableAddress {
         }
     }
 }
+
+impl From<Option<Pubkey>> for NullableAddress {
+    fn from(value: Option<Pubkey>) -> Self {
+        Self(value.unwrap_or_default())
+    }
+}
+
+impl From<Pubkey> for NullableAddress {
+    fn from(value: Pubkey) -> Self {
+        Self(value)
+    }
+}
