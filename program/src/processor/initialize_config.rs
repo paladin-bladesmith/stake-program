@@ -7,6 +7,7 @@ use spl_token_2022::{
 };
 
 use crate::{
+    err,
     error::StakeError,
     instruction::accounts::{Context, InitializeConfigAccounts},
     processor::REWARDS_PROGRAM_ID,
@@ -47,16 +48,19 @@ pub fn process_initialize_config(
     let mint = PodStateWithExtensions::<PodMint>::unpack(&mint_data)?;
 
     // ensure the mint is configured with the expected `TransferHook` extension
-    let transfer_hook = mint.get_extension::<TransferHook>()?;
-    let hook_program_id: Option<Pubkey> = transfer_hook.program_id.into();
+    if let Ok(transfer_hook) = mint.get_extension::<TransferHook>() {
+        let hook_program_id: Option<Pubkey> = transfer_hook.program_id.into();
 
-    require!(
-        hook_program_id == Some(REWARDS_PROGRAM_ID),
-        StakeError::InvalidTransferHookProgramId,
-        "expected {}, found {:?}",
-        program_id,
-        hook_program_id
-    );
+        require!(
+            hook_program_id == Some(REWARDS_PROGRAM_ID),
+            StakeError::InvalidTransferHookProgramId,
+            "expected {}, found {:?}",
+            program_id,
+            hook_program_id
+        );
+    } else {
+        return err!(StakeError::MissingTransferHook);
+    }
 
     // 2. vault (token account)
     // - must be initialized

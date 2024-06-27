@@ -28,6 +28,10 @@ pub enum StakeError {
     /// 4 - Invalid mint
     #[error("Invalid mint")]
     InvalidMint,
+
+    /// 5 - Missing transfer hook
+    #[error("Missing transfer hook")]
+    MissingTransferHook,
 }
 
 impl PrintProgramError for StakeError {
@@ -46,4 +50,18 @@ impl<T> DecodeError<T> for StakeError {
     fn type_of() -> &'static str {
         "StakeError"
     }
+}
+
+#[macro_export]
+macro_rules! err {
+    ( $error:expr ) => {{
+        Err($error.into())
+    }};
+    ( $error:expr, $msg:expr ) => {{
+        solana_program::msg!("Log: {}", $msg);
+        Err($error.into())
+    }};
+    ( $error:expr, $msg:literal, $($args:tt)+ ) => {{
+        err!($error, &format!($msg, $($args)+))
+    }};
 }

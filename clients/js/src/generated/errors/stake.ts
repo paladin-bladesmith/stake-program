@@ -16,13 +16,16 @@ export const STAKE_ERROR__INVALID_TRANSFER_HOOK_PROGRAM_ID = 0x2; // 2
 export const STAKE_ERROR__INVALID_ACCOUNT_DATA_LENGTH = 0x3; // 3
 /** InvalidMint: Invalid mint */
 export const STAKE_ERROR__INVALID_MINT = 0x4; // 4
+/** MissingTransferHook: Missing transfer hook */
+export const STAKE_ERROR__MISSING_TRANSFER_HOOK = 0x5; // 5
 
 export type StakeError =
   | typeof STAKE_ERROR__AMOUNT_GREATER_THAN_ZERO
   | typeof STAKE_ERROR__INVALID_ACCOUNT_DATA_LENGTH
   | typeof STAKE_ERROR__INVALID_MINT
   | typeof STAKE_ERROR__INVALID_TOKEN_OWNER
-  | typeof STAKE_ERROR__INVALID_TRANSFER_HOOK_PROGRAM_ID;
+  | typeof STAKE_ERROR__INVALID_TRANSFER_HOOK_PROGRAM_ID
+  | typeof STAKE_ERROR__MISSING_TRANSFER_HOOK;
 
 let stakeErrorMessages: Record<StakeError, string> | undefined;
 if (__DEV__) {
@@ -32,6 +35,7 @@ if (__DEV__) {
     [STAKE_ERROR__INVALID_MINT]: `Invalid mint`,
     [STAKE_ERROR__INVALID_TOKEN_OWNER]: `Invalid token owner`,
     [STAKE_ERROR__INVALID_TRANSFER_HOOK_PROGRAM_ID]: `Invalid transfer hook program id`,
+    [STAKE_ERROR__MISSING_TRANSFER_HOOK]: `Missing transfer hook`,
   };
 }
 

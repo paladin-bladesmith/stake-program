@@ -788,6 +788,11 @@
       "code": 4,
       "name": "InvalidMint",
       "msg": "Invalid mint"
+    },
+    {
+      "code": 5,
+      "name": "MissingTransferHook",
+      "msg": "Missing transfer hook"
     }
   ],
   "metadata": {
