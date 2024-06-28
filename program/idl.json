@@ -661,11 +661,15 @@
             "type": "u16"
           },
           {
+            "name": "signerBump",
+            "type": "u8"
+          },
+          {
             "name": "padding",
             "type": {
               "array": [
                 "u8",
-                6
+                5
               ]
             }
           }
@@ -793,6 +797,26 @@
       "code": 5,
       "name": "MissingTransferHook",
       "msg": "Missing transfer hook"
+    },
+    {
+      "code": 6,
+      "name": "CloseAuthorityNotNone",
+      "msg": "Close authority must be none"
+    },
+    {
+      "code": 7,
+      "name": "DelegateNotNone",
+      "msg": "Delegate must be none"
+    },
+    {
+      "code": 8,
+      "name": "InvalidTokenAccountExtension",
+      "msg": "Invalid token account extension"
+    },
+    {
+      "code": 9,
+      "name": "MissingTokenAccountExtensions",
+      "msg": "Missing token account extensions"
     }
   ],
   "metadata": {

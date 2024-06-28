@@ -67,7 +67,7 @@ pub fn process_initialize_config(
     // - must be initialized
     // - have the vault signer (PDA) as owner
     // - no close authority or delegate
-    // - no other extension but `ImmutableOwner` and `TransferHookAccount`
+    // - no other extension apart from `ImmutableOwner` and `TransferHookAccount`
     // - have the correct mint
     // - amount equal to 0
 
@@ -95,6 +95,8 @@ pub fn process_initialize_config(
         "vault"
     );
 
+    let mut required_extensions = Vec::from(VALID_VAULT_TOKEN_EXTENSIONS);
+
     vault
         .get_extension_types()?
         .iter()
@@ -103,8 +105,16 @@ pub fn process_initialize_config(
                 msg!("Invalid token extension: {:?}", extension_type);
                 return Err(StakeError::InvalidTokenAccountExtension);
             }
+            required_extensions.retain(|e| e != extension_type);
             Ok(())
         })?;
+
+    require!(
+        required_extensions.is_empty(),
+        StakeError::MissingTokenAccountExtensions,
+        "missing {:?} extension(s) in vault",
+        required_extensions
+    );
 
     require!(
         &vault.base.mint == ctx.accounts.mint.key,
