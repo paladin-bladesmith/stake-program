@@ -87,6 +87,7 @@ jobs:
 
   build_programs:
     name: Build programs
+    needs: [lint_programs, lint_rust_client, lint_js_client]
     runs-on: ubuntu-latest
     steps:
       - name: Git checkout
@@ -116,33 +117,9 @@ jobs:
           path: ./**/*.so
           key: ${{ runner.os }}-builds-${{ github.sha }}
 
-  test_programs:
-    name: Test programs
-    needs: [lint_programs, lint_rust_client, lint_js_client, build_programs]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Git checkout
-        uses: actions/checkout@v4
-      - name: Setup environment
-        uses: ./.github/actions/setup
-        with:
-          node: ${{ env.NODE_VERSION }}
-          solana: ${{ env.SOLANA_VERSION }}
-      - name: Cache test cargo dependencies
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.CARGO_CACHE }}
-          key: ${{ runner.os }}-cargo-program-tests-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-program-tests
-            ${{ runner.os }}-cargo-programs-${{ hashFiles('**/Cargo.lock') }}
-            ${{ runner.os }}-cargo-programs
-      - name: Test programs
-        run: pnpm programs:test
-
   generate_clients:
     name: Check client generation
-    needs: [lint_programs, lint_rust_client, lint_js_client, build_programs]
+    needs: [lint_programs, lint_rust_client, lint_js_client]
     runs-on: ubuntu-latest
     steps:
       - name: Git checkout
@@ -169,7 +146,7 @@ jobs:
 
   generate_idls:
     name: Check IDL generation
-    needs: [lint_programs, lint_rust_client, lint_js_client, build_programs]
+    needs: [lint_programs, lint_rust_client, lint_js_client]
     runs-on: ubuntu-latest
     steps:
       - name: Git checkout
@@ -202,9 +179,33 @@ jobs:
           git status --porcelain
           test -z "$(git status --porcelain)"
 
+  test_programs:
+    name: Test programs
+    needs: [build_programs, generate_clients, generate_idls]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          node: ${{ env.NODE_VERSION }}
+          solana: ${{ env.SOLANA_VERSION }}
+      - name: Cache test cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CARGO_CACHE }}
+          key: ${{ runner.os }}-cargo-program-tests-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-program-tests
+            ${{ runner.os }}-cargo-programs-${{ hashFiles('**/Cargo.lock') }}
+            ${{ runner.os }}-cargo-programs
+      - name: Test programs
+        run: pnpm programs:test
+
   test_js:
     name: Test JS client
-    needs: [lint_programs, lint_rust_client, lint_js_client, build_programs]
+    needs: [build_programs, generate_clients, generate_idls]
     runs-on: ubuntu-latest
     steps:
       - name: Git checkout
@@ -224,7 +225,7 @@ jobs:
 
   test_rust:
     name: Test Rust client
-    needs: [lint_programs, lint_rust_client, lint_js_client, build_programs]
+    needs: [build_programs, generate_clients, generate_idls]
     runs-on: ubuntu-latest
     steps:
       - name: Git checkout
