@@ -72,7 +72,7 @@ pub fn process_initialize_config(
     // - amount equal to 0
 
     let vault_data = ctx.accounts.vault.try_borrow_data()?;
-    // unpack checks if the token is initialized
+    // unpack checks if the token account is initialized
     let vault = PodStateWithExtensions::<PodAccount>::unpack(&vault_data)?;
 
     let (vault_signer, signer_bump) = find_vault_pda(ctx.accounts.config.key, program_id);
@@ -95,8 +95,6 @@ pub fn process_initialize_config(
         "vault"
     );
 
-    let mut required_extensions = Vec::from(VALID_VAULT_TOKEN_EXTENSIONS);
-
     vault
         .get_extension_types()?
         .iter()
@@ -105,16 +103,8 @@ pub fn process_initialize_config(
                 msg!("Invalid token extension: {:?}", extension_type);
                 return Err(StakeError::InvalidTokenAccountExtension);
             }
-            required_extensions.retain(|e| e != extension_type);
             Ok(())
         })?;
-
-    require!(
-        required_extensions.is_empty(),
-        StakeError::MissingTokenAccountExtensions,
-        "missing {:?} extension(s) in vault",
-        required_extensions
-    );
 
     require!(
         &vault.base.mint == ctx.accounts.mint.key,
