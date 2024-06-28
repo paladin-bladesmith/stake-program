@@ -25,7 +25,8 @@ pub struct Config {
     pub token_amount_delegated: u64,
     pub total_stake_rewards: u64,
     pub max_deactivation_basis_points: u16,
-    pub padding: [u8; 6],
+    pub signer_bump: u8,
+    pub padding: [u8; 5],
 }
 
 impl Config {

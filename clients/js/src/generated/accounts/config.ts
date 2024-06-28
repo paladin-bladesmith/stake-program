@@ -54,6 +54,7 @@ export type Config = {
   tokenAmountDelegated: bigint;
   totalStakeRewards: bigint;
   maxDeactivationBasisPoints: number;
+  signerBump: number;
   padding: Array<number>;
 };
 
@@ -66,6 +67,7 @@ export type ConfigArgs = {
   tokenAmountDelegated: number | bigint;
   totalStakeRewards: number | bigint;
   maxDeactivationBasisPoints: number;
+  signerBump: number;
   padding: Array<number>;
 };
 
@@ -79,7 +81,8 @@ export function getConfigEncoder(): Encoder<ConfigArgs> {
     ['tokenAmountDelegated', getU64Encoder()],
     ['totalStakeRewards', getU64Encoder()],
     ['maxDeactivationBasisPoints', getU16Encoder()],
-    ['padding', getArrayEncoder(getU8Encoder(), { size: 6 })],
+    ['signerBump', getU8Encoder()],
+    ['padding', getArrayEncoder(getU8Encoder(), { size: 5 })],
   ]);
 }
 
@@ -93,7 +96,8 @@ export function getConfigDecoder(): Decoder<Config> {
     ['tokenAmountDelegated', getU64Decoder()],
     ['totalStakeRewards', getU64Decoder()],
     ['maxDeactivationBasisPoints', getU16Decoder()],
-    ['padding', getArrayDecoder(getU8Decoder(), { size: 6 })],
+    ['signerBump', getU8Decoder()],
+    ['padding', getArrayDecoder(getU8Decoder(), { size: 5 })],
   ]);
 }
 

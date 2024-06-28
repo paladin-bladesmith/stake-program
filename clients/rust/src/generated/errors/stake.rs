@@ -28,6 +28,18 @@ pub enum StakeError {
     /// 5 - Missing transfer hook
     #[error("Missing transfer hook")]
     MissingTransferHook = 0x5,
+    /// 6 - Close authority must be none
+    #[error("Close authority must be none")]
+    CloseAuthorityNotNone = 0x6,
+    /// 7 - Delegate must be none
+    #[error("Delegate must be none")]
+    DelegateNotNone = 0x7,
+    /// 8 - Invalid token account extension
+    #[error("Invalid token account extension")]
+    InvalidTokenAccountExtension = 0x8,
+    /// 9 - Missing token account extensions
+    #[error("Missing token account extensions")]
+    MissingTokenAccountExtensions = 0x9,
 }
 
 impl solana_program::program_error::PrintProgramError for StakeError {
