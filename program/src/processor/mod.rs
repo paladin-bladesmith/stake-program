@@ -8,12 +8,7 @@ use {
         },
         StakeInstruction,
     },
-    solana_program::{
-        account_info::AccountInfo,
-        entrypoint::ProgramResult,
-        msg,
-        pubkey::{self, Pubkey},
-    },
+    solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey},
 };
 
 mod deactivate_stake;
@@ -30,7 +25,8 @@ mod update_config;
 mod withdraw_inactive_stake;
 
 // TODO: Replace this with the actual Rewards program ID
-const REWARDS_PROGRAM_ID: Pubkey = pubkey!("PStake1111111111111111111111111111111111111");
+const REWARDS_PROGRAM_ID: Pubkey =
+    solana_program::pubkey!("PStake1111111111111111111111111111111111111");
 
 #[inline(always)]
 pub fn process_instruction<'a>(
