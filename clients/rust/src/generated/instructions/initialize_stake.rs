@@ -3,7 +3,6 @@
 //! to add features, then rerun kinobi to update it.
 //!
 //! <https://github.com/kinobi-so/kinobi>
-//!
 
 use borsh::{BorshDeserialize, BorshSerialize};
 
@@ -11,7 +10,8 @@ use borsh::{BorshDeserialize, BorshSerialize};
 pub struct InitializeStake {
     /// Stake config account
     pub config: solana_program::pubkey::Pubkey,
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator stake account (pda of `['stake::state::stake', validator,
+    /// config]`)
     pub stake: solana_program::pubkey::Pubkey,
     /// Validator vote account
     pub validator_vote: solana_program::pubkey::Pubkey,
@@ -79,7 +79,8 @@ impl Default for InitializeStakeInstructionData {
 ///   0. `[]` config
 ///   1. `[writable]` stake
 ///   2. `[]` validator_vote
-///   3. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   3. `[optional]` system_program (default to
+///      `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct InitializeStakeBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
@@ -99,7 +100,8 @@ impl InitializeStakeBuilder {
         self.config = Some(config);
         self
     }
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator stake account (pda of `['stake::state::stake', validator,
+    /// config]`)
     #[inline(always)]
     pub fn stake(&mut self, stake: solana_program::pubkey::Pubkey) -> &mut Self {
         self.stake = Some(stake);
@@ -155,7 +157,8 @@ impl InitializeStakeBuilder {
 pub struct InitializeStakeCpiAccounts<'a, 'b> {
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator stake account (pda of `['stake::state::stake', validator,
+    /// config]`)
     pub stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Validator vote account
     pub validator_vote: &'b solana_program::account_info::AccountInfo<'a>,
@@ -169,7 +172,8 @@ pub struct InitializeStakeCpi<'a, 'b> {
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator stake account (pda of `['stake::state::stake', validator,
+    /// config]`)
     pub stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Validator vote account
     pub validator_vote: &'b solana_program::account_info::AccountInfo<'a>,
@@ -306,7 +310,8 @@ impl<'a, 'b> InitializeStakeCpiBuilder<'a, 'b> {
         self.instruction.config = Some(config);
         self
     }
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator stake account (pda of `['stake::state::stake', validator,
+    /// config]`)
     #[inline(always)]
     pub fn stake(&mut self, stake: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.stake = Some(stake);
@@ -345,8 +350,9 @@ impl<'a, 'b> InitializeStakeCpiBuilder<'a, 'b> {
     }
     /// Add additional accounts to the instruction.
     ///
-    /// Each account is represented by a tuple of the `AccountInfo`, a `bool` indicating whether the account is writable or not,
-    /// and a `bool` indicating whether the account is a signer or not.
+    /// Each account is represented by a tuple of the `AccountInfo`, a `bool`
+    /// indicating whether the account is writable or not, and a `bool`
+    /// indicating whether the account is a signer or not.
     #[inline(always)]
     pub fn add_remaining_accounts(
         &mut self,

@@ -1,15 +1,17 @@
-use solana_program::{
-    clock::UnixTimestamp, entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey,
-};
-
-use crate::{
-    error::StakeError,
-    instruction::{
-        accounts::{Context, UpdateConfigAccounts},
-        ConfigField,
+use {
+    crate::{
+        error::StakeError,
+        instruction::{
+            accounts::{Context, UpdateConfigAccounts},
+            ConfigField,
+        },
+        require,
+        state::Config,
     },
-    require,
-    state::Config,
+    solana_program::{
+        clock::UnixTimestamp, entrypoint::ProgramResult, program_error::ProgramError,
+        pubkey::Pubkey,
+    },
 };
 
 /// Updates configuration parameters.
@@ -76,8 +78,9 @@ pub fn process_update_config(
             }
         }
     } else {
-        // TODO: do we need to log a message to say that the config authority is not set
-        // and the update did not happen? Or fail the transaction?
+        // TODO: do we need to log a message to say that the config authority is
+        // not set and the update did not happen? Or fail the
+        // transaction?
     }
 
     Ok(())

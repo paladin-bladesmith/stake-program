@@ -3,7 +3,6 @@
 //! to add features, then rerun kinobi to update it.
 //!
 //! <https://github.com/kinobi-so/kinobi>
-//!
 
 use borsh::{BorshDeserialize, BorshSerialize};
 
@@ -11,7 +10,8 @@ use borsh::{BorshDeserialize, BorshSerialize};
 pub struct HarvestStakeRewards {
     /// Stake config account
     pub config: solana_program::pubkey::Pubkey,
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator stake account (pda of `['stake::state::stake', validator,
+    /// config]`)
     pub stake: solana_program::pubkey::Pubkey,
     /// Destination account for withdrawn lamports
     pub destination: solana_program::pubkey::Pubkey,
@@ -101,7 +101,8 @@ impl HarvestStakeRewardsBuilder {
         self.config = Some(config);
         self
     }
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator stake account (pda of `['stake::state::stake', validator,
+    /// config]`)
     #[inline(always)]
     pub fn stake(&mut self, stake: solana_program::pubkey::Pubkey) -> &mut Self {
         self.stake = Some(stake);
@@ -157,7 +158,8 @@ impl HarvestStakeRewardsBuilder {
 pub struct HarvestStakeRewardsCpiAccounts<'a, 'b> {
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator stake account (pda of `['stake::state::stake', validator,
+    /// config]`)
     pub stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Destination account for withdrawn lamports
     pub destination: &'b solana_program::account_info::AccountInfo<'a>,
@@ -171,7 +173,8 @@ pub struct HarvestStakeRewardsCpi<'a, 'b> {
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator stake account (pda of `['stake::state::stake', validator,
+    /// config]`)
     pub stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Destination account for withdrawn lamports
     pub destination: &'b solana_program::account_info::AccountInfo<'a>,
@@ -310,7 +313,8 @@ impl<'a, 'b> HarvestStakeRewardsCpiBuilder<'a, 'b> {
         self.instruction.config = Some(config);
         self
     }
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator stake account (pda of `['stake::state::stake', validator,
+    /// config]`)
     #[inline(always)]
     pub fn stake(&mut self, stake: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.stake = Some(stake);
@@ -349,8 +353,9 @@ impl<'a, 'b> HarvestStakeRewardsCpiBuilder<'a, 'b> {
     }
     /// Add additional accounts to the instruction.
     ///
-    /// Each account is represented by a tuple of the `AccountInfo`, a `bool` indicating whether the account is writable or not,
-    /// and a `bool` indicating whether the account is a signer or not.
+    /// Each account is represented by a tuple of the `AccountInfo`, a `bool`
+    /// indicating whether the account is writable or not, and a `bool`
+    /// indicating whether the account is a signer or not.
     #[inline(always)]
     pub fn add_remaining_accounts(
         &mut self,

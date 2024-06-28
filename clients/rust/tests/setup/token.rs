@@ -1,11 +1,13 @@
-use solana_program_test::{BanksClientError, ProgramTestContext};
-use solana_sdk::{
-    pubkey::Pubkey, signature::Keypair, signer::Signer, system_instruction,
-    transaction::Transaction,
-};
-use spl_token_2022::{
-    extension::{transfer_hook, ExtensionType},
-    state::{Account, Mint},
+use {
+    solana_program_test::{BanksClientError, ProgramTestContext},
+    solana_sdk::{
+        pubkey::Pubkey, signature::Keypair, signer::Signer, system_instruction,
+        transaction::Transaction,
+    },
+    spl_token_2022::{
+        extension::{transfer_hook, ExtensionType},
+        state::{Account, Mint},
+    },
 };
 
 /// Default extension for a mint account.

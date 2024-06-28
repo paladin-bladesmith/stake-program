@@ -3,7 +3,6 @@
 //! to add features, then rerun kinobi to update it.
 //!
 //! <https://github.com/kinobi-so/kinobi>
-//!
 
 pub(crate) mod r#deactivate_stake;
 pub(crate) mod r#distribute_rewards;

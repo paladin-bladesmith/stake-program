@@ -1,10 +1,12 @@
-use num_derive::FromPrimitive;
-use solana_program::{
-    decode_error::DecodeError,
-    msg,
-    program_error::{PrintProgramError, ProgramError},
+use {
+    num_derive::FromPrimitive,
+    solana_program::{
+        decode_error::DecodeError,
+        msg,
+        program_error::{PrintProgramError, ProgramError},
+    },
+    thiserror::Error,
 };
-use thiserror::Error;
 
 // Note: Shank does not export the type when we use `spl_program_error`.
 #[derive(Error, Clone, Debug, Eq, PartialEq, FromPrimitive)]

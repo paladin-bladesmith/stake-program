@@ -3,7 +3,6 @@
 //! to add features, then rerun kinobi to update it.
 //!
 //! <https://github.com/kinobi-so/kinobi>
-//!
 
 use borsh::{BorshDeserialize, BorshSerialize};
 
@@ -11,7 +10,8 @@ use borsh::{BorshDeserialize, BorshSerialize};
 pub struct Slash {
     /// Stake config account
     pub config: solana_program::pubkey::Pubkey,
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator stake account (pda of `['stake::state::stake', validator,
+    /// config]`)
     pub stake: solana_program::pubkey::Pubkey,
     /// Config slash authority
     pub slash_authority: solana_program::pubkey::Pubkey,
@@ -104,7 +104,8 @@ pub struct SlashInstructionArgs {
 ///   2. `[signer]` slash_authority
 ///   3. `[writable]` vault
 ///   4. `[]` vault_authority
-///   5. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   5. `[optional]` token_program (default to
+///      `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 #[derive(Clone, Debug, Default)]
 pub struct SlashBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
@@ -127,7 +128,8 @@ impl SlashBuilder {
         self.config = Some(config);
         self
     }
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator stake account (pda of `['stake::state::stake', validator,
+    /// config]`)
     #[inline(always)]
     pub fn stake(&mut self, stake: solana_program::pubkey::Pubkey) -> &mut Self {
         self.stake = Some(stake);
@@ -157,8 +159,8 @@ impl SlashBuilder {
         self.vault_authority = Some(vault_authority);
         self
     }
-    /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
-    /// Token program
+    /// `[optional account, default to
+    /// 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']` Token program
     #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
         self.token_program = Some(token_program);
@@ -211,7 +213,8 @@ impl SlashBuilder {
 pub struct SlashCpiAccounts<'a, 'b> {
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator stake account (pda of `['stake::state::stake', validator,
+    /// config]`)
     pub stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Config slash authority
     pub slash_authority: &'b solana_program::account_info::AccountInfo<'a>,
@@ -229,7 +232,8 @@ pub struct SlashCpi<'a, 'b> {
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator stake account (pda of `['stake::state::stake', validator,
+    /// config]`)
     pub stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Config slash authority
     pub slash_authority: &'b solana_program::account_info::AccountInfo<'a>,
@@ -393,7 +397,8 @@ impl<'a, 'b> SlashCpiBuilder<'a, 'b> {
         self.instruction.config = Some(config);
         self
     }
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator stake account (pda of `['stake::state::stake', validator,
+    /// config]`)
     #[inline(always)]
     pub fn stake(&mut self, stake: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.stake = Some(stake);
@@ -452,8 +457,9 @@ impl<'a, 'b> SlashCpiBuilder<'a, 'b> {
     }
     /// Add additional accounts to the instruction.
     ///
-    /// Each account is represented by a tuple of the `AccountInfo`, a `bool` indicating whether the account is writable or not,
-    /// and a `bool` indicating whether the account is a signer or not.
+    /// Each account is represented by a tuple of the `AccountInfo`, a `bool`
+    /// indicating whether the account is writable or not, and a `bool`
+    /// indicating whether the account is a signer or not.
     #[inline(always)]
     pub fn add_remaining_accounts(
         &mut self,

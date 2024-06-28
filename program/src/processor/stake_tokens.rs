@@ -1,6 +1,7 @@
-use solana_program::{entrypoint::ProgramResult, pubkey::Pubkey};
-
-use crate::instruction::accounts::{Context, StakeTokensAccounts};
+use {
+    crate::instruction::accounts::{Context, StakeTokensAccounts},
+    solana_program::{entrypoint::ProgramResult, pubkey::Pubkey},
+};
 
 /// Stakes tokens with the given config.
 ///

@@ -1,7 +1,9 @@
-use bytemuck::{Pod, Zeroable};
-use shank::ShankAccount;
-use solana_program::{clock::UnixTimestamp, pubkey::Pubkey};
-use spl_discriminator::SplDiscriminate;
+use {
+    bytemuck::{Pod, Zeroable},
+    shank::ShankAccount,
+    solana_program::{clock::UnixTimestamp, pubkey::Pubkey},
+    spl_discriminator::SplDiscriminate,
+};
 
 /// Data for an amount of tokens staked with a validator
 #[repr(C)]
@@ -11,8 +13,8 @@ pub struct Stake {
     /// Account disciminator.
     ///
     /// The discriminator is equal to `ArrayDiscriminator:: UNINITIALIZED` when
-    /// the account is empty, and equal to `Stake::DISCRIMINATOR` when the account
-    /// is initialized.
+    /// the account is empty, and equal to `Stake::DISCRIMINATOR` when the
+    /// account is initialized.
     discriminator: [u8; 8],
 
     /// Amount of staked tokens currently active
@@ -37,12 +39,13 @@ pub struct Stake {
     /// The address of the validator vote account
     pub validator: Pubkey,
 
-    /// Stores the "last_seen_holder_rewards" just for this stake account, allowing
-    /// stakers to withdraw rewards whenever, just like normal token users
+    /// Stores the "last_seen_holder_rewards" just for this stake account,
+    /// allowing stakers to withdraw rewards whenever, just like normal
+    /// token users
     pub last_seen_holder_rewards: u64,
 
-    /// Stores the "last_seen_stake_rewards" just for this stake account, allowing
-    /// stakers to withdraw rewards on their own schedule
+    /// Stores the "last_seen_stake_rewards" just for this stake account,
+    /// allowing stakers to withdraw rewards on their own schedule
     pub last_seen_stake_rewards: u64,
 }
 

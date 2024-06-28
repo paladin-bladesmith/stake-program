@@ -1,18 +1,19 @@
-use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey};
-use spl_discriminator::SplDiscriminate;
-use spl_pod::optional_keys::OptionalNonZeroPubkey;
-use spl_token_2022::{
-    extension::{transfer_hook::TransferHook, BaseStateWithExtensions, PodStateWithExtensions},
-    pod::{PodAccount, PodMint},
-};
-
-use crate::{
-    err,
-    error::StakeError,
-    instruction::accounts::{Context, InitializeConfigAccounts},
-    processor::REWARDS_PROGRAM_ID,
-    require,
-    state::Config,
+use {
+    crate::{
+        err,
+        error::StakeError,
+        instruction::accounts::{Context, InitializeConfigAccounts},
+        processor::REWARDS_PROGRAM_ID,
+        require,
+        state::Config,
+    },
+    solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey},
+    spl_discriminator::SplDiscriminate,
+    spl_pod::optional_keys::OptionalNonZeroPubkey,
+    spl_token_2022::{
+        extension::{transfer_hook::TransferHook, BaseStateWithExtensions, PodStateWithExtensions},
+        pod::{PodAccount, PodMint},
+    },
 };
 
 /// Creates Stake config account which controls staking parameters.

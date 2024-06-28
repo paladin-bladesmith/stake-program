@@ -1,15 +1,19 @@
-use solana_program::{
-    account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey, pubkey::Pubkey,
-};
-
-use crate::instruction::{
-    accounts::{
-        DeactivateStakeAccounts, DistributeRewardsAccounts, HarvestHolderRewardsAccounts,
-        HarvestStakeRewardsAccounts, InactivateStakeAccounts, InitializeConfigAccounts,
-        InitializeStakeAccounts, SetAuthorityAccounts, SlashAccounts, StakeTokensAccounts,
-        UpdateConfigAccounts, WithdrawInactiveStakeAccounts,
+use {
+    crate::instruction::{
+        accounts::{
+            DeactivateStakeAccounts, DistributeRewardsAccounts, HarvestHolderRewardsAccounts,
+            HarvestStakeRewardsAccounts, InactivateStakeAccounts, InitializeConfigAccounts,
+            InitializeStakeAccounts, SetAuthorityAccounts, SlashAccounts, StakeTokensAccounts,
+            UpdateConfigAccounts, WithdrawInactiveStakeAccounts,
+        },
+        StakeInstruction,
     },
-    StakeInstruction,
+    solana_program::{
+        account_info::AccountInfo,
+        entrypoint::ProgramResult,
+        msg,
+        pubkey::{self, Pubkey},
+    },
 };
 
 mod deactivate_stake;

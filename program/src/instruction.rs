@@ -1,8 +1,10 @@
-use arrayref::array_ref;
-use num_derive::FromPrimitive;
-use num_traits::FromPrimitive;
-use shank::{ShankContext, ShankInstruction, ShankType};
-use solana_program::program_error::ProgramError;
+use {
+    arrayref::array_ref,
+    num_derive::FromPrimitive,
+    num_traits::FromPrimitive,
+    shank::{ShankContext, ShankInstruction, ShankType},
+    solana_program::program_error::ProgramError,
+};
 
 /// Enum defining all instructions in the Stake program.
 #[repr(C)]
@@ -407,7 +409,8 @@ pub enum StakeInstruction {
 }
 
 impl StakeInstruction {
-    /// Packs a [StakeInstruction](enum.StakeInstruction.html) into a byte buffer.
+    /// Packs a [StakeInstruction](enum.StakeInstruction.html) into a byte
+    /// buffer.
     pub fn pack(&self) -> Vec<u8> {
         match self {
             StakeInstruction::InitializeConfig {
@@ -482,7 +485,8 @@ impl StakeInstruction {
         }
     }
 
-    /// Unpacks a byte buffer into a [StakeInstruction](enum.StakeInstruction.html).
+    /// Unpacks a byte buffer into a
+    /// [StakeInstruction](enum.StakeInstruction.html).
     pub fn unpack(input: &[u8]) -> Result<Self, ProgramError> {
         match input.split_first() {
             // 0 - InitializeConfig: u64 (8) + u16 (2)

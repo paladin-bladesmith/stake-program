@@ -1,8 +1,10 @@
-use bytemuck::{Pod, Zeroable};
-use shank::ShankAccount;
-use solana_program::{clock::UnixTimestamp, pubkey::Pubkey};
-use spl_discriminator::SplDiscriminate;
-use spl_pod::optional_keys::OptionalNonZeroPubkey;
+use {
+    bytemuck::{Pod, Zeroable},
+    shank::ShankAccount,
+    solana_program::{clock::UnixTimestamp, pubkey::Pubkey},
+    spl_discriminator::SplDiscriminate,
+    spl_pod::optional_keys::OptionalNonZeroPubkey,
+};
 
 /// Configuration for a staking system.
 #[repr(C)]
@@ -12,8 +14,8 @@ pub struct Config {
     /// Account disciminator.
     ///
     /// The discriminator is equal to `ArrayDiscriminator:: UNINITIALIZED` when
-    /// the account is empty, and equal to `Config::DISCRIMINATOR` when the account
-    /// is initialized.
+    /// the account is empty, and equal to `Config::DISCRIMINATOR` when the
+    /// account is initialized.
     pub(crate) discriminator: [u8; 8],
 
     /// Authority that can modify any elements in the config.
@@ -25,13 +27,13 @@ pub struct Config {
     /// Token account storing all stake.
     pub vault: Pubkey,
 
-    /// After a deactivation, defines the number of seconds that must pass before
-    /// the stake is inactive and able to be withdrawn.
+    /// After a deactivation, defines the number of seconds that must pass
+    /// before the stake is inactive and able to be withdrawn.
     pub cooldown_time_seconds: UnixTimestamp,
 
-    /// Total number of tokens delegated to the system. Since anyone can transfer
-    /// tokens into the vault without passing through the program, this number
-    /// is maintained independently.
+    /// Total number of tokens delegated to the system. Since anyone can
+    /// transfer tokens into the vault without passing through the program,
+    /// this number is maintained independently.
     pub token_amount_delegated: u64,
 
     /// Running total of all stake rewards distributed.
