@@ -68,7 +68,7 @@ pub async fn create_mint(
     context.banks_client.process_transaction(tx).await
 }
 
-pub async fn create_token(
+pub async fn create_token_account(
     context: &mut ProgramTestContext,
     owner: &Pubkey,
     token_account: &Keypair,
