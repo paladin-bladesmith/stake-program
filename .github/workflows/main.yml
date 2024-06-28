@@ -181,7 +181,7 @@ jobs:
 
   test_programs:
     name: Test programs
-    needs: [build_programs, generate_clients, generate_idls]
+    needs: [build_programs, generate_idls, generate_clients]
     runs-on: ubuntu-latest
     steps:
       - name: Git checkout
@@ -201,31 +201,11 @@ jobs:
             ${{ runner.os }}-cargo-programs-${{ hashFiles('**/Cargo.lock') }}
             ${{ runner.os }}-cargo-programs
       - name: Test programs
-        run: pnpm programs:test
-
-  test_js:
-    name: Test JS client
-    needs: [build_programs, generate_clients, generate_idls]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Git checkout
-        uses: actions/checkout@v4
-      - name: Setup environment
-        uses: ./.github/actions/setup
-        with:
-          node: ${{ env.NODE_VERSION }}
-          solana: ${{ env.SOLANA_VERSION }}
-      - name: Restore all builds
-        uses: actions/cache/restore@v4
-        with:
-          path: ./**/*.so
-          key: ${{ runner.os }}-builds-${{ github.sha }}
-      - name: Test JS client
-        run: pnpm clients:js:test
+        run: RUST_LOG=error pnpm programs:test
 
   test_rust:
     name: Test Rust client
-    needs: [build_programs, generate_clients, generate_idls]
+    needs: [build_programs, generate_idls, generate_clients]
     runs-on: ubuntu-latest
     steps:
       - name: Git checkout
@@ -247,4 +227,24 @@ jobs:
           path: ./**/*.so
           key: ${{ runner.os }}-builds-${{ github.sha }}
       - name: Test Rust client
-        run: pnpm clients:rust:test
+        run: RUST_LOG=error pnpm clients:rust:test
+
+  test_js:
+    name: Test JS client
+    needs: [build_programs, generate_idls, generate_clients]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          node: ${{ env.NODE_VERSION }}
+          solana: ${{ env.SOLANA_VERSION }}
+      - name: Restore all builds
+        uses: actions/cache/restore@v4
+        with:
+          path: ./**/*.so
+          key: ${{ runner.os }}-builds-${{ github.sha }}
+      - name: Test JS client
+        run: pnpm clients:js:test
