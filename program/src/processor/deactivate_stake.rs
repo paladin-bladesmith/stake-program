@@ -1,6 +1,7 @@
-use solana_program::{entrypoint::ProgramResult, pubkey::Pubkey};
-
-use crate::instruction::accounts::{Context, DeactivateStakeAccounts};
+use {
+    crate::instruction::accounts::{Context, DeactivateStakeAccounts},
+    solana_program::{entrypoint::ProgramResult, pubkey::Pubkey},
+};
 
 /// Deactivate staked tokens for the validator.
 ///

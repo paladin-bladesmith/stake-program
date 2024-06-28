@@ -1,11 +1,12 @@
-use solana_program::{
-    account_info::AccountInfo, entrypoint, entrypoint::ProgramResult,
-    program_error::PrintProgramError, pubkey::Pubkey,
+use {
+    crate::{error::StakeError, processor},
+    solana_program::{
+        account_info::AccountInfo, entrypoint::ProgramResult, program_error::PrintProgramError,
+        pubkey::Pubkey,
+    },
 };
 
-use crate::{error::StakeError, processor};
-
-entrypoint!(process_instruction);
+solana_program::entrypoint!(process_instruction);
 
 fn process_instruction<'a>(
     program_id: &'a Pubkey,

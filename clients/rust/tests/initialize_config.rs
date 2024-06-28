@@ -2,17 +2,19 @@
 
 mod setup;
 
-use paladin_stake::{
-    accounts::Config, errors::StakeError, instructions::InitializeConfigBuilder,
-    pdas::find_vault_pda,
-};
-use setup::{create_mint, create_token, mint_to, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS};
-use solana_program_test::{tokio, ProgramTest};
-use solana_sdk::{
-    instruction::InstructionError,
-    signature::{Keypair, Signer},
-    system_instruction,
-    transaction::Transaction,
+use {
+    paladin_stake::{
+        accounts::Config, errors::StakeError, instructions::InitializeConfigBuilder,
+        pdas::find_vault_pda,
+    },
+    setup::{create_mint, create_token, mint_to, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS},
+    solana_program_test::{tokio, ProgramTest},
+    solana_sdk::{
+        instruction::InstructionError,
+        signature::{Keypair, Signer},
+        system_instruction,
+        transaction::Transaction,
+    },
 };
 
 mod initialize_config {

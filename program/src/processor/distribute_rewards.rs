@@ -1,6 +1,7 @@
-use solana_program::{entrypoint::ProgramResult, pubkey::Pubkey};
-
-use crate::instruction::accounts::{Context, DistributeRewardsAccounts};
+use {
+    crate::instruction::accounts::{Context, DistributeRewardsAccounts},
+    solana_program::{entrypoint::ProgramResult, pubkey::Pubkey},
+};
 
 /// Moves SOL rewards to the config and updates the stake rewards total
 ///

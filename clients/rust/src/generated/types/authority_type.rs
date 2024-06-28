@@ -3,11 +3,11 @@
 //! to add features, then rerun kinobi to update it.
 //!
 //! <https://github.com/kinobi-so/kinobi>
-//!
 
-use borsh::BorshDeserialize;
-use borsh::BorshSerialize;
-use num_derive::FromPrimitive;
+use {
+    borsh::{BorshDeserialize, BorshSerialize},
+    num_derive::FromPrimitive,
+};
 
 #[derive(
     BorshSerialize,

@@ -1,6 +1,7 @@
-use solana_program::{entrypoint::ProgramResult, pubkey::Pubkey};
-
-use crate::instruction::accounts::{Context, InitializeStakeAccounts};
+use {
+    crate::instruction::accounts::{Context, InitializeStakeAccounts},
+    solana_program::{entrypoint::ProgramResult, pubkey::Pubkey},
+};
 
 /// Initializes stake account data for a validator.
 ///

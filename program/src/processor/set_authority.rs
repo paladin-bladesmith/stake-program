@@ -1,14 +1,15 @@
-use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey};
-use spl_pod::optional_keys::OptionalNonZeroPubkey;
-
-use crate::{
-    error::StakeError,
-    instruction::{
-        accounts::{Context, SetAuthorityAccounts},
-        AuthorityType,
+use {
+    crate::{
+        error::StakeError,
+        instruction::{
+            accounts::{Context, SetAuthorityAccounts},
+            AuthorityType,
+        },
+        require,
+        state::{Config, Stake},
     },
-    require,
-    state::{Config, Stake},
+    solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey},
+    spl_pod::optional_keys::OptionalNonZeroPubkey,
 };
 
 /// Sets new authority on a config or stake account
@@ -27,7 +28,8 @@ pub fn process_set_authority(
 
     // 1. authority
     // - must be a signer
-    // - must match the authority in the account (checked in the match statement below)
+    // - must match the authority in the account (checked in the match statement
+    //   below)
 
     require!(
         ctx.accounts.authority.is_signer,

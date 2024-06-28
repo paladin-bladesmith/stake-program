@@ -1,6 +1,7 @@
-use solana_program::{entrypoint::ProgramResult, pubkey::Pubkey};
-
-use crate::instruction::accounts::{Context, HarvestHolderRewardsAccounts};
+use {
+    crate::instruction::accounts::{Context, HarvestHolderRewardsAccounts},
+    solana_program::{entrypoint::ProgramResult, pubkey::Pubkey},
+};
 
 /// Harvests holder SOL rewards earned by the given stake account.
 ///

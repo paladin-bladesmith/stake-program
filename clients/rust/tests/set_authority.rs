@@ -2,26 +2,26 @@
 
 mod setup;
 
-use paladin_stake::{
-    accounts::Config,
-    errors::StakeError,
-    instructions::{InitializeConfigBuilder, SetAuthorityBuilder},
-    pdas::find_vault_pda,
-    types::AuthorityType,
-};
-use setup::{create_mint, create_token, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS};
-use solana_program_test::{tokio, ProgramTest};
-use solana_sdk::{
-    signature::{Keypair, Signer},
-    system_instruction,
-    transaction::Transaction,
+use {
+    paladin_stake::{
+        accounts::Config,
+        errors::StakeError,
+        instructions::{InitializeConfigBuilder, SetAuthorityBuilder},
+        pdas::find_vault_pda,
+        types::AuthorityType,
+    },
+    setup::{create_mint, create_token, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS},
+    solana_program_test::{tokio, ProgramTest},
+    solana_sdk::{
+        signature::{Keypair, Signer},
+        system_instruction,
+        transaction::Transaction,
+    },
 };
 
 mod set_authority {
 
-    use solana_sdk::pubkey::Pubkey;
-
-    use super::*;
+    use {super::*, solana_sdk::pubkey::Pubkey};
 
     #[tokio::test]
     async fn set_config_authority_on_config() {

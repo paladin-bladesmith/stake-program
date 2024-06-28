@@ -1,6 +1,7 @@
-use solana_program::{entrypoint::ProgramResult, pubkey::Pubkey};
-
-use crate::instruction::accounts::{Context, InactivateStakeAccounts};
+use {
+    crate::instruction::accounts::{Context, InactivateStakeAccounts},
+    solana_program::{entrypoint::ProgramResult, pubkey::Pubkey},
+};
 
 /// Move tokens from deactivating to inactive.
 ///

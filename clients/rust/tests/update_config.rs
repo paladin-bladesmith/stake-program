@@ -2,20 +2,22 @@
 
 mod setup;
 
-use paladin_stake::{
-    accounts::Config,
-    errors::StakeError,
-    instructions::{InitializeConfigBuilder, UpdateConfigBuilder},
-    pdas::find_vault_pda,
-    types::ConfigField,
-};
-use setup::{create_mint, create_token, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS};
-use solana_program_test::{tokio, ProgramTest};
-use solana_sdk::{
-    instruction::InstructionError,
-    signature::{Keypair, Signer},
-    system_instruction,
-    transaction::Transaction,
+use {
+    paladin_stake::{
+        accounts::Config,
+        errors::StakeError,
+        instructions::{InitializeConfigBuilder, UpdateConfigBuilder},
+        pdas::find_vault_pda,
+        types::ConfigField,
+    },
+    setup::{create_mint, create_token, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS},
+    solana_program_test::{tokio, ProgramTest},
+    solana_sdk::{
+        instruction::InstructionError,
+        signature::{Keypair, Signer},
+        system_instruction,
+        transaction::Transaction,
+    },
 };
 
 mod update_config {

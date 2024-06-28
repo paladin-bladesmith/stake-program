@@ -1,6 +1,7 @@
-use solana_program::{entrypoint::ProgramResult, pubkey::Pubkey};
-
-use crate::instruction::accounts::{Context, WithdrawInactiveStakeAccounts};
+use {
+    crate::instruction::accounts::{Context, WithdrawInactiveStakeAccounts},
+    solana_program::{entrypoint::ProgramResult, pubkey::Pubkey},
+};
 
 /// Withdraw inactive staked tokens from the vault
 ///
