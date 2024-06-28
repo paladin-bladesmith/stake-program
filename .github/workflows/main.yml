@@ -16,8 +16,8 @@ env:
     target/
 
 jobs:
-  rust_fmt_check:
-    name: Check Rust formatting
+  lint_programs:
+    name: Lint programs
     runs-on: ubuntu-latest
     steps:
       - name: Git checkout
@@ -34,13 +34,18 @@ jobs:
         with:
           toolchain: ${{ env.RUSTFMT_TOOLCHAIN }}
           components: rustfmt
-      - name: Check programs
+      - name: Install Clippy
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.CLIPPY_TOOLCHAIN }}
+          components: clippy
+      - name: Formatting
         run: pnpm programs:format --check
-      - name: Check client
-        run: pnpm clients:rust:format --check
+      - name: Clippy
+        run: pnpm programs:clippy
 
-  rust_clippy_check:
-      name: Check Rust clippy
+  lint_rust_client:
+      name: Lint Rust client
       runs-on: ubuntu-latest
       steps:
         - name: Git checkout
@@ -52,17 +57,22 @@ jobs:
         - name: Set environment variables
           shell: bash
           run: pnpm zx ./scripts/ci/set-variables.mjs
+        - name: Install Rustfmt
+          uses: dtolnay/rust-toolchain@master
+          with:
+            toolchain: ${{ env.RUSTFMT_TOOLCHAIN }}
+            components: rustfmt
         - name: Install Clippy
           uses: dtolnay/rust-toolchain@master
           with:
             toolchain: ${{ env.CLIPPY_TOOLCHAIN }}
             components: clippy
-        - name: Check programs
-          run: pnpm programs:clippy
-        - name: Check client
+        - name: Formatting
+          run: pnpm clients:rust:format --check
+        - name: Clippy
           run: pnpm clients:rust:clippy
 
-  lint_js:
+  lint_js_client:
     name: Lint JS client
     runs-on: ubuntu-latest
     steps:
@@ -78,7 +88,6 @@ jobs:
   build_programs:
     name: Build programs
     runs-on: ubuntu-latest
-    needs: [rust_fmt_check, rust_clippy_check, lint_js]
     steps:
       - name: Git checkout
         uses: actions/checkout@v4
@@ -110,7 +119,6 @@ jobs:
   test_programs:
     name: Test programs
     runs-on: ubuntu-latest
-    needs: [rust_fmt_check, rust_clippy_check, lint_js]
     steps:
       - name: Git checkout
         uses: actions/checkout@v4
@@ -130,6 +138,32 @@ jobs:
             ${{ runner.os }}-cargo-programs
       - name: Test programs
         run: pnpm programs:test
+
+  generate_clients:
+    name: Check client generation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          node: ${{ env.NODE_VERSION }}
+          solana: ${{ env.SOLANA_VERSION }}
+      - name: Set environment variables
+        shell: bash
+        run: pnpm zx ./scripts/ci/set-variables.mjs
+      - name: Install Rustfmt
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUSTFMT_TOOLCHAIN }}
+          components: rustfmt
+      - name: Generate clients
+        run: pnpm generate:clients
+      - name: Ensure working directory is clean
+        run: |
+          git status --porcelain
+          test -z "$(git status --porcelain)"
 
   generate_idls:
     name: Check IDL generation
@@ -161,33 +195,6 @@ jobs:
           restore-keys: ${{ runner.os }}-cargo-local
       - name: Generate IDLs
         run: pnpm generate:idls
-      - name: Ensure working directory is clean
-        run: |
-          git status --porcelain
-          test -z "$(git status --porcelain)"
-
-  generate_clients:
-    name: Check client generation
-    needs: build_programs
-    runs-on: ubuntu-latest
-    steps:
-      - name: Git checkout
-        uses: actions/checkout@v4
-      - name: Setup environment
-        uses: ./.github/actions/setup
-        with:
-          node: ${{ env.NODE_VERSION }}
-          solana: ${{ env.SOLANA_VERSION }}
-      - name: Set environment variables
-        shell: bash
-        run: pnpm zx ./scripts/ci/set-variables.mjs
-      - name: Install Rustfmt
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ env.RUSTFMT_TOOLCHAIN }}
-          components: rustfmt
-      - name: Generate clients
-        run: pnpm generate:clients
       - name: Ensure working directory is clean
         run: |
           git status --porcelain
