@@ -3,6 +3,7 @@ use solana_program::{
 };
 
 use crate::{
+    err,
     error::StakeError,
     instruction::{
         accounts::{Context, UpdateConfigAccounts},
@@ -76,8 +77,7 @@ pub fn process_update_config(
             }
         }
     } else {
-        // TODO: do we need to log a message to say that the config authority is not set
-        // and the update did not happen? Or fail the transaction?
+        return err!(StakeError::AuthorityNotSet);
     }
 
     Ok(())

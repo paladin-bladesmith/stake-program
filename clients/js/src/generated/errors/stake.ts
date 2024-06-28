@@ -20,6 +20,8 @@ export const STAKE_ERROR__INVALID_MINT = 0x4; // 4
 export const STAKE_ERROR__MISSING_TRANSFER_HOOK = 0x5; // 5
 /** InvalidAuthority: Invalid authority */
 export const STAKE_ERROR__INVALID_AUTHORITY = 0x6; // 6
+/** AuthorityNotSet: Authority is not set */
+export const STAKE_ERROR__AUTHORITY_NOT_SET = 0x7; // 7
 /** CloseAuthorityNotNone: Close authority must be none */
 export const STAKE_ERROR__CLOSE_AUTHORITY_NOT_NONE = 0x6; // 6
 /** DelegateNotNone: Delegate must be none */
@@ -31,6 +33,7 @@ export const STAKE_ERROR__MISSING_TOKEN_ACCOUNT_EXTENSIONS = 0x9; // 9
 
 export type StakeError =
   | typeof STAKE_ERROR__AMOUNT_GREATER_THAN_ZERO
+  | typeof STAKE_ERROR__AUTHORITY_NOT_SET
   | typeof STAKE_ERROR__CLOSE_AUTHORITY_NOT_NONE
   | typeof STAKE_ERROR__DELEGATE_NOT_NONE
   | typeof STAKE_ERROR__INVALID_ACCOUNT_DATA_LENGTH
@@ -46,6 +49,7 @@ let stakeErrorMessages: Record<StakeError, string> | undefined;
 if (__DEV__) {
   stakeErrorMessages = {
     [STAKE_ERROR__AMOUNT_GREATER_THAN_ZERO]: `Amount cannot be greater than zero`,
+    [STAKE_ERROR__AUTHORITY_NOT_SET]: `Authority is not set`,
     [STAKE_ERROR__CLOSE_AUTHORITY_NOT_NONE]: `Close authority must be none`,
     [STAKE_ERROR__DELEGATE_NOT_NONE]: `Delegate must be none`,
     [STAKE_ERROR__INVALID_ACCOUNT_DATA_LENGTH]: `Invalid account data length`,

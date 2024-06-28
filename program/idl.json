@@ -804,6 +804,11 @@
       "msg": "Invalid authority"
     },
     {
+      "code": 7,
+      "name": "AuthorityNotSet",
+      "msg": "Authority is not set"
+    },
+    {
       "code": 6,
       "name": "CloseAuthorityNotNone",
       "msg": "Close authority must be none"

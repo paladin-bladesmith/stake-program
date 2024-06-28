@@ -31,6 +31,9 @@ pub enum StakeError {
     /// 6 - Invalid authority
     #[error("Invalid authority")]
     InvalidAuthority = 0x6,
+    /// 7 - Authority is not set
+    #[error("Authority is not set")]
+    AuthorityNotSet = 0x7,
     /// 6 - Close authority must be none
     #[error("Close authority must be none")]
     CloseAuthorityNotNone = 0x6,

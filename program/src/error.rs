@@ -44,6 +44,10 @@ pub enum StakeError {
     /// 8 - Invalid token account extension
     #[error("Invalid token account extension")]
     InvalidTokenAccountExtension,
+
+    /// 7 - Authority is not set
+    #[error("Authority is not set")]
+    AuthorityNotSet,
 }
 
 impl PrintProgramError for StakeError {
