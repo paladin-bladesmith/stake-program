@@ -1,7 +1,7 @@
 #!/usr/bin/env zx
 import 'zx/globals';
 import {
-  getClippyToolchain,
+  getRustfmtToolchain,
   getProgramFolders,
   getToolchainArg,
   workingDirectory,
