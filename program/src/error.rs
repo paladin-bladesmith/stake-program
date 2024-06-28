@@ -32,6 +32,18 @@ pub enum StakeError {
     /// 5 - Missing transfer hook
     #[error("Missing transfer hook")]
     MissingTransferHook,
+
+    /// 6 - Close authority must be none
+    #[error("Close authority must be none")]
+    CloseAuthorityNotNone,
+
+    /// 7 - Delegate must be none
+    #[error("Delegate must be none")]
+    DelegateNotNone,
+
+    /// 8 - Invalid token account extension
+    #[error("Invalid token account extension")]
+    InvalidTokenAccountExtension,
 }
 
 impl PrintProgramError for StakeError {

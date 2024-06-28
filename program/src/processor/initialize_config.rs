@@ -1,9 +1,11 @@
-use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey};
+use solana_program::{entrypoint::ProgramResult, msg, program_error::ProgramError, pubkey::Pubkey};
 use spl_discriminator::SplDiscriminate;
 use spl_pod::optional_keys::OptionalNonZeroPubkey;
 use spl_token_2022::{
-    extension::{transfer_hook::TransferHook, BaseStateWithExtensions, PodStateWithExtensions},
-    pod::{PodAccount, PodMint},
+    extension::{
+        transfer_hook::TransferHook, BaseStateWithExtensions, ExtensionType, PodStateWithExtensions,
+    },
+    pod::{PodAccount, PodCOption, PodMint},
 };
 
 use crate::{
@@ -12,8 +14,14 @@ use crate::{
     instruction::accounts::{Context, InitializeConfigAccounts},
     processor::REWARDS_PROGRAM_ID,
     require,
-    state::Config,
+    state::{find_vault_pda, Config},
 };
+
+/// List of extensions that must be present in the vault token account.
+const VALID_VAULT_TOKEN_EXTENSIONS: &[ExtensionType] = &[
+    ExtensionType::ImmutableOwner,
+    ExtensionType::TransferHookAccount,
+];
 
 /// Creates Stake config account which controls staking parameters.
 ///
@@ -33,15 +41,8 @@ pub fn process_initialize_config(
     // Accounts validation.
 
     // 1. mint
-    // - owner must the spl token 2022
     // - must be initialized
     // - have rewards transfer hook
-
-    require!(
-        ctx.accounts.mint.owner == &spl_token_2022::ID,
-        ProgramError::InvalidAccountOwner,
-        "mint"
-    );
 
     let mint_data = ctx.accounts.mint.try_borrow_data()?;
     // unpack checks if the mint is initialized
@@ -65,6 +66,8 @@ pub fn process_initialize_config(
     // 2. vault (token account)
     // - must be initialized
     // - have the vault signer (PDA) as owner
+    // - no close authority or delegate
+    // - no other extension but `ImmutableOwner` and `TransferHookAccount`
     // - have the correct mint
     // - amount equal to 0
 
@@ -72,16 +75,36 @@ pub fn process_initialize_config(
     // unpack checks if the token is initialized
     let vault = PodStateWithExtensions::<PodAccount>::unpack(&vault_data)?;
 
-    let (vault_signer, bump) = Pubkey::find_program_address(
-        &["token-owner".as_bytes(), ctx.accounts.config.key.as_ref()],
-        program_id,
-    );
+    let (vault_signer, signer_bump) = find_vault_pda(ctx.accounts.config.key, program_id);
 
     require!(
         vault.base.owner == vault_signer,
         StakeError::InvalidTokenOwner,
         "vault"
     );
+
+    require!(
+        vault.base.close_authority == PodCOption::none(),
+        StakeError::CloseAuthorityNotNone,
+        "vault"
+    );
+
+    require!(
+        vault.base.delegate == PodCOption::none(),
+        StakeError::DelegateNotNone,
+        "vault"
+    );
+
+    vault
+        .get_extension_types()?
+        .iter()
+        .try_for_each(|extension_type| {
+            if !VALID_VAULT_TOKEN_EXTENSIONS.contains(extension_type) {
+                msg!("Invalid token extension: {:?}", extension_type);
+                return Err(StakeError::InvalidTokenAccountExtension);
+            }
+            Ok(())
+        })?;
 
     require!(
         &vault.base.mint == ctx.accounts.mint.key,
@@ -114,7 +137,7 @@ pub fn process_initialize_config(
     let config = bytemuck::from_bytes_mut::<Config>(&mut data);
 
     require!(
-        !config.is_initialized(),
+        config.is_uninitialized(),
         ProgramError::AccountAlreadyInitialized,
         "config"
     );
@@ -128,10 +151,9 @@ pub fn process_initialize_config(
         vault: *ctx.accounts.vault.key,
         cooldown_time_seconds: cooldown_time_seconds as i64,
         max_deactivation_basis_points,
+        signer_bump,
         ..Config::default()
     };
-    // store the vault signer bump
-    config.set_signer_bump(bump);
 
     Ok(())
 }

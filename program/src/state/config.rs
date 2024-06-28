@@ -1,7 +1,7 @@
 use bytemuck::{Pod, Zeroable};
 use shank::ShankAccount;
 use solana_program::{clock::UnixTimestamp, pubkey::Pubkey};
-use spl_discriminator::SplDiscriminate;
+use spl_discriminator::{ArrayDiscriminator, SplDiscriminate};
 use spl_pod::optional_keys::OptionalNonZeroPubkey;
 
 /// Configuration for a staking system.
@@ -14,7 +14,7 @@ pub struct Config {
     /// The discriminator is equal to `ArrayDiscriminator:: UNINITIALIZED` when
     /// the account is empty, and equal to `Config::DISCRIMINATOR` when the account
     /// is initialized.
-    pub(crate) discriminator: [u8; 8],
+    pub discriminator: [u8; 8],
 
     /// Authority that can modify any elements in the config.
     pub authority: OptionalNonZeroPubkey,
@@ -41,8 +41,11 @@ pub struct Config {
     /// points (1 / 10,000).
     pub max_deactivation_basis_points: u16,
 
+    /// Bump seed for the `Vault` signer authority.
+    pub signer_bump: u8,
+
     /// Padding for alignment.
-    pub(crate) _padding: [u8; 6],
+    pub _padding: [u8; 5],
 }
 
 impl Config {
@@ -54,12 +57,7 @@ impl Config {
     }
 
     #[inline(always)]
-    pub fn get_signer_bump(&self) -> u8 {
-        self._padding[0]
-    }
-
-    #[inline(always)]
-    pub fn set_signer_bump(&mut self, bump: u8) {
-        self._padding[0] = bump;
+    pub fn is_uninitialized(&self) -> bool {
+        self.discriminator.as_slice() == ArrayDiscriminator::UNINITIALIZED.as_slice()
     }
 }
