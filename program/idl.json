@@ -87,14 +87,6 @@
           "docs": [
             "Validator vote account"
           ]
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "System program"
-          ]
         }
       ],
       "args": [],
