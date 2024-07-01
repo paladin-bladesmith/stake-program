@@ -48,4 +48,9 @@ pub struct Stake {
 
 impl Stake {
     pub const LEN: usize = std::mem::size_of::<Stake>();
+
+    #[inline(always)]
+    pub fn is_initialized(&self) -> bool {
+        self.discriminator.as_slice() == Stake::SPL_DISCRIMINATOR_SLICE
+    }
 }
