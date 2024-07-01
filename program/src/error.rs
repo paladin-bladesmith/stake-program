@@ -45,7 +45,11 @@ pub enum StakeError {
     #[error("Invalid token account extension")]
     InvalidTokenAccountExtension,
 
-    /// 7 - Authority is not set
+    /// 9 - Invalid authority
+    #[error("Invalid authority")]
+    InvalidAuthority,
+
+    /// 10 - Authority is not set
     #[error("Authority is not set")]
     AuthorityNotSet,
 }

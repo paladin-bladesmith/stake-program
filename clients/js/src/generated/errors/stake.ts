@@ -18,18 +18,16 @@ export const STAKE_ERROR__INVALID_ACCOUNT_DATA_LENGTH = 0x3; // 3
 export const STAKE_ERROR__INVALID_MINT = 0x4; // 4
 /** MissingTransferHook: Missing transfer hook */
 export const STAKE_ERROR__MISSING_TRANSFER_HOOK = 0x5; // 5
-/** InvalidAuthority: Invalid authority */
-export const STAKE_ERROR__INVALID_AUTHORITY = 0x6; // 6
-/** AuthorityNotSet: Authority is not set */
-export const STAKE_ERROR__AUTHORITY_NOT_SET = 0x7; // 7
 /** CloseAuthorityNotNone: Close authority must be none */
 export const STAKE_ERROR__CLOSE_AUTHORITY_NOT_NONE = 0x6; // 6
 /** DelegateNotNone: Delegate must be none */
 export const STAKE_ERROR__DELEGATE_NOT_NONE = 0x7; // 7
 /** InvalidTokenAccountExtension: Invalid token account extension */
 export const STAKE_ERROR__INVALID_TOKEN_ACCOUNT_EXTENSION = 0x8; // 8
-/** MissingTokenAccountExtensions: Missing token account extensions */
-export const STAKE_ERROR__MISSING_TOKEN_ACCOUNT_EXTENSIONS = 0x9; // 9
+/** InvalidAuthority: Invalid authority */
+export const STAKE_ERROR__INVALID_AUTHORITY = 0x9; // 9
+/** AuthorityNotSet: Authority is not set */
+export const STAKE_ERROR__AUTHORITY_NOT_SET = 0xa; // 10
 
 export type StakeError =
   | typeof STAKE_ERROR__AMOUNT_GREATER_THAN_ZERO
@@ -42,7 +40,6 @@ export type StakeError =
   | typeof STAKE_ERROR__INVALID_TOKEN_ACCOUNT_EXTENSION
   | typeof STAKE_ERROR__INVALID_TOKEN_OWNER
   | typeof STAKE_ERROR__INVALID_TRANSFER_HOOK_PROGRAM_ID
-  | typeof STAKE_ERROR__MISSING_TOKEN_ACCOUNT_EXTENSIONS
   | typeof STAKE_ERROR__MISSING_TRANSFER_HOOK;
 
 let stakeErrorMessages: Record<StakeError, string> | undefined;
@@ -58,7 +55,6 @@ if (__DEV__) {
     [STAKE_ERROR__INVALID_TOKEN_ACCOUNT_EXTENSION]: `Invalid token account extension`,
     [STAKE_ERROR__INVALID_TOKEN_OWNER]: `Invalid token owner`,
     [STAKE_ERROR__INVALID_TRANSFER_HOOK_PROGRAM_ID]: `Invalid transfer hook program id`,
-    [STAKE_ERROR__MISSING_TOKEN_ACCOUNT_EXTENSIONS]: `Missing token account extensions`,
     [STAKE_ERROR__MISSING_TRANSFER_HOOK]: `Missing transfer hook`,
   };
 }

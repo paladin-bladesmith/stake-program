@@ -9,7 +9,7 @@ use paladin_stake::{
     pdas::find_vault_pda,
     types::ConfigField,
 };
-use setup::{create_mint, create_token, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS};
+use setup::{create_mint, create_token_account, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS};
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
     instruction::InstructionError,
@@ -43,7 +43,7 @@ async fn update_cooldown_time_config() {
     .unwrap();
 
     let token = Keypair::new();
-    create_token(
+    create_token_account(
         &mut context,
         &find_vault_pda(&config.pubkey()).0,
         &token,
@@ -138,7 +138,7 @@ async fn update_max_deactivation_basis_points_config() {
     .unwrap();
 
     let token = Keypair::new();
-    create_token(
+    create_token_account(
         &mut context,
         &find_vault_pda(&config.pubkey()).0,
         &token,
@@ -233,7 +233,7 @@ async fn fail_update_config_with_wrong_authority() {
     .unwrap();
 
     let token = Keypair::new();
-    create_token(
+    create_token_account(
         &mut context,
         &find_vault_pda(&config.pubkey()).0,
         &token,
@@ -418,7 +418,7 @@ async fn fail_update_config_with_no_authority_set() {
     .unwrap();
 
     let token = Keypair::new();
-    create_token(
+    create_token_account(
         &mut context,
         &find_vault_pda(&config.pubkey()).0,
         &token,

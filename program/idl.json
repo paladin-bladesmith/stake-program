@@ -800,16 +800,6 @@
     },
     {
       "code": 6,
-      "name": "InvalidAuthority",
-      "msg": "Invalid authority"
-    },
-    {
-      "code": 7,
-      "name": "AuthorityNotSet",
-      "msg": "Authority is not set"
-    },
-    {
-      "code": 6,
       "name": "CloseAuthorityNotNone",
       "msg": "Close authority must be none"
     },
@@ -825,8 +815,13 @@
     },
     {
       "code": 9,
-      "name": "MissingTokenAccountExtensions",
-      "msg": "Missing token account extensions"
+      "name": "InvalidAuthority",
+      "msg": "Invalid authority"
+    },
+    {
+      "code": 10,
+      "name": "AuthorityNotSet",
+      "msg": "Authority is not set"
     }
   ],
   "metadata": {
