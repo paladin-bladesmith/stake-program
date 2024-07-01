@@ -67,7 +67,7 @@ pub fn process_set_authority(
                 AuthorityType::Config => {
                     let config_authority =
                         <OptionalNonZeroPubkey as Into<Option<Pubkey>>>::into(config.authority)
-                            .ok_or(StakeError::InvalidAuthority)?;
+                            .ok_or(StakeError::AuthorityNotSet)?;
 
                     require!(
                         *ctx.accounts.authority.key == config_authority,
@@ -81,7 +81,7 @@ pub fn process_set_authority(
                     let slash_authority = <OptionalNonZeroPubkey as Into<Option<Pubkey>>>::into(
                         config.slash_authority,
                     )
-                    .ok_or(StakeError::InvalidAuthority)?;
+                    .ok_or(StakeError::AuthorityNotSet)?;
 
                     require!(
                         *ctx.accounts.authority.key == slash_authority,
