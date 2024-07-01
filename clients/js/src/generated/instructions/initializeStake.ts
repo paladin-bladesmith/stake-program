@@ -32,9 +32,6 @@ export type InitializeStakeInstruction<
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountStake extends string | IAccountMeta<string> = string,
   TAccountValidatorVote extends string | IAccountMeta<string> = string,
-  TAccountSystemProgram extends
-    | string
-    | IAccountMeta<string> = '11111111111111111111111111111111',
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -49,9 +46,6 @@ export type InitializeStakeInstruction<
       TAccountValidatorVote extends string
         ? ReadonlyAccount<TAccountValidatorVote>
         : TAccountValidatorVote,
-      TAccountSystemProgram extends string
-        ? ReadonlyAccount<TAccountSystemProgram>
-        : TAccountSystemProgram,
       ...TRemainingAccounts,
     ]
   >;
@@ -85,7 +79,6 @@ export type InitializeStakeInput<
   TAccountConfig extends string = string,
   TAccountStake extends string = string,
   TAccountValidatorVote extends string = string,
-  TAccountSystemProgram extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
@@ -93,28 +86,23 @@ export type InitializeStakeInput<
   stake: Address<TAccountStake>;
   /** Validator vote account */
   validatorVote: Address<TAccountValidatorVote>;
-  /** System program */
-  systemProgram?: Address<TAccountSystemProgram>;
 };
 
 export function getInitializeStakeInstruction<
   TAccountConfig extends string,
   TAccountStake extends string,
   TAccountValidatorVote extends string,
-  TAccountSystemProgram extends string,
 >(
   input: InitializeStakeInput<
     TAccountConfig,
     TAccountStake,
-    TAccountValidatorVote,
-    TAccountSystemProgram
+    TAccountValidatorVote
   >
 ): InitializeStakeInstruction<
   typeof STAKE_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountStake,
-  TAccountValidatorVote,
-  TAccountSystemProgram
+  TAccountValidatorVote
 > {
   // Program address.
   const programAddress = STAKE_PROGRAM_ADDRESS;
@@ -124,18 +112,11 @@ export function getInitializeStakeInstruction<
     config: { value: input.config ?? null, isWritable: false },
     stake: { value: input.stake ?? null, isWritable: true },
     validatorVote: { value: input.validatorVote ?? null, isWritable: false },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
     ResolvedAccount
   >;
-
-  // Resolve default values.
-  if (!accounts.systemProgram.value) {
-    accounts.systemProgram.value =
-      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
-  }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -143,7 +124,6 @@ export function getInitializeStakeInstruction<
       getAccountMeta(accounts.config),
       getAccountMeta(accounts.stake),
       getAccountMeta(accounts.validatorVote),
-      getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
     data: getInitializeStakeInstructionDataEncoder().encode({}),
@@ -151,8 +131,7 @@ export function getInitializeStakeInstruction<
     typeof STAKE_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountStake,
-    TAccountValidatorVote,
-    TAccountSystemProgram
+    TAccountValidatorVote
   >;
 
   return instruction;
@@ -170,8 +149,6 @@ export type ParsedInitializeStakeInstruction<
     stake: TAccountMetas[1];
     /** Validator vote account */
     validatorVote: TAccountMetas[2];
-    /** System program */
-    systemProgram: TAccountMetas[3];
   };
   data: InitializeStakeInstructionData;
 };
@@ -184,7 +161,7 @@ export function parseInitializeStakeInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedInitializeStakeInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 4) {
+  if (instruction.accounts.length < 3) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -200,7 +177,6 @@ export function parseInitializeStakeInstruction<
       config: getNextAccount(),
       stake: getNextAccount(),
       validatorVote: getNextAccount(),
-      systemProgram: getNextAccount(),
     },
     data: getInitializeStakeInstructionDataDecoder().decode(instruction.data),
   };

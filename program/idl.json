@@ -87,14 +87,6 @@
           "docs": [
             "Validator vote account"
           ]
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "System program"
-          ]
         }
       ],
       "args": [],
@@ -697,7 +689,9 @@
           {
             "name": "deactivationTimestamp",
             "type": {
-              "defined": "UnixTimestamp"
+              "option": {
+                "defined": "NonZeroU64"
+              }
             }
           },
           {
