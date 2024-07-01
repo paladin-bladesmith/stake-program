@@ -9,7 +9,7 @@ use paladin_stake::{
     pdas::find_vault_pda,
     types::AuthorityType,
 };
-use setup::{create_mint, create_token, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS};
+use setup::{create_mint, create_token_account, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS};
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
     pubkey::Pubkey,
@@ -47,7 +47,7 @@ mod set_authority {
         .unwrap();
 
         let token = Keypair::new();
-        create_token(
+        create_token_account(
             &mut context,
             &find_vault_pda(&config.pubkey()).0,
             &token,
@@ -145,7 +145,7 @@ mod set_authority {
         .unwrap();
 
         let token = Keypair::new();
-        create_token(
+        create_token_account(
             &mut context,
             &find_vault_pda(&config.pubkey()).0,
             &token,
@@ -246,7 +246,7 @@ mod set_authority {
         .unwrap();
 
         let token = Keypair::new();
-        create_token(
+        create_token_account(
             &mut context,
             &find_vault_pda(&config.pubkey()).0,
             &token,
@@ -347,7 +347,7 @@ mod set_authority {
         .unwrap();
 
         let token = Keypair::new();
-        create_token(
+        create_token_account(
             &mut context,
             &find_vault_pda(&config.pubkey()).0,
             &token,
@@ -448,7 +448,7 @@ mod set_authority {
         .unwrap();
 
         let token = Keypair::new();
-        create_token(
+        create_token_account(
             &mut context,
             &find_vault_pda(&config.pubkey()).0,
             &token,
@@ -520,7 +520,7 @@ mod set_authority {
 
         // Then we expect an error.
 
-        assert_custom_error!(err, StakeError::InvalidAuthority);
+        assert_custom_error!(err, StakeError::AuthorityNotSet);
     }
 
     #[tokio::test]
@@ -548,7 +548,7 @@ mod set_authority {
         .unwrap();
 
         let token = Keypair::new();
-        create_token(
+        create_token_account(
             &mut context,
             &find_vault_pda(&config.pubkey()).0,
             &token,
@@ -620,6 +620,6 @@ mod set_authority {
 
         // Then we expect an error.
 
-        assert_custom_error!(err, StakeError::InvalidAuthority);
+        assert_custom_error!(err, StakeError::AuthorityNotSet);
     }
 }
