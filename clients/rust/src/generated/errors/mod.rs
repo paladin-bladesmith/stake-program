@@ -4,3 +4,7 @@
 //!
 //! <https://github.com/kinobi-so/kinobi>
 //!
+
+pub(crate) mod stake;
+
+pub use self::stake::StakeError;
