@@ -37,9 +37,12 @@ pub enum StakeError {
     /// 8 - Invalid token account extension
     #[error("Invalid token account extension")]
     InvalidTokenAccountExtension = 0x8,
-    /// 9 - Missing token account extensions
-    #[error("Missing token account extensions")]
-    MissingTokenAccountExtensions = 0x9,
+    /// 9 - Invalid authority
+    #[error("Invalid authority")]
+    InvalidAuthority = 0x9,
+    /// 10 - Authority is not set
+    #[error("Authority is not set")]
+    AuthorityNotSet = 0xA,
 }
 
 impl solana_program::program_error::PrintProgramError for StakeError {

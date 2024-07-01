@@ -24,33 +24,37 @@ export const STAKE_ERROR__CLOSE_AUTHORITY_NOT_NONE = 0x6; // 6
 export const STAKE_ERROR__DELEGATE_NOT_NONE = 0x7; // 7
 /** InvalidTokenAccountExtension: Invalid token account extension */
 export const STAKE_ERROR__INVALID_TOKEN_ACCOUNT_EXTENSION = 0x8; // 8
-/** MissingTokenAccountExtensions: Missing token account extensions */
-export const STAKE_ERROR__MISSING_TOKEN_ACCOUNT_EXTENSIONS = 0x9; // 9
+/** InvalidAuthority: Invalid authority */
+export const STAKE_ERROR__INVALID_AUTHORITY = 0x9; // 9
+/** AuthorityNotSet: Authority is not set */
+export const STAKE_ERROR__AUTHORITY_NOT_SET = 0xa; // 10
 
 export type StakeError =
   | typeof STAKE_ERROR__AMOUNT_GREATER_THAN_ZERO
+  | typeof STAKE_ERROR__AUTHORITY_NOT_SET
   | typeof STAKE_ERROR__CLOSE_AUTHORITY_NOT_NONE
   | typeof STAKE_ERROR__DELEGATE_NOT_NONE
   | typeof STAKE_ERROR__INVALID_ACCOUNT_DATA_LENGTH
+  | typeof STAKE_ERROR__INVALID_AUTHORITY
   | typeof STAKE_ERROR__INVALID_MINT
   | typeof STAKE_ERROR__INVALID_TOKEN_ACCOUNT_EXTENSION
   | typeof STAKE_ERROR__INVALID_TOKEN_OWNER
   | typeof STAKE_ERROR__INVALID_TRANSFER_HOOK_PROGRAM_ID
-  | typeof STAKE_ERROR__MISSING_TOKEN_ACCOUNT_EXTENSIONS
   | typeof STAKE_ERROR__MISSING_TRANSFER_HOOK;
 
 let stakeErrorMessages: Record<StakeError, string> | undefined;
 if (__DEV__) {
   stakeErrorMessages = {
     [STAKE_ERROR__AMOUNT_GREATER_THAN_ZERO]: `Amount cannot be greater than zero`,
+    [STAKE_ERROR__AUTHORITY_NOT_SET]: `Authority is not set`,
     [STAKE_ERROR__CLOSE_AUTHORITY_NOT_NONE]: `Close authority must be none`,
     [STAKE_ERROR__DELEGATE_NOT_NONE]: `Delegate must be none`,
     [STAKE_ERROR__INVALID_ACCOUNT_DATA_LENGTH]: `Invalid account data length`,
+    [STAKE_ERROR__INVALID_AUTHORITY]: `Invalid authority`,
     [STAKE_ERROR__INVALID_MINT]: `Invalid mint`,
     [STAKE_ERROR__INVALID_TOKEN_ACCOUNT_EXTENSION]: `Invalid token account extension`,
     [STAKE_ERROR__INVALID_TOKEN_OWNER]: `Invalid token owner`,
     [STAKE_ERROR__INVALID_TRANSFER_HOOK_PROGRAM_ID]: `Invalid transfer hook program id`,
-    [STAKE_ERROR__MISSING_TOKEN_ACCOUNT_EXTENSIONS]: `Missing token account extensions`,
     [STAKE_ERROR__MISSING_TRANSFER_HOOK]: `Missing transfer hook`,
   };
 }

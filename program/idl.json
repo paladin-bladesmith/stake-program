@@ -815,8 +815,13 @@
     },
     {
       "code": 9,
-      "name": "MissingTokenAccountExtensions",
-      "msg": "Missing token account extensions"
+      "name": "InvalidAuthority",
+      "msg": "Invalid authority"
+    },
+    {
+      "code": 10,
+      "name": "AuthorityNotSet",
+      "msg": "Authority is not set"
     }
   ],
   "metadata": {
