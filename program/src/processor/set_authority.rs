@@ -11,6 +11,23 @@ use crate::{
     state::{Config, Stake},
 };
 
+/// Unpacks an initialized account from the given data and
+/// returns a mutable reference to it.
+macro_rules! unpack_initialized_mut {
+    ( $data:expr, $type:ty, $name:literal ) => {{
+        let account = bytemuck::try_from_bytes_mut::<$type>($data)
+            .map_err(|_error| ProgramError::InvalidAccountData)?;
+
+        require!(
+            account.is_initialized(),
+            ProgramError::UninitializedAccount,
+            $name,
+        );
+
+        account
+    }};
+}
+
 /// Sets new authority on a config or stake account
 ///
 /// ### Accounts:
@@ -25,7 +42,7 @@ pub fn process_set_authority(
 ) -> ProgramResult {
     // Accounts validation.
 
-    // 1. authority
+    // authority
     // - must be a signer
     // - must match the authority on the account (checked in the match statement below)
 
@@ -35,7 +52,7 @@ pub fn process_set_authority(
         "authority"
     );
 
-    // 2. account
+    // account
     // - owner must the stake program
     // - must be initialized
     // - must have an authority set
@@ -50,59 +67,38 @@ pub fn process_set_authority(
     let data = &mut ctx.accounts.account.try_borrow_mut_data()?;
 
     match authority_type {
-        AuthorityType::Config | AuthorityType::Slash => {
-            let config = bytemuck::try_from_bytes_mut::<Config>(data)
-                .map_err(|_error| ProgramError::InvalidAccountData)?;
+        AuthorityType::Config => {
+            let config = unpack_initialized_mut!(data, Config, "config");
 
-            require!(
-                config.is_initialized(),
-                ProgramError::UninitializedAccount,
-                "config"
-            );
-
-            // Asserts whether the authority is set or not - only updates the authority if
-            // there is one set and it matches the signing authority.
-
-            match authority_type {
-                AuthorityType::Config => {
-                    let config_authority =
-                        <OptionalNonZeroPubkey as Into<Option<Pubkey>>>::into(config.authority)
-                            .ok_or(StakeError::AuthorityNotSet)?;
-
-                    require!(
-                        *ctx.accounts.authority.key == config_authority,
-                        StakeError::InvalidAuthority,
-                        "authority (config)"
-                    );
-
-                    config.authority = OptionalNonZeroPubkey(*ctx.accounts.new_authority.key)
-                }
-                AuthorityType::Slash => {
-                    let slash_authority = <OptionalNonZeroPubkey as Into<Option<Pubkey>>>::into(
-                        config.slash_authority,
-                    )
+            let config_authority =
+                <OptionalNonZeroPubkey as Into<Option<Pubkey>>>::into(config.authority)
                     .ok_or(StakeError::AuthorityNotSet)?;
 
-                    require!(
-                        *ctx.accounts.authority.key == slash_authority,
-                        StakeError::InvalidAuthority,
-                        "authority (slash)"
-                    );
+            require!(
+                *ctx.accounts.authority.key == config_authority,
+                StakeError::InvalidAuthority,
+                "authority (config)"
+            );
 
-                    config.slash_authority = OptionalNonZeroPubkey(*ctx.accounts.new_authority.key);
-                }
-                _ => (), /* unreachable */
-            }
+            config.authority = OptionalNonZeroPubkey(*ctx.accounts.new_authority.key)
         }
-        AuthorityType::Stake => {
-            let stake = bytemuck::try_from_bytes_mut::<Stake>(data)
-                .map_err(|_error| ProgramError::InvalidAccountData)?;
+        AuthorityType::Slash => {
+            let config = unpack_initialized_mut!(data, Config, "config");
+
+            let slash_authority =
+                <OptionalNonZeroPubkey as Into<Option<Pubkey>>>::into(config.slash_authority)
+                    .ok_or(StakeError::AuthorityNotSet)?;
 
             require!(
-                stake.is_initialized(),
-                ProgramError::UninitializedAccount,
-                "stake"
+                *ctx.accounts.authority.key == slash_authority,
+                StakeError::InvalidAuthority,
+                "authority (slash)"
             );
+
+            config.slash_authority = OptionalNonZeroPubkey(*ctx.accounts.new_authority.key);
+        }
+        AuthorityType::Stake => {
+            let stake = unpack_initialized_mut!(data, Stake, "stake");
 
             require!(
                 *ctx.accounts.authority.key == stake.authority,
