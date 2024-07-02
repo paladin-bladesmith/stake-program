@@ -3,13 +3,17 @@
 mod setup;
 
 use paladin_stake::{
-    accounts::Config,
+    accounts::{Config, Stake},
     errors::StakeError,
-    instructions::{InitializeConfigBuilder, SetAuthorityBuilder},
-    pdas::find_vault_pda,
+    instructions::{InitializeConfigBuilder, InitializeStakeBuilder, SetAuthorityBuilder},
+    pdas::{find_stake_pda, find_vault_pda},
     types::AuthorityType,
 };
-use setup::{create_mint, create_token_account, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS};
+use setup::{
+    config::create_config,
+    token::{create_mint, create_token_account, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS},
+    vote::create_vote_account,
+};
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
     pubkey::Pubkey,
@@ -622,4 +626,151 @@ mod set_authority {
 
         assert_custom_error!(err, StakeError::AuthorityNotSet);
     }
+}
+
+#[tokio::test]
+async fn set_authority_on_stake() {
+    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
+        .start_with_context()
+        .await;
+
+    // Given a config account and a validator's vote account.
+
+    let config = create_config(&mut context).await;
+    let validator = Pubkey::new_unique();
+    let withdraw_authority = Keypair::new();
+    let vote = create_vote_account(&mut context, &validator, &withdraw_authority.pubkey());
+
+    // And we initialize the stake account.
+
+    let (stake_pda, _) = find_stake_pda(&validator, &config);
+
+    let transfer_ix = system_instruction::transfer(
+        &context.payer.pubkey(),
+        &stake_pda,
+        context
+            .banks_client
+            .get_rent()
+            .await
+            .unwrap()
+            .minimum_balance(Stake::LEN),
+    );
+
+    let initialize_ix = InitializeStakeBuilder::new()
+        .config(config)
+        .stake(stake_pda)
+        .validator_vote(vote)
+        .instruction();
+
+    let tx = Transaction::new_signed_with_payer(
+        &[transfer_ix, initialize_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer],
+        context.last_blockhash,
+    );
+    context.banks_client.process_transaction(tx).await.unwrap();
+
+    let account = get_account!(context, stake_pda);
+    let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    assert_eq!(stake_account.authority, withdraw_authority.pubkey());
+
+    // When we set a new authority on the stake account.
+
+    let new_authority = Pubkey::new_unique();
+
+    let set_authority_ix = SetAuthorityBuilder::new()
+        .account(stake_pda)
+        .authority(withdraw_authority.pubkey())
+        .new_authority(new_authority)
+        .authority_type(AuthorityType::Stake)
+        .instruction();
+
+    let tx = Transaction::new_signed_with_payer(
+        &[set_authority_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, &withdraw_authority],
+        context.last_blockhash,
+    );
+    context.banks_client.process_transaction(tx).await.unwrap();
+
+    // Then the stake authority is updated.
+
+    let account = get_account!(context, stake_pda);
+    let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    assert_eq!(stake_account.authority, new_authority);
+}
+
+#[tokio::test]
+async fn fail_set_authority_on_stake_with_invalid_authority() {
+    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
+        .start_with_context()
+        .await;
+
+    // Given a config account and a validator's vote account.
+
+    let config = create_config(&mut context).await;
+    let validator = Pubkey::new_unique();
+    let withdraw_authority = Keypair::new();
+    let vote = create_vote_account(&mut context, &validator, &withdraw_authority.pubkey());
+
+    // And we initialize the stake account.
+
+    let (stake_pda, _) = find_stake_pda(&validator, &config);
+
+    let transfer_ix = system_instruction::transfer(
+        &context.payer.pubkey(),
+        &stake_pda,
+        context
+            .banks_client
+            .get_rent()
+            .await
+            .unwrap()
+            .minimum_balance(Stake::LEN),
+    );
+
+    let initialize_ix = InitializeStakeBuilder::new()
+        .config(config)
+        .stake(stake_pda)
+        .validator_vote(vote)
+        .instruction();
+
+    let tx = Transaction::new_signed_with_payer(
+        &[transfer_ix, initialize_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer],
+        context.last_blockhash,
+    );
+    context.banks_client.process_transaction(tx).await.unwrap();
+
+    let account = get_account!(context, stake_pda);
+    let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    assert_eq!(stake_account.authority, withdraw_authority.pubkey());
+
+    // When we try to set a new authority on the stake account with an invalid authority.
+
+    let fake_authority = Keypair::new();
+    let new_authority = Pubkey::new_unique();
+
+    let set_authority_ix = SetAuthorityBuilder::new()
+        .account(stake_pda)
+        .authority(fake_authority.pubkey())
+        .new_authority(new_authority)
+        .authority_type(AuthorityType::Stake)
+        .instruction();
+
+    let tx = Transaction::new_signed_with_payer(
+        &[set_authority_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, &fake_authority],
+        context.last_blockhash,
+    );
+    let err = context
+        .banks_client
+        .process_transaction(tx)
+        .await
+        .unwrap_err();
+
+    // Then we expect an error.
+
+    assert_custom_error!(err, StakeError::InvalidAuthority);
 }
