@@ -149,3 +149,7 @@ export async function fetchAllMaybeStake(
   const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
   return maybeAccounts.map((maybeAccount) => decodeStake(maybeAccount));
 }
+
+export function getStakeSize(): number {
+  return 120;
+}

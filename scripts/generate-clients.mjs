@@ -109,6 +109,9 @@ kinobi.update(
     config: {
       size: 136,
     },
+    stake: {
+      size: 120,
+    },
   })
 );
 
