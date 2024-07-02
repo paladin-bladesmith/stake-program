@@ -88,6 +88,18 @@ kinobi.update(
         };
       },
     },
+    {
+      // Option<NonZeroU64> -> NullableU64
+      select:
+        "[structFieldTypeNode]deactivationTimestamp",
+      transform: (node) => {
+        k.assertIsNode(node, "structFieldTypeNode");
+        return {
+          ...node,
+          type: k.definedTypeLinkNode("nullableU64", "hooked"),
+        };
+      },
+    },
   ])
 );
 
@@ -96,6 +108,9 @@ kinobi.update(
   k.updateAccountsVisitor({
     config: {
       size: 136,
+    },
+    stake: {
+      size: 120,
     },
   })
 );

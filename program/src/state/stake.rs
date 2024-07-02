@@ -1,7 +1,9 @@
+use std::num::NonZeroU64;
+
 use bytemuck::{Pod, Zeroable};
 use shank::ShankAccount;
-use solana_program::{clock::UnixTimestamp, pubkey::Pubkey};
-use spl_discriminator::SplDiscriminate;
+use solana_program::pubkey::Pubkey;
+use spl_discriminator::{ArrayDiscriminator, SplDiscriminate};
 
 /// Data for an amount of tokens staked with a validator
 #[repr(C)]
@@ -13,17 +15,14 @@ pub struct Stake {
     /// The discriminator is equal to `ArrayDiscriminator:: UNINITIALIZED` when
     /// the account is empty, and equal to `Stake::DISCRIMINATOR` when the account
     /// is initialized.
-    discriminator: [u8; 8],
+    pub discriminator: [u8; 8],
 
     /// Amount of staked tokens currently active
     pub amount: u64,
 
     /// Timestamp for when deactivation began. Used to judge if a given stake
     /// is inactive.
-    /// NOTE: this is a special type where all zeros means `None` to avoid
-    /// wasting space, just like `Option<NonZeroU64>`
-    // TODO: Nullable trait + PodOption?
-    pub deactivation_timestamp: UnixTimestamp,
+    pub deactivation_timestamp: Option<NonZeroU64>,
 
     /// Amount of tokens in the cooling down phase, waiting to become inactive
     pub deactivating_amount: u64,
@@ -48,4 +47,14 @@ pub struct Stake {
 
 impl Stake {
     pub const LEN: usize = std::mem::size_of::<Stake>();
+
+    #[inline(always)]
+    pub fn is_initialized(&self) -> bool {
+        self.discriminator.as_slice() == Stake::SPL_DISCRIMINATOR_SLICE
+    }
+
+    #[inline(always)]
+    pub fn is_uninitialized(&self) -> bool {
+        self.discriminator.as_slice() == ArrayDiscriminator::UNINITIALIZED.as_slice()
+    }
 }

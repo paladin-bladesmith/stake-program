@@ -697,7 +697,9 @@
           {
             "name": "deactivationTimestamp",
             "type": {
-              "defined": "UnixTimestamp"
+              "option": {
+                "defined": "NonZeroU64"
+              }
             }
           },
           {

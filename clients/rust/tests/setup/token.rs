@@ -1,3 +1,6 @@
+#![cfg(feature = "test-sbf")]
+#![allow(dead_code)]
+
 use solana_program_test::{BanksClientError, ProgramTestContext};
 use solana_sdk::{
     pubkey::Pubkey, signature::Keypair, signer::Signer, system_instruction,
@@ -118,7 +121,6 @@ pub async fn create_token_account(
     context.banks_client.process_transaction(tx).await
 }
 
-#[allow(dead_code)]
 pub async fn mint_to(
     context: &mut ProgramTestContext,
     mint: &Keypair,

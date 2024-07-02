@@ -5,6 +5,7 @@
 //! <https://github.com/kinobi-so/kinobi>
 //!
 
+use crate::hooked::NullableU64;
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 use solana_program::pubkey::Pubkey;
@@ -14,7 +15,7 @@ use solana_program::pubkey::Pubkey;
 pub struct Stake {
     pub discriminator: [u8; 8],
     pub amount: u64,
-    pub deactivation_timestamp: i64,
+    pub deactivation_timestamp: NullableU64,
     pub deactivating_amount: u64,
     pub inactive_amount: u64,
     #[cfg_attr(
@@ -32,6 +33,8 @@ pub struct Stake {
 }
 
 impl Stake {
+    pub const LEN: usize = 120;
+
     #[inline(always)]
     pub fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {
         let mut data = data;
