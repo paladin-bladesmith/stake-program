@@ -19,7 +19,7 @@ use crate::{
 ///
 /// 0. `[]` Stake config account
 /// 1. `[w]` Validator stake account
-///     * PDA seeds: ['stake', validator, config_account]
+///     * PDA seeds: ['stake::state::stake', validator, config]
 /// 2. `[]` Validator vote account
 /// 3. `[]` System program
 pub fn process_initialize_stake(
