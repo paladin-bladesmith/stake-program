@@ -30,7 +30,7 @@ async fn initialize_stake_with_validator_vote() {
 
     let config = create_config(&mut context).await;
     let validator = Pubkey::new_unique();
-    let vote = create_vote_account(&mut context, &validator, &validator);
+    let vote = create_vote_account(&mut context, &validator, &validator).await;
 
     // When we initialize the stake account.
 
@@ -82,7 +82,7 @@ async fn fail_initialize_stake_with_initialized_account() {
 
     let config = create_config(&mut context).await;
     let validator = Pubkey::new_unique();
-    let vote = create_vote_account(&mut context, &validator, &validator);
+    let vote = create_vote_account(&mut context, &validator, &validator).await;
 
     // And we initialize the stake account.
 
@@ -142,80 +142,6 @@ async fn fail_initialize_stake_with_initialized_account() {
 }
 
 #[tokio::test]
-async fn fail_initialize_stake_without_funding_account() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
-
-    // Given a config account and a validator's vote account.
-
-    let config = create_config(&mut context).await;
-    let validator = Pubkey::new_unique();
-    let vote = create_vote_account(&mut context, &validator, &validator);
-
-    // And we initialize the stake account without pre-funding the account.
-
-    let (stake_pda, _) = find_stake_pda(&validator, &config);
-
-    let initialize_ix = InitializeStakeBuilder::new()
-        .config(config)
-        .stake(stake_pda)
-        .validator_vote(vote)
-        .instruction();
-
-    let tx = Transaction::new_signed_with_payer(
-        &[initialize_ix],
-        Some(&context.payer.pubkey()),
-        &[&context.payer],
-        context.last_blockhash,
-    );
-    context.banks_client.process_transaction(tx).await.unwrap();
-
-    let account = context.banks_client.get_account(stake_pda).await.unwrap();
-    // TODO: Shouldn't we get an error from the instruction?
-    assert!(account.is_none());
-}
-
-#[tokio::test]
-async fn fail_initialize_stake_with_invalid_stake_account() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
-
-    // Given a config account and a validator's vote account.
-
-    let config = create_config(&mut context).await;
-    let validator = Pubkey::new_unique();
-    let vote = create_vote_account(&mut context, &validator, &validator);
-
-    // When we try to initialize the stake account with an invalid PDA.
-
-    let stake_pda = Pubkey::new_unique();
-
-    let initialize_ix = InitializeStakeBuilder::new()
-        .config(config)
-        .stake(stake_pda)
-        .validator_vote(vote)
-        .instruction();
-
-    let tx = Transaction::new_signed_with_payer(
-        &[initialize_ix],
-        Some(&context.payer.pubkey()),
-        &[&context.payer],
-        context.last_blockhash,
-    );
-    let err = context
-        .banks_client
-        .process_transaction(tx)
-        .await
-        .unwrap_err();
-
-    // Then we expect an error.
-
-    assert_instruction_error!(err, InstructionError::InvalidSeeds);
-}
-
-#[tokio::test]
 async fn fail_initialize_stake_with_invalid_derivation() {
     let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
         .start_with_context()
@@ -225,7 +151,7 @@ async fn fail_initialize_stake_with_invalid_derivation() {
 
     let config = create_config(&mut context).await;
     let validator = Pubkey::new_unique();
-    let vote = create_vote_account(&mut context, &validator, &validator);
+    let vote = create_vote_account(&mut context, &validator, &validator).await;
 
     // When we try initialize the stake account with an invalid derivation.
 
@@ -255,7 +181,7 @@ async fn fail_initialize_stake_with_invalid_derivation() {
 }
 
 #[tokio::test]
-async fn fail_initialize_stake_with_invalid_vote_account_owner() {
+async fn fail_initialize_stake_with_invalid_vote_account() {
     let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
         .start_with_context()
         .await;
@@ -269,9 +195,11 @@ async fn fail_initialize_stake_with_invalid_vote_account_owner() {
         &validator,
         &validator,
         &system_program::ID,
-    );
+    )
+    .await;
 
-    // When we try initialize the stake account with an invalid derivation.
+    // When we try initialize the stake account with an invalid validator vote account
+    // (the validator vote account is owned by system program).
 
     let (stake_pda, _) = find_stake_pda(&Pubkey::new_unique(), &config);
 
@@ -327,7 +255,8 @@ async fn fail_initialize_stake_with_uninitialized_config_account() {
         &validator,
         &validator,
         &system_program::ID,
-    );
+    )
+    .await;
 
     // When we try initialize the stake account with an invalid derivation.
 

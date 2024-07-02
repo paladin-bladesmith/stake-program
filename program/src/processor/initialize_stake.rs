@@ -3,7 +3,6 @@ use solana_program::{
     entrypoint::ProgramResult, program::invoke_signed, program_error::ProgramError, pubkey::Pubkey,
     system_instruction, vote::state::VoteState,
 };
-use spl_discriminator::SplDiscriminate;
 
 use crate::{
     instruction::accounts::{Context, InitializeStakeAccounts},
@@ -28,7 +27,7 @@ pub fn process_initialize_stake(
 ) -> ProgramResult {
     // Accounts validation.
 
-    // 1. config
+    // config
     // - owner must the stake program
     // - must be initialized
 
@@ -49,7 +48,7 @@ pub fn process_initialize_stake(
         "config"
     );
 
-    // 2. validator_vote
+    // validator_vote
     // - owner must be the vote program
     // - must be initialized
 
@@ -70,7 +69,7 @@ pub fn process_initialize_stake(
     let validator = Pubkey::from(*array_ref!(data, 4, 32));
     let withdraw_authority = Pubkey::from(*array_ref!(data, 36, 32));
 
-    // 3. stake
+    // stake
     // - have the correct PDA derivation
     // - be uninitialized (empty data)
     //
@@ -113,12 +112,7 @@ pub fn process_initialize_stake(
     let mut data = ctx.accounts.stake.try_borrow_mut_data()?;
     let stake = bytemuck::from_bytes_mut::<Stake>(&mut data);
 
-    *stake = Stake {
-        discriminator: Stake::SPL_DISCRIMINATOR.into(),
-        validator,
-        authority: withdraw_authority,
-        ..Stake::default()
-    };
+    *stake = Stake::new(withdraw_authority, validator);
 
     Ok(())
 }

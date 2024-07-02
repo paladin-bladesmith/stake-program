@@ -3,7 +3,7 @@ use std::num::NonZeroU64;
 use bytemuck::{Pod, Zeroable};
 use shank::ShankAccount;
 use solana_program::pubkey::Pubkey;
-use spl_discriminator::{ArrayDiscriminator, SplDiscriminate};
+use spl_discriminator::SplDiscriminate;
 
 /// Data for an amount of tokens staked with a validator
 #[repr(C)]
@@ -15,7 +15,10 @@ pub struct Stake {
     /// The discriminator is equal to `ArrayDiscriminator:: UNINITIALIZED` when
     /// the account is empty, and equal to `Stake::DISCRIMINATOR` when the account
     /// is initialized.
-    pub discriminator: [u8; 8],
+    ///
+    /// Note that the value of the discriminator is different than the prefix seed
+    /// `"stake::state::stake"` used to derive the PDA address.
+    discriminator: [u8; 8],
 
     /// Amount of staked tokens currently active
     pub amount: u64,
@@ -53,8 +56,17 @@ impl Stake {
         self.discriminator.as_slice() == Stake::SPL_DISCRIMINATOR_SLICE
     }
 
-    #[inline(always)]
-    pub fn is_uninitialized(&self) -> bool {
-        self.discriminator.as_slice() == ArrayDiscriminator::UNINITIALIZED.as_slice()
+    pub fn new(authority: Pubkey, validator: Pubkey) -> Self {
+        Self {
+            discriminator: Stake::SPL_DISCRIMINATOR.into(),
+            amount: u64::default(),
+            deactivation_timestamp: Option::default(),
+            deactivating_amount: u64::default(),
+            inactive_amount: u64::default(),
+            authority,
+            validator,
+            last_seen_holder_rewards: u64::default(),
+            last_seen_stake_rewards: u64::default(),
+        }
     }
 }
