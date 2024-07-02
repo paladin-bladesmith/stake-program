@@ -10,7 +10,7 @@ use solana_sdk::{
     transaction::Transaction,
 };
 
-use super::{create_mint, create_token_account, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS};
+use super::token::{create_mint, create_token_account, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS};
 
 pub async fn create_config(context: &mut ProgramTestContext) -> Pubkey {
     let config = Keypair::new();

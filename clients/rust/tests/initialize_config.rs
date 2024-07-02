@@ -6,7 +6,7 @@ use paladin_stake::{
     accounts::Config, errors::StakeError, instructions::InitializeConfigBuilder,
     pdas::find_vault_pda,
 };
-use setup::{
+use setup::token::{
     create_mint, create_token_account, mint_to, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS,
 };
 use solana_program_test::{tokio, ProgramTest};

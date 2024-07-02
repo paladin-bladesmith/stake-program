@@ -3,7 +3,7 @@
 
 pub mod config;
 pub mod token;
-pub use token::*;
+pub mod vote;
 
 #[macro_export]
 macro_rules! assert_instruction_error {
