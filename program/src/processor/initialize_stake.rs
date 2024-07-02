@@ -1,14 +1,14 @@
 use arrayref::array_ref;
 use solana_program::{
-    entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey, vote::state::VoteState,
+    entrypoint::ProgramResult, program::invoke_signed, program_error::ProgramError, pubkey::Pubkey,
+    system_instruction, vote::state::VoteState,
 };
 use spl_discriminator::SplDiscriminate;
 
 use crate::{
-    error::StakeError,
     instruction::accounts::{Context, InitializeStakeAccounts},
     require,
-    state::{find_stake_pda, Config, Stake},
+    state::{find_stake_pda, get_stake_pda_signer_seeds, Config, Stake},
 };
 
 /// Initializes stake account data for a validator.
@@ -59,7 +59,7 @@ pub fn process_initialize_stake(
         "validator_vote"
     );
 
-    let data = &ctx.accounts.config.try_borrow_data()?;
+    let data = &ctx.accounts.validator_vote.try_borrow_data()?;
 
     require!(
         VoteState::is_correct_size_and_initialized(data),
@@ -67,22 +67,17 @@ pub fn process_initialize_stake(
         "validator_vote"
     );
 
-    let validator = Pubkey::from(*array_ref!(data, 0, 32));
-    let withdraw_authority = Pubkey::from(*array_ref!(data, 32, 32));
+    let validator = Pubkey::from(*array_ref!(data, 4, 32));
+    let withdraw_authority = Pubkey::from(*array_ref!(data, 36, 32));
 
     // 3. stake
-    // - owner must be stake program
     // - have the correct PDA derivation
-    // - have the correct length
-    // - be uninitialized
+    // - be uninitialized (empty data)
+    //
+    // NOTE: The stake account is created and assigned to the stake program, so it needs
+    // to be pre-funded with the minimum rent balance by the caller.
 
-    require!(
-        ctx.accounts.stake.owner == program_id,
-        ProgramError::InvalidAccountOwner,
-        "stake"
-    );
-
-    let (derivation, _) = find_stake_pda(&validator, ctx.accounts.config.key, program_id);
+    let (derivation, bump) = find_stake_pda(&validator, ctx.accounts.config.key, program_id);
 
     require!(
         ctx.accounts.stake.key == &derivation,
@@ -90,23 +85,33 @@ pub fn process_initialize_stake(
         "stake"
     );
 
-    let mut data = ctx.accounts.config.try_borrow_mut_data()?;
-
     require!(
-        data.len() == Stake::LEN,
-        StakeError::InvalidAccountDataLength,
-        "stake"
-    );
-
-    let stake = bytemuck::from_bytes_mut::<Stake>(&mut data);
-
-    require!(
-        stake.is_uninitialized(),
+        ctx.accounts.stake.data_is_empty(),
         ProgramError::AccountAlreadyInitialized,
         "stake"
     );
 
+    // Allocate and assign.
+
+    let bump_seed = [bump];
+    let signer_seeds = get_stake_pda_signer_seeds(&validator, ctx.accounts.config.key, &bump_seed);
+
+    invoke_signed(
+        &system_instruction::allocate(ctx.accounts.stake.key, Stake::LEN as u64),
+        &[ctx.accounts.stake.clone()],
+        &[&signer_seeds],
+    )?;
+
+    invoke_signed(
+        &system_instruction::assign(ctx.accounts.stake.key, program_id),
+        &[ctx.accounts.stake.clone()],
+        &[&signer_seeds],
+    )?;
+
     // Initialize the stake account.
+
+    let mut data = ctx.accounts.stake.try_borrow_mut_data()?;
+    let stake = bytemuck::from_bytes_mut::<Stake>(&mut data);
 
     *stake = Stake {
         discriminator: Stake::SPL_DISCRIMINATOR.into(),

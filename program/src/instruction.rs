@@ -62,6 +62,11 @@ pub enum StakeInstruction {
         name = "validator_vote",
         desc = "Validator vote account"
     )]
+    #[account(
+        3,
+        name = "system_program",
+        desc = "System program"
+    )]
     InitializeStake,
 
     /// Stakes tokens with the given config.
