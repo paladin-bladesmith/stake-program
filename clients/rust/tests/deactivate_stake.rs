@@ -10,6 +10,7 @@ use setup::{config::create_config, stake::create_stake, vote::create_vote_accoun
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
     account::{Account, AccountSharedData},
+    clock::Clock,
     instruction::InstructionError,
     pubkey::Pubkey,
     signature::{Keypair, Signer},
@@ -126,6 +127,12 @@ async fn deactivate_stake_with_active_deactivation() {
     let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(stake_account.deactivating_amount, 50);
 
+    let mut clock = context.banks_client.get_sysvar::<Clock>().await.unwrap();
+    // timestamp of the first deactivation
+    let timestamp = clock.unix_timestamp;
+    clock.unix_timestamp = timestamp.saturating_add(1000);
+    context.set_sysvar::<Clock>(&clock);
+
     // When we deactivate a different amount from the stake account
     // with an active deactivation.
 
@@ -148,6 +155,7 @@ async fn deactivate_stake_with_active_deactivation() {
     let account = get_account!(context, stake_pda);
     let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(stake_account.deactivating_amount, 100);
+    assert!((timestamp as u64) < stake_account.deactivation_timestamp.value().unwrap());
 }
 
 #[tokio::test]
