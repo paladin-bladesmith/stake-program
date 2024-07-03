@@ -13,8 +13,8 @@ use solana_sdk::{
 use super::token::{create_mint, create_token_account, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS};
 
 pub async fn create_config(context: &mut ProgramTestContext) -> Pubkey {
-    // cooldown_time_seconds: 1 second
-    // max_deactivation_basis_points: 500 (5%)
+    // cooldown_time_seconds = 1 second
+    // max_deactivation_basis_points = 500 (5%)
     create_config_with_args(context, 1, 500).await
 }
 
