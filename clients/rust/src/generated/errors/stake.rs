@@ -52,6 +52,9 @@ pub enum StakeError {
     /// 13 - Amount exeeds maximum deactivation amount
     #[error("Amount exeeds maximum deactivation amount")]
     MaximumDeactivationAmountExceeded = 0xD,
+    /// 14 - Active deactivation cooldown
+    #[error("Active deactivation cooldown")]
+    ActiveDeactivationCooldown = 0xE,
 }
 
 impl solana_program::program_error::PrintProgramError for StakeError {
