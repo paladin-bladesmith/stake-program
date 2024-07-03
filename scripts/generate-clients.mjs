@@ -90,13 +90,29 @@ kinobi.update(
     },
     {
       // Option<NonZeroU64> -> NullableU64
-      select:
-        "[structFieldTypeNode]deactivationTimestamp",
+      select: "[structFieldTypeNode]deactivationTimestamp",
       transform: (node) => {
         k.assertIsNode(node, "structFieldTypeNode");
         return {
           ...node,
           type: k.definedTypeLinkNode("nullableU64", "hooked"),
+        };
+      },
+    },
+  ])
+);
+
+// Rename instruction arguments.
+kinobi.update(
+  k.bottomUpTransformerVisitor([
+    {
+      // DeactivateStake
+      select: "[instructionNode]deactivateStake.[instructionArgumentNode]args",
+      transform: (node) => {
+        k.assertIsNode(node, "instructionArgumentNode");
+        return {
+          ...node,
+          name: "amount",
         };
       },
     },

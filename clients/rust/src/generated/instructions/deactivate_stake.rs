@@ -70,7 +70,7 @@ impl Default for DeactivateStakeInstructionData {
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct DeactivateStakeInstructionArgs {
-    pub args: u64,
+    pub amount: u64,
 }
 
 /// Instruction builder for `DeactivateStake`.
@@ -83,7 +83,7 @@ pub struct DeactivateStakeInstructionArgs {
 pub struct DeactivateStakeBuilder {
     stake: Option<solana_program::pubkey::Pubkey>,
     stake_authority: Option<solana_program::pubkey::Pubkey>,
-    args: Option<u64>,
+    amount: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -107,8 +107,8 @@ impl DeactivateStakeBuilder {
         self
     }
     #[inline(always)]
-    pub fn args(&mut self, args: u64) -> &mut Self {
-        self.args = Some(args);
+    pub fn amount(&mut self, amount: u64) -> &mut Self {
+        self.amount = Some(amount);
         self
     }
     /// Add an aditional account to the instruction.
@@ -136,7 +136,7 @@ impl DeactivateStakeBuilder {
             stake_authority: self.stake_authority.expect("stake_authority is not set"),
         };
         let args = DeactivateStakeInstructionArgs {
-            args: self.args.clone().expect("args is not set"),
+            amount: self.amount.clone().expect("amount is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -267,7 +267,7 @@ impl<'a, 'b> DeactivateStakeCpiBuilder<'a, 'b> {
             __program: program,
             stake: None,
             stake_authority: None,
-            args: None,
+            amount: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -288,8 +288,8 @@ impl<'a, 'b> DeactivateStakeCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn args(&mut self, args: u64) -> &mut Self {
-        self.instruction.args = Some(args);
+    pub fn amount(&mut self, amount: u64) -> &mut Self {
+        self.instruction.amount = Some(amount);
         self
     }
     /// Add an additional account to the instruction.
@@ -334,7 +334,7 @@ impl<'a, 'b> DeactivateStakeCpiBuilder<'a, 'b> {
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
         let args = DeactivateStakeInstructionArgs {
-            args: self.instruction.args.clone().expect("args is not set"),
+            amount: self.instruction.amount.clone().expect("amount is not set"),
         };
         let instruction = DeactivateStakeCpi {
             __program: self.instruction.__program,
@@ -359,7 +359,7 @@ struct DeactivateStakeCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     stake_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    args: Option<u64>,
+    amount: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

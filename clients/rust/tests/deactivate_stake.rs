@@ -53,7 +53,7 @@ async fn deactivate_stake() {
     let deactivate_ix = DeactivateStakeBuilder::new()
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
-        .args(50)
+        .amount(50)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -111,7 +111,7 @@ async fn deactivate_stake_with_active_deactivation() {
     let deactivate_ix = DeactivateStakeBuilder::new()
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
-        .args(50)
+        .amount(50)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -132,7 +132,7 @@ async fn deactivate_stake_with_active_deactivation() {
     let deactivate_ix = DeactivateStakeBuilder::new()
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
-        .args(100)
+        .amount(100)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -187,7 +187,7 @@ async fn fail_deactivate_stake_with_amount_greater_than_stake_amount() {
     let deactivate_ix = DeactivateStakeBuilder::new()
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
-        .args(150)
+        .amount(150)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -246,7 +246,7 @@ async fn fail_deactivate_stake_with_invalid_authority() {
     let deactivate_ix = DeactivateStakeBuilder::new()
         .stake(stake_pda)
         .stake_authority(fake_authority.pubkey())
-        .args(50)
+        .amount(50)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -303,7 +303,7 @@ async fn fail_deactivate_stake_with_zero_amount() {
     let deactivate_ix = DeactivateStakeBuilder::new()
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
-        .args(0)
+        .amount(0)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -354,7 +354,7 @@ async fn fail_deactivate_stake_with_uninitialized_stake_account() {
     let deactivate_ix = DeactivateStakeBuilder::new()
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
-        .args(0)
+        .amount(0)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(

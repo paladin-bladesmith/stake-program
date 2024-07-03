@@ -53,16 +53,16 @@ export type DeactivateStakeInstruction<
 
 export type DeactivateStakeInstructionData = {
   discriminator: number;
-  args: bigint;
+  amount: bigint;
 };
 
-export type DeactivateStakeInstructionDataArgs = { args: number | bigint };
+export type DeactivateStakeInstructionDataArgs = { amount: number | bigint };
 
 export function getDeactivateStakeInstructionDataEncoder(): Encoder<DeactivateStakeInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
-      ['args', getU64Encoder()],
+      ['amount', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: 3 })
   );
@@ -71,7 +71,7 @@ export function getDeactivateStakeInstructionDataEncoder(): Encoder<DeactivateSt
 export function getDeactivateStakeInstructionDataDecoder(): Decoder<DeactivateStakeInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
-    ['args', getU64Decoder()],
+    ['amount', getU64Decoder()],
   ]);
 }
 
@@ -93,7 +93,7 @@ export type DeactivateStakeInput<
   stake: Address<TAccountStake>;
   /** Authority on validator stake account */
   stakeAuthority: TransactionSigner<TAccountStakeAuthority>;
-  args: DeactivateStakeInstructionDataArgs['args'];
+  amount: DeactivateStakeInstructionDataArgs['amount'];
 };
 
 export function getDeactivateStakeInstruction<
