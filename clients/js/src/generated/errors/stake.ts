@@ -28,13 +28,19 @@ export const STAKE_ERROR__INVALID_TOKEN_ACCOUNT_EXTENSION = 0x8; // 8
 export const STAKE_ERROR__INVALID_AUTHORITY = 0x9; // 9
 /** AuthorityNotSet: Authority is not set */
 export const STAKE_ERROR__AUTHORITY_NOT_SET = 0xa; // 10
+/** InsufficientStakeAmount: Amount greater than stake amount */
+export const STAKE_ERROR__INSUFFICIENT_STAKE_AMOUNT = 0xb; // 11
+/** InvalidAmount: Amount should be greater than 0 */
+export const STAKE_ERROR__INVALID_AMOUNT = 0xc; // 12
 
 export type StakeError =
   | typeof STAKE_ERROR__AMOUNT_GREATER_THAN_ZERO
   | typeof STAKE_ERROR__AUTHORITY_NOT_SET
   | typeof STAKE_ERROR__CLOSE_AUTHORITY_NOT_NONE
   | typeof STAKE_ERROR__DELEGATE_NOT_NONE
+  | typeof STAKE_ERROR__INSUFFICIENT_STAKE_AMOUNT
   | typeof STAKE_ERROR__INVALID_ACCOUNT_DATA_LENGTH
+  | typeof STAKE_ERROR__INVALID_AMOUNT
   | typeof STAKE_ERROR__INVALID_AUTHORITY
   | typeof STAKE_ERROR__INVALID_MINT
   | typeof STAKE_ERROR__INVALID_TOKEN_ACCOUNT_EXTENSION
@@ -49,7 +55,9 @@ if (__DEV__) {
     [STAKE_ERROR__AUTHORITY_NOT_SET]: `Authority is not set`,
     [STAKE_ERROR__CLOSE_AUTHORITY_NOT_NONE]: `Close authority must be none`,
     [STAKE_ERROR__DELEGATE_NOT_NONE]: `Delegate must be none`,
+    [STAKE_ERROR__INSUFFICIENT_STAKE_AMOUNT]: `Amount greater than stake amount`,
     [STAKE_ERROR__INVALID_ACCOUNT_DATA_LENGTH]: `Invalid account data length`,
+    [STAKE_ERROR__INVALID_AMOUNT]: `Amount should be greater than 0`,
     [STAKE_ERROR__INVALID_AUTHORITY]: `Invalid authority`,
     [STAKE_ERROR__INVALID_MINT]: `Invalid mint`,
     [STAKE_ERROR__INVALID_TOKEN_ACCOUNT_EXTENSION]: `Invalid token account extension`,

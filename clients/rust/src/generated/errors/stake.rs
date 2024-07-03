@@ -43,6 +43,12 @@ pub enum StakeError {
     /// 10 - Authority is not set
     #[error("Authority is not set")]
     AuthorityNotSet = 0xA,
+    /// 11 - Amount greater than stake amount
+    #[error("Amount greater than stake amount")]
+    InsufficientStakeAmount = 0xB,
+    /// 12 - Amount should be greater than 0
+    #[error("Amount should be greater than 0")]
+    InvalidAmount = 0xC,
 }
 
 impl solana_program::program_error::PrintProgramError for StakeError {

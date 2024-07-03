@@ -824,6 +824,16 @@
       "code": 10,
       "name": "AuthorityNotSet",
       "msg": "Authority is not set"
+    },
+    {
+      "code": 11,
+      "name": "InsufficientStakeAmount",
+      "msg": "Amount greater than stake amount"
+    },
+    {
+      "code": 12,
+      "name": "InvalidAmount",
+      "msg": "Amount should be greater than 0"
     }
   ],
   "metadata": {
