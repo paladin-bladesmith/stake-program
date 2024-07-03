@@ -17,8 +17,6 @@ import {
   getAddressEncoder,
   getArrayDecoder,
   getArrayEncoder,
-  getI64Decoder,
-  getI64Encoder,
   getStructDecoder,
   getStructEncoder,
   getU64Decoder,
@@ -36,11 +34,17 @@ import {
   type MaybeAccount,
   type MaybeEncodedAccount,
 } from '@solana/web3.js';
+import {
+  getNullableU64Decoder,
+  getNullableU64Encoder,
+  type NullableU64,
+  type NullableU64Args,
+} from '../../hooked';
 
 export type Stake = {
   discriminator: Array<number>;
   amount: bigint;
-  deactivationTimestamp: bigint;
+  deactivationTimestamp: NullableU64;
   deactivatingAmount: bigint;
   inactiveAmount: bigint;
   authority: Address;
@@ -52,7 +56,7 @@ export type Stake = {
 export type StakeArgs = {
   discriminator: Array<number>;
   amount: number | bigint;
-  deactivationTimestamp: number | bigint;
+  deactivationTimestamp: NullableU64Args;
   deactivatingAmount: number | bigint;
   inactiveAmount: number | bigint;
   authority: Address;
@@ -65,7 +69,7 @@ export function getStakeEncoder(): Encoder<StakeArgs> {
   return getStructEncoder([
     ['discriminator', getArrayEncoder(getU8Encoder(), { size: 8 })],
     ['amount', getU64Encoder()],
-    ['deactivationTimestamp', getI64Encoder()],
+    ['deactivationTimestamp', getNullableU64Encoder()],
     ['deactivatingAmount', getU64Encoder()],
     ['inactiveAmount', getU64Encoder()],
     ['authority', getAddressEncoder()],
@@ -79,7 +83,7 @@ export function getStakeDecoder(): Decoder<Stake> {
   return getStructDecoder([
     ['discriminator', getArrayDecoder(getU8Decoder(), { size: 8 })],
     ['amount', getU64Decoder()],
-    ['deactivationTimestamp', getI64Decoder()],
+    ['deactivationTimestamp', getNullableU64Decoder()],
     ['deactivatingAmount', getU64Decoder()],
     ['inactiveAmount', getU64Decoder()],
     ['authority', getAddressDecoder()],
@@ -144,4 +148,8 @@ export async function fetchAllMaybeStake(
 ): Promise<MaybeAccount<Stake>[]> {
   const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
   return maybeAccounts.map((maybeAccount) => decodeStake(maybeAccount));
+}
+
+export function getStakeSize(): number {
+  return 120;
 }

@@ -9,7 +9,7 @@ use paladin_stake::{
     pdas::find_vault_pda,
     types::ConfigField,
 };
-use setup::{create_mint, create_token_account, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS};
+use setup::token::{create_mint, create_token_account, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS};
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
     instruction::InstructionError,
