@@ -2,6 +2,7 @@
 #![allow(dead_code)]
 
 pub mod config;
+pub mod stake;
 pub mod token;
 pub mod vote;
 
