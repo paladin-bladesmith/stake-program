@@ -4,7 +4,10 @@ mod setup;
 
 use borsh::BorshSerialize;
 use paladin_stake::{
-    accounts::Stake, errors::StakeError, instructions::DeactivateStakeBuilder, pdas::find_stake_pda,
+    accounts::{Config, Stake},
+    errors::StakeError,
+    instructions::DeactivateStakeBuilder,
+    pdas::find_stake_pda,
 };
 use setup::{config::create_config, stake::create_stake, vote::create_vote_account};
 use solana_program_test::{tokio, ProgramTest};
@@ -26,6 +29,20 @@ async fn deactivate_stake() {
     // Given a config account and a validator's vote account.
 
     let config = create_config(&mut context).await;
+    // "manually" set the total amount delegated
+    let account = get_account!(context, config);
+    let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
+    config_account.token_amount_delegated = 100;
+
+    let updated_config = Account {
+        lamports: account.lamports,
+        data: config_account.try_to_vec().unwrap(),
+        owner: account.owner,
+        executable: account.executable,
+        rent_epoch: account.rent_epoch,
+    };
+    context.set_account(&config, &updated_config.into());
+
     let validator = Pubkey::new_unique();
     let authority = Keypair::new();
     let vote = create_vote_account(&mut context, &validator, &authority.pubkey()).await;
@@ -52,9 +69,10 @@ async fn deactivate_stake() {
     // When we deactivate an amount from the stake account.
 
     let deactivate_ix = DeactivateStakeBuilder::new()
+        .config(config)
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
-        .amount(50)
+        .amount(5)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -71,7 +89,7 @@ async fn deactivate_stake() {
     let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
 
     assert_eq!(stake_account.amount, 100);
-    assert_eq!(stake_account.deactivating_amount, 50);
+    assert_eq!(stake_account.deactivating_amount, 5);
     assert!(stake_account.deactivation_timestamp.value().is_some())
 }
 
@@ -84,6 +102,20 @@ async fn deactivate_stake_with_active_deactivation() {
     // Given a config account and a validator's vote account.
 
     let config = create_config(&mut context).await;
+    // "manually" set the total amount delegated
+    let account = get_account!(context, config);
+    let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
+    config_account.token_amount_delegated = 100;
+
+    let updated_config = Account {
+        lamports: account.lamports,
+        data: config_account.try_to_vec().unwrap(),
+        owner: account.owner,
+        executable: account.executable,
+        rent_epoch: account.rent_epoch,
+    };
+    context.set_account(&config, &updated_config.into());
+
     let validator = Pubkey::new_unique();
     let authority = Keypair::new();
     let vote = create_vote_account(&mut context, &validator, &authority.pubkey()).await;
@@ -110,9 +142,10 @@ async fn deactivate_stake_with_active_deactivation() {
     // And we deactivate an amount from the stake account.
 
     let deactivate_ix = DeactivateStakeBuilder::new()
+        .config(config)
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
-        .amount(50)
+        .amount(5)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -125,7 +158,7 @@ async fn deactivate_stake_with_active_deactivation() {
 
     let account = get_account!(context, stake_pda);
     let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake_account.deactivating_amount, 50);
+    assert_eq!(stake_account.deactivating_amount, 5);
 
     let mut clock = context.banks_client.get_sysvar::<Clock>().await.unwrap();
     // timestamp of the first deactivation
@@ -137,9 +170,10 @@ async fn deactivate_stake_with_active_deactivation() {
     // with an active deactivation.
 
     let deactivate_ix = DeactivateStakeBuilder::new()
+        .config(config)
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
-        .amount(100)
+        .amount(1)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -154,7 +188,7 @@ async fn deactivate_stake_with_active_deactivation() {
 
     let account = get_account!(context, stake_pda);
     let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake_account.deactivating_amount, 100);
+    assert_eq!(stake_account.deactivating_amount, 1);
     assert!((timestamp as u64) < stake_account.deactivation_timestamp.value().unwrap());
 }
 
@@ -193,6 +227,7 @@ async fn fail_deactivate_stake_with_amount_greater_than_stake_amount() {
     // When we try to deactivate an amount greater than the staked amount.
 
     let deactivate_ix = DeactivateStakeBuilder::new()
+        .config(config)
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
         .amount(150)
@@ -252,6 +287,7 @@ async fn fail_deactivate_stake_with_invalid_authority() {
     let fake_authority = Keypair::new();
 
     let deactivate_ix = DeactivateStakeBuilder::new()
+        .config(config)
         .stake(stake_pda)
         .stake_authority(fake_authority.pubkey())
         .amount(50)
@@ -309,6 +345,7 @@ async fn fail_deactivate_stake_with_zero_amount() {
     // When we try to deactivate with an invalid amount (0).
 
     let deactivate_ix = DeactivateStakeBuilder::new()
+        .config(config)
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
         .amount(0)
@@ -360,6 +397,7 @@ async fn fail_deactivate_stake_with_uninitialized_stake_account() {
     // When we try to deactivate from an uninitialized stake account.
 
     let deactivate_ix = DeactivateStakeBuilder::new()
+        .config(config)
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
         .amount(0)
@@ -380,4 +418,76 @@ async fn fail_deactivate_stake_with_uninitialized_stake_account() {
     // Then we expect an error.
 
     assert_instruction_error!(err, InstructionError::UninitializedAccount);
+}
+
+#[tokio::test]
+async fn fail_deactivate_stake_with_maximum_deactivation_amount_exceeded() {
+    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
+        .start_with_context()
+        .await;
+
+    // Given a config account and a validator's vote account.
+
+    let config = create_config(&mut context).await;
+    // "manually" set the total amount delegated
+    let account = get_account!(context, config);
+    let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
+    config_account.token_amount_delegated = 100;
+
+    let updated_config = Account {
+        lamports: account.lamports,
+        data: config_account.try_to_vec().unwrap(),
+        owner: account.owner,
+        executable: account.executable,
+        rent_epoch: account.rent_epoch,
+    };
+    context.set_account(&config, &updated_config.into());
+
+    let validator = Pubkey::new_unique();
+    let authority = Keypair::new();
+    let vote = create_vote_account(&mut context, &validator, &authority.pubkey()).await;
+
+    // And a stake account.
+
+    let stake_pda = create_stake(&mut context, &validator, &vote, &config).await;
+
+    let account = get_account!(context, stake_pda);
+    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    // "manually" set the amount to 100
+    stake_account.amount = 100;
+
+    let updated_stake = Account {
+        lamports: account.lamports,
+        data: stake_account.try_to_vec().unwrap(),
+        owner: account.owner,
+        executable: account.executable,
+        rent_epoch: account.rent_epoch,
+    };
+
+    context.set_account(&stake_pda, &updated_stake.into());
+
+    // When we try to deactivate a greater amount than the maximum allowed.
+
+    let deactivate_ix = DeactivateStakeBuilder::new()
+        .config(config)
+        .stake(stake_pda)
+        .stake_authority(authority.pubkey())
+        .amount(100) // <- equivalent to 100% of the stake
+        .instruction();
+
+    let tx = Transaction::new_signed_with_payer(
+        &[deactivate_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, &authority],
+        context.last_blockhash,
+    );
+    let err = context
+        .banks_client
+        .process_transaction(tx)
+        .await
+        .unwrap_err();
+
+    // Then we expect an error.
+
+    assert_custom_error!(err, StakeError::MaximumDeactivationAmountExceeded);
 }
