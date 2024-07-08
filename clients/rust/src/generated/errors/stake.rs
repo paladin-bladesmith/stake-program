@@ -49,6 +49,9 @@ pub enum StakeError {
     /// 12 - Amount should be greater than 0
     #[error("Amount should be greater than 0")]
     InvalidAmount = 0xC,
+    /// 13 - Amount exeeds maximum deactivation amount
+    #[error("Amount exeeds maximum deactivation amount")]
+    MaximumDeactivationAmountExceeded = 0xD,
 }
 
 impl solana_program::program_error::PrintProgramError for StakeError {

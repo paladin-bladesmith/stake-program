@@ -32,6 +32,8 @@ export const STAKE_ERROR__AUTHORITY_NOT_SET = 0xa; // 10
 export const STAKE_ERROR__INSUFFICIENT_STAKE_AMOUNT = 0xb; // 11
 /** InvalidAmount: Amount should be greater than 0 */
 export const STAKE_ERROR__INVALID_AMOUNT = 0xc; // 12
+/** MaximumDeactivationAmountExceeded: Amount exeeds maximum deactivation amount */
+export const STAKE_ERROR__MAXIMUM_DEACTIVATION_AMOUNT_EXCEEDED = 0xd; // 13
 
 export type StakeError =
   | typeof STAKE_ERROR__AMOUNT_GREATER_THAN_ZERO
@@ -46,6 +48,7 @@ export type StakeError =
   | typeof STAKE_ERROR__INVALID_TOKEN_ACCOUNT_EXTENSION
   | typeof STAKE_ERROR__INVALID_TOKEN_OWNER
   | typeof STAKE_ERROR__INVALID_TRANSFER_HOOK_PROGRAM_ID
+  | typeof STAKE_ERROR__MAXIMUM_DEACTIVATION_AMOUNT_EXCEEDED
   | typeof STAKE_ERROR__MISSING_TRANSFER_HOOK;
 
 let stakeErrorMessages: Record<StakeError, string> | undefined;
@@ -63,6 +66,7 @@ if (__DEV__) {
     [STAKE_ERROR__INVALID_TOKEN_ACCOUNT_EXTENSION]: `Invalid token account extension`,
     [STAKE_ERROR__INVALID_TOKEN_OWNER]: `Invalid token owner`,
     [STAKE_ERROR__INVALID_TRANSFER_HOOK_PROGRAM_ID]: `Invalid transfer hook program id`,
+    [STAKE_ERROR__MAXIMUM_DEACTIVATION_AMOUNT_EXCEEDED]: `Amount exeeds maximum deactivation amount`,
     [STAKE_ERROR__MISSING_TRANSFER_HOOK]: `Missing transfer hook`,
   };
 }
