@@ -60,6 +60,10 @@ pub enum StakeError {
     /// 12 - Amount should be greater than 0
     #[error("Amount should be greater than 0")]
     InvalidAmount,
+
+    /// 13 - Amount exeeds maximum deactivation amount
+    #[error("Amount exeeds maximum deactivation amount")]
+    MaximumDeactivationAmountExceeded,
 }
 
 impl PrintProgramError for StakeError {

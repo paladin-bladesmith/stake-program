@@ -134,12 +134,17 @@ pub enum StakeInstruction {
     /// Instruction data: amount of tokens to deactivate, as a little-endian `u64`.
     #[account(
         0,
+        name = "config",
+        desc = "Stake config account"
+    )]
+    #[account(
+        1,
         writable,
         name = "stake",
         desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
     )]
     #[account(
-        1,
+        2,
         signer,
         name = "stake_authority",
         desc = "Authority on validator stake account"
