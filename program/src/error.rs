@@ -72,6 +72,10 @@ pub enum StakeError {
     /// 15 - No deactivated tokens
     #[error("No deactivated tokens")]
     NoDeactivatedTokens,
+
+    /// 16 - Incorrect vault account
+    #[error("Incorrect vault account")]
+    IncorrectVaultAccount,
 }
 
 impl PrintProgramError for StakeError {
