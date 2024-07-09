@@ -855,6 +855,11 @@
     },
     {
       "code": 15,
+      "name": "IncorrectVaultAccount",
+      "msg": "Incorrect vault account"
+    },
+    {
+      "code": 16,
       "name": "NoDeactivatedTokens",
       "msg": "No deactivated tokens"
     }
