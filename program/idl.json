@@ -186,6 +186,14 @@
       "name": "DeactivateStake",
       "accounts": [
         {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Stake config account"
+          ]
+        },
+        {
           "name": "stake",
           "isMut": true,
           "isSigner": false,
@@ -824,6 +832,21 @@
       "code": 10,
       "name": "AuthorityNotSet",
       "msg": "Authority is not set"
+    },
+    {
+      "code": 11,
+      "name": "InsufficientStakeAmount",
+      "msg": "Amount greater than stake amount"
+    },
+    {
+      "code": 12,
+      "name": "InvalidAmount",
+      "msg": "Amount should be greater than 0"
+    },
+    {
+      "code": 13,
+      "name": "MaximumDeactivationAmountExceeded",
+      "msg": "Amount exeeds maximum deactivation amount"
     }
   ],
   "metadata": {

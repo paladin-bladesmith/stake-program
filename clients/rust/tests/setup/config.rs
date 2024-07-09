@@ -13,6 +13,16 @@ use solana_sdk::{
 use super::token::{create_mint, create_token_account, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS};
 
 pub async fn create_config(context: &mut ProgramTestContext) -> Pubkey {
+    // cooldown_time_seconds: 1 second
+    // max_deactivation_basis_points: 500 (5%)
+    create_config_with_args(context, 1, 500).await
+}
+
+pub async fn create_config_with_args(
+    context: &mut ProgramTestContext,
+    cooldown_time_seconds: u64,
+    max_deactivation_basis_points: u16,
+) -> Pubkey {
     let config = Keypair::new();
     let authority = Keypair::new().pubkey();
 
@@ -58,8 +68,8 @@ pub async fn create_config(context: &mut ProgramTestContext) -> Pubkey {
         .slash_authority(authority)
         .mint(mint.pubkey())
         .vault(token.pubkey())
-        .cooldown_time_seconds(1) // 1 second
-        .max_deactivation_basis_points(500) // 5%
+        .cooldown_time_seconds(cooldown_time_seconds)
+        .max_deactivation_basis_points(max_deactivation_basis_points)
         .instruction();
 
     // When we create a config.

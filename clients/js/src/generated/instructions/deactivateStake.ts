@@ -24,6 +24,7 @@ import {
   type IInstruction,
   type IInstructionWithAccounts,
   type IInstructionWithData,
+  type ReadonlyAccount,
   type ReadonlySignerAccount,
   type TransactionSigner,
   type WritableAccount,
@@ -33,6 +34,7 @@ import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export type DeactivateStakeInstruction<
   TProgram extends string = typeof STAKE_PROGRAM_ADDRESS,
+  TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountStake extends string | IAccountMeta<string> = string,
   TAccountStakeAuthority extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
@@ -40,6 +42,9 @@ export type DeactivateStakeInstruction<
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
+      TAccountConfig extends string
+        ? ReadonlyAccount<TAccountConfig>
+        : TAccountConfig,
       TAccountStake extends string
         ? WritableAccount<TAccountStake>
         : TAccountStake,
@@ -53,16 +58,16 @@ export type DeactivateStakeInstruction<
 
 export type DeactivateStakeInstructionData = {
   discriminator: number;
-  args: bigint;
+  amount: bigint;
 };
 
-export type DeactivateStakeInstructionDataArgs = { args: number | bigint };
+export type DeactivateStakeInstructionDataArgs = { amount: number | bigint };
 
 export function getDeactivateStakeInstructionDataEncoder(): Encoder<DeactivateStakeInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
-      ['args', getU64Encoder()],
+      ['amount', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: 3 })
   );
@@ -71,7 +76,7 @@ export function getDeactivateStakeInstructionDataEncoder(): Encoder<DeactivateSt
 export function getDeactivateStakeInstructionDataDecoder(): Decoder<DeactivateStakeInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
-    ['args', getU64Decoder()],
+    ['amount', getU64Decoder()],
   ]);
 }
 
@@ -86,23 +91,32 @@ export function getDeactivateStakeInstructionDataCodec(): Codec<
 }
 
 export type DeactivateStakeInput<
+  TAccountConfig extends string = string,
   TAccountStake extends string = string,
   TAccountStakeAuthority extends string = string,
 > = {
+  /** Stake config account */
+  config: Address<TAccountConfig>;
   /** Validator stake account (pda of `['stake::state::stake', validator, config]`) */
   stake: Address<TAccountStake>;
   /** Authority on validator stake account */
   stakeAuthority: TransactionSigner<TAccountStakeAuthority>;
-  args: DeactivateStakeInstructionDataArgs['args'];
+  amount: DeactivateStakeInstructionDataArgs['amount'];
 };
 
 export function getDeactivateStakeInstruction<
+  TAccountConfig extends string,
   TAccountStake extends string,
   TAccountStakeAuthority extends string,
 >(
-  input: DeactivateStakeInput<TAccountStake, TAccountStakeAuthority>
+  input: DeactivateStakeInput<
+    TAccountConfig,
+    TAccountStake,
+    TAccountStakeAuthority
+  >
 ): DeactivateStakeInstruction<
   typeof STAKE_PROGRAM_ADDRESS,
+  TAccountConfig,
   TAccountStake,
   TAccountStakeAuthority
 > {
@@ -111,6 +125,7 @@ export function getDeactivateStakeInstruction<
 
   // Original accounts.
   const originalAccounts = {
+    config: { value: input.config ?? null, isWritable: false },
     stake: { value: input.stake ?? null, isWritable: true },
     stakeAuthority: { value: input.stakeAuthority ?? null, isWritable: false },
   };
@@ -125,6 +140,7 @@ export function getDeactivateStakeInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
+      getAccountMeta(accounts.config),
       getAccountMeta(accounts.stake),
       getAccountMeta(accounts.stakeAuthority),
     ],
@@ -134,6 +150,7 @@ export function getDeactivateStakeInstruction<
     ),
   } as DeactivateStakeInstruction<
     typeof STAKE_PROGRAM_ADDRESS,
+    TAccountConfig,
     TAccountStake,
     TAccountStakeAuthority
   >;
@@ -147,10 +164,12 @@ export type ParsedDeactivateStakeInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
+    /** Stake config account */
+    config: TAccountMetas[0];
     /** Validator stake account (pda of `['stake::state::stake', validator, config]`) */
-    stake: TAccountMetas[0];
+    stake: TAccountMetas[1];
     /** Authority on validator stake account */
-    stakeAuthority: TAccountMetas[1];
+    stakeAuthority: TAccountMetas[2];
   };
   data: DeactivateStakeInstructionData;
 };
@@ -163,7 +182,7 @@ export function parseDeactivateStakeInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedDeactivateStakeInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 2) {
+  if (instruction.accounts.length < 3) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -176,6 +195,7 @@ export function parseDeactivateStakeInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
+      config: getNextAccount(),
       stake: getNextAccount(),
       stakeAuthority: getNextAccount(),
     },

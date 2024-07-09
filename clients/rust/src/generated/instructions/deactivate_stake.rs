@@ -10,6 +10,8 @@ use borsh::BorshSerialize;
 
 /// Accounts.
 pub struct DeactivateStake {
+    /// Stake config account
+    pub config: solana_program::pubkey::Pubkey,
     /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
     pub stake: solana_program::pubkey::Pubkey,
     /// Authority on validator stake account
@@ -29,7 +31,11 @@ impl DeactivateStake {
         args: DeactivateStakeInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.config,
+            false,
+        ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.stake, false,
         ));
@@ -70,26 +76,34 @@ impl Default for DeactivateStakeInstructionData {
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct DeactivateStakeInstructionArgs {
-    pub args: u64,
+    pub amount: u64,
 }
 
 /// Instruction builder for `DeactivateStake`.
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` stake
-///   1. `[signer]` stake_authority
+///   0. `[]` config
+///   1. `[writable]` stake
+///   2. `[signer]` stake_authority
 #[derive(Clone, Debug, Default)]
 pub struct DeactivateStakeBuilder {
+    config: Option<solana_program::pubkey::Pubkey>,
     stake: Option<solana_program::pubkey::Pubkey>,
     stake_authority: Option<solana_program::pubkey::Pubkey>,
-    args: Option<u64>,
+    amount: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
 impl DeactivateStakeBuilder {
     pub fn new() -> Self {
         Self::default()
+    }
+    /// Stake config account
+    #[inline(always)]
+    pub fn config(&mut self, config: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.config = Some(config);
+        self
     }
     /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
     #[inline(always)]
@@ -107,8 +121,8 @@ impl DeactivateStakeBuilder {
         self
     }
     #[inline(always)]
-    pub fn args(&mut self, args: u64) -> &mut Self {
-        self.args = Some(args);
+    pub fn amount(&mut self, amount: u64) -> &mut Self {
+        self.amount = Some(amount);
         self
     }
     /// Add an aditional account to the instruction.
@@ -132,11 +146,12 @@ impl DeactivateStakeBuilder {
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = DeactivateStake {
+            config: self.config.expect("config is not set"),
             stake: self.stake.expect("stake is not set"),
             stake_authority: self.stake_authority.expect("stake_authority is not set"),
         };
         let args = DeactivateStakeInstructionArgs {
-            args: self.args.clone().expect("args is not set"),
+            amount: self.amount.clone().expect("amount is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -145,6 +160,8 @@ impl DeactivateStakeBuilder {
 
 /// `deactivate_stake` CPI accounts.
 pub struct DeactivateStakeCpiAccounts<'a, 'b> {
+    /// Stake config account
+    pub config: &'b solana_program::account_info::AccountInfo<'a>,
     /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
     pub stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Authority on validator stake account
@@ -155,6 +172,8 @@ pub struct DeactivateStakeCpiAccounts<'a, 'b> {
 pub struct DeactivateStakeCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Stake config account
+    pub config: &'b solana_program::account_info::AccountInfo<'a>,
     /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
     pub stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Authority on validator stake account
@@ -171,6 +190,7 @@ impl<'a, 'b> DeactivateStakeCpi<'a, 'b> {
     ) -> Self {
         Self {
             __program: program,
+            config: accounts.config,
             stake: accounts.stake,
             stake_authority: accounts.stake_authority,
             __args: args,
@@ -209,7 +229,11 @@ impl<'a, 'b> DeactivateStakeCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.config.key,
+            false,
+        ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.stake.key,
             false,
@@ -234,8 +258,9 @@ impl<'a, 'b> DeactivateStakeCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(2 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(3 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
+        account_infos.push(self.config.clone());
         account_infos.push(self.stake.clone());
         account_infos.push(self.stake_authority.clone());
         remaining_accounts
@@ -254,8 +279,9 @@ impl<'a, 'b> DeactivateStakeCpi<'a, 'b> {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` stake
-///   1. `[signer]` stake_authority
+///   0. `[]` config
+///   1. `[writable]` stake
+///   2. `[signer]` stake_authority
 #[derive(Clone, Debug)]
 pub struct DeactivateStakeCpiBuilder<'a, 'b> {
     instruction: Box<DeactivateStakeCpiBuilderInstruction<'a, 'b>>,
@@ -265,12 +291,22 @@ impl<'a, 'b> DeactivateStakeCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
         let instruction = Box::new(DeactivateStakeCpiBuilderInstruction {
             __program: program,
+            config: None,
             stake: None,
             stake_authority: None,
-            args: None,
+            amount: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
+    }
+    /// Stake config account
+    #[inline(always)]
+    pub fn config(
+        &mut self,
+        config: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.config = Some(config);
+        self
     }
     /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
     #[inline(always)]
@@ -288,8 +324,8 @@ impl<'a, 'b> DeactivateStakeCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn args(&mut self, args: u64) -> &mut Self {
-        self.instruction.args = Some(args);
+    pub fn amount(&mut self, amount: u64) -> &mut Self {
+        self.instruction.amount = Some(amount);
         self
     }
     /// Add an additional account to the instruction.
@@ -334,10 +370,12 @@ impl<'a, 'b> DeactivateStakeCpiBuilder<'a, 'b> {
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
         let args = DeactivateStakeInstructionArgs {
-            args: self.instruction.args.clone().expect("args is not set"),
+            amount: self.instruction.amount.clone().expect("amount is not set"),
         };
         let instruction = DeactivateStakeCpi {
             __program: self.instruction.__program,
+
+            config: self.instruction.config.expect("config is not set"),
 
             stake: self.instruction.stake.expect("stake is not set"),
 
@@ -357,9 +395,10 @@ impl<'a, 'b> DeactivateStakeCpiBuilder<'a, 'b> {
 #[derive(Clone, Debug)]
 struct DeactivateStakeCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
+    config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     stake_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    args: Option<u64>,
+    amount: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

@@ -52,6 +52,18 @@ pub enum StakeError {
     /// 10 - Authority is not set
     #[error("Authority is not set")]
     AuthorityNotSet,
+
+    /// 11 - Amount greater than stake amount
+    #[error("Amount greater than stake amount")]
+    InsufficientStakeAmount,
+
+    /// 12 - Amount should be greater than 0
+    #[error("Amount should be greater than 0")]
+    InvalidAmount,
+
+    /// 13 - Amount exeeds maximum deactivation amount
+    #[error("Amount exeeds maximum deactivation amount")]
+    MaximumDeactivationAmountExceeded,
 }
 
 impl PrintProgramError for StakeError {
