@@ -165,9 +165,9 @@ async fn deactivate_stake_with_active_deactivation() {
     assert_eq!(stake_account.deactivating_amount, 5);
 
     let mut clock = context.banks_client.get_sysvar::<Clock>().await.unwrap();
-    // timestamp of the first deactivation
-    let timestamp = clock.unix_timestamp;
-    clock.unix_timestamp = timestamp.saturating_add(1000);
+    // updated timestamp
+    let updated_timestamp = clock.unix_timestamp.saturating_add(1000);
+    clock.unix_timestamp = updated_timestamp;
     context.set_sysvar::<Clock>(&clock);
 
     // When we deactivate a different amount from the stake account
@@ -188,12 +188,15 @@ async fn deactivate_stake_with_active_deactivation() {
     );
     context.banks_client.process_transaction(tx).await.unwrap();
 
-    // Then the deactivation should be "updated".
+    // Then the deactivation should have the updated amount and timestamp.
 
     let account = get_account!(context, stake_pda);
     let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(stake_account.deactivating_amount, 1);
-    assert!((timestamp as u64) < stake_account.deactivation_timestamp.value().unwrap());
+    assert_eq!(
+        updated_timestamp as u64,
+        stake_account.deactivation_timestamp.value().unwrap()
+    );
 }
 
 #[tokio::test]
