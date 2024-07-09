@@ -17,8 +17,7 @@ use crate::{
 fn get_max_deactivation_amount(total_amount: u64, basis_points: u16) -> Result<u64, ProgramError> {
     total_amount
         .checked_mul(basis_points as u64)
-        .ok_or(ProgramError::ArithmeticOverflow)?
-        .checked_div(10_000)
+        .and_then(|p| p.checked_div(10_000))
         .ok_or(ProgramError::ArithmeticOverflow)
 }
 
@@ -38,7 +37,7 @@ pub fn process_deactivate_stake(
     ctx: Context<DeactivateStakeAccounts>,
     amount: u64,
 ) -> ProgramResult {
-    // Account valuidation.
+    // Account validation.
 
     // config
     // - owner must be the stake program
