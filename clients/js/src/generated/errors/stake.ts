@@ -36,8 +36,10 @@ export const STAKE_ERROR__INVALID_AMOUNT = 0xc; // 12
 export const STAKE_ERROR__MAXIMUM_DEACTIVATION_AMOUNT_EXCEEDED = 0xd; // 13
 /** ActiveDeactivationCooldown: Active deactivation cooldown */
 export const STAKE_ERROR__ACTIVE_DEACTIVATION_COOLDOWN = 0xe; // 14
+/** IncorrectVaultAccount: Incorrect vault account */
+export const STAKE_ERROR__INCORRECT_VAULT_ACCOUNT = 0xf; // 15
 /** NoDeactivatedTokens: No deactivated tokens */
-export const STAKE_ERROR__NO_DEACTIVATED_TOKENS = 0xf; // 15
+export const STAKE_ERROR__NO_DEACTIVATED_TOKENS = 0x10; // 16
 
 export type StakeError =
   | typeof STAKE_ERROR__ACTIVE_DEACTIVATION_COOLDOWN
@@ -45,6 +47,7 @@ export type StakeError =
   | typeof STAKE_ERROR__AUTHORITY_NOT_SET
   | typeof STAKE_ERROR__CLOSE_AUTHORITY_NOT_NONE
   | typeof STAKE_ERROR__DELEGATE_NOT_NONE
+  | typeof STAKE_ERROR__INCORRECT_VAULT_ACCOUNT
   | typeof STAKE_ERROR__INSUFFICIENT_STAKE_AMOUNT
   | typeof STAKE_ERROR__INVALID_ACCOUNT_DATA_LENGTH
   | typeof STAKE_ERROR__INVALID_AMOUNT
@@ -65,6 +68,7 @@ if (__DEV__) {
     [STAKE_ERROR__AUTHORITY_NOT_SET]: `Authority is not set`,
     [STAKE_ERROR__CLOSE_AUTHORITY_NOT_NONE]: `Close authority must be none`,
     [STAKE_ERROR__DELEGATE_NOT_NONE]: `Delegate must be none`,
+    [STAKE_ERROR__INCORRECT_VAULT_ACCOUNT]: `Incorrect vault account`,
     [STAKE_ERROR__INSUFFICIENT_STAKE_AMOUNT]: `Amount greater than stake amount`,
     [STAKE_ERROR__INVALID_ACCOUNT_DATA_LENGTH]: `Invalid account data length`,
     [STAKE_ERROR__INVALID_AMOUNT]: `Amount should be greater than 0`,
