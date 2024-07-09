@@ -24,7 +24,7 @@ pub fn process_inactivate_stake(
     program_id: &Pubkey,
     ctx: Context<InactivateStakeAccounts>,
 ) -> ProgramResult {
-    // Account valuidation.
+    // Account validation.
 
     // config
     // - owner must be the stake program
@@ -86,10 +86,11 @@ pub fn process_inactivate_stake(
             .unix_timestamp
             .saturating_sub(config.cooldown_time_seconds) as u64;
 
-        // TODO: should we fail or just do nothing?
         require!(
             current >= timestamp.get(),
-            StakeError::ActiveDeactivationCooldown
+            StakeError::ActiveDeactivationCooldown,
+            "{} second(s) remaining for deactivation",
+            timestamp.get().saturating_sub(current),
         );
 
         msg!("Deactivating {} token(s)", stake.deactivating_amount);
