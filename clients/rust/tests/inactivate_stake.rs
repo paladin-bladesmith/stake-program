@@ -102,7 +102,7 @@ async fn inactivate_stake() {
 }
 
 #[tokio::test]
-async fn inactivate_stake_with_no_deactivated_amount() {
+async fn fail_inactivate_stake_with_no_deactivated_amount() {
     let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
         .start_with_context()
         .await;
@@ -147,25 +147,15 @@ async fn inactivate_stake_with_no_deactivated_amount() {
         &[&context.payer],
         context.last_blockhash,
     );
-    context.banks_client.process_transaction(tx).await.unwrap();
+    let err = context
+        .banks_client
+        .process_transaction(tx)
+        .await
+        .unwrap_err();
 
-    // Then the tranasction succeeds and the stake account should
-    // remain the same.
+    // Then we expect an error.
 
-    let account = get_account!(context, stake_pda);
-    let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
-
-    assert_eq!(stake_account.amount, 100);
-    assert_eq!(stake_account.deactivating_amount, 0);
-    assert_eq!(stake_account.inactive_amount, 0);
-    assert!(stake_account.deactivation_timestamp.value().is_none());
-
-    // And the total delegated on the config is the same.
-
-    let account = get_account!(context, config);
-    let config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-
-    assert_eq!(config_account.token_amount_delegated, 100);
+    assert_custom_error!(err, StakeError::NoDeactivatedTokens);
 }
 
 #[tokio::test]

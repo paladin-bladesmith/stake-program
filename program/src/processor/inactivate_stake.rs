@@ -78,8 +78,6 @@ pub fn process_inactivate_stake(
     );
 
     // Inactivates the stake if elegible.
-    //
-    // Note: we do not fail if there are no tokens to inactivate
 
     if let Some(timestamp) = stake.deactivation_timestamp {
         let current = Clock::get()?
@@ -104,7 +102,9 @@ pub fn process_inactivate_stake(
         // clears the deactivation
         stake.deactivating_amount = 0;
         stake.deactivation_timestamp = None;
-    }
 
-    Ok(())
+        Ok(())
+    } else {
+        Err(StakeError::NoDeactivatedTokens.into())
+    }
 }
