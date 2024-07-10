@@ -1,5 +1,5 @@
 use solana_program::{
-    account_info::AccountInfo, entrypoint::ProgramResult, program::invoke,
+    account_info::AccountInfo, entrypoint::ProgramResult, program::invoke_signed,
     program_error::ProgramError, pubkey::Pubkey,
 };
 use spl_token_2022::{
@@ -12,7 +12,7 @@ use crate::{
     error::StakeError,
     instruction::accounts::{Context, WithdrawInactiveStakeAccounts},
     require,
-    state::{find_stake_pda, find_vault_pda, Config, Stake},
+    state::{find_stake_pda, find_vault_pda, get_stake_pda_signer_seeds, Config, Stake},
 };
 
 /// Withdraw inactive staked tokens from the vault
@@ -30,9 +30,9 @@ use crate::{
 /// 7.. Extra required accounts for transfer hook
 ///
 /// Instruction data: amount of tokens to move
-pub fn process_withdraw_inactive_stake(
+pub fn process_withdraw_inactive_stake<'a>(
     program_id: &Pubkey,
-    ctx: Context<WithdrawInactiveStakeAccounts>,
+    ctx: Context<'a, WithdrawInactiveStakeAccounts<'a>>,
     amount: u64,
 ) -> ProgramResult {
     // Account validation.
@@ -105,13 +105,17 @@ pub fn process_withdraw_inactive_stake(
     // vault authority
     // - derivation must match
 
-    let (vault_signer, signer_bump) = find_vault_pda(ctx.accounts.config.key, program_id);
+    let (vault_signer, bump) = find_vault_pda(ctx.accounts.config.key, program_id);
 
     require!(
         ctx.accounts.vault_authority.key == &vault_signer,
         StakeError::InvalidAuthority,
         "vault authority",
     );
+
+    let signer_bump = &[bump];
+    let signer_seeds =
+        get_stake_pda_signer_seeds(&stake.validator, ctx.accounts.config.key, signer_bump);
 
     // vault
     // - must be the token account on the stake config account
@@ -151,19 +155,15 @@ pub fn process_withdraw_inactive_stake(
         .checked_sub(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
-    stake.amount = stake
-        .amount
-        .checked_sub(amount)
-        .ok_or(ProgramError::ArithmeticOverflow)?;
-    drop(stake_data);
-
     config.token_amount_delegated = config
         .token_amount_delegated
         .checked_sub(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
-    drop(config_data);
 
     // Transfer the tokens to the vault (stakes them).
+
+    drop(vault_data);
+    drop(mint_data);
 
     let transfer_ix = transfer_checked(
         ctx.accounts.token_program.key,
@@ -184,5 +184,5 @@ pub fn process_withdraw_inactive_stake(
     account_infos.push(ctx.accounts.vault_authority.clone());
     account_infos.extend_from_slice(ctx.remaining_accounts);
 
-    invoke(&transfer_ix, &account_infos)
+    invoke_signed(&transfer_ix, &account_infos, &[&signer_seeds])
 }
