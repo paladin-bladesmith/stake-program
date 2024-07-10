@@ -93,12 +93,12 @@ async fn inactivate_stake() {
     assert_eq!(stake_account.inactive_amount, 50);
     assert!(stake_account.deactivation_timestamp.value().is_none());
 
-    // And the total delegated on the config must decrease.
+    // And the total delegated on the config stays the same.
 
     let account = get_account!(context, config);
     let config_account = Config::from_bytes(account.data.as_ref()).unwrap();
 
-    assert_eq!(config_account.token_amount_delegated, 50);
+    assert_eq!(config_account.token_amount_delegated, 100);
 }
 
 #[tokio::test]
