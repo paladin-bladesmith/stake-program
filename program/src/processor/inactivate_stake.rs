@@ -95,15 +95,13 @@ pub fn process_inactivate_stake(
 
         msg!("Deactivating {} token(s)", stake.deactivating_amount);
 
-        config.token_amount_delegated = config
-            .token_amount_delegated
-            .saturating_sub(stake.deactivating_amount);
-
-        // moves deactivating amount to inactive and clears the deactivation
+        // moves deactivating amount to inactive
         stake.amount = stake.amount.saturating_sub(stake.deactivating_amount);
         stake.inactive_amount = stake
             .inactive_amount
             .saturating_add(stake.deactivating_amount);
+
+        // clears the deactivation
         stake.deactivating_amount = 0;
         stake.deactivation_timestamp = None;
     }
