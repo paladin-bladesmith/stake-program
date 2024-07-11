@@ -38,6 +38,7 @@ export type SlashInstruction<
   TAccountStake extends string | IAccountMeta<string> = string,
   TAccountSlashAuthority extends string | IAccountMeta<string> = string,
   TAccountVault extends string | IAccountMeta<string> = string,
+  TAccountMint extends string | IAccountMeta<string> = string,
   TAccountVaultAuthority extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
@@ -60,6 +61,9 @@ export type SlashInstruction<
       TAccountVault extends string
         ? WritableAccount<TAccountVault>
         : TAccountVault,
+      TAccountMint extends string
+        ? ReadonlyAccount<TAccountMint>
+        : TAccountMint,
       TAccountVaultAuthority extends string
         ? ReadonlyAccount<TAccountVaultAuthority>
         : TAccountVaultAuthority,
@@ -106,6 +110,7 @@ export type SlashInput<
   TAccountStake extends string = string,
   TAccountSlashAuthority extends string = string,
   TAccountVault extends string = string,
+  TAccountMint extends string = string,
   TAccountVaultAuthority extends string = string,
   TAccountTokenProgram extends string = string,
 > = {
@@ -117,6 +122,8 @@ export type SlashInput<
   slashAuthority: TransactionSigner<TAccountSlashAuthority>;
   /** Vault token account */
   vault: Address<TAccountVault>;
+  /** Stake Token Mint */
+  mint: Address<TAccountMint>;
   /** Vault authority (pda of `['token-owner', config]`) */
   vaultAuthority: Address<TAccountVaultAuthority>;
   /** Token program */
@@ -129,6 +136,7 @@ export function getSlashInstruction<
   TAccountStake extends string,
   TAccountSlashAuthority extends string,
   TAccountVault extends string,
+  TAccountMint extends string,
   TAccountVaultAuthority extends string,
   TAccountTokenProgram extends string,
 >(
@@ -137,6 +145,7 @@ export function getSlashInstruction<
     TAccountStake,
     TAccountSlashAuthority,
     TAccountVault,
+    TAccountMint,
     TAccountVaultAuthority,
     TAccountTokenProgram
   >
@@ -146,6 +155,7 @@ export function getSlashInstruction<
   TAccountStake,
   TAccountSlashAuthority,
   TAccountVault,
+  TAccountMint,
   TAccountVaultAuthority,
   TAccountTokenProgram
 > {
@@ -158,6 +168,7 @@ export function getSlashInstruction<
     stake: { value: input.stake ?? null, isWritable: true },
     slashAuthority: { value: input.slashAuthority ?? null, isWritable: false },
     vault: { value: input.vault ?? null, isWritable: true },
+    mint: { value: input.mint ?? null, isWritable: false },
     vaultAuthority: { value: input.vaultAuthority ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
   };
@@ -182,6 +193,7 @@ export function getSlashInstruction<
       getAccountMeta(accounts.stake),
       getAccountMeta(accounts.slashAuthority),
       getAccountMeta(accounts.vault),
+      getAccountMeta(accounts.mint),
       getAccountMeta(accounts.vaultAuthority),
       getAccountMeta(accounts.tokenProgram),
     ],
@@ -195,6 +207,7 @@ export function getSlashInstruction<
     TAccountStake,
     TAccountSlashAuthority,
     TAccountVault,
+    TAccountMint,
     TAccountVaultAuthority,
     TAccountTokenProgram
   >;
@@ -216,10 +229,12 @@ export type ParsedSlashInstruction<
     slashAuthority: TAccountMetas[2];
     /** Vault token account */
     vault: TAccountMetas[3];
+    /** Stake Token Mint */
+    mint: TAccountMetas[4];
     /** Vault authority (pda of `['token-owner', config]`) */
-    vaultAuthority: TAccountMetas[4];
+    vaultAuthority: TAccountMetas[5];
     /** Token program */
-    tokenProgram: TAccountMetas[5];
+    tokenProgram: TAccountMetas[6];
   };
   data: SlashInstructionData;
 };
@@ -232,7 +247,7 @@ export function parseSlashInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedSlashInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 6) {
+  if (instruction.accounts.length < 7) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -249,6 +264,7 @@ export function parseSlashInstruction<
       stake: getNextAccount(),
       slashAuthority: getNextAccount(),
       vault: getNextAccount(),
+      mint: getNextAccount(),
       vaultAuthority: getNextAccount(),
       tokenProgram: getNextAccount(),
     },
