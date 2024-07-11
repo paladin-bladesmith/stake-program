@@ -40,6 +40,7 @@ export type WithdrawInactiveStakeInstruction<
   TAccountDestinationTokenAccount extends
     | string
     | IAccountMeta<string> = string,
+  TAccountMint extends string | IAccountMeta<string> = string,
   TAccountStakeAuthority extends string | IAccountMeta<string> = string,
   TAccountVaultAuthority extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
@@ -62,6 +63,9 @@ export type WithdrawInactiveStakeInstruction<
       TAccountDestinationTokenAccount extends string
         ? WritableAccount<TAccountDestinationTokenAccount>
         : TAccountDestinationTokenAccount,
+      TAccountMint extends string
+        ? ReadonlyAccount<TAccountMint>
+        : TAccountMint,
       TAccountStakeAuthority extends string
         ? ReadonlySignerAccount<TAccountStakeAuthority> &
             IAccountSignerMeta<TAccountStakeAuthority>
@@ -117,6 +121,7 @@ export type WithdrawInactiveStakeInput<
   TAccountStake extends string = string,
   TAccountVault extends string = string,
   TAccountDestinationTokenAccount extends string = string,
+  TAccountMint extends string = string,
   TAccountStakeAuthority extends string = string,
   TAccountVaultAuthority extends string = string,
   TAccountTokenProgram extends string = string,
@@ -129,6 +134,8 @@ export type WithdrawInactiveStakeInput<
   vault: Address<TAccountVault>;
   /** Destination token account */
   destinationTokenAccount: Address<TAccountDestinationTokenAccount>;
+  /** Stake Token Mint */
+  mint: Address<TAccountMint>;
   /** Stake authority */
   stakeAuthority: TransactionSigner<TAccountStakeAuthority>;
   /** Vault authority (pda of `['token-owner', config]`) */
@@ -143,6 +150,7 @@ export function getWithdrawInactiveStakeInstruction<
   TAccountStake extends string,
   TAccountVault extends string,
   TAccountDestinationTokenAccount extends string,
+  TAccountMint extends string,
   TAccountStakeAuthority extends string,
   TAccountVaultAuthority extends string,
   TAccountTokenProgram extends string,
@@ -152,6 +160,7 @@ export function getWithdrawInactiveStakeInstruction<
     TAccountStake,
     TAccountVault,
     TAccountDestinationTokenAccount,
+    TAccountMint,
     TAccountStakeAuthority,
     TAccountVaultAuthority,
     TAccountTokenProgram
@@ -162,6 +171,7 @@ export function getWithdrawInactiveStakeInstruction<
   TAccountStake,
   TAccountVault,
   TAccountDestinationTokenAccount,
+  TAccountMint,
   TAccountStakeAuthority,
   TAccountVaultAuthority,
   TAccountTokenProgram
@@ -178,6 +188,7 @@ export function getWithdrawInactiveStakeInstruction<
       value: input.destinationTokenAccount ?? null,
       isWritable: true,
     },
+    mint: { value: input.mint ?? null, isWritable: false },
     stakeAuthority: { value: input.stakeAuthority ?? null, isWritable: false },
     vaultAuthority: { value: input.vaultAuthority ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
@@ -203,6 +214,7 @@ export function getWithdrawInactiveStakeInstruction<
       getAccountMeta(accounts.stake),
       getAccountMeta(accounts.vault),
       getAccountMeta(accounts.destinationTokenAccount),
+      getAccountMeta(accounts.mint),
       getAccountMeta(accounts.stakeAuthority),
       getAccountMeta(accounts.vaultAuthority),
       getAccountMeta(accounts.tokenProgram),
@@ -217,6 +229,7 @@ export function getWithdrawInactiveStakeInstruction<
     TAccountStake,
     TAccountVault,
     TAccountDestinationTokenAccount,
+    TAccountMint,
     TAccountStakeAuthority,
     TAccountVaultAuthority,
     TAccountTokenProgram
@@ -239,12 +252,14 @@ export type ParsedWithdrawInactiveStakeInstruction<
     vault: TAccountMetas[2];
     /** Destination token account */
     destinationTokenAccount: TAccountMetas[3];
+    /** Stake Token Mint */
+    mint: TAccountMetas[4];
     /** Stake authority */
-    stakeAuthority: TAccountMetas[4];
+    stakeAuthority: TAccountMetas[5];
     /** Vault authority (pda of `['token-owner', config]`) */
-    vaultAuthority: TAccountMetas[5];
+    vaultAuthority: TAccountMetas[6];
     /** Token program */
-    tokenProgram: TAccountMetas[6];
+    tokenProgram: TAccountMetas[7];
   };
   data: WithdrawInactiveStakeInstructionData;
 };
@@ -257,7 +272,7 @@ export function parseWithdrawInactiveStakeInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedWithdrawInactiveStakeInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 7) {
+  if (instruction.accounts.length < 8) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -274,6 +289,7 @@ export function parseWithdrawInactiveStakeInstruction<
       stake: getNextAccount(),
       vault: getNextAccount(),
       destinationTokenAccount: getNextAccount(),
+      mint: getNextAccount(),
       stakeAuthority: getNextAccount(),
       vaultAuthority: getNextAccount(),
       tokenProgram: getNextAccount(),
