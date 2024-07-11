@@ -283,6 +283,14 @@
           ]
         },
         {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Stake Token Mint"
+          ]
+        },
+        {
           "name": "stakeAuthority",
           "isMut": false,
           "isSigner": true,
