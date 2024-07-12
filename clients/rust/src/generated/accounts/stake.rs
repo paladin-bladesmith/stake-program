@@ -28,8 +28,8 @@ pub struct Stake {
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
     pub validator: Pubkey,
-    pub last_seen_holder_rewards: u64,
-    pub last_seen_stake_rewards: u64,
+    pub last_seen_holder_rewards_per_token: u128,
+    pub last_seen_stake_rewards_per_token: u128,
 }
 
 impl Stake {

@@ -19,6 +19,8 @@ import {
   getArrayEncoder,
   getStructDecoder,
   getStructEncoder,
+  getU128Decoder,
+  getU128Encoder,
   getU64Decoder,
   getU64Encoder,
   getU8Decoder,
@@ -49,8 +51,8 @@ export type Stake = {
   inactiveAmount: bigint;
   authority: Address;
   validator: Address;
-  lastSeenHolderRewards: bigint;
-  lastSeenStakeRewards: bigint;
+  lastSeenHolderRewardsPerToken: bigint;
+  lastSeenStakeRewardsPerToken: bigint;
 };
 
 export type StakeArgs = {
@@ -61,8 +63,8 @@ export type StakeArgs = {
   inactiveAmount: number | bigint;
   authority: Address;
   validator: Address;
-  lastSeenHolderRewards: number | bigint;
-  lastSeenStakeRewards: number | bigint;
+  lastSeenHolderRewardsPerToken: number | bigint;
+  lastSeenStakeRewardsPerToken: number | bigint;
 };
 
 export function getStakeEncoder(): Encoder<StakeArgs> {
@@ -74,8 +76,8 @@ export function getStakeEncoder(): Encoder<StakeArgs> {
     ['inactiveAmount', getU64Encoder()],
     ['authority', getAddressEncoder()],
     ['validator', getAddressEncoder()],
-    ['lastSeenHolderRewards', getU64Encoder()],
-    ['lastSeenStakeRewards', getU64Encoder()],
+    ['lastSeenHolderRewardsPerToken', getU128Encoder()],
+    ['lastSeenStakeRewardsPerToken', getU128Encoder()],
   ]);
 }
 
@@ -88,8 +90,8 @@ export function getStakeDecoder(): Decoder<Stake> {
     ['inactiveAmount', getU64Decoder()],
     ['authority', getAddressDecoder()],
     ['validator', getAddressDecoder()],
-    ['lastSeenHolderRewards', getU64Decoder()],
-    ['lastSeenStakeRewards', getU64Decoder()],
+    ['lastSeenHolderRewardsPerToken', getU128Decoder()],
+    ['lastSeenStakeRewardsPerToken', getU128Decoder()],
   ]);
 }
 
