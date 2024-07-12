@@ -33,7 +33,7 @@ pub struct Stake {
 }
 
 impl Stake {
-    pub const LEN: usize = 120;
+    pub const LEN: usize = 136;
 
     #[inline(always)]
     pub fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {
