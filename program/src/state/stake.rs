@@ -5,6 +5,9 @@ use shank::ShankAccount;
 use solana_program::pubkey::Pubkey;
 use spl_discriminator::SplDiscriminate;
 
+/// Default value for a U128 byte array.
+const U128_DEFAULT: [u8; 16] = [0; 16];
+
 /// Data for an amount of tokens staked with a validator
 #[repr(C)]
 #[derive(Clone, Copy, Default, Pod, ShankAccount, SplDiscriminate, Zeroable)]
@@ -41,11 +44,11 @@ pub struct Stake {
 
     /// Stores the "last_seen_holder_rewards" just for this stake account, allowing
     /// stakers to withdraw rewards whenever, just like normal token users
-    pub last_seen_holder_rewards: u64,
+    last_seen_holder_rewards_per_token: [u8; 16],
 
     /// Stores the "last_seen_stake_rewards" just for this stake account, allowing
     /// stakers to withdraw rewards on their own schedule
-    pub last_seen_stake_rewards: u64,
+    last_seen_stake_rewards_per_token: [u8; 16],
 }
 
 impl Stake {
@@ -65,8 +68,24 @@ impl Stake {
             inactive_amount: u64::default(),
             authority,
             validator_vote,
-            last_seen_holder_rewards: u64::default(),
-            last_seen_stake_rewards: u64::default(),
+            last_seen_holder_rewards_per_token: U128_DEFAULT,
+            last_seen_stake_rewards_per_token: U128_DEFAULT,
         }
+    }
+
+    pub fn last_seen_holder_rewards_per_token(&self) -> u128 {
+        u128::from_le_bytes(self.last_seen_holder_rewards_per_token)
+    }
+
+    pub fn set_last_seen_holder_rewards_per_token(&mut self, value: u128) {
+        self.last_seen_holder_rewards_per_token = value.to_le_bytes();
+    }
+
+    pub fn last_seen_stake_rewards_per_token(&self) -> u128 {
+        u128::from_le_bytes(self.last_seen_stake_rewards_per_token)
+    }
+
+    pub fn set_last_seen_stake_rewards_per_token(&mut self, value: u128) {
+        self.last_seen_stake_rewards_per_token = value.to_le_bytes();
     }
 }
