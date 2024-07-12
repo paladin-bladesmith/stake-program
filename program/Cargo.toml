@@ -23,6 +23,7 @@ bytemuck = "1.16.0"
 shank = "^0.4.2"
 num-derive = "^0.3"
 num-traits = "^0.2"
+paladin-rewards = { package="paladin-rewards-program-client", version="^0", git="https://github.com/paladin-bladesmith/rewards-program.git" }
 solana-program = "1.18.14"
 spl-discriminator = "0.2.2"
 spl-pod = "0.2.2"

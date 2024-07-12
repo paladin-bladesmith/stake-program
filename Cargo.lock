@@ -2620,6 +2620,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "paladin-rewards-program-client"
+version = "0.0.0"
+source = "git+https://github.com/paladin-bladesmith/rewards-program.git#d0e9ce9592305919df071a3d07777bf133a928f6"
+dependencies = [
+ "borsh 0.10.3",
+ "num-derive 0.3.3",
+ "num-traits",
+ "solana-program",
+ "thiserror",
+]
+
+[[package]]
 name = "paladin-stake"
 version = "0.0.0"
 dependencies = [
@@ -5228,6 +5240,7 @@ dependencies = [
  "bytemuck",
  "num-derive 0.3.3",
  "num-traits",
+ "paladin-rewards-program-client",
  "shank",
  "solana-program",
  "spl-discriminator 0.2.2",
