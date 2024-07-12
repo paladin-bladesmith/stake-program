@@ -153,5 +153,5 @@ export async function fetchAllMaybeStake(
 }
 
 export function getStakeSize(): number {
-  return 120;
+  return 136;
 }

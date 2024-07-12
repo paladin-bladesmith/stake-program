@@ -171,12 +171,10 @@ kinobi.update(
       size: 136,
     },
     stake: {
-      size: 120,
+      size: 136,
     },
   })
 );
-
-kinobi.accept(k.consoleLogVisitor(k.getDebugStringVisitor({ indent: true })));
 
 // Render JavaScript.
 const jsClient = path.join(__dirname, "..", "clients", "js");
