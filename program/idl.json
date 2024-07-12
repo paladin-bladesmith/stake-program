@@ -735,12 +735,22 @@
             "type": "publicKey"
           },
           {
-            "name": "lastSeenHolderRewards",
-            "type": "u64"
+            "name": "lastSeenHolderRewardsPerToken",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
           },
           {
-            "name": "lastSeenStakeRewards",
-            "type": "u64"
+            "name": "lastSeenStakeRewardsPerToken",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
           }
         ]
       }

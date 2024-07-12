@@ -19,6 +19,8 @@ import {
   getArrayEncoder,
   getStructDecoder,
   getStructEncoder,
+  getU128Decoder,
+  getU128Encoder,
   getU64Decoder,
   getU64Encoder,
   getU8Decoder,

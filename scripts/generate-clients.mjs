@@ -92,6 +92,24 @@ kinobi.update(
         };
       },
     },
+    {
+      // [u8; 16] -> u128
+      select: (node) => {
+        const names = ["lastSeenHolderRewardsPerToken", "lastSeenStakeRewardsPerToken"];
+        return (
+          names.includes(node.name) &&
+          k.isNode(node, "structFieldTypeNode") &&
+          k.isNode(node.type, "arrayTypeNode")
+        );
+      },
+      transform: (node) => {
+        k.assertIsNode(node, "structFieldTypeNode");
+        return {
+          ...node,
+          type: k.numberTypeNode("u128"),
+        };
+      },
+    },
   ])
 );
 
@@ -157,6 +175,8 @@ kinobi.update(
     },
   })
 );
+
+kinobi.accept(k.consoleLogVisitor(k.getDebugStringVisitor({ indent: true })));
 
 // Render JavaScript.
 const jsClient = path.join(__dirname, "..", "clients", "js");
