@@ -64,6 +64,14 @@ pub enum StakeError {
     /// 13 - Amount exeeds maximum deactivation amount
     #[error("Amount exeeds maximum deactivation amount")]
     MaximumDeactivationAmountExceeded,
+
+    /// 14 - Active deactivation cooldown
+    #[error("Active deactivation cooldown")]
+    ActiveDeactivationCooldown,
+
+    /// 16 - No deactivated tokens
+    #[error("No deactivated tokens")]
+    NoDeactivatedTokens,
 }
 
 impl PrintProgramError for StakeError {

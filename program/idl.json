@@ -847,6 +847,16 @@
       "code": 13,
       "name": "MaximumDeactivationAmountExceeded",
       "msg": "Amount exeeds maximum deactivation amount"
+    },
+    {
+      "code": 14,
+      "name": "ActiveDeactivationCooldown",
+      "msg": "Active deactivation cooldown"
+    },
+    {
+      "code": 15,
+      "name": "NoDeactivatedTokens",
+      "msg": "No deactivated tokens"
     }
   ],
   "metadata": {
