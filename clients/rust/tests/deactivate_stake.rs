@@ -400,7 +400,7 @@ async fn fail_deactivate_stake_with_uninitialized_stake_account() {
         &stake_pda,
         &AccountSharedData::from(Account {
             lamports: 100_000_000,
-            data: vec![5; std::mem::size_of::<Stake>()],
+            data: vec![5; Stake::LEN],
             owner: paladin_stake::ID,
             ..Default::default()
         }),
