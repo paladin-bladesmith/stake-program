@@ -28,6 +28,11 @@ pub fn create_vault_pda(
 }
 
 #[inline(always)]
+pub fn get_vault_pda_signer_seeds<'a>(config: &'a Pubkey, bump_seed: &'a [u8]) -> [&'a [u8]; 3] {
+    ["token-owner".as_bytes(), config.as_ref(), bump_seed]
+}
+
+#[inline(always)]
 pub fn find_stake_pda(validator: &Pubkey, config: &Pubkey, program_id: &Pubkey) -> (Pubkey, u8) {
     Pubkey::find_program_address(
         &[

@@ -1,12 +1,20 @@
 use paladin_rewards::accounts::HolderRewards;
-use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey};
-use spl_token_2022::{extension::PodStateWithExtensions, pod::PodAccount};
+use solana_program::{
+    entrypoint::ProgramResult, program::invoke_signed, program_error::ProgramError, pubkey::Pubkey,
+    system_instruction,
+};
+use spl_token_2022::{
+    extension::PodStateWithExtensions, instruction::withdraw_excess_lamports, pod::PodAccount,
+};
 
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, HarvestHolderRewardsAccounts},
     require,
-    state::{calculate_eligible_rewards, create_vault_pda, find_stake_pda, Config, Stake},
+    state::{
+        calculate_eligible_rewards, create_vault_pda, find_stake_pda, get_vault_pda_signer_seeds,
+        Config, Stake,
+    },
 };
 
 /// Harvests holder SOL rewards earned by the given stake account.
@@ -106,6 +114,8 @@ pub fn process_harvest_holder_rewards(
         "mint"
     );
 
+    drop(vault_data);
+
     // stake authority
     // - must be a signer
     // - must match the authority on the stake account
@@ -166,12 +176,83 @@ pub fn process_harvest_holder_rewards(
     stake.set_last_seen_holder_rewards_per_token(holder_rewards.last_accumulated_rewards_per_token);
 
     // Withdraw the holder rewards to the destination account.
-    //
-    // Rewards are stored on the `vault` account.
-    //
-    // TODO: Need to withdraw the rewards to the destination account, but these are
-    // currently stored on the vault token account. We could use `WithdrawExcessLamports`
-    // and put back the excess lamports back into the vault token account.
+
+    if rewards != 0 {
+        // Rewards are stored on the `vault` token account. We need to first withdraw the excess lamports
+        // from the vault token account to the vault authority account. Then transfer the rewards amount
+        // to the destination account and send the remaining excess lamports back to the vault token
+        // account.
+
+        let withdraw_ix = withdraw_excess_lamports(
+            ctx.accounts.token_program.key,
+            ctx.accounts.vault.key,
+            ctx.accounts.vault_authority.key,
+            ctx.accounts.vault_authority.key,
+            &[],
+        )?;
+
+        let signer_bump = [config.signer_bump];
+        let signer_seeds = get_vault_pda_signer_seeds(ctx.accounts.config.key, &signer_bump);
+        // Stores the current lamports of the vault authority account before the withdraw so
+        // we can calculate the amount of rewards withdrawn.
+        let current_lamports = ctx.accounts.vault_authority.lamports();
+
+        invoke_signed(
+            &withdraw_ix,
+            &[
+                ctx.accounts.token_program.clone(),
+                ctx.accounts.vault.clone(),
+                ctx.accounts.vault_authority.clone(),
+            ],
+            &[&signer_seeds],
+        )?;
+
+        // If the withdraw does not result in enough lamports to cover the rewards, only
+        // harvest the available lamports. This should never happen, but the check is a
+        // failsafe.
+        let rewards = std::cmp::min(
+            rewards,
+            ctx.accounts
+                .vault_authority
+                .lamports()
+                .saturating_sub(current_lamports),
+        );
+
+        // Move the rewards amount from the vault authority to the destination account and
+        // the remaining lamports back to the vault token account.
+        invoke_signed(
+            &system_instruction::transfer(
+                ctx.accounts.vault_authority.key,
+                ctx.accounts.destination.key,
+                rewards,
+            ),
+            &[
+                ctx.accounts.vault_authority.clone(),
+                ctx.accounts.destination.clone(),
+            ],
+            &[&signer_seeds],
+        )?;
+
+        let remaining = ctx
+            .accounts
+            .vault_authority
+            .lamports()
+            .checked_sub(rewards)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
+
+        invoke_signed(
+            &system_instruction::transfer(
+                ctx.accounts.vault_authority.key,
+                ctx.accounts.vault.key,
+                remaining,
+            ),
+            &[
+                ctx.accounts.vault_authority.clone(),
+                ctx.accounts.vault.clone(),
+            ],
+            &[&signer_seeds],
+        )?;
+    }
 
     Ok(())
 }
