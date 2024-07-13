@@ -8,7 +8,11 @@ use solana_program::{
 };
 pub use stake::*;
 
-const REWARDS_PER_TOKEN_SCALING_FACTOR: u128 = 1_000_000_000; // 1e9
+/// Scaling factor for rewards per token (1e9).
+const REWARDS_PER_TOKEN_SCALING_FACTOR: u128 = 1_000_000_000;
+
+/// Default value for a U128 byte array.
+const U128_DEFAULT: [u8; 16] = [0; 16];
 
 #[inline(always)]
 pub fn find_vault_pda(config: &Pubkey, program_id: &Pubkey) -> (Pubkey, u8) {
@@ -82,6 +86,23 @@ pub fn calculate_eligible_rewards(
             .checked_mul(token_account_balance as u128)
             .and_then(|product| product.checked_div(REWARDS_PER_TOKEN_SCALING_FACTOR))
             .and_then(|product| product.try_into().ok())
+            .ok_or(ProgramError::ArithmeticOverflow)
+    }
+}
+
+pub fn calculate_stake_rewards_per_token(
+    rewards: u64,
+    stake_amount: u64,
+) -> Result<u128, ProgramError> {
+    if stake_amount == 0 {
+        Ok(0)
+    } else {
+        // Calculation: rewards / stake_amount
+        //
+        // Scaled by 1e9 to store 9 decimal places of precision.
+        (rewards as u128)
+            .checked_mul(REWARDS_PER_TOKEN_SCALING_FACTOR)
+            .and_then(|product| product.checked_div(stake_amount as u128))
             .ok_or(ProgramError::ArithmeticOverflow)
     }
 }

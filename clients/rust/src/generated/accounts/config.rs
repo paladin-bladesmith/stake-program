@@ -24,13 +24,14 @@ pub struct Config {
     pub cooldown_time_seconds: i64,
     pub token_amount_delegated: u64,
     pub total_stake_rewards: u64,
+    pub accumulated_stake_rewards_per_token: [u8; 16],
     pub max_deactivation_basis_points: u16,
     pub signer_bump: u8,
     pub padding: [u8; 5],
 }
 
 impl Config {
-    pub const LEN: usize = 136;
+    pub const LEN: usize = 152;
 
     #[inline(always)]
     pub fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {

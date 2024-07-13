@@ -53,6 +53,7 @@ export type Config = {
   cooldownTimeSeconds: bigint;
   tokenAmountDelegated: bigint;
   totalStakeRewards: bigint;
+  accumulatedStakeRewardsPerToken: Array<number>;
   maxDeactivationBasisPoints: number;
   signerBump: number;
   padding: Array<number>;
@@ -66,6 +67,7 @@ export type ConfigArgs = {
   cooldownTimeSeconds: number | bigint;
   tokenAmountDelegated: number | bigint;
   totalStakeRewards: number | bigint;
+  accumulatedStakeRewardsPerToken: Array<number>;
   maxDeactivationBasisPoints: number;
   signerBump: number;
   padding: Array<number>;
@@ -80,6 +82,10 @@ export function getConfigEncoder(): Encoder<ConfigArgs> {
     ['cooldownTimeSeconds', getI64Encoder()],
     ['tokenAmountDelegated', getU64Encoder()],
     ['totalStakeRewards', getU64Encoder()],
+    [
+      'accumulatedStakeRewardsPerToken',
+      getArrayEncoder(getU8Encoder(), { size: 16 }),
+    ],
     ['maxDeactivationBasisPoints', getU16Encoder()],
     ['signerBump', getU8Encoder()],
     ['padding', getArrayEncoder(getU8Encoder(), { size: 5 })],
@@ -95,6 +101,10 @@ export function getConfigDecoder(): Decoder<Config> {
     ['cooldownTimeSeconds', getI64Decoder()],
     ['tokenAmountDelegated', getU64Decoder()],
     ['totalStakeRewards', getU64Decoder()],
+    [
+      'accumulatedStakeRewardsPerToken',
+      getArrayDecoder(getU8Decoder(), { size: 16 }),
+    ],
     ['maxDeactivationBasisPoints', getU16Decoder()],
     ['signerBump', getU8Decoder()],
     ['padding', getArrayDecoder(getU8Decoder(), { size: 5 })],
@@ -159,5 +169,5 @@ export async function fetchAllMaybeConfig(
 }
 
 export function getConfigSize(): number {
-  return 136;
+  return 152;
 }

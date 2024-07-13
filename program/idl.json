@@ -681,6 +681,15 @@
             "type": "u64"
           },
           {
+            "name": "accumulatedStakeRewardsPerToken",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
+          },
+          {
             "name": "maxDeactivationBasisPoints",
             "type": "u16"
           },
