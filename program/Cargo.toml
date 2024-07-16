@@ -1,6 +1,6 @@
 [package]
-name = "stake-program"
-version = "0.0.0"
+name = "paladin-stake-program"
+version = "0.0.1"
 edition = "2021"
 readme = "./README.md"
 license-file = "../LICENSE"
