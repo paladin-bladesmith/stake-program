@@ -28,11 +28,11 @@ import {
   type ReadonlyAccount,
   type WritableAccount,
 } from '@solana/web3.js';
-import { STAKE_PROGRAM_ADDRESS } from '../programs';
+import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export type InitializeConfigInstruction<
-  TProgram extends string = typeof STAKE_PROGRAM_ADDRESS,
+  TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountSlashAuthority extends string | IAccountMeta<string> = string,
   TAccountConfigAuthority extends string | IAccountMeta<string> = string,
@@ -138,7 +138,7 @@ export function getInitializeConfigInstruction<
     TAccountVault
   >
 ): InitializeConfigInstruction<
-  typeof STAKE_PROGRAM_ADDRESS,
+  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountSlashAuthority,
   TAccountConfigAuthority,
@@ -146,7 +146,7 @@ export function getInitializeConfigInstruction<
   TAccountVault
 > {
   // Program address.
-  const programAddress = STAKE_PROGRAM_ADDRESS;
+  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -181,7 +181,7 @@ export function getInitializeConfigInstruction<
       args as InitializeConfigInstructionDataArgs
     ),
   } as InitializeConfigInstruction<
-    typeof STAKE_PROGRAM_ADDRESS,
+    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountSlashAuthority,
     TAccountConfigAuthority,
@@ -193,7 +193,7 @@ export function getInitializeConfigInstruction<
 }
 
 export type ParsedInitializeConfigInstruction<
-  TProgram extends string = typeof STAKE_PROGRAM_ADDRESS,
+  TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;

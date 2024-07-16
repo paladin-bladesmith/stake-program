@@ -29,11 +29,11 @@ import {
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/web3.js';
-import { STAKE_PROGRAM_ADDRESS } from '../programs';
+import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export type DistributeRewardsInstruction<
-  TProgram extends string = typeof STAKE_PROGRAM_ADDRESS,
+  TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountPayer extends string | IAccountMeta<string> = string,
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountSystemProgram extends
@@ -117,13 +117,13 @@ export function getDistributeRewardsInstruction<
     TAccountSystemProgram
   >
 ): DistributeRewardsInstruction<
-  typeof STAKE_PROGRAM_ADDRESS,
+  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountPayer,
   TAccountConfig,
   TAccountSystemProgram
 > {
   // Program address.
-  const programAddress = STAKE_PROGRAM_ADDRESS;
+  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -157,7 +157,7 @@ export function getDistributeRewardsInstruction<
       args as DistributeRewardsInstructionDataArgs
     ),
   } as DistributeRewardsInstruction<
-    typeof STAKE_PROGRAM_ADDRESS,
+    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountPayer,
     TAccountConfig,
     TAccountSystemProgram
@@ -167,7 +167,7 @@ export function getDistributeRewardsInstruction<
 }
 
 export type ParsedDistributeRewardsInstruction<
-  TProgram extends string = typeof STAKE_PROGRAM_ADDRESS,
+  TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;

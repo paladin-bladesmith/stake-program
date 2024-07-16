@@ -5,6 +5,6 @@
 //! <https://github.com/kinobi-so/kinobi>
 //!
 
-pub(crate) mod stake;
+pub(crate) mod paladin_stake_program;
 
-pub use self::stake::StakeError;
+pub use self::paladin_stake_program::PaladinStakeProgramError;

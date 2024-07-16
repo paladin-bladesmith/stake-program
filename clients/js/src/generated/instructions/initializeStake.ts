@@ -24,11 +24,11 @@ import {
   type ReadonlyAccount,
   type WritableAccount,
 } from '@solana/web3.js';
-import { STAKE_PROGRAM_ADDRESS } from '../programs';
+import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export type InitializeStakeInstruction<
-  TProgram extends string = typeof STAKE_PROGRAM_ADDRESS,
+  TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountStake extends string | IAccountMeta<string> = string,
   TAccountValidatorVote extends string | IAccountMeta<string> = string,
@@ -110,14 +110,14 @@ export function getInitializeStakeInstruction<
     TAccountSystemProgram
   >
 ): InitializeStakeInstruction<
-  typeof STAKE_PROGRAM_ADDRESS,
+  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountStake,
   TAccountValidatorVote,
   TAccountSystemProgram
 > {
   // Program address.
-  const programAddress = STAKE_PROGRAM_ADDRESS;
+  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -148,7 +148,7 @@ export function getInitializeStakeInstruction<
     programAddress,
     data: getInitializeStakeInstructionDataEncoder().encode({}),
   } as InitializeStakeInstruction<
-    typeof STAKE_PROGRAM_ADDRESS,
+    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountStake,
     TAccountValidatorVote,
@@ -159,7 +159,7 @@ export function getInitializeStakeInstruction<
 }
 
 export type ParsedInitializeStakeInstruction<
-  TProgram extends string = typeof STAKE_PROGRAM_ADDRESS,
+  TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;

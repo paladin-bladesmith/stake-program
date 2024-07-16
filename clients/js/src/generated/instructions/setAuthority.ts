@@ -27,7 +27,7 @@ import {
   type TransactionSigner,
   type WritableAccount,
 } from '@solana/web3.js';
-import { STAKE_PROGRAM_ADDRESS } from '../programs';
+import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 import {
   getAuthorityTypeDecoder,
@@ -37,7 +37,7 @@ import {
 } from '../types';
 
 export type SetAuthorityInstruction<
-  TProgram extends string = typeof STAKE_PROGRAM_ADDRESS,
+  TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountAccount extends string | IAccountMeta<string> = string,
   TAccountAuthority extends string | IAccountMeta<string> = string,
   TAccountNewAuthority extends string | IAccountMeta<string> = string,
@@ -121,13 +121,13 @@ export function getSetAuthorityInstruction<
     TAccountNewAuthority
   >
 ): SetAuthorityInstruction<
-  typeof STAKE_PROGRAM_ADDRESS,
+  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountAccount,
   TAccountAuthority,
   TAccountNewAuthority
 > {
   // Program address.
-  const programAddress = STAKE_PROGRAM_ADDRESS;
+  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -155,7 +155,7 @@ export function getSetAuthorityInstruction<
       args as SetAuthorityInstructionDataArgs
     ),
   } as SetAuthorityInstruction<
-    typeof STAKE_PROGRAM_ADDRESS,
+    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountAccount,
     TAccountAuthority,
     TAccountNewAuthority
@@ -165,7 +165,7 @@ export function getSetAuthorityInstruction<
 }
 
 export type ParsedSetAuthorityInstruction<
-  TProgram extends string = typeof STAKE_PROGRAM_ADDRESS,
+  TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
