@@ -2,9 +2,9 @@
 
 mod setup;
 
-use paladin_stake::{
+use paladin_stake_program_client::{
     accounts::Config,
-    errors::StakeError,
+    errors::PaladinStakeProgramError,
     instructions::{InitializeConfigBuilder, UpdateConfigBuilder},
     pdas::find_vault_pda,
     types::ConfigField,
@@ -21,7 +21,7 @@ use solana_sdk::{
 
 #[tokio::test]
 async fn update_cooldown_time_config() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
+    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
         .start_with_context()
         .await;
 
@@ -65,7 +65,7 @@ async fn update_cooldown_time_config() {
             .unwrap()
             .minimum_balance(Config::LEN),
         Config::LEN as u64,
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     let initialize_ix = InitializeConfigBuilder::new()
@@ -116,7 +116,7 @@ async fn update_cooldown_time_config() {
 
 #[tokio::test]
 async fn update_max_deactivation_basis_points_config() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
+    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
         .start_with_context()
         .await;
 
@@ -160,7 +160,7 @@ async fn update_max_deactivation_basis_points_config() {
             .unwrap()
             .minimum_balance(Config::LEN),
         Config::LEN as u64,
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     let initialize_ix = InitializeConfigBuilder::new()
@@ -211,7 +211,7 @@ async fn update_max_deactivation_basis_points_config() {
 
 #[tokio::test]
 async fn fail_update_config_with_wrong_authority() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
+    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
         .start_with_context()
         .await;
 
@@ -255,7 +255,7 @@ async fn fail_update_config_with_wrong_authority() {
             .unwrap()
             .minimum_balance(Config::LEN),
         Config::LEN as u64,
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     let initialize_ix = InitializeConfigBuilder::new()
@@ -304,12 +304,12 @@ async fn fail_update_config_with_wrong_authority() {
 
     // Then we expect an error.
 
-    assert_custom_error!(err, StakeError::InvalidAuthority);
+    assert_custom_error!(err, PaladinStakeProgramError::InvalidAuthority);
 }
 
 #[tokio::test]
 async fn fail_update_config_non_existing() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
+    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
         .start_with_context()
         .await;
 
@@ -346,7 +346,7 @@ async fn fail_update_config_non_existing() {
 
 #[tokio::test]
 async fn fail_update_with_uninitialized_config() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
+    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
         .start_with_context()
         .await;
 
@@ -365,7 +365,7 @@ async fn fail_update_with_uninitialized_config() {
             .unwrap()
             .minimum_balance(Config::LEN),
         Config::LEN as u64,
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     // When we try to update the empty config.
@@ -396,7 +396,7 @@ async fn fail_update_with_uninitialized_config() {
 
 #[tokio::test]
 async fn fail_update_config_with_no_authority_set() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
+    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
         .start_with_context()
         .await;
 
@@ -440,7 +440,7 @@ async fn fail_update_config_with_no_authority_set() {
             .unwrap()
             .minimum_balance(Config::LEN),
         Config::LEN as u64,
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     let initialize_ix = InitializeConfigBuilder::new()
@@ -488,5 +488,5 @@ async fn fail_update_config_with_no_authority_set() {
 
     // Then we expect an error.
 
-    assert_custom_error!(err, StakeError::AuthorityNotSet);
+    assert_custom_error!(err, PaladinStakeProgramError::AuthorityNotSet);
 }

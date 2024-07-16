@@ -2,8 +2,8 @@
 
 mod setup;
 
-use paladin_stake::{
-    accounts::Config, errors::StakeError, instructions::InitializeConfigBuilder,
+use paladin_stake_program_client::{
+    accounts::Config, errors::PaladinStakeProgramError, instructions::InitializeConfigBuilder,
     pdas::find_vault_pda,
 };
 use setup::token::{
@@ -27,7 +27,7 @@ use spl_token_2022::{
 
 #[tokio::test]
 async fn initialize_config_with_mint_and_token() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
+    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
         .start_with_context()
         .await;
 
@@ -69,7 +69,7 @@ async fn initialize_config_with_mint_and_token() {
             .unwrap()
             .minimum_balance(Config::LEN),
         Config::LEN as u64,
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     let initialize_ix = InitializeConfigBuilder::new()
@@ -105,7 +105,7 @@ async fn initialize_config_with_mint_and_token() {
 
 #[tokio::test]
 async fn fail_initialize_config_with_wrong_token_authority() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
+    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
         .start_with_context()
         .await;
 
@@ -147,7 +147,7 @@ async fn fail_initialize_config_with_wrong_token_authority() {
             .unwrap()
             .minimum_balance(Config::LEN),
         Config::LEN as u64,
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     let initialize_ix = InitializeConfigBuilder::new()
@@ -177,12 +177,12 @@ async fn fail_initialize_config_with_wrong_token_authority() {
 
     // Then we expect an error.
 
-    assert_custom_error!(err, StakeError::InvalidTokenOwner);
+    assert_custom_error!(err, PaladinStakeProgramError::InvalidTokenOwner);
 }
 
 #[tokio::test]
 async fn fail_initialize_config_with_non_empty_token() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
+    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
         .start_with_context()
         .await;
 
@@ -231,7 +231,7 @@ async fn fail_initialize_config_with_non_empty_token() {
             .unwrap()
             .minimum_balance(Config::LEN),
         Config::LEN as u64,
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     let intialize_ix = InitializeConfigBuilder::new()
@@ -261,12 +261,12 @@ async fn fail_initialize_config_with_non_empty_token() {
 
     // Then we expect an error.
 
-    assert_custom_error!(err, StakeError::AmountGreaterThanZero);
+    assert_custom_error!(err, PaladinStakeProgramError::AmountGreaterThanZero);
 }
 
 #[tokio::test]
 async fn fail_initialize_config_without_transfer_hook() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
+    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
         .start_with_context()
         .await;
 
@@ -309,7 +309,7 @@ async fn fail_initialize_config_without_transfer_hook() {
             .unwrap()
             .minimum_balance(Config::LEN),
         Config::LEN as u64,
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     let intialize_ix = InitializeConfigBuilder::new()
@@ -339,12 +339,12 @@ async fn fail_initialize_config_without_transfer_hook() {
 
     // Then we expect an error.
 
-    assert_custom_error!(err, StakeError::MissingTransferHook);
+    assert_custom_error!(err, PaladinStakeProgramError::MissingTransferHook);
 }
 
 #[tokio::test]
 async fn fail_initialize_config_with_unitialized_mint() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
+    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
         .start_with_context()
         .await;
 
@@ -375,7 +375,7 @@ async fn fail_initialize_config_with_unitialized_mint() {
             .unwrap()
             .minimum_balance(Config::LEN),
         Config::LEN as u64,
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     let initialize_ix = InitializeConfigBuilder::new()
@@ -410,7 +410,7 @@ async fn fail_initialize_config_with_unitialized_mint() {
 
 #[tokio::test]
 async fn fail_initialize_config_with_wrong_account_length() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
+    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
         .start_with_context()
         .await;
 
@@ -453,7 +453,7 @@ async fn fail_initialize_config_with_wrong_account_length() {
             .unwrap()
             .minimum_balance(Config::LEN + 100),
         (Config::LEN + 100) as u64, // <-- wrong length
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     let intialize_ix = InitializeConfigBuilder::new()
@@ -483,12 +483,12 @@ async fn fail_initialize_config_with_wrong_account_length() {
 
     // Then we expect an error.
 
-    assert_custom_error!(err, StakeError::InvalidAccountDataLength);
+    assert_custom_error!(err, PaladinStakeProgramError::InvalidAccountDataLength);
 }
 
 #[tokio::test]
 async fn fail_initialize_config_with_initialized_account() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
+    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
         .start_with_context()
         .await;
 
@@ -530,7 +530,7 @@ async fn fail_initialize_config_with_initialized_account() {
             .unwrap()
             .minimum_balance(Config::LEN),
         Config::LEN as u64,
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     // And we initialize a config.
@@ -587,7 +587,7 @@ async fn fail_initialize_config_with_initialized_account() {
 
 #[tokio::test]
 async fn fail_initialize_config_with_token_delegate() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
+    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
         .start_with_context()
         .await;
 
@@ -650,7 +650,7 @@ async fn fail_initialize_config_with_token_delegate() {
             .unwrap()
             .minimum_balance(Config::LEN),
         Config::LEN as u64,
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     let intialize_ix = InitializeConfigBuilder::new()
@@ -680,12 +680,12 @@ async fn fail_initialize_config_with_token_delegate() {
 
     // Then we expect an error.
 
-    assert_custom_error!(err, StakeError::DelegateNotNone);
+    assert_custom_error!(err, PaladinStakeProgramError::DelegateNotNone);
 }
 
 #[tokio::test]
 async fn fail_initialize_config_with_token_close_authority() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
+    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
         .start_with_context()
         .await;
 
@@ -747,7 +747,7 @@ async fn fail_initialize_config_with_token_close_authority() {
             .unwrap()
             .minimum_balance(Config::LEN),
         Config::LEN as u64,
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     let intialize_ix = InitializeConfigBuilder::new()
@@ -777,12 +777,12 @@ async fn fail_initialize_config_with_token_close_authority() {
 
     // Then we expect an error.
 
-    assert_custom_error!(err, StakeError::CloseAuthorityNotNone);
+    assert_custom_error!(err, PaladinStakeProgramError::CloseAuthorityNotNone);
 }
 
 #[tokio::test]
 async fn fail_initialize_config_with_invalid_token_extensions() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
+    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
         .start_with_context()
         .await;
 
@@ -863,7 +863,7 @@ async fn fail_initialize_config_with_invalid_token_extensions() {
             .unwrap()
             .minimum_balance(Config::LEN),
         Config::LEN as u64,
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     let intialize_ix = InitializeConfigBuilder::new()
@@ -891,5 +891,5 @@ async fn fail_initialize_config_with_invalid_token_extensions() {
 
     // Then we expect an error.
 
-    assert_custom_error!(err, StakeError::InvalidTokenAccountExtension);
+    assert_custom_error!(err, PaladinStakeProgramError::InvalidTokenAccountExtension);
 }
