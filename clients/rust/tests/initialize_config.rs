@@ -27,9 +27,13 @@ use spl_token_2022::{
 
 #[tokio::test]
 async fn initialize_config_with_mint_and_token() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an empty config account with an associated vault and a mint.
 
@@ -105,9 +109,13 @@ async fn initialize_config_with_mint_and_token() {
 
 #[tokio::test]
 async fn fail_initialize_config_with_wrong_token_authority() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an empty config account and a mint.
 
@@ -182,9 +190,13 @@ async fn fail_initialize_config_with_wrong_token_authority() {
 
 #[tokio::test]
 async fn fail_initialize_config_with_non_empty_token() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an empty config account and a mint.
 
@@ -266,9 +278,13 @@ async fn fail_initialize_config_with_non_empty_token() {
 
 #[tokio::test]
 async fn fail_initialize_config_without_transfer_hook() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an empty config account and a mint without a transfer hook.
 
@@ -344,9 +360,13 @@ async fn fail_initialize_config_without_transfer_hook() {
 
 #[tokio::test]
 async fn fail_initialize_config_with_unitialized_mint() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an empty config account and a mint.
 
@@ -410,9 +430,13 @@ async fn fail_initialize_config_with_unitialized_mint() {
 
 #[tokio::test]
 async fn fail_initialize_config_with_wrong_account_length() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an empty config account and a mint.
 
@@ -488,9 +512,13 @@ async fn fail_initialize_config_with_wrong_account_length() {
 
 #[tokio::test]
 async fn fail_initialize_config_with_initialized_account() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an empty config account with an associated vault and a mint.
 
@@ -587,9 +615,13 @@ async fn fail_initialize_config_with_initialized_account() {
 
 #[tokio::test]
 async fn fail_initialize_config_with_token_delegate() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an empty config account and a mint.
 
@@ -685,9 +717,13 @@ async fn fail_initialize_config_with_token_delegate() {
 
 #[tokio::test]
 async fn fail_initialize_config_with_token_close_authority() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an empty config account and a mint.
 
@@ -782,9 +818,13 @@ async fn fail_initialize_config_with_token_close_authority() {
 
 #[tokio::test]
 async fn fail_initialize_config_with_invalid_token_extensions() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an empty config account and a mint.
 

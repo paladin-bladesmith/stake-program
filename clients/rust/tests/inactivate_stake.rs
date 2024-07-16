@@ -27,9 +27,13 @@ use solana_sdk::{
 
 #[tokio::test]
 async fn inactivate_stake() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account (total amount delegated = 100).
 
@@ -103,9 +107,13 @@ async fn inactivate_stake() {
 
 #[tokio::test]
 async fn fail_inactivate_stake_with_no_deactivated_amount() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account (total amount delegated = 100).
 
@@ -160,9 +168,13 @@ async fn fail_inactivate_stake_with_no_deactivated_amount() {
 
 #[tokio::test]
 async fn fail_inactivate_stake_with_wrong_config() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account (total amount delegated = 100).
 
@@ -222,9 +234,13 @@ async fn fail_inactivate_stake_with_wrong_config() {
 
 #[tokio::test]
 async fn fail_inactivate_stake_with_uninitialized_stake_account() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account and a validator's vote account.
 
@@ -271,9 +287,13 @@ async fn fail_inactivate_stake_with_uninitialized_stake_account() {
 
 #[tokio::test]
 async fn fail_inactivate_stake_with_active_cooldown() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account (total amount delegated = 100).
 

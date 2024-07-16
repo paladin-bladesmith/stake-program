@@ -22,9 +22,13 @@ use solana_sdk::{
 
 #[tokio::test]
 async fn initialize_stake_with_validator_vote() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account and a validator's vote account.
 
@@ -74,9 +78,13 @@ async fn initialize_stake_with_validator_vote() {
 
 #[tokio::test]
 async fn fail_initialize_stake_with_initialized_account() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account and a validator's vote account.
 
@@ -143,9 +151,13 @@ async fn fail_initialize_stake_with_initialized_account() {
 
 #[tokio::test]
 async fn fail_initialize_stake_with_invalid_derivation() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account and a validator's vote account.
 
@@ -182,9 +194,13 @@ async fn fail_initialize_stake_with_invalid_derivation() {
 
 #[tokio::test]
 async fn fail_initialize_stake_with_invalid_vote_account() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account and a validator's vote account.
 
@@ -228,9 +244,13 @@ async fn fail_initialize_stake_with_invalid_vote_account() {
 
 #[tokio::test]
 async fn fail_initialize_stake_with_uninitialized_config_account() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account and a validator's vote account.
 

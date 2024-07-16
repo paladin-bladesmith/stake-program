@@ -21,9 +21,13 @@ use solana_sdk::{
 
 #[tokio::test]
 async fn update_cooldown_time_config() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an empty config account and a mint.
 
@@ -116,9 +120,13 @@ async fn update_cooldown_time_config() {
 
 #[tokio::test]
 async fn update_max_deactivation_basis_points_config() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an empty config account and a mint.
 
@@ -211,9 +219,13 @@ async fn update_max_deactivation_basis_points_config() {
 
 #[tokio::test]
 async fn fail_update_config_with_wrong_authority() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an empty config account and a mint.
 
@@ -309,9 +321,13 @@ async fn fail_update_config_with_wrong_authority() {
 
 #[tokio::test]
 async fn fail_update_config_non_existing() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an non-existing config account.
 
@@ -346,9 +362,13 @@ async fn fail_update_config_non_existing() {
 
 #[tokio::test]
 async fn fail_update_with_uninitialized_config() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an empty config account.
 
@@ -396,9 +416,13 @@ async fn fail_update_with_uninitialized_config() {
 
 #[tokio::test]
 async fn fail_update_config_with_no_authority_set() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an empty config account and a mint.
 

@@ -26,9 +26,13 @@ use solana_sdk::{
 
 #[tokio::test]
 async fn deactivate_stake() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account and a validator's vote account.
 
@@ -99,9 +103,13 @@ async fn deactivate_stake() {
 
 #[tokio::test]
 async fn deactivate_stake_with_active_deactivation() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account and a validator's vote account.
 
@@ -201,9 +209,13 @@ async fn deactivate_stake_with_active_deactivation() {
 
 #[tokio::test]
 async fn fail_deactivate_stake_with_amount_greater_than_stake_amount() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account and a validator's vote account.
 
@@ -259,9 +271,13 @@ async fn fail_deactivate_stake_with_amount_greater_than_stake_amount() {
 
 #[tokio::test]
 async fn fail_deactivate_stake_with_invalid_authority() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account and a validator's vote account.
 
@@ -319,9 +335,13 @@ async fn fail_deactivate_stake_with_invalid_authority() {
 
 #[tokio::test]
 async fn fail_deactivate_stake_with_zero_amount() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account and a validator's vote account.
 
@@ -377,9 +397,13 @@ async fn fail_deactivate_stake_with_zero_amount() {
 
 #[tokio::test]
 async fn fail_deactivate_stake_with_uninitialized_stake_account() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account and a validator's vote account.
 
@@ -434,9 +458,13 @@ async fn fail_deactivate_stake_with_uninitialized_stake_account() {
 
 #[tokio::test]
 async fn fail_deactivate_stake_with_maximum_deactivation_amount_exceeded() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account and a validator's vote account.
 
@@ -501,14 +529,21 @@ async fn fail_deactivate_stake_with_maximum_deactivation_amount_exceeded() {
 
     // Then we expect an error.
 
-    assert_custom_error!(err, PaladinStakeProgramError::MaximumDeactivationAmountExceeded);
+    assert_custom_error!(
+        err,
+        PaladinStakeProgramError::MaximumDeactivationAmountExceeded
+    );
 }
 
 #[tokio::test]
 async fn fail_deactivate_stake_with_uninitialized_config_account() {
-    let mut context = ProgramTest::new("paladin_stake_program", paladin_stake_program_client::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account and a validator's vote account.
 
