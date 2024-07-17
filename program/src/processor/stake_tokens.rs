@@ -142,6 +142,8 @@ pub fn process_stake_tokens<'a>(
     //
     // TODO: validate the amount against the total SOL staked on the validator.
 
+    require!(amount > 0, StakeError::InvalidAmount);
+
     config.token_amount_delegated = config
         .token_amount_delegated
         .checked_add(amount)
