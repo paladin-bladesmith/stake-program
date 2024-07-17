@@ -92,7 +92,7 @@ pub fn process_inactivate_stake(
             inactive_timestamp.saturating_sub(current_timestamp),
         );
 
-        msg!("Deactivating {} token(s)", stake.deactivating_amount);
+        msg!("Inactivating {} token(s)", stake.deactivating_amount);
 
         // moves deactivating amount to inactive
         stake.amount = stake
