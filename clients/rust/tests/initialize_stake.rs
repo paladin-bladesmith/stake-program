@@ -30,11 +30,11 @@ async fn initialize_stake_with_validator_vote() {
 
     let config = create_config(&mut context).await;
     let validator = Pubkey::new_unique();
-    let vote = create_vote_account(&mut context, &validator, &validator).await;
+    let validator_vote = create_vote_account(&mut context, &validator, &validator).await;
 
     // When we initialize the stake account.
 
-    let (stake_pda, _) = find_stake_pda(&validator, &config);
+    let (stake_pda, _) = find_stake_pda(&validator_vote, &config);
 
     let transfer_ix = system_instruction::transfer(
         &context.payer.pubkey(),
@@ -50,7 +50,7 @@ async fn initialize_stake_with_validator_vote() {
     let initialize_ix = InitializeStakeBuilder::new()
         .config(config)
         .stake(stake_pda)
-        .validator_vote(vote)
+        .validator_vote(validator_vote)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -68,7 +68,7 @@ async fn initialize_stake_with_validator_vote() {
 
     let account_data = account.data.as_ref();
     let stake_account = Stake::from_bytes(account_data).unwrap();
-    assert_eq!(stake_account.validator, validator);
+    assert_eq!(stake_account.validator, validator_vote);
     assert_eq!(stake_account.authority, validator);
 }
 
@@ -82,11 +82,11 @@ async fn fail_initialize_stake_with_initialized_account() {
 
     let config = create_config(&mut context).await;
     let validator = Pubkey::new_unique();
-    let vote = create_vote_account(&mut context, &validator, &validator).await;
+    let validator_vote = create_vote_account(&mut context, &validator, &validator).await;
 
     // And we initialize the stake account.
 
-    let (stake_pda, _) = find_stake_pda(&validator, &config);
+    let (stake_pda, _) = find_stake_pda(&validator_vote, &config);
 
     let transfer_ix = system_instruction::transfer(
         &context.payer.pubkey(),
@@ -102,7 +102,7 @@ async fn fail_initialize_stake_with_initialized_account() {
     let initialize_ix = InitializeStakeBuilder::new()
         .config(config)
         .stake(stake_pda)
-        .validator_vote(vote)
+        .validator_vote(validator_vote)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -121,7 +121,7 @@ async fn fail_initialize_stake_with_initialized_account() {
     let initialize_ix = InitializeStakeBuilder::new()
         .config(config)
         .stake(stake_pda)
-        .validator_vote(vote)
+        .validator_vote(validator_vote)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -151,7 +151,7 @@ async fn fail_initialize_stake_with_invalid_derivation() {
 
     let config = create_config(&mut context).await;
     let validator = Pubkey::new_unique();
-    let vote = create_vote_account(&mut context, &validator, &validator).await;
+    let validator_vote = create_vote_account(&mut context, &validator, &validator).await;
 
     // When we try initialize the stake account with an invalid derivation.
 
@@ -160,7 +160,7 @@ async fn fail_initialize_stake_with_invalid_derivation() {
     let initialize_ix = InitializeStakeBuilder::new()
         .config(config)
         .stake(stake_pda)
-        .validator_vote(vote)
+        .validator_vote(validator_vote)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -190,7 +190,7 @@ async fn fail_initialize_stake_with_invalid_vote_account() {
 
     let config = create_config(&mut context).await;
     let validator = Pubkey::new_unique();
-    let vote = create_vote_account_with_program_id(
+    let validator_vote = create_vote_account_with_program_id(
         &mut context,
         &validator,
         &validator,
@@ -206,7 +206,7 @@ async fn fail_initialize_stake_with_invalid_vote_account() {
     let initialize_ix = InitializeStakeBuilder::new()
         .config(config)
         .stake(stake_pda)
-        .validator_vote(vote)
+        .validator_vote(validator_vote)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -250,7 +250,7 @@ async fn fail_initialize_stake_with_uninitialized_config_account() {
     );
 
     let validator = Pubkey::new_unique();
-    let vote = create_vote_account_with_program_id(
+    let validator_vote = create_vote_account_with_program_id(
         &mut context,
         &validator,
         &validator,
@@ -265,7 +265,7 @@ async fn fail_initialize_stake_with_uninitialized_config_account() {
     let initialize_ix = InitializeStakeBuilder::new()
         .config(uninitialized_config.pubkey())
         .stake(stake_pda)
-        .validator_vote(vote)
+        .validator_vote(validator_vote)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(

@@ -4,11 +4,10 @@ use solana_sdk::{pubkey::Pubkey, signer::Signer, system_instruction, transaction
 
 pub async fn create_stake(
     context: &mut ProgramTestContext,
-    validator: &Pubkey,
     vote: &Pubkey,
     config: &Pubkey,
 ) -> Pubkey {
-    let (stake_pda, _) = find_stake_pda(validator, config);
+    let (stake_pda, _) = find_stake_pda(vote, config);
 
     let transfer_ix = system_instruction::transfer(
         &context.payer.pubkey(),
