@@ -318,7 +318,7 @@ async fn fail_deactivate_stake_with_invalid_authority() {
 }
 
 #[tokio::test]
-async fn fail_deactivate_stake_with_zero_amount() {
+async fn deactivate_stake_with_zero_amount() {
     let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
         .start_with_context()
         .await;
@@ -349,7 +349,7 @@ async fn fail_deactivate_stake_with_zero_amount() {
 
     context.set_account(&stake_pda, &updated_stake.into());
 
-    // When we try to deactivate with an invalid amount (0).
+    // When we deactivate with zero amount.
 
     let deactivate_ix = DeactivateStakeBuilder::new()
         .config(config)
@@ -364,15 +364,15 @@ async fn fail_deactivate_stake_with_zero_amount() {
         &[&context.payer, &authority],
         context.last_blockhash,
     );
-    let err = context
-        .banks_client
-        .process_transaction(tx)
-        .await
-        .unwrap_err();
+    context.banks_client.process_transaction(tx).await.unwrap();
 
-    // Then we expect an error.
+    // Then the deactivation should be cancelled.
 
-    assert_custom_error!(err, StakeError::InvalidAmount);
+    let account = get_account!(context, stake_pda);
+    let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+
+    assert_eq!(stake_account.deactivating_amount, 0);
+    assert!(stake_account.deactivation_timestamp.value().is_none())
 }
 
 #[tokio::test]
