@@ -1,4 +1,6 @@
-use paladin_stake::{accounts::Stake, instructions::InitializeStakeBuilder, pdas::find_stake_pda};
+use paladin_stake_program_client::{
+    accounts::Stake, instructions::InitializeStakeBuilder, pdas::find_stake_pda,
+};
 use solana_program_test::ProgramTestContext;
 use solana_sdk::{pubkey::Pubkey, signer::Signer, system_instruction, transaction::Transaction};
 

@@ -1,6 +1,6 @@
 {
-  "version": "0.0.0",
-  "name": "stake_program",
+  "version": "0.0.1",
+  "name": "paladin_stake_program",
   "instructions": [
     {
       "name": "InitializeConfig",

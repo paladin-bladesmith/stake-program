@@ -3,9 +3,9 @@
 mod setup;
 
 use borsh::BorshSerialize;
-use paladin_stake::{
+use paladin_stake_program_client::{
     accounts::{Config, Stake},
-    errors::StakeError,
+    errors::PaladinStakeProgramError,
     instructions::InactivateStakeBuilder,
     pdas::find_stake_pda,
     NullableU64,
@@ -27,9 +27,13 @@ use solana_sdk::{
 
 #[tokio::test]
 async fn inactivate_stake() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account (total amount delegated = 100).
 
@@ -103,9 +107,13 @@ async fn inactivate_stake() {
 
 #[tokio::test]
 async fn fail_inactivate_stake_with_no_deactivated_amount() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account (total amount delegated = 100).
 
@@ -155,14 +163,18 @@ async fn fail_inactivate_stake_with_no_deactivated_amount() {
 
     // Then we expect an error.
 
-    assert_custom_error!(err, StakeError::NoDeactivatedTokens);
+    assert_custom_error!(err, PaladinStakeProgramError::NoDeactivatedTokens);
 }
 
 #[tokio::test]
 async fn fail_inactivate_stake_with_wrong_config() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account (total amount delegated = 100).
 
@@ -222,9 +234,13 @@ async fn fail_inactivate_stake_with_wrong_config() {
 
 #[tokio::test]
 async fn fail_inactivate_stake_with_uninitialized_stake_account() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account and a validator's vote account.
 
@@ -240,7 +256,7 @@ async fn fail_inactivate_stake_with_uninitialized_stake_account() {
         &AccountSharedData::from(Account {
             lamports: 100_000_000,
             data: vec![5; std::mem::size_of::<Stake>()],
-            owner: paladin_stake::ID,
+            owner: paladin_stake_program_client::ID,
             ..Default::default()
         }),
     );
@@ -271,9 +287,13 @@ async fn fail_inactivate_stake_with_uninitialized_stake_account() {
 
 #[tokio::test]
 async fn fail_inactivate_stake_with_active_cooldown() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account (total amount delegated = 100).
 
@@ -337,5 +357,5 @@ async fn fail_inactivate_stake_with_active_cooldown() {
 
     // Then we expect an error.
 
-    assert_custom_error!(err, StakeError::ActiveDeactivationCooldown);
+    assert_custom_error!(err, PaladinStakeProgramError::ActiveDeactivationCooldown);
 }

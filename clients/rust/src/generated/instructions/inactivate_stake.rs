@@ -37,7 +37,7 @@ impl InactivateStake {
         let data = InactivateStakeInstructionData::new().try_to_vec().unwrap();
 
         solana_program::instruction::Instruction {
-            program_id: crate::STAKE_ID,
+            program_id: crate::PALADIN_STAKE_PROGRAM_ID,
             accounts,
             data,
         }
@@ -200,7 +200,7 @@ impl<'a, 'b> InactivateStakeCpi<'a, 'b> {
         let data = InactivateStakeInstructionData::new().try_to_vec().unwrap();
 
         let instruction = solana_program::instruction::Instruction {
-            program_id: crate::STAKE_ID,
+            program_id: crate::PALADIN_STAKE_PROGRAM_ID,
             accounts,
             data,
         };
