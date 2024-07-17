@@ -112,10 +112,8 @@ pub fn process_deactivate_stake(
 
     require!(stake.amount >= amount, StakeError::InsufficientStakeAmount);
 
-    let max_deactivation_amount = get_max_deactivation_amount(
-        config.token_amount_delegated,
-        config.max_deactivation_basis_points,
-    )?;
+    let max_deactivation_amount =
+        get_max_deactivation_amount(stake.amount, config.max_deactivation_basis_points)?;
 
     require!(
         amount <= max_deactivation_amount,
