@@ -80,15 +80,16 @@ pub fn process_inactivate_stake(
     // Inactivates the stake if elegible.
 
     if let Some(timestamp) = stake.deactivation_timestamp {
-        let current = Clock::get()?
-            .unix_timestamp
-            .saturating_sub(config.cooldown_time_seconds) as u64;
+        let inactive_timestamp = config
+            .cooldown_time_seconds
+            .saturating_add(timestamp.get() as i64);
+        let current_timestamp = Clock::get()?.unix_timestamp;
 
         require!(
-            current >= timestamp.get(),
+            current_timestamp >= inactive_timestamp,
             StakeError::ActiveDeactivationCooldown,
             "{} second(s) remaining for deactivation",
-            timestamp.get().saturating_sub(current),
+            inactive_timestamp.saturating_sub(current_timestamp),
         );
 
         msg!("Deactivating {} token(s)", stake.deactivating_amount);
