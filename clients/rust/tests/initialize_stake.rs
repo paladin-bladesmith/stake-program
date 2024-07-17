@@ -68,7 +68,7 @@ async fn initialize_stake_with_validator_vote() {
 
     let account_data = account.data.as_ref();
     let stake_account = Stake::from_bytes(account_data).unwrap();
-    assert_eq!(stake_account.validator, validator_vote);
+    assert_eq!(stake_account.validator_vote, validator_vote);
     assert_eq!(stake_account.authority, validator);
 }
 

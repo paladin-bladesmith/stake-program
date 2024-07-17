@@ -37,7 +37,7 @@ pub struct Stake {
     pub authority: Pubkey,
 
     /// The address of the validator vote account
-    pub validator: Pubkey,
+    pub validator_vote: Pubkey,
 
     /// Stores the "last_seen_holder_rewards" just for this stake account, allowing
     /// stakers to withdraw rewards whenever, just like normal token users
@@ -64,7 +64,7 @@ impl Stake {
             deactivating_amount: u64::default(),
             inactive_amount: u64::default(),
             authority,
-            validator: validator_vote,
+            validator_vote,
             last_seen_holder_rewards: u64::default(),
             last_seen_stake_rewards: u64::default(),
         }
