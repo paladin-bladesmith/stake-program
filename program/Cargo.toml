@@ -4,7 +4,6 @@ version = "0.0.1"
 edition = "2021"
 readme = "./README.md"
 license-file = "../LICENSE"
-publish = false
 
 [package.metadata.solana]
 program-id = "PStake1111111111111111111111111111111111111"
