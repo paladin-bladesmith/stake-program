@@ -229,9 +229,16 @@ async fn fail_initialize_config_with_non_empty_token() {
 
     // And we mint a token.
 
-    mint_to(&mut context, &mint, &authority, &token.pubkey(), 1, 0)
-        .await
-        .unwrap();
+    mint_to(
+        &mut context,
+        &mint.pubkey(),
+        &authority,
+        &token.pubkey(),
+        1,
+        0,
+    )
+    .await
+    .unwrap();
 
     let create_ix = system_instruction::create_account(
         &context.payer.pubkey(),

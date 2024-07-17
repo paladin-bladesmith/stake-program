@@ -6,6 +6,7 @@ use solana_sdk::{
     pubkey::Pubkey, signature::Keypair, signer::Signer, system_instruction,
     transaction::Transaction,
 };
+use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_token_2022::{
     extension::{transfer_hook, ExtensionType},
     state::{Account, Mint},
@@ -17,6 +18,32 @@ pub const MINT_EXTENSIONS: &[ExtensionType] = &[ExtensionType::TransferHook];
 /// Default extension for a token account.
 pub const TOKEN_ACCOUNT_EXTENSIONS: &[ExtensionType] =
     &[ExtensionType::TransferHook, ExtensionType::ImmutableOwner];
+
+pub async fn create_associated_token_account(
+    context: &mut ProgramTestContext,
+    owner: &Pubkey,
+    mint: &Pubkey,
+) -> Pubkey {
+    let instructions = vec![
+        spl_associated_token_account::instruction::create_associated_token_account(
+            &context.payer.pubkey(),
+            owner,
+            mint,
+            &spl_token_2022::ID,
+        ),
+    ];
+
+    let tx = Transaction::new_signed_with_payer(
+        &instructions,
+        Some(&context.payer.pubkey()),
+        &[&context.payer],
+        context.last_blockhash,
+    );
+
+    context.banks_client.process_transaction(tx).await.unwrap();
+
+    get_associated_token_address_with_program_id(owner, mint, &spl_token_2022::ID)
+}
 
 pub async fn create_mint(
     context: &mut ProgramTestContext,
@@ -123,7 +150,7 @@ pub async fn create_token_account(
 
 pub async fn mint_to(
     context: &mut ProgramTestContext,
-    mint: &Keypair,
+    mint: &Pubkey,
     mint_authority: &Keypair,
     token: &Pubkey,
     amount: u64,
@@ -132,7 +159,7 @@ pub async fn mint_to(
     let tx = Transaction::new_signed_with_payer(
         &[spl_token_2022::instruction::mint_to_checked(
             &spl_token_2022::ID,
-            &mint.pubkey(),
+            mint,
             token,
             &mint_authority.pubkey(),
             &[],

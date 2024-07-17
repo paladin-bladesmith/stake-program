@@ -12,6 +12,110 @@ use solana_sdk::{
 
 use super::token::{create_mint, create_token_account, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS};
 
+pub struct ConfigManager {
+    // Config account.
+    pub config: Pubkey,
+    // Config authority.
+    pub authority: Keypair,
+    // Mint account.
+    pub mint: Pubkey,
+    // Mint authority.
+    pub mint_authority: Keypair,
+    // Vault token account.
+    pub vault: Pubkey,
+}
+
+impl ConfigManager {
+    pub async fn new(context: &mut ProgramTestContext) -> Self {
+        // cooldown_time_seconds = 1 second
+        // max_deactivation_basis_points = 500 (5%)
+        Self::with_args(context, 1, 500).await
+    }
+
+    pub async fn with_args(
+        context: &mut ProgramTestContext,
+        cooldown_time_seconds: u64,
+        max_deactivation_basis_points: u16,
+    ) -> Self {
+        let mut manager = Self {
+            config: Pubkey::default(),
+            authority: Keypair::new(),
+            mint: Pubkey::default(),
+            mint_authority: Keypair::new(),
+            vault: Pubkey::default(),
+        };
+
+        // creates the mint
+
+        let mint = Keypair::new();
+        create_mint(
+            context,
+            &mint,
+            &manager.mint_authority.pubkey(),
+            Some(&manager.mint_authority.pubkey()),
+            0,
+            MINT_EXTENSIONS,
+        )
+        .await
+        .unwrap();
+
+        manager.mint = mint.pubkey();
+
+        // creates the valut (token account)
+
+        let config = Keypair::new();
+        let vault = Keypair::new();
+
+        create_token_account(
+            context,
+            &find_vault_pda(&config.pubkey()).0,
+            &vault,
+            &manager.mint,
+            TOKEN_ACCOUNT_EXTENSIONS,
+        )
+        .await
+        .unwrap();
+
+        manager.vault = vault.pubkey();
+
+        // initializes the config
+
+        let create_ix = system_instruction::create_account(
+            &context.payer.pubkey(),
+            &config.pubkey(),
+            context
+                .banks_client
+                .get_rent()
+                .await
+                .unwrap()
+                .minimum_balance(Config::LEN),
+            Config::LEN as u64,
+            &paladin_stake_program_client::ID,
+        );
+
+        let initialize_ix = InitializeConfigBuilder::new()
+            .config(config.pubkey())
+            .config_authority(manager.authority.pubkey())
+            .slash_authority(manager.authority.pubkey())
+            .mint(mint.pubkey())
+            .vault(manager.vault)
+            .cooldown_time_seconds(cooldown_time_seconds)
+            .max_deactivation_basis_points(max_deactivation_basis_points)
+            .instruction();
+
+        let tx = Transaction::new_signed_with_payer(
+            &[create_ix, initialize_ix],
+            Some(&context.payer.pubkey()),
+            &[&context.payer, &config],
+            context.last_blockhash,
+        );
+        context.banks_client.process_transaction(tx).await.unwrap();
+
+        manager.config = config.pubkey();
+        manager
+    }
+}
+
 pub async fn create_config(context: &mut ProgramTestContext) -> Pubkey {
     // cooldown_time_seconds = 1 second
     // max_deactivation_basis_points = 500 (5%)
@@ -23,64 +127,11 @@ pub async fn create_config_with_args(
     cooldown_time_seconds: u64,
     max_deactivation_basis_points: u16,
 ) -> Pubkey {
-    let config = Keypair::new();
-    let authority = Keypair::new().pubkey();
-
-    let mint = Keypair::new();
-    create_mint(
+    let manager = ConfigManager::with_args(
         context,
-        &mint,
-        &authority,
-        Some(&authority),
-        0,
-        MINT_EXTENSIONS,
+        cooldown_time_seconds,
+        max_deactivation_basis_points,
     )
-    .await
-    .unwrap();
-
-    let token = Keypair::new();
-    create_token_account(
-        context,
-        &find_vault_pda(&config.pubkey()).0,
-        &token,
-        &mint.pubkey(),
-        TOKEN_ACCOUNT_EXTENSIONS,
-    )
-    .await
-    .unwrap();
-
-    let create_ix = system_instruction::create_account(
-        &context.payer.pubkey(),
-        &config.pubkey(),
-        context
-            .banks_client
-            .get_rent()
-            .await
-            .unwrap()
-            .minimum_balance(Config::LEN),
-        Config::LEN as u64,
-        &paladin_stake_program_client::ID,
-    );
-
-    let initialize_ix = InitializeConfigBuilder::new()
-        .config(config.pubkey())
-        .config_authority(authority)
-        .slash_authority(authority)
-        .mint(mint.pubkey())
-        .vault(token.pubkey())
-        .cooldown_time_seconds(cooldown_time_seconds)
-        .max_deactivation_basis_points(max_deactivation_basis_points)
-        .instruction();
-
-    // When we create a config.
-
-    let tx = Transaction::new_signed_with_payer(
-        &[create_ix, initialize_ix],
-        Some(&context.payer.pubkey()),
-        &[&context.payer, &config],
-        context.last_blockhash,
-    );
-    context.banks_client.process_transaction(tx).await.unwrap();
-
-    config.pubkey()
+    .await;
+    manager.config
 }

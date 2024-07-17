@@ -1,7 +1,14 @@
 #![cfg(feature = "test-sbf")]
 #![allow(dead_code)]
 
+use solana_program_test::ProgramTestContext;
+use solana_sdk::{instruction::Instruction, pubkey::Pubkey};
+use spl_transfer_hook_interface::{
+    get_extra_account_metas_address, offchain::add_extra_account_metas_for_execute,
+};
+
 pub mod config;
+pub mod rewards;
 pub mod stake;
 pub mod token;
 pub mod vote;
@@ -62,4 +69,39 @@ macro_rules! get_account {
 
         account.unwrap()
     }};
+}
+
+#[allow(clippy::too_many_arguments)]
+pub async fn add_extra_account_metas_for_transfer(
+    context: &mut ProgramTestContext,
+    instruction: &mut Instruction,
+    program_id: &Pubkey,
+    source_pubkey: &Pubkey,
+    mint_pubkey: &Pubkey,
+    destination_pubkey: &Pubkey,
+    authority_pubkey: &Pubkey,
+    amount: u64,
+) {
+    let extra_metas_address = get_extra_account_metas_address(mint_pubkey, program_id);
+    let extra_metas_account = get_account!(context, extra_metas_address);
+
+    add_extra_account_metas_for_execute(
+        instruction,
+        program_id,
+        source_pubkey,
+        mint_pubkey,
+        destination_pubkey,
+        authority_pubkey,
+        amount,
+        |key| {
+            let data = if key.eq(&extra_metas_address) {
+                Some(extra_metas_account.data.clone())
+            } else {
+                None
+            };
+            async move { Ok(data) }
+        },
+    )
+    .await
+    .unwrap();
 }
