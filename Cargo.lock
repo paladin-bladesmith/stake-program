@@ -2396,6 +2396,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2355d85b9a3786f481747ced0e0ff2ba35213a1f9bd406ed906554d7af805a1"
 
 [[package]]
+name = "paladin-rewards-program-client"
+version = "0.0.0"
+source = "git+https://github.com/paladin-bladesmith/rewards-program.git#26845c684b485d7ea90c3332793afcd8316ef58b"
+dependencies = [
+ "borsh 0.10.3",
+ "num-derive 0.3.3",
+ "num-traits",
+ "solana-program",
+ "thiserror",
+]
+
+[[package]]
 name = "paladin-stake-program"
 version = "0.0.1"
 dependencies = [
@@ -2403,6 +2415,7 @@ dependencies = [
  "bytemuck",
  "num-derive 0.3.3",
  "num-traits",
+ "paladin-rewards-program-client",
  "shank",
  "solana-program",
  "spl-discriminator",

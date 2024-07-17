@@ -1,6 +1,4 @@
-use solana_program::{
-    account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey, pubkey::Pubkey,
-};
+use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey};
 
 use crate::instruction::{
     accounts::{
@@ -24,9 +22,6 @@ mod slash;
 mod stake_tokens;
 mod update_config;
 mod withdraw_inactive_stake;
-
-// TODO: Replace this with the actual Rewards program ID
-const REWARDS_PROGRAM_ID: Pubkey = pubkey!("PStake1111111111111111111111111111111111111");
 
 #[inline(always)]
 pub fn process_instruction<'a>(
