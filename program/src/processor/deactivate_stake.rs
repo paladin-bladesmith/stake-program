@@ -107,8 +107,6 @@ pub fn process_deactivate_stake(
 
     // Validate the amount.
 
-    require!(amount > 0, StakeError::InvalidAmount);
-
     require!(stake.amount >= amount, StakeError::InsufficientStakeAmount);
 
     let max_deactivation_amount = get_max_deactivation_amount(
@@ -128,8 +126,14 @@ pub fn process_deactivate_stake(
     //
     // If the stake is already deactivating, this will reset the deactivation.
 
-    stake.deactivating_amount = amount;
-    stake.deactivation_timestamp = NonZeroU64::new(Clock::get()?.unix_timestamp as u64);
+    if amount > 0 {
+        stake.deactivating_amount = amount;
+        stake.deactivation_timestamp = NonZeroU64::new(Clock::get()?.unix_timestamp as u64);
+    } else {
+        // cancels the deactivation if the amount is 0
+        stake.deactivating_amount = 0;
+        stake.deactivation_timestamp = None;
+    }
 
     Ok(())
 }
