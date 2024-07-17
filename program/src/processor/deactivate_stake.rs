@@ -12,13 +12,16 @@ use crate::{
     state::{find_stake_pda, Config, Stake},
 };
 
+const MAX_BASIS_POINTS: u128 = 10_000;
+
 /// Helper to calculate the maximum amount that can be deactivated.
 #[inline(always)]
-fn get_max_deactivation_amount(total_amount: u64, basis_points: u16) -> Result<u64, ProgramError> {
-    total_amount
-        .checked_mul(basis_points as u64)
-        .and_then(|p| p.checked_div(10_000))
-        .ok_or(ProgramError::ArithmeticOverflow)
+fn get_max_deactivation_amount(amount: u64, basis_points: u16) -> Result<u64, ProgramError> {
+    let amount = (amount as u128)
+        .checked_mul(basis_points as u128)
+        .and_then(|p| p.checked_div(MAX_BASIS_POINTS))
+        .ok_or(ProgramError::ArithmeticOverflow)?;
+    Ok(amount as u64)
 }
 
 /// Deactivate staked tokens for the validator.
