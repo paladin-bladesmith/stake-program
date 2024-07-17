@@ -119,6 +119,8 @@ pub fn process_stake_tokens<'a>(
 
     require!(amount > 0, StakeError::InvalidAmount);
 
+    require!(amount > 0, StakeError::InvalidAmount);
+
     config.token_amount_delegated = config
         .token_amount_delegated
         .checked_add(amount)
