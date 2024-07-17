@@ -109,6 +109,17 @@ kinobi.update(
         };
       },
     },
+    {
+      // StakeTokens
+      select: "[instructionNode]stakeTokens.[instructionArgumentNode]args",
+      transform: (node) => {
+        k.assertIsNode(node, "instructionArgumentNode");
+        return {
+          ...node,
+          name: "amount",
+        };
+      },
+    },
   ])
 );
 

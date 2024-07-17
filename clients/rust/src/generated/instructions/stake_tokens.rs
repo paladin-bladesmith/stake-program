@@ -104,7 +104,7 @@ impl Default for StakeTokensInstructionData {
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct StakeTokensInstructionArgs {
-    pub args: u64,
+    pub amount: u64,
 }
 
 /// Instruction builder for `StakeTokens`.
@@ -129,7 +129,7 @@ pub struct StakeTokensBuilder {
     mint: Option<solana_program::pubkey::Pubkey>,
     vault: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
-    args: Option<u64>,
+    amount: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -193,8 +193,8 @@ impl StakeTokensBuilder {
         self
     }
     #[inline(always)]
-    pub fn args(&mut self, args: u64) -> &mut Self {
-        self.args = Some(args);
+    pub fn amount(&mut self, amount: u64) -> &mut Self {
+        self.amount = Some(amount);
         self
     }
     /// Add an aditional account to the instruction.
@@ -234,7 +234,7 @@ impl StakeTokensBuilder {
             )),
         };
         let args = StakeTokensInstructionArgs {
-            args: self.args.clone().expect("args is not set"),
+            amount: self.amount.clone().expect("amount is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -437,7 +437,7 @@ impl<'a, 'b> StakeTokensCpiBuilder<'a, 'b> {
             mint: None,
             vault: None,
             token_program: None,
-            args: None,
+            amount: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -506,8 +506,8 @@ impl<'a, 'b> StakeTokensCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn args(&mut self, args: u64) -> &mut Self {
-        self.instruction.args = Some(args);
+    pub fn amount(&mut self, amount: u64) -> &mut Self {
+        self.instruction.amount = Some(amount);
         self
     }
     /// Add an additional account to the instruction.
@@ -552,7 +552,7 @@ impl<'a, 'b> StakeTokensCpiBuilder<'a, 'b> {
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
         let args = StakeTokensInstructionArgs {
-            args: self.instruction.args.clone().expect("args is not set"),
+            amount: self.instruction.amount.clone().expect("amount is not set"),
         };
         let instruction = StakeTokensCpi {
             __program: self.instruction.__program,
@@ -604,7 +604,7 @@ struct StakeTokensCpiBuilderInstruction<'a, 'b> {
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    args: Option<u64>,
+    amount: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

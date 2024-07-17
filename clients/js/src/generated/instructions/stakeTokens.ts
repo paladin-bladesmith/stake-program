@@ -80,16 +80,16 @@ export type StakeTokensInstruction<
 
 export type StakeTokensInstructionData = {
   discriminator: number;
-  args: bigint;
+  amount: bigint;
 };
 
-export type StakeTokensInstructionDataArgs = { args: number | bigint };
+export type StakeTokensInstructionDataArgs = { amount: number | bigint };
 
 export function getStakeTokensInstructionDataEncoder(): Encoder<StakeTokensInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
-      ['args', getU64Encoder()],
+      ['amount', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: 2 })
   );
@@ -98,7 +98,7 @@ export function getStakeTokensInstructionDataEncoder(): Encoder<StakeTokensInstr
 export function getStakeTokensInstructionDataDecoder(): Decoder<StakeTokensInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
-    ['args', getU64Decoder()],
+    ['amount', getU64Decoder()],
   ]);
 }
 
@@ -138,7 +138,7 @@ export type StakeTokensInput<
   vault: Address<TAccountVault>;
   /** Token program */
   tokenProgram?: Address<TAccountTokenProgram>;
-  args: StakeTokensInstructionDataArgs['args'];
+  amount: StakeTokensInstructionDataArgs['amount'];
 };
 
 export function getStakeTokensInstruction<
