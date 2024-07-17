@@ -69,7 +69,7 @@ pub enum StakeError {
     #[error("Active deactivation cooldown")]
     ActiveDeactivationCooldown,
 
-    /// 16 - No deactivated tokens
+    /// 15 - No deactivated tokens
     #[error("No deactivated tokens")]
     NoDeactivatedTokens,
 }
