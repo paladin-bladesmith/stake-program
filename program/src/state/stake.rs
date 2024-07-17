@@ -56,7 +56,7 @@ impl Stake {
         self.discriminator.as_slice() == Stake::SPL_DISCRIMINATOR_SLICE
     }
 
-    pub fn new(authority: Pubkey, validator: Pubkey) -> Self {
+    pub fn new(authority: Pubkey, validator_vote: Pubkey) -> Self {
         Self {
             discriminator: Stake::SPL_DISCRIMINATOR.into(),
             amount: u64::default(),
@@ -64,7 +64,7 @@ impl Stake {
             deactivating_amount: u64::default(),
             inactive_amount: u64::default(),
             authority,
-            validator,
+            validator: validator_vote,
             last_seen_holder_rewards: u64::default(),
             last_seen_stake_rewards: u64::default(),
         }

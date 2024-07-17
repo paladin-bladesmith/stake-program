@@ -66,7 +66,6 @@ pub fn process_initialize_stake(
         "validator_vote"
     );
 
-    let validator = Pubkey::from(*array_ref!(data, 4, 32));
     let withdraw_authority = Pubkey::from(*array_ref!(data, 36, 32));
 
     // stake
@@ -76,7 +75,11 @@ pub fn process_initialize_stake(
     // NOTE: The stake account is created and assigned to the stake program, so it needs
     // to be pre-funded with the minimum rent balance by the caller.
 
-    let (derivation, bump) = find_stake_pda(&validator, ctx.accounts.config.key, program_id);
+    let (derivation, bump) = find_stake_pda(
+        ctx.accounts.validator_vote.key,
+        ctx.accounts.config.key,
+        program_id,
+    );
 
     require!(
         ctx.accounts.stake.key == &derivation,
@@ -93,7 +96,11 @@ pub fn process_initialize_stake(
     // Allocate and assign.
 
     let bump_seed = [bump];
-    let signer_seeds = get_stake_pda_signer_seeds(&validator, ctx.accounts.config.key, &bump_seed);
+    let signer_seeds = get_stake_pda_signer_seeds(
+        ctx.accounts.validator_vote.key,
+        ctx.accounts.config.key,
+        &bump_seed,
+    );
 
     invoke_signed(
         &system_instruction::allocate(ctx.accounts.stake.key, Stake::LEN as u64),
@@ -112,7 +119,7 @@ pub fn process_initialize_stake(
     let mut data = ctx.accounts.stake.try_borrow_mut_data()?;
     let stake = bytemuck::from_bytes_mut::<Stake>(&mut data);
 
-    *stake = Stake::new(withdraw_authority, validator);
+    *stake = Stake::new(withdraw_authority, *ctx.accounts.validator_vote.key);
 
     Ok(())
 }
