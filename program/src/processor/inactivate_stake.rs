@@ -94,10 +94,14 @@ pub fn process_inactivate_stake(
         msg!("Deactivating {} token(s)", stake.deactivating_amount);
 
         // moves deactivating amount to inactive
-        stake.amount = stake.amount.saturating_sub(stake.deactivating_amount);
+        stake.amount = stake
+            .amount
+            .checked_sub(stake.deactivating_amount)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
         stake.inactive_amount = stake
             .inactive_amount
-            .saturating_add(stake.deactivating_amount);
+            .checked_add(stake.deactivating_amount)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
 
         // clears the deactivation
         stake.deactivating_amount = 0;
