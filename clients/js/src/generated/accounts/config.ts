@@ -50,7 +50,6 @@ export type Config = {
   vault: Address;
   cooldownTimeSeconds: bigint;
   tokenAmountDelegated: bigint;
-  totalStakeRewards: bigint;
   accumulatedStakeRewardsPerToken: Array<number>;
   maxDeactivationBasisPoints: number;
   signerBump: number;
@@ -64,7 +63,6 @@ export type ConfigArgs = {
   vault: Address;
   cooldownTimeSeconds: number | bigint;
   tokenAmountDelegated: number | bigint;
-  totalStakeRewards: number | bigint;
   accumulatedStakeRewardsPerToken: Array<number>;
   maxDeactivationBasisPoints: number;
   signerBump: number;
@@ -79,7 +77,6 @@ export function getConfigEncoder(): Encoder<ConfigArgs> {
     ['vault', getAddressEncoder()],
     ['cooldownTimeSeconds', getU64Encoder()],
     ['tokenAmountDelegated', getU64Encoder()],
-    ['totalStakeRewards', getU64Encoder()],
     [
       'accumulatedStakeRewardsPerToken',
       getArrayEncoder(getU8Encoder(), { size: 16 }),
@@ -98,7 +95,6 @@ export function getConfigDecoder(): Decoder<Config> {
     ['vault', getAddressDecoder()],
     ['cooldownTimeSeconds', getU64Decoder()],
     ['tokenAmountDelegated', getU64Decoder()],
-    ['totalStakeRewards', getU64Decoder()],
     [
       'accumulatedStakeRewardsPerToken',
       getArrayDecoder(getU8Decoder(), { size: 16 }),

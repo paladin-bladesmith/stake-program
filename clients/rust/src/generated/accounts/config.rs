@@ -23,7 +23,6 @@ pub struct Config {
     pub vault: Pubkey,
     pub cooldown_time_seconds: u64,
     pub token_amount_delegated: u64,
-    pub total_stake_rewards: u64,
     pub accumulated_stake_rewards_per_token: [u8; 16],
     pub max_deactivation_basis_points: u16,
     pub signer_bump: u8,

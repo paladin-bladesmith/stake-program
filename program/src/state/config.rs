@@ -36,9 +36,6 @@ pub struct Config {
     /// is maintained independently.
     pub token_amount_delegated: u64,
 
-    /// Running total of all stake rewards distributed.
-    pub total_stake_rewards: u64,
-
     /// The current stake rewards per token exchange rate.
     ///
     /// Stored as a `u128`, which includes a scaling factor of `1e9` to
@@ -74,7 +71,6 @@ impl Config {
             vault,
             cooldown_time_seconds,
             token_amount_delegated: 0,
-            total_stake_rewards: 0,
             accumulated_stake_rewards_per_token: U128_DEFAULT,
             max_deactivation_basis_points,
             signer_bump,

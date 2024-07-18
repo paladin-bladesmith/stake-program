@@ -675,10 +675,6 @@
             "type": "u64"
           },
           {
-            "name": "totalStakeRewards",
-            "type": "u64"
-          },
-          {
             "name": "accumulatedStakeRewardsPerToken",
             "type": {
               "array": [
