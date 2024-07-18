@@ -1,5 +1,4 @@
 use solana_program::{entrypoint::ProgramResult, msg, program_error::ProgramError, pubkey::Pubkey};
-use spl_discriminator::SplDiscriminate;
 use spl_pod::optional_keys::OptionalNonZeroPubkey;
 use spl_token_2022::{
     extension::{
@@ -152,12 +151,11 @@ pub fn process_initialize_config(
 
     // Initialize the stake config account.
 
-    *config = Config {
-        discriminator: Config::SPL_DISCRIMINATOR.into(),
-        authority: OptionalNonZeroPubkey(*ctx.accounts.config_authority.key),
-        slash_authority: OptionalNonZeroPubkey(*ctx.accounts.slash_authority.key),
-        vault: *ctx.accounts.vault.key,
-        cooldown_time_seconds: cooldown_time_seconds as i64,
+    *config = Config::new(
+        OptionalNonZeroPubkey(*ctx.accounts.config_authority.key),
+        OptionalNonZeroPubkey(*ctx.accounts.slash_authority.key),
+        *ctx.accounts.vault.key,
+        cooldown_time_seconds,
         max_deactivation_basis_points,
         vault_authority_bump: signer_bump,
         ..Config::default()

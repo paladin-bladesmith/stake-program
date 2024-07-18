@@ -85,3 +85,20 @@ pub fn calculate_eligible_rewards(
             .ok_or(ProgramError::ArithmeticOverflow)
     }
 }
+
+pub fn calculate_stake_rewards_per_token(
+    rewards: u64,
+    stake_amount: u64,
+) -> Result<u128, ProgramError> {
+    if stake_amount == 0 {
+        Ok(0)
+    } else {
+        // Calculation: rewards / stake_amount
+        //
+        // Scaled by 1e9 to store 9 decimal places of precision.
+        (rewards as u128)
+            .checked_mul(REWARDS_PER_TOKEN_SCALING_FACTOR)
+            .and_then(|product| product.checked_div(stake_amount as u128))
+            .ok_or(ProgramError::ArithmeticOverflow)
+    }
+}

@@ -5,8 +5,7 @@ use shank::ShankAccount;
 use solana_program::pubkey::Pubkey;
 use spl_discriminator::SplDiscriminate;
 
-/// Default value for a U128 byte array.
-const U128_DEFAULT: [u8; 16] = [0; 16];
+use super::U128_DEFAULT;
 
 /// Data for an amount of tokens staked with a validator
 #[repr(C)]

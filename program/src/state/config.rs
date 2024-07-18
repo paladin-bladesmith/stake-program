@@ -1,12 +1,14 @@
 use bytemuck::{Pod, Zeroable};
 use shank::ShankAccount;
-use solana_program::{clock::UnixTimestamp, pubkey::Pubkey};
+use solana_program::pubkey::Pubkey;
 use spl_discriminator::{ArrayDiscriminator, SplDiscriminate};
 use spl_pod::optional_keys::OptionalNonZeroPubkey;
 
+use super::U128_DEFAULT;
+
 /// Configuration for a staking system.
 #[repr(C)]
-#[derive(Clone, Copy, Default, Pod, ShankAccount, SplDiscriminate, Zeroable)]
+#[derive(Clone, Copy, Pod, ShankAccount, SplDiscriminate, Zeroable)]
 #[discriminator_hash_input("stake::state::config")]
 pub struct Config {
     /// Account disciminator.
@@ -14,7 +16,7 @@ pub struct Config {
     /// The discriminator is equal to `ArrayDiscriminator:: UNINITIALIZED` when
     /// the account is empty, and equal to `Config::DISCRIMINATOR` when the account
     /// is initialized.
-    pub discriminator: [u8; 8],
+    discriminator: [u8; 8],
 
     /// Authority that can modify any elements in the config.
     pub authority: OptionalNonZeroPubkey,
@@ -27,15 +29,18 @@ pub struct Config {
 
     /// After a deactivation, defines the number of seconds that must pass before
     /// the stake is inactive and able to be withdrawn.
-    pub cooldown_time_seconds: UnixTimestamp,
+    pub cooldown_time_seconds: u64,
 
     /// Total number of tokens delegated to the system. Since anyone can transfer
     /// tokens into the vault without passing through the program, this number
     /// is maintained independently.
     pub token_amount_delegated: u64,
 
-    /// Running total of all stake rewards distributed.
-    pub total_stake_rewards: u64,
+    /// The current stake rewards per token exchange rate.
+    ///
+    /// Stored as a `u128`, which includes a scaling factor of `1e9` to
+    /// represent the exchange rate with 9 decimal places of precision.
+    accumulated_stake_rewards_per_token: [u8; 16],
 
     /// The maximum proportion that can be deactivated at once, given as basis
     /// points (1 / 10,000).
@@ -45,11 +50,33 @@ pub struct Config {
     pub vault_authority_bump: u8,
 
     /// Padding for alignment.
-    pub _padding: [u8; 5],
+    _padding: [u8; 5],
 }
 
 impl Config {
     pub const LEN: usize = std::mem::size_of::<Config>();
+
+    pub fn new(
+        authority: OptionalNonZeroPubkey,
+        slash_authority: OptionalNonZeroPubkey,
+        vault: Pubkey,
+        cooldown_time_seconds: u64,
+        max_deactivation_basis_points: u16,
+        signer_bump: u8,
+    ) -> Self {
+        Self {
+            discriminator: Config::SPL_DISCRIMINATOR.into(),
+            authority,
+            slash_authority,
+            vault,
+            cooldown_time_seconds,
+            token_amount_delegated: 0,
+            accumulated_stake_rewards_per_token: U128_DEFAULT,
+            max_deactivation_basis_points,
+            signer_bump,
+            _padding: [0; 5],
+        }
+    }
 
     #[inline(always)]
     pub fn is_initialized(&self) -> bool {
@@ -59,5 +86,15 @@ impl Config {
     #[inline(always)]
     pub fn is_uninitialized(&self) -> bool {
         self.discriminator.as_slice() == ArrayDiscriminator::UNINITIALIZED.as_slice()
+    }
+
+    #[inline(always)]
+    pub fn accumulated_stake_rewards_per_token(&self) -> u128 {
+        u128::from_le_bytes(self.accumulated_stake_rewards_per_token)
+    }
+
+    #[inline(always)]
+    pub fn set_accumulated_stake_rewards_per_token(&mut self, value: u128) {
+        self.accumulated_stake_rewards_per_token = value.to_le_bytes();
     }
 }
