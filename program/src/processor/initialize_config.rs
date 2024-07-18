@@ -52,10 +52,10 @@ pub fn process_initialize_config(
         let hook_program_id: Option<Pubkey> = transfer_hook.program_id.into();
 
         require!(
-            hook_program_id == Some(paladin_rewards::ID),
+            hook_program_id == Some(paladin_rewards_program_client::ID),
             StakeError::InvalidTransferHookProgramId,
-            "expected {}, found {:?}",
-            program_id,
+            "expected {:?}, found {:?}",
+            Some(paladin_rewards_program_client::ID),
             hook_program_id
         );
     } else {

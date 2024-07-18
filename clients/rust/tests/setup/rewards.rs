@@ -1,4 +1,4 @@
-use paladin_rewards::{
+use paladin_rewards_program_client::{
     accounts::{HolderRewards, HolderRewardsPool},
     instructions::{InitializeHolderRewardsBuilder, InitializeHolderRewardsPoolBuilder},
 };
@@ -55,7 +55,8 @@ pub async fn create_holder_rewards_pool(
     // rewards pool
     let (holder_rewards_pool, _) = HolderRewardsPool::find_pda(mint);
     // extra account metas
-    let extra_account_metas = get_extra_account_metas_address(mint, &paladin_rewards::ID);
+    let extra_account_metas =
+        get_extra_account_metas_address(mint, &paladin_rewards_program_client::ID);
 
     // Initialize the holder rewards pool.
 

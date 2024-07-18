@@ -855,13 +855,13 @@
     },
     {
       "code": 15,
-      "name": "IncorrectVaultAccount",
-      "msg": "Incorrect vault account"
+      "name": "NoDeactivatedTokens",
+      "msg": "No deactivated tokens"
     },
     {
       "code": 16,
-      "name": "NoDeactivatedTokens",
-      "msg": "No deactivated tokens"
+      "name": "IncorrectVaultAccount",
+      "msg": "Incorrect vault account"
     }
   ],
   "metadata": {

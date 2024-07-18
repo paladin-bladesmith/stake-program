@@ -55,12 +55,12 @@ pub enum PaladinStakeProgramError {
     /// 14 - Active deactivation cooldown
     #[error("Active deactivation cooldown")]
     ActiveDeactivationCooldown = 0xE,
-    /// 15 - Incorrect vault account
-    #[error("Incorrect vault account")]
-    IncorrectVaultAccount = 0xF,
-    /// 16 - No deactivated tokens
+    /// 15 - No deactivated tokens
     #[error("No deactivated tokens")]
-    NoDeactivatedTokens = 0x10,
+    NoDeactivatedTokens = 0xF,
+    /// 16 - Incorrect vault account
+    #[error("Incorrect vault account")]
+    IncorrectVaultAccount = 0x10,
 }
 
 impl solana_program::program_error::PrintProgramError for PaladinStakeProgramError {

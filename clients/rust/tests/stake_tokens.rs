@@ -2,9 +2,9 @@
 
 mod setup;
 
-use paladin_stake::{
+use paladin_stake_program_client::{
     accounts::{Config, Stake},
-    errors::StakeError,
+    errors::PaladinStakeProgramError,
     instructions::StakeTokensBuilder,
 };
 use setup::{
@@ -24,8 +24,16 @@ use spl_token_2022::{extension::StateWithExtensions, state::Account};
 
 #[tokio::test]
 async fn stake_tokens() {
-    let mut program_test = ProgramTest::new("stake_program", paladin_stake::ID, None);
-    program_test.add_program("paladin_rewards_program", paladin_rewards::ID, None);
+    let mut program_test = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    );
+    program_test.add_program(
+        "paladin_rewards_program",
+        paladin_rewards_program_client::ID,
+        None,
+    );
     let mut context = program_test.start_with_context().await;
 
     // Given a config and stake accounts.
@@ -80,7 +88,7 @@ async fn stake_tokens() {
     add_extra_account_metas_for_transfer(
         &mut context,
         &mut stake_ix,
-        &paladin_rewards::ID,
+        &paladin_rewards_program_client::ID,
         &rewards_manager.token_account,
         &config_manager.mint,
         &config_manager.vault,
@@ -118,8 +126,16 @@ async fn stake_tokens() {
 
 #[tokio::test]
 async fn fail_stake_tokens_with_wrong_vault_account() {
-    let mut program_test = ProgramTest::new("stake_program", paladin_stake::ID, None);
-    program_test.add_program("paladin_rewards_program", paladin_rewards::ID, None);
+    let mut program_test = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    );
+    program_test.add_program(
+        "paladin_rewards_program",
+        paladin_rewards_program_client::ID,
+        None,
+    );
     let mut context = program_test.start_with_context().await;
 
     // Given a config and stake accounts.
@@ -185,7 +201,7 @@ async fn fail_stake_tokens_with_wrong_vault_account() {
     add_extra_account_metas_for_transfer(
         &mut context,
         &mut stake_ix,
-        &paladin_rewards::ID,
+        &paladin_rewards_program_client::ID,
         &rewards_manager.token_account,
         &config_manager.mint,
         &wrong_vault.pubkey(),
@@ -208,13 +224,21 @@ async fn fail_stake_tokens_with_wrong_vault_account() {
 
     // Then we expect an error.
 
-    assert_custom_error!(err, StakeError::IncorrectVaultAccount);
+    assert_custom_error!(err, PaladinStakeProgramError::IncorrectVaultAccount);
 }
 
 #[tokio::test]
 async fn fail_stake_tokens_with_wrong_config_account() {
-    let mut program_test = ProgramTest::new("stake_program", paladin_stake::ID, None);
-    program_test.add_program("paladin_rewards_program", paladin_rewards::ID, None);
+    let mut program_test = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    );
+    program_test.add_program(
+        "paladin_rewards_program",
+        paladin_rewards_program_client::ID,
+        None,
+    );
     let mut context = program_test.start_with_context().await;
 
     // Given a config and stake accounts.
@@ -271,7 +295,7 @@ async fn fail_stake_tokens_with_wrong_config_account() {
     add_extra_account_metas_for_transfer(
         &mut context,
         &mut stake_ix,
-        &paladin_rewards::ID,
+        &paladin_rewards_program_client::ID,
         &rewards_manager.token_account,
         &config_manager.mint,
         &config_manager.vault,
@@ -299,8 +323,16 @@ async fn fail_stake_tokens_with_wrong_config_account() {
 
 #[tokio::test]
 async fn fail_stake_tokens_with_zero_amount() {
-    let mut program_test = ProgramTest::new("stake_program", paladin_stake::ID, None);
-    program_test.add_program("paladin_rewards_program", paladin_rewards::ID, None);
+    let mut program_test = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    );
+    program_test.add_program(
+        "paladin_rewards_program",
+        paladin_rewards_program_client::ID,
+        None,
+    );
     let mut context = program_test.start_with_context().await;
 
     // Given a config and stake accounts.
@@ -355,7 +387,7 @@ async fn fail_stake_tokens_with_zero_amount() {
     add_extra_account_metas_for_transfer(
         &mut context,
         &mut stake_ix,
-        &paladin_rewards::ID,
+        &paladin_rewards_program_client::ID,
         &rewards_manager.token_account,
         &config_manager.mint,
         &config_manager.vault,
@@ -378,5 +410,5 @@ async fn fail_stake_tokens_with_zero_amount() {
 
     // Then we expect an error.
 
-    assert_custom_error!(err, StakeError::InvalidAmount);
+    assert_custom_error!(err, PaladinStakeProgramError::InvalidAmount);
 }
