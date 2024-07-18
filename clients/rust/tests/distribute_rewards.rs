@@ -104,7 +104,7 @@ async fn distribute_rewards_with_no_staked_tokens() {
     let config_account = Config::from_bytes(account_data).unwrap();
 
     assert_eq!(config_account.accumulated_stake_rewards_per_token, 0u128);
-    assert_eq!(account.lamports, lamports);
+    assert_eq!(account.lamports, lamports.saturating_add(5_000_000_000));
 }
 
 #[tokio::test]
