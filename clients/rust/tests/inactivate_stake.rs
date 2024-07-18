@@ -87,13 +87,12 @@ async fn inactivate_stake() {
     );
     context.banks_client.process_transaction(tx).await.unwrap();
 
-    // Then the tranasction succeeds and the stake account should
-    // remain the same.
+    // Then the inactivation should be successful.
 
     let account = get_account!(context, stake_pda);
     let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
 
-    assert_eq!(stake_account.amount, 100);
+    assert_eq!(stake_account.amount, 50);
     assert_eq!(stake_account.deactivating_amount, 0);
     assert_eq!(stake_account.inactive_amount, 50);
     assert!(stake_account.deactivation_timestamp.value().is_none());

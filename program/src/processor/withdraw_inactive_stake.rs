@@ -78,7 +78,8 @@ pub fn process_withdraw_inactive_stake<'a>(
         "stake",
     );
 
-    let (derivation, _) = find_stake_pda(&stake.validator, ctx.accounts.config.key, program_id);
+    let (derivation, _) =
+        find_stake_pda(&stake.validator_vote, ctx.accounts.config.key, program_id);
 
     require!(
         ctx.accounts.stake.key == &derivation,
@@ -115,7 +116,7 @@ pub fn process_withdraw_inactive_stake<'a>(
 
     let signer_bump = &[bump];
     let signer_seeds =
-        get_stake_pda_signer_seeds(&stake.validator, ctx.accounts.config.key, signer_bump);
+        get_stake_pda_signer_seeds(&stake.validator_vote, ctx.accounts.config.key, signer_bump);
 
     // vault
     // - must be the token account on the stake config account
