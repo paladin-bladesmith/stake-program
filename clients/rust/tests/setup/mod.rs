@@ -6,6 +6,9 @@ pub mod stake;
 pub mod token;
 pub mod vote;
 
+/// Scaling factor for rewards per token (1e9).
+pub const REWARDS_PER_TOKEN_SCALING_FACTOR: u128 = 1_000_000_000;
+
 #[macro_export]
 macro_rules! assert_instruction_error {
     ( $error:expr, $matcher:pat ) => {

@@ -1,10 +1,10 @@
 #!/usr/bin/env zx
-import "zx/globals";
-import * as k from "kinobi";
-import { rootNodeFromAnchor } from "@kinobi-so/nodes-from-anchor";
-import { renderVisitor as renderJavaScriptVisitor } from "@kinobi-so/renderers-js";
-import { renderVisitor as renderRustVisitor } from "@kinobi-so/renderers-rust";
-import { getAllProgramIdls } from "./utils.mjs";
+import 'zx/globals';
+import * as k from 'kinobi';
+import { rootNodeFromAnchor } from '@kinobi-so/nodes-from-anchor';
+import { renderVisitor as renderJavaScriptVisitor } from '@kinobi-so/renderers-js';
+import { renderVisitor as renderRustVisitor } from '@kinobi-so/renderers-rust';
+import { getAllProgramIdls } from './utils.mjs';
 
 // Instanciate Kinobi.
 const [idl, ...additionalIdls] = getAllProgramIdls().map((idl) =>
@@ -15,7 +15,7 @@ const kinobi = k.createFromRoot(idl, additionalIdls);
 // Update programs.
 kinobi.update(
   k.updateProgramsVisitor({
-    stakeProgram: { name: "stake" },
+    stakeProgram: { name: 'stake' },
   })
 );
 
@@ -23,20 +23,20 @@ kinobi.update(
 kinobi.update(
   k.bottomUpTransformerVisitor([
     {
-      select: "[programNode]stake",
+      select: '[programNode]stake',
       transform: (node) => {
-        k.assertIsNode(node, "programNode");
+        k.assertIsNode(node, 'programNode');
         return {
           ...node,
           pdas: [
             k.pdaNode({
-              name: "vault",
+              name: 'vault',
               seeds: [
-                k.constantPdaSeedNodeFromString("utf8", "token-vault"),
+                k.constantPdaSeedNodeFromString('utf8', 'token-vault'),
                 k.variablePdaSeedNode(
-                  "authority",
+                  'authority',
                   k.publicKeyTypeNode(),
-                  "Config authority"
+                  'Config authority'
                 ),
               ],
             }),
@@ -53,48 +53,52 @@ kinobi.update(
     {
       // OptionalNonZeroPubkey -> NullableAddress
       select: (node) => {
-        const names = ["authority", "slashAuthority"];
+        const names = ['authority', 'slashAuthority'];
         return (
           names.includes(node.name) &&
-          k.isNode(node, "structFieldTypeNode") &&
-          k.isNode(node.type, "definedTypeLinkNode") &&
-          node.type.name === "optionalNonZeroPubkey"
+          k.isNode(node, 'structFieldTypeNode') &&
+          k.isNode(node.type, 'definedTypeLinkNode') &&
+          node.type.name === 'optionalNonZeroPubkey'
         );
       },
       transform: (node) => {
-        k.assertIsNode(node, "structFieldTypeNode");
+        k.assertIsNode(node, 'structFieldTypeNode');
         return {
           ...node,
-          type: k.definedTypeLinkNode("nullableAddress", "hooked"),
+          type: k.definedTypeLinkNode('nullableAddress', 'hooked'),
         };
       },
     },
     {
       // Option<NonZeroU64> -> NullableU64
-      select: "[structFieldTypeNode]deactivationTimestamp",
+      select: '[structFieldTypeNode]deactivationTimestamp',
       transform: (node) => {
-        k.assertIsNode(node, "structFieldTypeNode");
+        k.assertIsNode(node, 'structFieldTypeNode');
         return {
           ...node,
-          type: k.definedTypeLinkNode("nullableU64", "hooked"),
+          type: k.definedTypeLinkNode('nullableU64', 'hooked'),
         };
       },
     },
     {
       // [u8; 16] -> u128
       select: (node) => {
-        const names = ["lastSeenHolderRewardsPerToken", "lastSeenStakeRewardsPerToken"];
+        const names = [
+          'lastSeenHolderRewardsPerToken',
+          'lastSeenStakeRewardsPerToken',
+          'accumulatedStakeRewardsPerToken',
+        ];
         return (
           names.includes(node.name) &&
-          k.isNode(node, "structFieldTypeNode") &&
-          k.isNode(node.type, "arrayTypeNode")
+          k.isNode(node, 'structFieldTypeNode') &&
+          k.isNode(node.type, 'arrayTypeNode')
         );
       },
       transform: (node) => {
-        k.assertIsNode(node, "structFieldTypeNode");
+        k.assertIsNode(node, 'structFieldTypeNode');
         return {
           ...node,
-          type: k.numberTypeNode("u128"),
+          type: k.numberTypeNode('u128'),
         };
       },
     },
@@ -106,12 +110,24 @@ kinobi.update(
   k.bottomUpTransformerVisitor([
     {
       // DeactivateStake
-      select: "[instructionNode]deactivateStake.[instructionArgumentNode]args",
+      select: '[instructionNode]deactivateStake.[instructionArgumentNode]args',
       transform: (node) => {
-        k.assertIsNode(node, "instructionArgumentNode");
+        k.assertIsNode(node, 'instructionArgumentNode');
         return {
           ...node,
-          name: "amount",
+          name: 'amount',
+        };
+      },
+    },
+    {
+      // DistributeRewards
+      select:
+        '[instructionNode]distributeRewards.[instructionArgumentNode]args',
+      transform: (node) => {
+        k.assertIsNode(node, 'instructionArgumentNode');
+        return {
+          ...node,
+          name: 'amount',
         };
       },
     },
@@ -131,17 +147,17 @@ kinobi.update(
 );
 
 // Render JavaScript.
-const jsClient = path.join(__dirname, "..", "clients", "js");
+const jsClient = path.join(__dirname, '..', 'clients', 'js');
 kinobi.accept(
-  renderJavaScriptVisitor(path.join(jsClient, "src", "generated"), {
-    prettier: require(path.join(jsClient, ".prettierrc.json")),
+  renderJavaScriptVisitor(path.join(jsClient, 'src', 'generated'), {
+    prettier: require(path.join(jsClient, '.prettierrc.json')),
   })
 );
 
 // Render Rust.
-const rustClient = path.join(__dirname, "..", "clients", "rust");
+const rustClient = path.join(__dirname, '..', 'clients', 'rust');
 kinobi.accept(
-  renderRustVisitor(path.join(rustClient, "src", "generated"), {
+  renderRustVisitor(path.join(rustClient, 'src', 'generated'), {
     formatCode: true,
     crateFolder: rustClient,
   })

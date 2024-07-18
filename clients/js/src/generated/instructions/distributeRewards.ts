@@ -60,16 +60,16 @@ export type DistributeRewardsInstruction<
 
 export type DistributeRewardsInstructionData = {
   discriminator: number;
-  args: bigint;
+  amount: bigint;
 };
 
-export type DistributeRewardsInstructionDataArgs = { args: number | bigint };
+export type DistributeRewardsInstructionDataArgs = { amount: number | bigint };
 
 export function getDistributeRewardsInstructionDataEncoder(): Encoder<DistributeRewardsInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
-      ['args', getU64Encoder()],
+      ['amount', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: 11 })
   );
@@ -78,7 +78,7 @@ export function getDistributeRewardsInstructionDataEncoder(): Encoder<Distribute
 export function getDistributeRewardsInstructionDataDecoder(): Decoder<DistributeRewardsInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
-    ['args', getU64Decoder()],
+    ['amount', getU64Decoder()],
   ]);
 }
 
@@ -103,7 +103,7 @@ export type DistributeRewardsInput<
   config: Address<TAccountConfig>;
   /** System program */
   systemProgram?: Address<TAccountSystemProgram>;
-  args: DistributeRewardsInstructionDataArgs['args'];
+  amount: DistributeRewardsInstructionDataArgs['amount'];
 };
 
 export function getDistributeRewardsInstruction<
