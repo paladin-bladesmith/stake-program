@@ -933,3 +933,83 @@ async fn fail_initialize_config_with_invalid_token_extensions() {
 
     assert_custom_error!(err, PaladinStakeProgramError::InvalidTokenAccountExtension);
 }
+
+#[tokio::test]
+async fn fail_initialize_config_with_invalid_max_deactivation_basis_points() {
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
+
+    // Given an empty config account with an associated vault and a mint.
+
+    let config = Keypair::new();
+    let authority = Keypair::new().pubkey();
+
+    let mint = Keypair::new();
+    create_mint(
+        &mut context,
+        &mint,
+        &authority,
+        Some(&authority),
+        0,
+        MINT_EXTENSIONS,
+    )
+    .await
+    .unwrap();
+
+    let token = Keypair::new();
+    create_token_account(
+        &mut context,
+        &find_vault_pda(&config.pubkey()).0,
+        &token,
+        &mint.pubkey(),
+        TOKEN_ACCOUNT_EXTENSIONS,
+    )
+    .await
+    .unwrap();
+
+    let create_ix = system_instruction::create_account(
+        &context.payer.pubkey(),
+        &config.pubkey(),
+        context
+            .banks_client
+            .get_rent()
+            .await
+            .unwrap()
+            .minimum_balance(Config::LEN),
+        Config::LEN as u64,
+        &paladin_stake_program_client::ID,
+    );
+
+    let initialize_ix = InitializeConfigBuilder::new()
+        .config(config.pubkey())
+        .config_authority(authority)
+        .slash_authority(authority)
+        .mint(mint.pubkey())
+        .vault(token.pubkey())
+        .cooldown_time_seconds(1)
+        .max_deactivation_basis_points(20_000) // <- invalid (200%)
+        .instruction();
+
+    // When we try to initialize the config with an invalid max_deactivation_basis_points value.
+
+    let tx = Transaction::new_signed_with_payer(
+        &[create_ix, initialize_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, &config],
+        context.last_blockhash,
+    );
+    let err = context
+        .banks_client
+        .process_transaction(tx)
+        .await
+        .unwrap_err();
+
+    // Then we expect an error.
+
+    assert_instruction_error!(err, InstructionError::InvalidArgument);
+}

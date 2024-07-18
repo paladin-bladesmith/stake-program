@@ -2,8 +2,12 @@ pub mod config;
 pub mod stake;
 
 pub use config::*;
-use solana_program::pubkey::Pubkey;
 pub use stake::*;
+
+use solana_program::pubkey::Pubkey;
+
+/// Defined the maximum valud for basis points (100%).
+pub const MAX_BASIS_POINTS: u128 = 10_000;
 
 #[inline(always)]
 pub fn find_vault_pda(config: &Pubkey, program_id: &Pubkey) -> (Pubkey, u8) {

@@ -10,7 +10,7 @@ use crate::{
         ConfigField,
     },
     require,
-    state::Config,
+    state::{Config, MAX_BASIS_POINTS},
 };
 
 /// Updates configuration parameters.
@@ -73,6 +73,13 @@ pub fn process_update_config(
                 config.cooldown_time_seconds = seconds as UnixTimestamp;
             }
             ConfigField::MaxDeactivationBasisPoints(points) => {
+                require!(
+                    points <= MAX_BASIS_POINTS as u16,
+                    ProgramError::InvalidArgument,
+                    "basis points exceeds maximum allowed value of {}",
+                    MAX_BASIS_POINTS
+                );
+
                 config.max_deactivation_basis_points = points;
             }
         }

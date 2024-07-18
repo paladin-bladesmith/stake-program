@@ -9,16 +9,17 @@ use crate::{
     error::StakeError,
     instruction::accounts::{Context, DeactivateStakeAccounts},
     require,
-    state::{find_stake_pda, Config, Stake},
+    state::{find_stake_pda, Config, Stake, MAX_BASIS_POINTS},
 };
 
 /// Helper to calculate the maximum amount that can be deactivated.
 #[inline(always)]
-fn get_max_deactivation_amount(total_amount: u64, basis_points: u16) -> Result<u64, ProgramError> {
-    total_amount
-        .checked_mul(basis_points as u64)
-        .and_then(|p| p.checked_div(10_000))
-        .ok_or(ProgramError::ArithmeticOverflow)
+fn get_max_deactivation_amount(amount: u64, basis_points: u16) -> Result<u64, ProgramError> {
+    let amount = (amount as u128)
+        .checked_mul(basis_points as u128)
+        .and_then(|p| p.checked_div(MAX_BASIS_POINTS))
+        .ok_or(ProgramError::ArithmeticOverflow)?;
+    Ok(amount as u64)
 }
 
 /// Deactivate staked tokens for the validator.
@@ -107,14 +108,10 @@ pub fn process_deactivate_stake(
 
     // Validate the amount.
 
-    require!(amount > 0, StakeError::InvalidAmount);
-
     require!(stake.amount >= amount, StakeError::InsufficientStakeAmount);
 
-    let max_deactivation_amount = get_max_deactivation_amount(
-        config.token_amount_delegated,
-        config.max_deactivation_basis_points,
-    )?;
+    let max_deactivation_amount =
+        get_max_deactivation_amount(stake.amount, config.max_deactivation_basis_points)?;
 
     require!(
         amount <= max_deactivation_amount,
@@ -128,8 +125,14 @@ pub fn process_deactivate_stake(
     //
     // If the stake is already deactivating, this will reset the deactivation.
 
-    stake.deactivating_amount = amount;
-    stake.deactivation_timestamp = NonZeroU64::new(Clock::get()?.unix_timestamp as u64);
+    if amount > 0 {
+        stake.deactivating_amount = amount;
+        stake.deactivation_timestamp = NonZeroU64::new(Clock::get()?.unix_timestamp as u64);
+    } else {
+        // cancels the deactivation if the amount is 0
+        stake.deactivating_amount = 0;
+        stake.deactivation_timestamp = None;
+    }
 
     Ok(())
 }
