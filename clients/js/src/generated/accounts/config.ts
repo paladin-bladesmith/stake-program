@@ -52,7 +52,7 @@ export type Config = {
   vault: Address;
   cooldownTimeSeconds: bigint;
   tokenAmountDelegated: bigint;
-  accumulatedStakeRewardsPerToken: Array<number>;
+  accumulatedStakeRewardsPerToken: bigint;
   maxDeactivationBasisPoints: number;
   signerBump: number;
   padding: Array<number>;
@@ -65,7 +65,7 @@ export type ConfigArgs = {
   vault: Address;
   cooldownTimeSeconds: number | bigint;
   tokenAmountDelegated: number | bigint;
-  accumulatedStakeRewardsPerToken: Array<number>;
+  accumulatedStakeRewardsPerToken: number | bigint;
   maxDeactivationBasisPoints: number;
   signerBump: number;
   padding: Array<number>;
@@ -79,10 +79,7 @@ export function getConfigEncoder(): Encoder<ConfigArgs> {
     ['vault', getAddressEncoder()],
     ['cooldownTimeSeconds', getU64Encoder()],
     ['tokenAmountDelegated', getU64Encoder()],
-    [
-      'accumulatedStakeRewardsPerToken',
-      getArrayEncoder(getU8Encoder(), { size: 16 }),
-    ],
+    ['accumulatedStakeRewardsPerToken', getU128Encoder()],
     ['maxDeactivationBasisPoints', getU16Encoder()],
     ['signerBump', getU8Encoder()],
     ['padding', getArrayEncoder(getU8Encoder(), { size: 5 })],
@@ -97,10 +94,7 @@ export function getConfigDecoder(): Decoder<Config> {
     ['vault', getAddressDecoder()],
     ['cooldownTimeSeconds', getU64Decoder()],
     ['tokenAmountDelegated', getU64Decoder()],
-    [
-      'accumulatedStakeRewardsPerToken',
-      getArrayDecoder(getU8Decoder(), { size: 16 }),
-    ],
+    ['accumulatedStakeRewardsPerToken', getU128Decoder()],
     ['maxDeactivationBasisPoints', getU16Decoder()],
     ['signerBump', getU8Decoder()],
     ['padding', getArrayDecoder(getU8Decoder(), { size: 5 })],

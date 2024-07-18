@@ -49,7 +49,7 @@ async fn harvest_stake_rewards() {
     // "manually" set the total amount delegated
     config_account.token_amount_delegated = 100;
     config_account.accumulated_stake_rewards_per_token =
-        calculate_stake_rewards_per_token(4_000_000_000, 100).to_le_bytes();
+        calculate_stake_rewards_per_token(4_000_000_000, 100);
 
     account.lamports += 4_000_000_000;
     account.data = config_account.try_to_vec().unwrap();
@@ -187,7 +187,7 @@ async fn harvest_stake_rewards_after_harvesting() {
     // "manually" set the total amount delegated
     config_account.token_amount_delegated = 100;
     config_account.accumulated_stake_rewards_per_token =
-        calculate_stake_rewards_per_token(4_000_000_000, 100).to_le_bytes();
+        calculate_stake_rewards_per_token(4_000_000_000, 100);
 
     account.lamports += 4_000_000_000;
     account.data = config_account.try_to_vec().unwrap();
@@ -301,7 +301,7 @@ async fn fail_harvest_stake_rewards_with_wrong_authority() {
     // "manually" set the total amount delegated
     config_account.token_amount_delegated = 100;
     config_account.accumulated_stake_rewards_per_token =
-        calculate_stake_rewards_per_token(4_000_000_000, 100).to_le_bytes();
+        calculate_stake_rewards_per_token(4_000_000_000, 100);
 
     account.lamports += 4_000_000_000;
     account.data = config_account.try_to_vec().unwrap();
@@ -432,7 +432,7 @@ async fn fail_harvest_stake_rewards_with_uninitialized_stake_account() {
     // "manually" set the total amount delegated
     config_account.token_amount_delegated = 100;
     config_account.accumulated_stake_rewards_per_token =
-        calculate_stake_rewards_per_token(4_000_000_000, 100).to_le_bytes();
+        calculate_stake_rewards_per_token(4_000_000_000, 100);
 
     account.lamports += 4_000_000_000;
     account.data = config_account.try_to_vec().unwrap();
@@ -499,7 +499,7 @@ async fn fail_harvest_stake_rewards_with_wrong_config_account() {
     // "manually" set the total amount delegated
     config_account.token_amount_delegated = 100;
     config_account.accumulated_stake_rewards_per_token =
-        calculate_stake_rewards_per_token(4_000_000_000, 100).to_le_bytes();
+        calculate_stake_rewards_per_token(4_000_000_000, 100);
 
     account.lamports += 4_000_000_000;
     account.data = config_account.try_to_vec().unwrap();
