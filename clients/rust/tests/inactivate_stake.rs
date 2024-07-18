@@ -52,7 +52,7 @@ async fn inactivate_stake() {
     let authority = Keypair::new();
     let vote = create_vote_account(&mut context, &validator, &authority.pubkey()).await;
 
-    let stake_pda = create_stake(&mut context, &validator, &vote, &config).await;
+    let stake_pda = create_stake(&mut context, &vote, &config).await;
 
     let mut account = get_account!(context, stake_pda);
     let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
@@ -132,7 +132,7 @@ async fn fail_inactivate_stake_with_no_deactivated_amount() {
     let authority = Keypair::new();
     let vote = create_vote_account(&mut context, &validator, &authority.pubkey()).await;
 
-    let stake_pda = create_stake(&mut context, &validator, &vote, &config).await;
+    let stake_pda = create_stake(&mut context, &vote, &config).await;
 
     let mut account = get_account!(context, stake_pda);
     let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
@@ -193,7 +193,7 @@ async fn fail_inactivate_stake_with_wrong_config() {
     let authority = Keypair::new();
     let vote = create_vote_account(&mut context, &validator, &authority.pubkey()).await;
 
-    let stake_pda = create_stake(&mut context, &validator, &vote, &config).await;
+    let stake_pda = create_stake(&mut context, &vote, &config).await;
 
     let mut account = get_account!(context, stake_pda);
     let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
@@ -317,7 +317,7 @@ async fn fail_inactivate_stake_with_active_cooldown() {
     let authority = Keypair::new();
     let vote = create_vote_account(&mut context, &validator, &authority.pubkey()).await;
 
-    let stake_pda = create_stake(&mut context, &validator, &vote, &config).await;
+    let stake_pda = create_stake(&mut context, &vote, &config).await;
     let mut account = get_account!(context, stake_pda);
     let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the stake values

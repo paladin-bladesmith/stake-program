@@ -48,7 +48,7 @@ export type Stake = {
   deactivatingAmount: bigint;
   inactiveAmount: bigint;
   authority: Address;
-  validator: Address;
+  validatorVote: Address;
   lastSeenHolderRewards: bigint;
   lastSeenStakeRewards: bigint;
 };
@@ -60,7 +60,7 @@ export type StakeArgs = {
   deactivatingAmount: number | bigint;
   inactiveAmount: number | bigint;
   authority: Address;
-  validator: Address;
+  validatorVote: Address;
   lastSeenHolderRewards: number | bigint;
   lastSeenStakeRewards: number | bigint;
 };
@@ -73,7 +73,7 @@ export function getStakeEncoder(): Encoder<StakeArgs> {
     ['deactivatingAmount', getU64Encoder()],
     ['inactiveAmount', getU64Encoder()],
     ['authority', getAddressEncoder()],
-    ['validator', getAddressEncoder()],
+    ['validatorVote', getAddressEncoder()],
     ['lastSeenHolderRewards', getU64Encoder()],
     ['lastSeenStakeRewards', getU64Encoder()],
   ]);
@@ -87,7 +87,7 @@ export function getStakeDecoder(): Decoder<Stake> {
     ['deactivatingAmount', getU64Decoder()],
     ['inactiveAmount', getU64Decoder()],
     ['authority', getAddressDecoder()],
-    ['validator', getAddressDecoder()],
+    ['validatorVote', getAddressDecoder()],
     ['lastSeenHolderRewards', getU64Decoder()],
     ['lastSeenStakeRewards', getU64Decoder()],
   ]);

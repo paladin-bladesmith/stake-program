@@ -723,7 +723,7 @@
             "type": "publicKey"
           },
           {
-            "name": "validator",
+            "name": "validatorVote",
             "type": "publicKey"
           },
           {

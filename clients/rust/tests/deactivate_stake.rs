@@ -57,7 +57,7 @@ async fn deactivate_stake() {
 
     // And a stake account.
 
-    let stake_pda = create_stake(&mut context, &validator, &vote, &config).await;
+    let stake_pda = create_stake(&mut context, &vote, &config).await;
 
     let account = get_account!(context, stake_pda);
     let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
@@ -134,7 +134,7 @@ async fn deactivate_stake_with_active_deactivation() {
 
     // And a stake account.
 
-    let stake_pda = create_stake(&mut context, &validator, &vote, &config).await;
+    let stake_pda = create_stake(&mut context, &vote, &config).await;
 
     let account = get_account!(context, stake_pda);
     let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
@@ -226,7 +226,7 @@ async fn fail_deactivate_stake_with_amount_greater_than_stake_amount() {
 
     // And a stake account.
 
-    let stake_pda = create_stake(&mut context, &validator, &vote, &config).await;
+    let stake_pda = create_stake(&mut context, &vote, &config).await;
 
     let account = get_account!(context, stake_pda);
     let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
@@ -288,7 +288,7 @@ async fn fail_deactivate_stake_with_invalid_authority() {
 
     // And a stake account.
 
-    let stake_pda = create_stake(&mut context, &validator, &vote, &config).await;
+    let stake_pda = create_stake(&mut context, &vote, &config).await;
 
     let account = get_account!(context, stake_pda);
     let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
@@ -352,7 +352,7 @@ async fn deactivate_stake_with_zero_amount() {
 
     // And a stake account.
 
-    let stake_pda = create_stake(&mut context, &validator, &vote, &config).await;
+    let stake_pda = create_stake(&mut context, &vote, &config).await;
 
     let account = get_account!(context, stake_pda);
     let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
@@ -489,7 +489,7 @@ async fn fail_deactivate_stake_with_maximum_deactivation_amount_exceeded() {
 
     // And a stake account.
 
-    let stake_pda = create_stake(&mut context, &validator, &vote, &config).await;
+    let stake_pda = create_stake(&mut context, &vote, &config).await;
 
     let account = get_account!(context, stake_pda);
     let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
@@ -568,7 +568,7 @@ async fn fail_deactivate_stake_with_uninitialized_config_account() {
 
     // And a stake account.
 
-    let stake_pda = create_stake(&mut context, &validator, &vote, &config).await;
+    let stake_pda = create_stake(&mut context, &vote, &config).await;
 
     let account = get_account!(context, stake_pda);
     let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();

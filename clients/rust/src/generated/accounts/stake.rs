@@ -27,7 +27,7 @@ pub struct Stake {
         feature = "serde",
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
-    pub validator: Pubkey,
+    pub validator_vote: Pubkey,
     pub last_seen_holder_rewards: u64,
     pub last_seen_stake_rewards: u64,
 }

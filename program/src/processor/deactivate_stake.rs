@@ -82,7 +82,8 @@ pub fn process_deactivate_stake(
     );
 
     // validates that the stake account corresponds to the received config account
-    let (derivation, _) = find_stake_pda(&stake.validator, ctx.accounts.config.key, program_id);
+    let (derivation, _) =
+        find_stake_pda(&stake.validator_vote, ctx.accounts.config.key, program_id);
 
     require!(
         ctx.accounts.stake.key == &derivation,

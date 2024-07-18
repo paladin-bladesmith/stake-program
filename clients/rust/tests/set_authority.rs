@@ -662,11 +662,12 @@ async fn set_authority_on_stake() {
     let config = create_config(&mut context).await;
     let validator = Pubkey::new_unique();
     let withdraw_authority = Keypair::new();
-    let vote = create_vote_account(&mut context, &validator, &withdraw_authority.pubkey()).await;
+    let validator_vote =
+        create_vote_account(&mut context, &validator, &withdraw_authority.pubkey()).await;
 
     // And we initialize the stake account.
 
-    let (stake_pda, _) = find_stake_pda(&validator, &config);
+    let (stake_pda, _) = find_stake_pda(&validator_vote, &config);
 
     let transfer_ix = system_instruction::transfer(
         &context.payer.pubkey(),
@@ -682,7 +683,7 @@ async fn set_authority_on_stake() {
     let initialize_ix = InitializeStakeBuilder::new()
         .config(config)
         .stake(stake_pda)
-        .validator_vote(vote)
+        .validator_vote(validator_vote)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -738,11 +739,12 @@ async fn fail_set_authority_on_stake_with_invalid_authority() {
     let config = create_config(&mut context).await;
     let validator = Pubkey::new_unique();
     let withdraw_authority = Keypair::new();
-    let vote = create_vote_account(&mut context, &validator, &withdraw_authority.pubkey()).await;
+    let validator_vote =
+        create_vote_account(&mut context, &validator, &withdraw_authority.pubkey()).await;
 
     // And we initialize the stake account.
 
-    let (stake_pda, _) = find_stake_pda(&validator, &config);
+    let (stake_pda, _) = find_stake_pda(&validator_vote, &config);
 
     let transfer_ix = system_instruction::transfer(
         &context.payer.pubkey(),
@@ -758,7 +760,7 @@ async fn fail_set_authority_on_stake_with_invalid_authority() {
     let initialize_ix = InitializeStakeBuilder::new()
         .config(config)
         .stake(stake_pda)
-        .validator_vote(vote)
+        .validator_vote(validator_vote)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
