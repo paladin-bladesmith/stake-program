@@ -9,10 +9,8 @@ use crate::{
     error::StakeError,
     instruction::accounts::{Context, DeactivateStakeAccounts},
     require,
-    state::{find_stake_pda, Config, Stake},
+    state::{find_stake_pda, Config, Stake, MAX_BASIS_POINTS},
 };
-
-const MAX_BASIS_POINTS: u128 = 10_000;
 
 /// Helper to calculate the maximum amount that can be deactivated.
 #[inline(always)]

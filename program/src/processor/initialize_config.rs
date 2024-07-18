@@ -14,7 +14,7 @@ use crate::{
     instruction::accounts::{Context, InitializeConfigAccounts},
     processor::REWARDS_PROGRAM_ID,
     require,
-    state::{find_vault_pda, Config},
+    state::{find_vault_pda, Config, MAX_BASIS_POINTS},
 };
 
 /// List of extensions that must be present in the vault token account.
@@ -140,6 +140,15 @@ pub fn process_initialize_config(
         config.is_uninitialized(),
         ProgramError::AccountAlreadyInitialized,
         "config"
+    );
+
+    // Validate the maximum deactivation basis points argument.
+
+    require!(
+        max_deactivation_basis_points <= MAX_BASIS_POINTS as u16,
+        ProgramError::InvalidArgument,
+        "basis points exceeds maximum allowed value of {}",
+        MAX_BASIS_POINTS
     );
 
     // Initialize the stake config account.
