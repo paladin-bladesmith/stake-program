@@ -1,7 +1,7 @@
 #![cfg(feature = "test-sbf")]
 #![allow(dead_code)]
 
-use paladin_stake::{
+use paladin_stake_program_client::{
     accounts::Config, instructions::InitializeConfigBuilder, pdas::find_vault_pda,
 };
 use solana_program_test::ProgramTestContext;
@@ -59,7 +59,7 @@ pub async fn create_config_with_args(
             .unwrap()
             .minimum_balance(Config::LEN),
         Config::LEN as u64,
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     let initialize_ix = InitializeConfigBuilder::new()

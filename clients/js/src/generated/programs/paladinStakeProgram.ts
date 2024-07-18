@@ -22,15 +22,15 @@ import {
   type ParsedWithdrawInactiveStakeInstruction,
 } from '../instructions';
 
-export const STAKE_PROGRAM_ADDRESS =
+export const PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS =
   'PStake1111111111111111111111111111111111111' as Address<'PStake1111111111111111111111111111111111111'>;
 
-export enum StakeAccount {
+export enum PaladinStakeProgramAccount {
   Config,
   Stake,
 }
 
-export enum StakeInstruction {
+export enum PaladinStakeProgramInstruction {
   InitializeConfig,
   InitializeStake,
   StakeTokens,
@@ -45,88 +45,88 @@ export enum StakeInstruction {
   DistributeRewards,
 }
 
-export function identifyStakeInstruction(
+export function identifyPaladinStakeProgramInstruction(
   instruction: { data: Uint8Array } | Uint8Array
-): StakeInstruction {
+): PaladinStakeProgramInstruction {
   const data =
     instruction instanceof Uint8Array ? instruction : instruction.data;
   if (containsBytes(data, getU8Encoder().encode(0), 0)) {
-    return StakeInstruction.InitializeConfig;
+    return PaladinStakeProgramInstruction.InitializeConfig;
   }
   if (containsBytes(data, getU8Encoder().encode(1), 0)) {
-    return StakeInstruction.InitializeStake;
+    return PaladinStakeProgramInstruction.InitializeStake;
   }
   if (containsBytes(data, getU8Encoder().encode(2), 0)) {
-    return StakeInstruction.StakeTokens;
+    return PaladinStakeProgramInstruction.StakeTokens;
   }
   if (containsBytes(data, getU8Encoder().encode(3), 0)) {
-    return StakeInstruction.DeactivateStake;
+    return PaladinStakeProgramInstruction.DeactivateStake;
   }
   if (containsBytes(data, getU8Encoder().encode(4), 0)) {
-    return StakeInstruction.InactivateStake;
+    return PaladinStakeProgramInstruction.InactivateStake;
   }
   if (containsBytes(data, getU8Encoder().encode(5), 0)) {
-    return StakeInstruction.WithdrawInactiveStake;
+    return PaladinStakeProgramInstruction.WithdrawInactiveStake;
   }
   if (containsBytes(data, getU8Encoder().encode(6), 0)) {
-    return StakeInstruction.HarvestHolderRewards;
+    return PaladinStakeProgramInstruction.HarvestHolderRewards;
   }
   if (containsBytes(data, getU8Encoder().encode(7), 0)) {
-    return StakeInstruction.HarvestStakeRewards;
+    return PaladinStakeProgramInstruction.HarvestStakeRewards;
   }
   if (containsBytes(data, getU8Encoder().encode(8), 0)) {
-    return StakeInstruction.Slash;
+    return PaladinStakeProgramInstruction.Slash;
   }
   if (containsBytes(data, getU8Encoder().encode(9), 0)) {
-    return StakeInstruction.SetAuthority;
+    return PaladinStakeProgramInstruction.SetAuthority;
   }
   if (containsBytes(data, getU8Encoder().encode(10), 0)) {
-    return StakeInstruction.UpdateConfig;
+    return PaladinStakeProgramInstruction.UpdateConfig;
   }
   if (containsBytes(data, getU8Encoder().encode(11), 0)) {
-    return StakeInstruction.DistributeRewards;
+    return PaladinStakeProgramInstruction.DistributeRewards;
   }
   throw new Error(
-    'The provided instruction could not be identified as a stake instruction.'
+    'The provided instruction could not be identified as a paladinStakeProgram instruction.'
   );
 }
 
-export type ParsedStakeInstruction<
+export type ParsedPaladinStakeProgramInstruction<
   TProgram extends string = 'PStake1111111111111111111111111111111111111',
 > =
   | ({
-      instructionType: StakeInstruction.InitializeConfig;
+      instructionType: PaladinStakeProgramInstruction.InitializeConfig;
     } & ParsedInitializeConfigInstruction<TProgram>)
   | ({
-      instructionType: StakeInstruction.InitializeStake;
+      instructionType: PaladinStakeProgramInstruction.InitializeStake;
     } & ParsedInitializeStakeInstruction<TProgram>)
   | ({
-      instructionType: StakeInstruction.StakeTokens;
+      instructionType: PaladinStakeProgramInstruction.StakeTokens;
     } & ParsedStakeTokensInstruction<TProgram>)
   | ({
-      instructionType: StakeInstruction.DeactivateStake;
+      instructionType: PaladinStakeProgramInstruction.DeactivateStake;
     } & ParsedDeactivateStakeInstruction<TProgram>)
   | ({
-      instructionType: StakeInstruction.InactivateStake;
+      instructionType: PaladinStakeProgramInstruction.InactivateStake;
     } & ParsedInactivateStakeInstruction<TProgram>)
   | ({
-      instructionType: StakeInstruction.WithdrawInactiveStake;
+      instructionType: PaladinStakeProgramInstruction.WithdrawInactiveStake;
     } & ParsedWithdrawInactiveStakeInstruction<TProgram>)
   | ({
-      instructionType: StakeInstruction.HarvestHolderRewards;
+      instructionType: PaladinStakeProgramInstruction.HarvestHolderRewards;
     } & ParsedHarvestHolderRewardsInstruction<TProgram>)
   | ({
-      instructionType: StakeInstruction.HarvestStakeRewards;
+      instructionType: PaladinStakeProgramInstruction.HarvestStakeRewards;
     } & ParsedHarvestStakeRewardsInstruction<TProgram>)
   | ({
-      instructionType: StakeInstruction.Slash;
+      instructionType: PaladinStakeProgramInstruction.Slash;
     } & ParsedSlashInstruction<TProgram>)
   | ({
-      instructionType: StakeInstruction.SetAuthority;
+      instructionType: PaladinStakeProgramInstruction.SetAuthority;
     } & ParsedSetAuthorityInstruction<TProgram>)
   | ({
-      instructionType: StakeInstruction.UpdateConfig;
+      instructionType: PaladinStakeProgramInstruction.UpdateConfig;
     } & ParsedUpdateConfigInstruction<TProgram>)
   | ({
-      instructionType: StakeInstruction.DistributeRewards;
+      instructionType: PaladinStakeProgramInstruction.DistributeRewards;
     } & ParsedDistributeRewardsInstruction<TProgram>);

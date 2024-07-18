@@ -12,18 +12,11 @@ const [idl, ...additionalIdls] = getAllProgramIdls().map((idl) =>
 );
 const kinobi = k.createFromRoot(idl, additionalIdls);
 
-// Update programs.
-kinobi.update(
-  k.updateProgramsVisitor({
-    stakeProgram: { name: "stake" },
-  })
-);
-
 // Add PDA information.
 kinobi.update(
   k.bottomUpTransformerVisitor([
     {
-      select: "[programNode]stake",
+      select: "[programNode]paladinStakeProgram",
       transform: (node) => {
         k.assertIsNode(node, "programNode");
         return {

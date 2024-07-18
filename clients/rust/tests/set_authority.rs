@@ -2,9 +2,9 @@
 
 mod setup;
 
-use paladin_stake::{
+use paladin_stake_program_client::{
     accounts::{Config, Stake},
-    errors::StakeError,
+    errors::PaladinStakeProgramError,
     instructions::{InitializeConfigBuilder, InitializeStakeBuilder, SetAuthorityBuilder},
     pdas::{find_stake_pda, find_vault_pda},
     types::AuthorityType,
@@ -24,9 +24,13 @@ use solana_sdk::{
 
 #[tokio::test]
 async fn set_config_authority_on_config() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an empty config account and a mint.
 
@@ -67,7 +71,7 @@ async fn set_config_authority_on_config() {
             .unwrap()
             .minimum_balance(Config::LEN),
         Config::LEN as u64,
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     let initialize_ix = InitializeConfigBuilder::new()
@@ -122,9 +126,13 @@ async fn set_config_authority_on_config() {
 
 #[tokio::test]
 async fn set_slash_authority_on_config() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an empty config account and a mint.
 
@@ -165,7 +173,7 @@ async fn set_slash_authority_on_config() {
             .unwrap()
             .minimum_balance(Config::LEN),
         Config::LEN as u64,
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     let initialize_ix = InitializeConfigBuilder::new()
@@ -223,9 +231,13 @@ async fn set_slash_authority_on_config() {
 
 #[tokio::test]
 async fn fail_set_config_authority_with_wrong_authority() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an empty config account and a mint.
 
@@ -266,7 +278,7 @@ async fn fail_set_config_authority_with_wrong_authority() {
             .unwrap()
             .minimum_balance(Config::LEN),
         Config::LEN as u64,
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     let initialize_ix = InitializeConfigBuilder::new()
@@ -319,14 +331,18 @@ async fn fail_set_config_authority_with_wrong_authority() {
 
     // Then we expect an error.
 
-    assert_custom_error!(err, StakeError::InvalidAuthority);
+    assert_custom_error!(err, PaladinStakeProgramError::InvalidAuthority);
 }
 
 #[tokio::test]
 async fn fail_set_slash_authority_with_wrong_authority() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an empty config account and a mint.
 
@@ -367,7 +383,7 @@ async fn fail_set_slash_authority_with_wrong_authority() {
             .unwrap()
             .minimum_balance(Config::LEN),
         Config::LEN as u64,
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     let initialize_ix = InitializeConfigBuilder::new()
@@ -420,14 +436,18 @@ async fn fail_set_slash_authority_with_wrong_authority() {
 
     // Then we expect an error.
 
-    assert_custom_error!(err, StakeError::InvalidAuthority);
+    assert_custom_error!(err, PaladinStakeProgramError::InvalidAuthority);
 }
 
 #[tokio::test]
 async fn fail_set_config_authority_when_authority_none() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an empty config account and a mint.
 
@@ -468,7 +488,7 @@ async fn fail_set_config_authority_when_authority_none() {
             .unwrap()
             .minimum_balance(Config::LEN),
         Config::LEN as u64,
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     let initialize_ix = InitializeConfigBuilder::new()
@@ -520,14 +540,18 @@ async fn fail_set_config_authority_when_authority_none() {
 
     // Then we expect an error.
 
-    assert_custom_error!(err, StakeError::AuthorityNotSet);
+    assert_custom_error!(err, PaladinStakeProgramError::AuthorityNotSet);
 }
 
 #[tokio::test]
 async fn fail_set_slash_authority_when_authority_none() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an empty config account and a mint.
 
@@ -568,7 +592,7 @@ async fn fail_set_slash_authority_when_authority_none() {
             .unwrap()
             .minimum_balance(Config::LEN),
         Config::LEN as u64,
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     let initialize_ix = InitializeConfigBuilder::new()
@@ -620,14 +644,18 @@ async fn fail_set_slash_authority_when_authority_none() {
 
     // Then we expect an error.
 
-    assert_custom_error!(err, StakeError::AuthorityNotSet);
+    assert_custom_error!(err, PaladinStakeProgramError::AuthorityNotSet);
 }
 
 #[tokio::test]
 async fn set_authority_on_stake() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account and a validator's vote account.
 
@@ -697,9 +725,13 @@ async fn set_authority_on_stake() {
 
 #[tokio::test]
 async fn fail_set_authority_on_stake_with_invalid_authority() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account and a validator's vote account.
 
@@ -767,5 +799,5 @@ async fn fail_set_authority_on_stake_with_invalid_authority() {
 
     // Then we expect an error.
 
-    assert_custom_error!(err, StakeError::InvalidAuthority);
+    assert_custom_error!(err, PaladinStakeProgramError::InvalidAuthority);
 }

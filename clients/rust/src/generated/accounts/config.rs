@@ -63,7 +63,7 @@ impl anchor_lang::AccountSerialize for Config {}
 #[cfg(feature = "anchor")]
 impl anchor_lang::Owner for Config {
     fn owner() -> Pubkey {
-        crate::STAKE_ID
+        crate::PALADIN_STAKE_PROGRAM_ID
     }
 }
 

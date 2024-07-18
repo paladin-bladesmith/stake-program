@@ -9,7 +9,7 @@ use num_derive::FromPrimitive;
 use thiserror::Error;
 
 #[derive(Clone, Debug, Eq, Error, FromPrimitive, PartialEq)]
-pub enum StakeError {
+pub enum PaladinStakeProgramError {
     /// 0 - Amount cannot be greater than zero
     #[error("Amount cannot be greater than zero")]
     AmountGreaterThanZero = 0x0,
@@ -60,7 +60,7 @@ pub enum StakeError {
     NoDeactivatedTokens = 0xF,
 }
 
-impl solana_program::program_error::PrintProgramError for StakeError {
+impl solana_program::program_error::PrintProgramError for PaladinStakeProgramError {
     fn print<E>(&self) {
         solana_program::msg!(&self.to_string());
     }

@@ -44,7 +44,7 @@ pub async fn create_mint(
                 &mint.pubkey(),
                 Some(*mint_authority),
                 // TODO: change program id to Rewards program
-                Some(paladin_stake::ID),
+                Some(paladin_stake_program_client::ID),
             )
             .unwrap(),
         );
