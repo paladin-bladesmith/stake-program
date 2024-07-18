@@ -34,7 +34,7 @@ fn calculate_stake_rewards_per_token(rewards: u64, stake_amount: u64) -> u128 {
 }
 
 #[tokio::test]
-async fn harvest_holder_rewards() {
+async fn harvest_stake_rewards() {
     let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
         .start_with_context()
         .await;
@@ -83,7 +83,7 @@ async fn harvest_holder_rewards() {
 
     let destination = Pubkey::new_unique();
 
-    let harvest_holder_rewards_ix = HarvestStakeRewardsBuilder::new()
+    let harvest_stake_rewards_ix = HarvestStakeRewardsBuilder::new()
         .config(config)
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
@@ -91,7 +91,7 @@ async fn harvest_holder_rewards() {
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
-        &[harvest_holder_rewards_ix],
+        &[harvest_stake_rewards_ix],
         Some(&context.payer.pubkey()),
         &[&context.payer, &authority],
         context.last_blockhash,
@@ -113,7 +113,7 @@ async fn harvest_holder_rewards() {
 }
 
 #[tokio::test]
-async fn harvest_holder_rewards_with_no_rewards_available() {
+async fn harvest_stake_rewards_with_no_rewards_available() {
     let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
         .start_with_context()
         .await;
@@ -150,7 +150,7 @@ async fn harvest_holder_rewards_with_no_rewards_available() {
 
     let destination = Pubkey::new_unique();
 
-    let harvest_holder_rewards_ix = HarvestStakeRewardsBuilder::new()
+    let harvest_stake_rewards_ix = HarvestStakeRewardsBuilder::new()
         .config(config)
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
@@ -158,7 +158,7 @@ async fn harvest_holder_rewards_with_no_rewards_available() {
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
-        &[harvest_holder_rewards_ix],
+        &[harvest_stake_rewards_ix],
         Some(&context.payer.pubkey()),
         &[&context.payer, &authority],
         context.last_blockhash,
@@ -172,7 +172,7 @@ async fn harvest_holder_rewards_with_no_rewards_available() {
 }
 
 #[tokio::test]
-async fn harvest_holder_rewards_after_harvesting() {
+async fn harvest_stake_rewards_after_harvesting() {
     let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
         .start_with_context()
         .await;
@@ -221,7 +221,7 @@ async fn harvest_holder_rewards_after_harvesting() {
 
     let first_destination = Pubkey::new_unique();
 
-    let harvest_holder_rewards_ix = HarvestStakeRewardsBuilder::new()
+    let harvest_stake_rewards_ix = HarvestStakeRewardsBuilder::new()
         .config(config)
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
@@ -229,7 +229,7 @@ async fn harvest_holder_rewards_after_harvesting() {
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
-        &[harvest_holder_rewards_ix],
+        &[harvest_stake_rewards_ix],
         Some(&context.payer.pubkey()),
         &[&context.payer, &authority],
         context.last_blockhash,
@@ -246,7 +246,7 @@ async fn harvest_holder_rewards_after_harvesting() {
 
     let second_destination = Pubkey::new_unique();
 
-    let harvest_holder_rewards_ix = HarvestStakeRewardsBuilder::new()
+    let harvest_stake_rewards_ix = HarvestStakeRewardsBuilder::new()
         .config(config)
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
@@ -254,7 +254,7 @@ async fn harvest_holder_rewards_after_harvesting() {
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
-        &[harvest_holder_rewards_ix],
+        &[harvest_stake_rewards_ix],
         Some(&context.payer.pubkey()),
         &[&context.payer, &authority],
         context.last_blockhash,
@@ -286,7 +286,7 @@ async fn harvest_holder_rewards_after_harvesting() {
 }
 
 #[tokio::test]
-async fn fail_harvest_holder_rewards_with_wrong_authority() {
+async fn fail_harvest_stake_rewards_with_wrong_authority() {
     let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
         .start_with_context()
         .await;
@@ -328,7 +328,7 @@ async fn fail_harvest_holder_rewards_with_wrong_authority() {
     let fake_authority = Keypair::new();
     let destination = Pubkey::new_unique();
 
-    let harvest_holder_rewards_ix = HarvestStakeRewardsBuilder::new()
+    let harvest_stake_rewards_ix = HarvestStakeRewardsBuilder::new()
         .config(config)
         .stake(stake_pda)
         .stake_authority(fake_authority.pubkey())
@@ -336,7 +336,7 @@ async fn fail_harvest_holder_rewards_with_wrong_authority() {
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
-        &[harvest_holder_rewards_ix],
+        &[harvest_stake_rewards_ix],
         Some(&context.payer.pubkey()),
         &[&context.payer, &fake_authority],
         context.last_blockhash,
@@ -353,7 +353,7 @@ async fn fail_harvest_holder_rewards_with_wrong_authority() {
 }
 
 #[tokio::test]
-async fn fail_harvest_holder_rewards_with_uninitialized_config_account() {
+async fn fail_harvest_stake_rewards_with_uninitialized_config_account() {
     let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
         .start_with_context()
         .await;
@@ -393,7 +393,7 @@ async fn fail_harvest_holder_rewards_with_uninitialized_config_account() {
 
     let destination = Pubkey::new_unique();
 
-    let harvest_holder_rewards_ix = HarvestStakeRewardsBuilder::new()
+    let harvest_stake_rewards_ix = HarvestStakeRewardsBuilder::new()
         .config(config)
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
@@ -401,7 +401,7 @@ async fn fail_harvest_holder_rewards_with_uninitialized_config_account() {
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
-        &[harvest_holder_rewards_ix],
+        &[harvest_stake_rewards_ix],
         Some(&context.payer.pubkey()),
         &[&context.payer, &authority],
         context.last_blockhash,
@@ -418,7 +418,7 @@ async fn fail_harvest_holder_rewards_with_uninitialized_config_account() {
 }
 
 #[tokio::test]
-async fn fail_harvest_holder_rewards_with_uninitialized_stake_account() {
+async fn fail_harvest_stake_rewards_with_uninitialized_stake_account() {
     let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
         .start_with_context()
         .await;
@@ -459,7 +459,7 @@ async fn fail_harvest_holder_rewards_with_uninitialized_stake_account() {
 
     let destination = Pubkey::new_unique();
 
-    let harvest_holder_rewards_ix = HarvestStakeRewardsBuilder::new()
+    let harvest_stake_rewards_ix = HarvestStakeRewardsBuilder::new()
         .config(config)
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
@@ -467,7 +467,7 @@ async fn fail_harvest_holder_rewards_with_uninitialized_stake_account() {
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
-        &[harvest_holder_rewards_ix],
+        &[harvest_stake_rewards_ix],
         Some(&context.payer.pubkey()),
         &[&context.payer, &authority],
         context.last_blockhash,
@@ -484,7 +484,7 @@ async fn fail_harvest_holder_rewards_with_uninitialized_stake_account() {
 }
 
 #[tokio::test]
-async fn fail_harvest_holder_rewards_with_wrong_config_account() {
+async fn fail_harvest_stake_rewards_with_wrong_config_account() {
     let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
         .start_with_context()
         .await;
@@ -526,7 +526,7 @@ async fn fail_harvest_holder_rewards_with_wrong_config_account() {
     let wrong_config = create_config(&mut context).await;
     let destination = Pubkey::new_unique();
 
-    let harvest_holder_rewards_ix = HarvestStakeRewardsBuilder::new()
+    let harvest_stake_rewards_ix = HarvestStakeRewardsBuilder::new()
         .config(wrong_config)
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
@@ -534,7 +534,7 @@ async fn fail_harvest_holder_rewards_with_wrong_config_account() {
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
-        &[harvest_holder_rewards_ix],
+        &[harvest_stake_rewards_ix],
         Some(&context.payer.pubkey()),
         &[&context.payer, &authority],
         context.last_blockhash,

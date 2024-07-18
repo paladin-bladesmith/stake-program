@@ -1,5 +1,5 @@
 use solana_program::{
-    entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey, rent::Rent,
+    entrypoint::ProgramResult, msg, program_error::ProgramError, pubkey::Pubkey, rent::Rent,
     sysvar::Sysvar,
 };
 
@@ -99,12 +99,13 @@ pub fn process_harvest_stake_rewards(
         stake.last_seen_stake_rewards_per_token(),
         stake.amount,
     )?;
-    // update the last seen holder rewards
-    stake.set_last_seen_stake_rewards_per_token(accumulated_rewards_per_token);
 
     // Transfer the rewards to the destination account.
 
     if rewards != 0 {
+        // update the last seen holder rewards
+        stake.set_last_seen_stake_rewards_per_token(accumulated_rewards_per_token);
+
         // If the config does not have enough lamports to cover the rewards, only
         // harvest the available lamports. This should never happen, but the check
         // is a failsafe.
@@ -137,6 +138,8 @@ pub fn process_harvest_stake_rewards(
 
         **ctx.accounts.config.try_borrow_mut_lamports()? = updated_config_lamports;
         **ctx.accounts.destination.try_borrow_mut_lamports()? = updated_destination_lamports;
+    } else {
+        msg!("No rewards to harvest");
     }
 
     Ok(())

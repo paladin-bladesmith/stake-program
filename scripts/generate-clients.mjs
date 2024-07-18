@@ -122,7 +122,7 @@ kinobi.update(
 kinobi.update(
   k.updateAccountsVisitor({
     config: {
-      size: 152,
+      size: 144,
     },
     stake: {
       size: 136,
