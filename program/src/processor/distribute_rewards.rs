@@ -62,9 +62,6 @@ pub fn process_distribute_rewards(
     );
 
     // Calculates the rewards per token
-    //
-    // TODO: Do we still transfer the rewards to the config account if there are no
-    // staked tokens?
 
     let rewards_per_token =
         calculate_stake_rewards_per_token(amount, config.token_amount_delegated)?;
@@ -76,16 +73,16 @@ pub fn process_distribute_rewards(
             .checked_add(rewards_per_token)
             .ok_or(ProgramError::ArithmeticOverflow)?;
         config.set_accumulated_stake_rewards_per_token(accumulated);
-
-        // Transfers the rewards to the config account.
-
-        drop(config_data);
-
-        invoke(
-            &system_instruction::transfer(ctx.accounts.payer.key, ctx.accounts.config.key, amount),
-            &[ctx.accounts.payer.clone(), ctx.accounts.config.clone()],
-        )?;
     }
+
+    // Transfers the rewards to the config account.
+
+    drop(config_data);
+
+    invoke(
+        &system_instruction::transfer(ctx.accounts.payer.key, ctx.accounts.config.key, amount),
+        &[ctx.accounts.payer.clone(), ctx.accounts.config.clone()],
+    )?;
 
     Ok(())
 }
