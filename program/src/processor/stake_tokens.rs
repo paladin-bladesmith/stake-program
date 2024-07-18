@@ -25,14 +25,14 @@ use crate::{
 ///
 /// 0. `[w]` Stake config account
 /// 1. `[w]` Validator stake account
-///     * PDA seeds: ['stake', validator, config_account]
+///          (PDA seeds: ['stake', validator, config_account])
 /// 2. `[w]` Token Account
 /// 3. `[s]` Owner or delegate of the token account
-/// 4. `[]` Validator vote account
-/// 3. `[]` Stake Token Mint
-/// 4. `[]` Stake Token Vault, to hold all staked tokens.
-///   Must be the token account on the stake config account
-/// 5. `[]` Token program
+/// 4. `[ ]` Validator vote account
+/// 3. `[ ]` Stake Token Mint
+/// 4. `[ ]` Stake Token Vault, to hold all staked tokens
+///          (must be the token account on the stake config account)
+/// 5. `[ ]` Token program
 /// 6.. Extra accounts required for the transfer hook
 ///
 /// Instruction data: amount of tokens to stake, as a little-endian u64
@@ -63,14 +63,14 @@ pub fn process_stake_tokens<'a>(
         "config",
     );
 
-    // validator_vote
+    // validator vote
     // - owner must be the vote program
     // - must be initialized
 
     require!(
         ctx.accounts.validator_vote.owner == &solana_program::vote::program::ID,
         ProgramError::InvalidAccountOwner,
-        "validator_vote"
+        "validator vote"
     );
 
     let validator_vote_data = ctx.accounts.validator_vote.try_borrow_data()?;
@@ -78,7 +78,7 @@ pub fn process_stake_tokens<'a>(
     require!(
         VoteState::is_correct_size_and_initialized(&validator_vote_data),
         ProgramError::InvalidAccountData,
-        "validator_vote"
+        "validator vote"
     );
 
     // stake
@@ -141,7 +141,7 @@ pub fn process_stake_tokens<'a>(
 
     // Update the config and stake account data.
     //
-    // TODO: validate the amount against the total SOL staked on the validator.
+    // Note: validate the amount against the total SOL staked on the validator.
 
     require!(amount > 0, StakeError::InvalidAmount);
 
