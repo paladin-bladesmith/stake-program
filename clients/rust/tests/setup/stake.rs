@@ -36,7 +36,7 @@ impl StakeManager {
 
         // And a stake account.
 
-        manager.stake = create_stake(context, &manager.validator, &manager.vote, config).await;
+        manager.stake = create_stake(context, &manager.vote, config).await;
 
         let transfer_ix = system_instruction::transfer(
             &context.payer.pubkey(),

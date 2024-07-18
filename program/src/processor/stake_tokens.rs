@@ -1,4 +1,3 @@
-use arrayref::array_ref;
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, instruction::AccountMeta,
     program::invoke, program_error::ProgramError, pubkey::Pubkey, vote::state::VoteState,
@@ -82,8 +81,6 @@ pub fn process_stake_tokens<'a>(
         "validator_vote"
     );
 
-    let validator = Pubkey::from(*array_ref!(validator_vote_data, 4, 32));
-
     // stake
     // - owner must be the stake program
     // - must have the correct derivation
@@ -95,7 +92,11 @@ pub fn process_stake_tokens<'a>(
         "stake"
     );
 
-    let (derivation, _) = find_stake_pda(&validator, ctx.accounts.config.key, program_id);
+    let (derivation, _) = find_stake_pda(
+        ctx.accounts.validator_vote.key,
+        ctx.accounts.config.key,
+        program_id,
+    );
 
     require!(
         ctx.accounts.stake.key == &derivation,
