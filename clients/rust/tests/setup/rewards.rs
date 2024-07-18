@@ -2,7 +2,7 @@ use paladin_rewards_program_client::{
     accounts::{HolderRewards, HolderRewardsPool},
     instructions::{InitializeHolderRewardsBuilder, InitializeHolderRewardsPoolBuilder},
 };
-use solana_program_test::ProgramTestContext;
+use solana_program_test::{ProgramTestBanksClientExt, ProgramTestContext};
 use solana_sdk::{
     pubkey::Pubkey, signature::Keypair, signer::Signer, system_instruction,
     transaction::Transaction,
@@ -79,11 +79,17 @@ pub async fn create_holder_rewards_pool(
             .instruction(),
     ];
 
+    let last_blockhash = context
+        .banks_client
+        .get_new_latest_blockhash(&context.last_blockhash)
+        .await
+        .unwrap();
+
     let tx = Transaction::new_signed_with_payer(
         &instructions,
         Some(&context.payer.pubkey()),
         &[&context.payer, mint_authority],
-        context.last_blockhash,
+        last_blockhash,
     );
 
     context.banks_client.process_transaction(tx).await.unwrap();
@@ -114,11 +120,17 @@ pub async fn create_holder_rewards(
             .instruction(),
     ];
 
+    let last_blockhash = context
+        .banks_client
+        .get_new_latest_blockhash(&context.last_blockhash)
+        .await
+        .unwrap();
+
     let tx = Transaction::new_signed_with_payer(
         &instructions,
         Some(&context.payer.pubkey()),
         &[&context.payer],
-        context.last_blockhash,
+        last_blockhash,
     );
 
     context.banks_client.process_transaction(tx).await.unwrap();
