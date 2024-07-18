@@ -219,9 +219,13 @@ async fn update_max_deactivation_basis_points_config() {
 
 #[tokio::test]
 async fn fail_update_max_deactivation_basis_points_config_with_invalid_value() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an empty config account and a mint.
 
@@ -263,7 +267,7 @@ async fn fail_update_max_deactivation_basis_points_config_with_invalid_value() {
             .unwrap()
             .minimum_balance(Config::LEN),
         Config::LEN as u64,
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     let initialize_ix = InitializeConfigBuilder::new()

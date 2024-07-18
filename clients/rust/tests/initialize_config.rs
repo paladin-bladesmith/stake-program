@@ -936,9 +936,13 @@ async fn fail_initialize_config_with_invalid_token_extensions() {
 
 #[tokio::test]
 async fn fail_initialize_config_with_invalid_max_deactivation_basis_points() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an empty config account with an associated vault and a mint.
 
@@ -978,7 +982,7 @@ async fn fail_initialize_config_with_invalid_max_deactivation_basis_points() {
             .unwrap()
             .minimum_balance(Config::LEN),
         Config::LEN as u64,
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     let initialize_ix = InitializeConfigBuilder::new()
