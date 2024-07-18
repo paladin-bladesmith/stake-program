@@ -871,8 +871,8 @@
     },
     {
       "code": 15,
-      "name": "IncorrectVaultAccount",
-      "msg": "Incorrect vault account"
+      "name": "NoDeactivatedTokens",
+      "msg": "No deactivated tokens"
     },
     {
       "code": 16,
