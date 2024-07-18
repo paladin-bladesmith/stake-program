@@ -147,7 +147,7 @@ pub fn process_initialize_config(
         OptionalNonZeroPubkey(*ctx.accounts.config_authority.key),
         OptionalNonZeroPubkey(*ctx.accounts.slash_authority.key),
         *ctx.accounts.vault.key,
-        cooldown_time_seconds as i64,
+        cooldown_time_seconds,
         max_deactivation_basis_points,
         signer_bump,
     );

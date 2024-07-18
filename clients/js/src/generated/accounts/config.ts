@@ -17,8 +17,6 @@ import {
   getAddressEncoder,
   getArrayDecoder,
   getArrayEncoder,
-  getI64Decoder,
-  getI64Encoder,
   getStructDecoder,
   getStructEncoder,
   getU16Decoder,
@@ -79,7 +77,7 @@ export function getConfigEncoder(): Encoder<ConfigArgs> {
     ['authority', getNullableAddressEncoder()],
     ['slashAuthority', getNullableAddressEncoder()],
     ['vault', getAddressEncoder()],
-    ['cooldownTimeSeconds', getI64Encoder()],
+    ['cooldownTimeSeconds', getU64Encoder()],
     ['tokenAmountDelegated', getU64Encoder()],
     ['totalStakeRewards', getU64Encoder()],
     [
@@ -98,7 +96,7 @@ export function getConfigDecoder(): Decoder<Config> {
     ['authority', getNullableAddressDecoder()],
     ['slashAuthority', getNullableAddressDecoder()],
     ['vault', getAddressDecoder()],
-    ['cooldownTimeSeconds', getI64Decoder()],
+    ['cooldownTimeSeconds', getU64Decoder()],
     ['tokenAmountDelegated', getU64Decoder()],
     ['totalStakeRewards', getU64Decoder()],
     [

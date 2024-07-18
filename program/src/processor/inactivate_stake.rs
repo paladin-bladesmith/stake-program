@@ -80,9 +80,8 @@ pub fn process_inactivate_stake(
     // Inactivates the stake if elegible.
 
     if let Some(timestamp) = stake.deactivation_timestamp {
-        let current = Clock::get()?
-            .unix_timestamp
-            .saturating_sub(config.cooldown_time_seconds) as u64;
+        let current =
+            (Clock::get()?.unix_timestamp as u64).saturating_sub(config.cooldown_time_seconds);
 
         require!(
             current >= timestamp.get(),

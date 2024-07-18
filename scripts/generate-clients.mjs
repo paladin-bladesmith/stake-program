@@ -70,25 +70,6 @@ kinobi.update(
       },
     },
     {
-      // UnixTimestamp -> i64
-      select: (node) => {
-        const names = ["cooldownTimeSeconds", "deactivationTimestamp"];
-        return (
-          names.includes(node.name) &&
-          k.isNode(node, "structFieldTypeNode") &&
-          k.isNode(node.type, "definedTypeLinkNode") &&
-          node.type.name === "unixTimestamp"
-        );
-      },
-      transform: (node) => {
-        k.assertIsNode(node, "structFieldTypeNode");
-        return {
-          ...node,
-          type: k.numberTypeNode("i64"),
-        };
-      },
-    },
-    {
       // Option<NonZeroU64> -> NullableU64
       select: "[structFieldTypeNode]deactivationTimestamp",
       transform: (node) => {

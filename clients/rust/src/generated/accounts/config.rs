@@ -21,7 +21,7 @@ pub struct Config {
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
     pub vault: Pubkey,
-    pub cooldown_time_seconds: i64,
+    pub cooldown_time_seconds: u64,
     pub token_amount_delegated: u64,
     pub total_stake_rewards: u64,
     pub accumulated_stake_rewards_per_token: [u8; 16],

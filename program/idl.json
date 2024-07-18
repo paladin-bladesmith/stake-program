@@ -668,9 +668,7 @@
           },
           {
             "name": "cooldownTimeSeconds",
-            "type": {
-              "defined": "UnixTimestamp"
-            }
+            "type": "u64"
           },
           {
             "name": "tokenAmountDelegated",

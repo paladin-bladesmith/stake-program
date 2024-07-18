@@ -1,6 +1,6 @@
 use bytemuck::{Pod, Zeroable};
 use shank::ShankAccount;
-use solana_program::{clock::UnixTimestamp, pubkey::Pubkey};
+use solana_program::pubkey::Pubkey;
 use spl_discriminator::{ArrayDiscriminator, SplDiscriminate};
 use spl_pod::optional_keys::OptionalNonZeroPubkey;
 
@@ -29,7 +29,7 @@ pub struct Config {
 
     /// After a deactivation, defines the number of seconds that must pass before
     /// the stake is inactive and able to be withdrawn.
-    pub cooldown_time_seconds: UnixTimestamp,
+    pub cooldown_time_seconds: u64,
 
     /// Total number of tokens delegated to the system. Since anyone can transfer
     /// tokens into the vault without passing through the program, this number
@@ -63,7 +63,7 @@ impl Config {
         authority: OptionalNonZeroPubkey,
         slash_authority: OptionalNonZeroPubkey,
         vault: Pubkey,
-        cooldown_time_seconds: i64,
+        cooldown_time_seconds: u64,
         max_deactivation_basis_points: u16,
         signer_bump: u8,
     ) -> Self {
