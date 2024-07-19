@@ -82,18 +82,18 @@ export type WithdrawInactiveStakeInstruction<
 
 export type WithdrawInactiveStakeInstructionData = {
   discriminator: number;
-  args: bigint;
+  amount: bigint;
 };
 
 export type WithdrawInactiveStakeInstructionDataArgs = {
-  args: number | bigint;
+  amount: number | bigint;
 };
 
 export function getWithdrawInactiveStakeInstructionDataEncoder(): Encoder<WithdrawInactiveStakeInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
-      ['args', getU64Encoder()],
+      ['amount', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: 5 })
   );
@@ -102,7 +102,7 @@ export function getWithdrawInactiveStakeInstructionDataEncoder(): Encoder<Withdr
 export function getWithdrawInactiveStakeInstructionDataDecoder(): Decoder<WithdrawInactiveStakeInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
-    ['args', getU64Decoder()],
+    ['amount', getU64Decoder()],
   ]);
 }
 
@@ -142,7 +142,7 @@ export type WithdrawInactiveStakeInput<
   vaultAuthority: Address<TAccountVaultAuthority>;
   /** Token program */
   tokenProgram?: Address<TAccountTokenProgram>;
-  args: WithdrawInactiveStakeInstructionDataArgs['args'];
+  amount: WithdrawInactiveStakeInstructionDataArgs['amount'];
 };
 
 export function getWithdrawInactiveStakeInstruction<
