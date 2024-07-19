@@ -371,7 +371,7 @@
         },
         {
           "name": "vaultAuthority",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false,
           "docs": [
             "Vault authority (pda of `['token-owner', config]`)"
@@ -391,6 +391,14 @@
           "isSigner": false,
           "docs": [
             "Token program"
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "System program"
           ]
         }
       ],
