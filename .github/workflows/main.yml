@@ -40,27 +40,27 @@ jobs:
         run: pnpm clients:rust:format --check
 
   rust_clippy_check:
-      name: Check Rust clippy
-      runs-on: ubuntu-latest
-      steps:
-        - name: Git checkout
-          uses: actions/checkout@v4
-        - name: Setup environment
-          uses: ./.github/actions/setup
-          with:
-            node: ${{ env.NODE_VERSION }}
-        - name: Set environment variables
-          shell: bash
-          run: pnpm zx ./scripts/ci/set-variables.mjs
-        - name: Install Clippy
-          uses: dtolnay/rust-toolchain@master
-          with:
-            toolchain: ${{ env.CLIPPY_TOOLCHAIN }}
-            components: clippy
-        - name: Check programs
-          run: pnpm programs:clippy
-        - name: Check client
-          run: pnpm clients:rust:clippy
+    name: Check Rust clippy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          node: ${{ env.NODE_VERSION }}
+      - name: Set environment variables
+        shell: bash
+        run: pnpm zx ./scripts/ci/set-variables.mjs
+      - name: Install Clippy
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.CLIPPY_TOOLCHAIN }}
+          components: clippy
+      - name: Check programs
+        run: pnpm programs:clippy
+      - name: Check client
+        run: pnpm clients:rust:clippy
 
   lint_js:
     name: Lint JS client
@@ -224,5 +224,7 @@ jobs:
         with:
           path: ./**/*.so
           key: ${{ runner.os }}-builds-${{ github.sha }}
+      - name: Purge environment
+        uses: ./.github/actions/purge
       - name: Test Rust client
         run: pnpm clients:rust:test
