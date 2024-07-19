@@ -16,7 +16,7 @@ const kinobi = k.createFromRoot(idl, additionalIdls);
 kinobi.update(
   k.bottomUpTransformerVisitor([
     {
-      select: "[programNode]paladinStakeProgram",
+      select: '[programNode]paladinStakeProgram',
       transform: (node) => {
         k.assertIsNode(node, 'programNode');
         return {
@@ -36,6 +36,19 @@ kinobi.update(
           ],
         };
       },
+    },
+  ])
+);
+
+// Set default account values accross multiple instructions.
+kinobi.update(
+  k.setInstructionAccountDefaultValuesVisitor([
+    {
+      account: 'tokenProgram',
+      defaultValue: k.publicKeyValueNode(
+        'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
+        'spl-token-2022'
+      ),
     },
   ])
 );
@@ -103,23 +116,24 @@ kinobi.update(
   k.bottomUpTransformerVisitor([
     {
       // DeactivateStake
-      select: "[instructionNode]deactivateStake.[instructionArgumentNode]args",
+      select: '[instructionNode]deactivateStake.[instructionArgumentNode]args',
       transform: (node) => {
-        k.assertIsNode(node, "instructionArgumentNode");
+        k.assertIsNode(node, 'instructionArgumentNode');
         return {
           ...node,
-          name: "amount",
+          name: 'amount',
         };
       },
     },
     {
       // DistributeRewards
-      select: "[instructionNode]distributeRewards.[instructionArgumentNode]args",
+      select:
+        '[instructionNode]distributeRewards.[instructionArgumentNode]args',
       transform: (node) => {
-        k.assertIsNode(node, "instructionArgumentNode");
+        k.assertIsNode(node, 'instructionArgumentNode');
         return {
           ...node,
-          name: "amount",
+          name: 'amount',
         };
       },
     },
@@ -136,24 +150,24 @@ kinobi.update(
     },
     {
       // StakeTokens
-      select: "[instructionNode]stakeTokens.[instructionArgumentNode]args",
+      select: '[instructionNode]stakeTokens.[instructionArgumentNode]args',
       transform: (node) => {
-        k.assertIsNode(node, "instructionArgumentNode");
+        k.assertIsNode(node, 'instructionArgumentNode');
         return {
           ...node,
-          name: "amount",
+          name: 'amount',
         };
       },
     },
     {
       // WithdrawInactiveStake
       select:
-        "[instructionNode]withdrawInactiveStake.[instructionArgumentNode]args",
+        '[instructionNode]withdrawInactiveStake.[instructionArgumentNode]args',
       transform: (node) => {
-        k.assertIsNode(node, "instructionArgumentNode");
+        k.assertIsNode(node, 'instructionArgumentNode');
         return {
           ...node,
-          name: "amount",
+          name: 'amount',
         };
       },
     },
