@@ -75,13 +75,13 @@ async fn harvest_stake_rewards() {
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_pda, &account.into());
 
-    // When we harvest the holder rewards.
+    // When we harvest the stake rewards.
     //
     // We are expecting the rewards to be 2 SOL.
     //
     // Calculation:
     //   - total staked: 100
-    //   - holder rewards: 4 SOL
+    //   - stake rewards: 4 SOL
     //   - rewards per token: 4_000_000_000 / 100 = 40_000_000 (0.04 SOL)
     //   - rewards for 50 staked: 40_000_000 * 50 = 2_000_000_000 (2 SOL)
 
@@ -154,7 +154,7 @@ async fn harvest_stake_rewards_with_no_rewards_available() {
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_pda, &account.into());
 
-    // When we harvest the holder rewards with no rewards available.
+    // When we harvest the stake rewards with no rewards available.
 
     let destination = Pubkey::new_unique();
 
@@ -221,13 +221,13 @@ async fn harvest_stake_rewards_after_harvesting() {
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_pda, &account.into());
 
-    // And we harvest the holder rewards.
+    // And we harvest the stake rewards.
     //
     // We are expecting the rewards to be 2 SOL.
     //
     // Calculation:
     //   - total staked: 100
-    //   - holder rewards: 4 SOL
+    //   - stake rewards: 4 SOL
     //   - rewards per token: 4_000_000_000 / 100 = 40_000_000 (0.04 SOL)
     //   - rewards for 50 staked: 40_000_000 * 50 = 2_000_000_000 (2 SOL)
 
@@ -251,7 +251,7 @@ async fn harvest_stake_rewards_after_harvesting() {
     let account = get_account!(context, first_destination);
     assert_eq!(account.lamports, 2_000_000_000);
 
-    // When we harvest the holder rewards again.
+    // When we harvest the stake rewards again.
     //
     // We are expecting the rewards to be 0 SOL. There should still be 2 SOL of rewards
     // left on the config account.
@@ -339,7 +339,7 @@ async fn fail_harvest_stake_rewards_with_wrong_authority() {
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_pda, &account.into());
 
-    // When we try to harvest the holder rewards with the wrong authority.
+    // When we try to harvest the stake rewards with the wrong authority.
 
     let fake_authority = Keypair::new();
     let destination = Pubkey::new_unique();
@@ -409,7 +409,7 @@ async fn fail_harvest_stake_rewards_with_uninitialized_config_account() {
         }),
     );
 
-    // When we try to harvest holder rewards from an uninitialized config account.
+    // When we try to harvest stake rewards from an uninitialized config account.
 
     let destination = Pubkey::new_unique();
 
@@ -479,7 +479,7 @@ async fn fail_harvest_stake_rewards_with_uninitialized_stake_account() {
         }),
     );
 
-    // When we try to harvest holder rewards from an uninitialized stake account.
+    // When we try to harvest stake rewards from an uninitialized stake account.
 
     let destination = Pubkey::new_unique();
 
@@ -549,7 +549,7 @@ async fn fail_harvest_stake_rewards_with_wrong_config_account() {
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_pda, &account.into());
 
-    // When we try to harvest the holder rewards with the wrong config account.
+    // When we try to harvest the stake rewards with the wrong config account.
 
     let wrong_config = create_config(&mut context).await;
     let destination = Pubkey::new_unique();
