@@ -120,6 +120,18 @@ kinobi.update(
         };
       },
     },
+    {
+      // WithdrawInactiveStake
+      select:
+        "[instructionNode]withdrawInactiveStake.[instructionArgumentNode]args",
+      transform: (node) => {
+        k.assertIsNode(node, "instructionArgumentNode");
+        return {
+          ...node,
+          name: "amount",
+        };
+      },
+    },
   ])
 );
 
