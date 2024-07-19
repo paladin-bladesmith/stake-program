@@ -4,7 +4,16 @@ pub mod stake;
 pub use config::*;
 pub use stake::*;
 
-use solana_program::pubkey::{Pubkey, PubkeyError};
+use solana_program::{
+    program_error::ProgramError,
+    pubkey::{Pubkey, PubkeyError},
+};
+
+/// Scaling factor for rewards per token (1e9).
+const REWARDS_PER_TOKEN_SCALING_FACTOR: u128 = 1_000_000_000;
+
+/// Default value for a U128 byte array.
+const U128_DEFAULT: [u8; 16] = [0; 16];
 
 /// Defined the maximum valud for basis points (100%).
 pub const MAX_BASIS_POINTS: u128 = 10_000;

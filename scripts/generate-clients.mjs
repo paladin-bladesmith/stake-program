@@ -113,6 +113,17 @@ kinobi.update(
       },
     },
     {
+      // DistributeRewards
+      select: "[instructionNode]distributeRewards.[instructionArgumentNode]args",
+      transform: (node) => {
+        k.assertIsNode(node, "instructionArgumentNode");
+        return {
+          ...node,
+          name: "amount",
+        };
+      },
+    },
+    {
       // Slash
       select: "[instructionNode]slash.[instructionArgumentNode]args",
       transform: (node) => {

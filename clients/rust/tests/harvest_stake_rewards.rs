@@ -3,9 +3,9 @@
 mod setup;
 
 use borsh::BorshSerialize;
-use paladin_stake::{
+use paladin_stake_program_client::{
     accounts::{Config, Stake},
-    errors::StakeError,
+    errors::PaladinStakeProgramError,
     instructions::HarvestStakeRewardsBuilder,
     pdas::find_stake_pda,
 };
@@ -35,9 +35,13 @@ fn calculate_stake_rewards_per_token(rewards: u64, stake_amount: u64) -> u128 {
 
 #[tokio::test]
 async fn harvest_stake_rewards() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account with 4 SOL rewards and 100 staked amount and
     // a validator's vote account.
@@ -61,7 +65,7 @@ async fn harvest_stake_rewards() {
 
     // And a stake account wiht a 50 staked amount.
 
-    let stake_pda = create_stake(&mut context, &validator, &vote, &config).await;
+    let stake_pda = create_stake(&mut context, &vote, &config).await;
 
     let mut account = get_account!(context, stake_pda);
     let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
@@ -114,9 +118,13 @@ async fn harvest_stake_rewards() {
 
 #[tokio::test]
 async fn harvest_stake_rewards_with_no_rewards_available() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account with no rewards and 100 staked amount and
     // a validator's vote account.
@@ -136,7 +144,7 @@ async fn harvest_stake_rewards_with_no_rewards_available() {
 
     // And a stake account wiht a 50 staked amount.
 
-    let stake_pda = create_stake(&mut context, &validator, &vote, &config).await;
+    let stake_pda = create_stake(&mut context, &vote, &config).await;
 
     let mut account = get_account!(context, stake_pda);
     let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
@@ -173,9 +181,13 @@ async fn harvest_stake_rewards_with_no_rewards_available() {
 
 #[tokio::test]
 async fn harvest_stake_rewards_after_harvesting() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account with 4 SOL rewards and 100 staked amount and
     // a validator's vote account.
@@ -199,7 +211,7 @@ async fn harvest_stake_rewards_after_harvesting() {
 
     // And a stake account wiht a 50 staked amount.
 
-    let stake_pda = create_stake(&mut context, &validator, &vote, &config).await;
+    let stake_pda = create_stake(&mut context, &vote, &config).await;
 
     let mut account = get_account!(context, stake_pda);
     let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
@@ -287,9 +299,13 @@ async fn harvest_stake_rewards_after_harvesting() {
 
 #[tokio::test]
 async fn fail_harvest_stake_rewards_with_wrong_authority() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account with 4 SOL rewards and 100 staked amount and
     // a validator's vote account.
@@ -313,7 +329,7 @@ async fn fail_harvest_stake_rewards_with_wrong_authority() {
 
     // And a stake account wiht a 50 staked amount.
 
-    let stake_pda = create_stake(&mut context, &validator, &vote, &config).await;
+    let stake_pda = create_stake(&mut context, &vote, &config).await;
 
     let mut account = get_account!(context, stake_pda);
     let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
@@ -349,14 +365,18 @@ async fn fail_harvest_stake_rewards_with_wrong_authority() {
 
     // Then we expect an error.
 
-    assert_custom_error!(err, StakeError::InvalidAuthority);
+    assert_custom_error!(err, PaladinStakeProgramError::InvalidAuthority);
 }
 
 #[tokio::test]
 async fn fail_harvest_stake_rewards_with_uninitialized_config_account() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account and a validator's vote account.
 
@@ -367,7 +387,7 @@ async fn fail_harvest_stake_rewards_with_uninitialized_config_account() {
 
     // And a stake account.
 
-    let stake_pda = create_stake(&mut context, &validator, &vote, &config).await;
+    let stake_pda = create_stake(&mut context, &vote, &config).await;
 
     let mut account = get_account!(context, stake_pda);
     let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
@@ -384,7 +404,7 @@ async fn fail_harvest_stake_rewards_with_uninitialized_config_account() {
         &AccountSharedData::from(Account {
             lamports: 100_000_000,
             data: vec![5; Config::LEN],
-            owner: paladin_stake::ID,
+            owner: paladin_stake_program_client::ID,
             ..Default::default()
         }),
     );
@@ -419,9 +439,13 @@ async fn fail_harvest_stake_rewards_with_uninitialized_config_account() {
 
 #[tokio::test]
 async fn fail_harvest_stake_rewards_with_uninitialized_stake_account() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account and a validator's vote account.
 
@@ -450,7 +474,7 @@ async fn fail_harvest_stake_rewards_with_uninitialized_stake_account() {
         &AccountSharedData::from(Account {
             lamports: 100_000_000,
             data: vec![5; Stake::LEN],
-            owner: paladin_stake::ID,
+            owner: paladin_stake_program_client::ID,
             ..Default::default()
         }),
     );
@@ -485,9 +509,13 @@ async fn fail_harvest_stake_rewards_with_uninitialized_stake_account() {
 
 #[tokio::test]
 async fn fail_harvest_stake_rewards_with_wrong_config_account() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account with 4 SOL rewards and 100 staked amount and
     // a validator's vote account.
@@ -511,7 +539,7 @@ async fn fail_harvest_stake_rewards_with_wrong_config_account() {
 
     // And a stake account wiht a 50 staked amount.
 
-    let stake_pda = create_stake(&mut context, &validator, &vote, &config).await;
+    let stake_pda = create_stake(&mut context, &vote, &config).await;
 
     let mut account = get_account!(context, stake_pda);
     let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();

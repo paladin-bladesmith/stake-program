@@ -67,7 +67,8 @@ pub fn process_harvest_stake_rewards(
         "stake",
     );
 
-    let (derivation, _) = find_stake_pda(&stake.validator, ctx.accounts.config.key, program_id);
+    let (derivation, _) =
+        find_stake_pda(&stake.validator_vote, ctx.accounts.config.key, program_id);
 
     require!(
         ctx.accounts.stake.key == &derivation,

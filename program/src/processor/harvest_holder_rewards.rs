@@ -1,4 +1,4 @@
-use paladin_rewards::accounts::HolderRewards;
+use paladin_rewards_program_client::accounts::HolderRewards;
 use solana_program::{
     entrypoint::ProgramResult, program::invoke_signed, program_error::ProgramError, pubkey::Pubkey,
     system_instruction,
@@ -85,7 +85,8 @@ pub fn process_harvest_holder_rewards(
         "stake",
     );
 
-    let (derivation, _) = find_stake_pda(&stake.validator, ctx.accounts.config.key, program_id);
+    let (derivation, _) =
+        find_stake_pda(&stake.validator_vote, ctx.accounts.config.key, program_id);
 
     require!(
         ctx.accounts.stake.key == &derivation,
@@ -135,7 +136,8 @@ pub fn process_harvest_holder_rewards(
     // vault authority
     // - derivation must match
 
-    let vault_signer = create_vault_pda(ctx.accounts.config.key, config.signer_bump, program_id)?;
+    let signer_bump = [config.signer_bump];
+    let vault_signer = create_vault_pda(ctx.accounts.config.key, &signer_bump, program_id)?;
 
     require!(
         ctx.accounts.vault_authority.key == &vault_signer,
@@ -148,14 +150,14 @@ pub fn process_harvest_holder_rewards(
     // - derivation must match
 
     require!(
-        ctx.accounts.holder_rewards.owner == &paladin_rewards::ID,
+        ctx.accounts.holder_rewards.owner == &paladin_rewards_program_client::ID,
         ProgramError::InvalidAccountOwner,
         "holder rewards",
     );
 
     let (derivation, _) = Pubkey::find_program_address(
         &["holder".as_bytes(), ctx.accounts.vault.key.as_ref()],
-        &paladin_rewards::ID,
+        &paladin_rewards_program_client::ID,
     );
 
     require!(

@@ -3,7 +3,7 @@
 mod setup;
 
 use borsh::BorshSerialize;
-use paladin_stake::{accounts::Config, instructions::DistributeRewardsBuilder};
+use paladin_stake_program_client::{accounts::Config, instructions::DistributeRewardsBuilder};
 use setup::{config::create_config, REWARDS_PER_TOKEN_SCALING_FACTOR};
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
@@ -16,9 +16,13 @@ use solana_sdk::{
 
 #[tokio::test]
 async fn distribute_rewards() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account.
 
@@ -70,9 +74,13 @@ async fn distribute_rewards() {
 
 #[tokio::test]
 async fn distribute_rewards_with_no_staked_tokens() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account.
 
@@ -109,9 +117,13 @@ async fn distribute_rewards_with_no_staked_tokens() {
 
 #[tokio::test]
 async fn fail_distribute_rewards_with_uninitialized_config() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given an uninitialized config account.
 
@@ -127,7 +139,7 @@ async fn fail_distribute_rewards_with_uninitialized_config() {
             .unwrap()
             .minimum_balance(Config::LEN),
         Config::LEN as u64,
-        &paladin_stake::ID,
+        &paladin_stake_program_client::ID,
     );
 
     // When we try distribute rewards to an uninitialized config account.
@@ -157,9 +169,13 @@ async fn fail_distribute_rewards_with_uninitialized_config() {
 
 #[tokio::test]
 async fn fail_distribute_rewards_with_payer_insufficient_funds() {
-    let mut context = ProgramTest::new("stake_program", paladin_stake::ID, None)
-        .start_with_context()
-        .await;
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
 
     // Given a config account and a payer with no funds.
 
