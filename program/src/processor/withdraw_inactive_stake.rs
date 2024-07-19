@@ -1,6 +1,6 @@
 use solana_program::{
-    account_info::AccountInfo, entrypoint::ProgramResult, program::invoke_signed,
-    program_error::ProgramError, pubkey::Pubkey,
+    account_info::AccountInfo, entrypoint::ProgramResult, instruction::AccountMeta,
+    program::invoke_signed, program_error::ProgramError, pubkey::Pubkey,
 };
 use spl_token_2022::{
     extension::PodStateWithExtensions,
@@ -12,7 +12,7 @@ use crate::{
     error::StakeError,
     instruction::accounts::{Context, WithdrawInactiveStakeAccounts},
     require,
-    state::{find_stake_pda, find_vault_pda, get_stake_pda_signer_seeds, Config, Stake},
+    state::{create_vault_pda, find_stake_pda, get_vault_pda_signer_seeds, Config, Stake},
 };
 
 /// Withdraw inactive staked tokens from the vault
@@ -106,7 +106,8 @@ pub fn process_withdraw_inactive_stake<'a>(
     // vault authority
     // - derivation must match
 
-    let (vault_signer, bump) = find_vault_pda(ctx.accounts.config.key, program_id);
+    let bump = [config.signer_bump];
+    let vault_signer = create_vault_pda(ctx.accounts.config.key, &bump, program_id)?;
 
     require!(
         ctx.accounts.vault_authority.key == &vault_signer,
@@ -114,9 +115,7 @@ pub fn process_withdraw_inactive_stake<'a>(
         "vault authority",
     );
 
-    let signer_bump = &[bump];
-    let signer_seeds =
-        get_stake_pda_signer_seeds(&stake.validator_vote, ctx.accounts.config.key, signer_bump);
+    let signer_seeds = get_vault_pda_signer_seeds(ctx.accounts.config.key, &bump);
 
     // vault
     // - must be the token account on the stake config account
@@ -166,7 +165,7 @@ pub fn process_withdraw_inactive_stake<'a>(
     drop(vault_data);
     drop(mint_data);
 
-    let transfer_ix = transfer_checked(
+    let mut transfer_ix = transfer_checked(
         ctx.accounts.token_program.key,
         ctx.accounts.vault.key,
         ctx.accounts.mint.key,
@@ -176,6 +175,14 @@ pub fn process_withdraw_inactive_stake<'a>(
         amount,
         decimals,
     )?;
+
+    ctx.remaining_accounts.iter().for_each(|account| {
+        transfer_ix.accounts.push(AccountMeta {
+            is_signer: account.is_signer,
+            is_writable: account.is_writable,
+            pubkey: *account.key,
+        });
+    });
 
     let mut account_infos: Vec<AccountInfo> = Vec::with_capacity(5 + ctx.remaining_accounts.len());
     account_infos.push(ctx.accounts.token_program.clone());
