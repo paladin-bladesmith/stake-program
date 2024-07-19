@@ -1,7 +1,7 @@
 use paladin_rewards_program_client::accounts::HolderRewards;
 use solana_program::{
-    entrypoint::ProgramResult, program::invoke_signed, program_error::ProgramError, pubkey::Pubkey,
-    system_instruction,
+    entrypoint::ProgramResult, msg, program::invoke_signed, program_error::ProgramError,
+    pubkey::Pubkey, system_instruction,
 };
 use spl_token_2022::{
     extension::PodStateWithExtensions, instruction::withdraw_excess_lamports, pod::PodAccount,
@@ -174,12 +174,15 @@ pub fn process_harvest_holder_rewards(
         stake.last_seen_holder_rewards_per_token(),
         stake.amount,
     )?;
-    // update the last seen holder rewards
-    stake.set_last_seen_holder_rewards_per_token(holder_rewards.last_accumulated_rewards_per_token);
 
     // Withdraw the holder rewards to the destination account.
 
     if rewards != 0 {
+        // update the last seen holder rewards
+        stake.set_last_seen_holder_rewards_per_token(
+            holder_rewards.last_accumulated_rewards_per_token,
+        );
+
         // Rewards are stored on the `vault` token account. We need to first withdraw the excess lamports
         // from the vault token account to the vault authority account. Then transfer the rewards amount
         // to the destination account and send the remaining excess lamports back to the vault token
@@ -235,11 +238,12 @@ pub fn process_harvest_holder_rewards(
             &[&signer_seeds],
         )?;
 
+        // Calculate the remaining lamports after the transfer.
         let remaining = ctx
             .accounts
             .vault_authority
             .lamports()
-            .checked_sub(rewards)
+            .checked_sub(current_lamports)
             .ok_or(ProgramError::ArithmeticOverflow)?;
 
         invoke_signed(
@@ -254,6 +258,8 @@ pub fn process_harvest_holder_rewards(
             ],
             &[&signer_seeds],
         )?;
+    } else {
+        msg!("No rewards to harvest");
     }
 
     Ok(())
