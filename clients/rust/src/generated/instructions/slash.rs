@@ -54,7 +54,7 @@ impl Slash {
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.vault, false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             self.mint, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -98,7 +98,7 @@ impl Default for SlashInstructionData {
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SlashInstructionArgs {
-    pub args: u64,
+    pub amount: u64,
 }
 
 /// Instruction builder for `Slash`.
@@ -109,7 +109,7 @@ pub struct SlashInstructionArgs {
 ///   1. `[writable]` stake
 ///   2. `[signer]` slash_authority
 ///   3. `[writable]` vault
-///   4. `[]` mint
+///   4. `[writable]` mint
 ///   5. `[]` vault_authority
 ///   6. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 #[derive(Clone, Debug, Default)]
@@ -121,7 +121,7 @@ pub struct SlashBuilder {
     mint: Option<solana_program::pubkey::Pubkey>,
     vault_authority: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
-    args: Option<u64>,
+    amount: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -179,8 +179,8 @@ impl SlashBuilder {
         self
     }
     #[inline(always)]
-    pub fn args(&mut self, args: u64) -> &mut Self {
-        self.args = Some(args);
+    pub fn amount(&mut self, amount: u64) -> &mut Self {
+        self.amount = Some(amount);
         self
     }
     /// Add an aditional account to the instruction.
@@ -215,7 +215,7 @@ impl SlashBuilder {
             )),
         };
         let args = SlashInstructionArgs {
-            args: self.args.clone().expect("args is not set"),
+            amount: self.amount.clone().expect("amount is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -330,7 +330,7 @@ impl<'a, 'b> SlashCpi<'a, 'b> {
             *self.vault.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             *self.mint.key,
             false,
         ));
@@ -387,7 +387,7 @@ impl<'a, 'b> SlashCpi<'a, 'b> {
 ///   1. `[writable]` stake
 ///   2. `[signer]` slash_authority
 ///   3. `[writable]` vault
-///   4. `[]` mint
+///   4. `[writable]` mint
 ///   5. `[]` vault_authority
 ///   6. `[]` token_program
 #[derive(Clone, Debug)]
@@ -406,7 +406,7 @@ impl<'a, 'b> SlashCpiBuilder<'a, 'b> {
             mint: None,
             vault_authority: None,
             token_program: None,
-            args: None,
+            amount: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -466,8 +466,8 @@ impl<'a, 'b> SlashCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn args(&mut self, args: u64) -> &mut Self {
-        self.instruction.args = Some(args);
+    pub fn amount(&mut self, amount: u64) -> &mut Self {
+        self.instruction.amount = Some(amount);
         self
     }
     /// Add an additional account to the instruction.
@@ -512,7 +512,7 @@ impl<'a, 'b> SlashCpiBuilder<'a, 'b> {
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
         let args = SlashInstructionArgs {
-            args: self.instruction.args.clone().expect("args is not set"),
+            amount: self.instruction.amount.clone().expect("amount is not set"),
         };
         let instruction = SlashCpi {
             __program: self.instruction.__program,
@@ -558,7 +558,7 @@ struct SlashCpiBuilderInstruction<'a, 'b> {
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    args: Option<u64>,
+    amount: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,
