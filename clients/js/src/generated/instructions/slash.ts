@@ -62,7 +62,7 @@ export type SlashInstruction<
         ? WritableAccount<TAccountVault>
         : TAccountVault,
       TAccountMint extends string
-        ? ReadonlyAccount<TAccountMint>
+        ? WritableAccount<TAccountMint>
         : TAccountMint,
       TAccountVaultAuthority extends string
         ? ReadonlyAccount<TAccountVaultAuthority>
@@ -74,15 +74,15 @@ export type SlashInstruction<
     ]
   >;
 
-export type SlashInstructionData = { discriminator: number; args: bigint };
+export type SlashInstructionData = { discriminator: number; amount: bigint };
 
-export type SlashInstructionDataArgs = { args: number | bigint };
+export type SlashInstructionDataArgs = { amount: number | bigint };
 
 export function getSlashInstructionDataEncoder(): Encoder<SlashInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
-      ['args', getU64Encoder()],
+      ['amount', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: 8 })
   );
@@ -91,7 +91,7 @@ export function getSlashInstructionDataEncoder(): Encoder<SlashInstructionDataAr
 export function getSlashInstructionDataDecoder(): Decoder<SlashInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
-    ['args', getU64Decoder()],
+    ['amount', getU64Decoder()],
   ]);
 }
 
@@ -128,7 +128,7 @@ export type SlashInput<
   vaultAuthority: Address<TAccountVaultAuthority>;
   /** Token program */
   tokenProgram?: Address<TAccountTokenProgram>;
-  args: SlashInstructionDataArgs['args'];
+  amount: SlashInstructionDataArgs['amount'];
 };
 
 export function getSlashInstruction<
@@ -168,7 +168,7 @@ export function getSlashInstruction<
     stake: { value: input.stake ?? null, isWritable: true },
     slashAuthority: { value: input.slashAuthority ?? null, isWritable: false },
     vault: { value: input.vault ?? null, isWritable: true },
-    mint: { value: input.mint ?? null, isWritable: false },
+    mint: { value: input.mint ?? null, isWritable: true },
     vaultAuthority: { value: input.vaultAuthority ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
   };
