@@ -344,6 +344,7 @@ pub enum StakeInstruction {
     )]
     #[account(
         4,
+        writable,
         name = "mint",
         desc = "Stake Token Mint"
     )]

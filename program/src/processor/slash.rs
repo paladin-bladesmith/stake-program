@@ -12,7 +12,7 @@ use crate::{
     error::StakeError,
     instruction::accounts::{Context, SlashAccounts},
     require,
-    state::{find_stake_pda, find_vault_pda, get_stake_pda_signer_seeds, Config, Stake},
+    state::{create_vault_pda, find_stake_pda, get_vault_pda_signer_seeds, Config, Stake},
 };
 
 /// Slashes a stake account for the given amount
@@ -77,7 +77,8 @@ pub fn process_slash(
         "stake",
     );
 
-    let (derivation, _) = find_stake_pda(&stake.validator, ctx.accounts.config.key, program_id);
+    let (derivation, _) =
+        find_stake_pda(&stake.validator_vote, ctx.accounts.config.key, program_id);
 
     require!(
         ctx.accounts.stake.key == &derivation,
@@ -113,17 +114,16 @@ pub fn process_slash(
     // vault authority
     // - derivation must match
 
-    let (vault_signer, bump) = find_vault_pda(ctx.accounts.config.key, program_id);
+    let signer_bump = [config.signer_bump];
+    let derivation = create_vault_pda(ctx.accounts.config.key, &signer_bump, program_id)?;
 
     require!(
-        ctx.accounts.vault_authority.key == &vault_signer,
+        ctx.accounts.vault_authority.key == &derivation,
         StakeError::InvalidAuthority,
         "vault authority",
     );
 
-    let signer_bump = &[bump];
-    let signer_seeds =
-        get_stake_pda_signer_seeds(&stake.validator, ctx.accounts.config.key, signer_bump);
+    let signer_seeds = get_vault_pda_signer_seeds(ctx.accounts.config.key, &signer_bump);
 
     // vault
     // - must be the token account on the stake config account
@@ -146,7 +146,18 @@ pub fn process_slash(
         "mint"
     );
 
-    // Update the stake amount on both config and stake accounts.
+    // Update the stake amount on both stake and config accounts.
+
+    require!(
+        stake.amount >= amount,
+        StakeError::InsufficientStakeAmount,
+        "stake"
+    );
+
+    stake.amount = stake
+        .amount
+        .checked_sub(amount)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
 
     require!(
         config.token_amount_delegated >= amount,
@@ -159,16 +170,13 @@ pub fn process_slash(
         .checked_sub(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
-    require!(
-        stake.amount >= amount,
-        StakeError::InsufficientStakeAmount,
-        "stake"
-    );
+    // Validates the amount of tokens to burn.
 
-    stake.amount = stake
-        .amount
-        .checked_sub(amount)
-        .ok_or(ProgramError::ArithmeticOverflow)?;
+    require!(
+        amount > 0,
+        StakeError::InvalidAmount,
+        "amount must be greater than 0"
+    );
 
     // Burn the tokens from the vault account.
 
