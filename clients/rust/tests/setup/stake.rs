@@ -22,25 +22,20 @@ pub struct StakeManager {
 
 impl StakeManager {
     pub async fn new(context: &mut ProgramTestContext, config: &Pubkey) -> Self {
-        let mut manager = Self {
-            stake: Pubkey::default(),
-            authority: Keypair::new(),
-            validator: Pubkey::new_unique(),
-            vote: Pubkey::default(),
-        };
+        let authority = Keypair::new();
+        let validator = Pubkey::new_unique();
 
         // Creates the validator vote account.
 
-        manager.vote =
-            create_vote_account(context, &manager.validator, &manager.authority.pubkey()).await;
+        let vote = create_vote_account(context, &validator, &authority.pubkey()).await;
 
         // And a stake account.
 
-        manager.stake = create_stake(context, &manager.vote, config).await;
+        let stake = create_stake(context, &vote, config).await;
 
         let transfer_ix = system_instruction::transfer(
             &context.payer.pubkey(),
-            &manager.stake,
+            &stake,
             context
                 .banks_client
                 .get_rent()
@@ -51,8 +46,8 @@ impl StakeManager {
 
         let initialize_ix = InitializeStakeBuilder::new()
             .config(*config)
-            .stake(manager.stake)
-            .validator_vote(manager.vote)
+            .stake(stake)
+            .validator_vote(vote)
             .instruction();
 
         let tx = Transaction::new_signed_with_payer(
@@ -63,7 +58,12 @@ impl StakeManager {
         );
         context.banks_client.process_transaction(tx).await.unwrap();
 
-        manager
+        Self {
+            stake,
+            authority,
+            validator,
+            vote,
+        }
     }
 }
 
