@@ -1,7 +1,9 @@
 #![cfg(feature = "test-sbf")]
 #![allow(dead_code)]
 
-use solana_program_test::{BanksClientError, ProgramTestContext};
+use solana_program_test::{
+    BanksClientError, BanksTransactionResultWithMetadata, ProgramTestContext,
+};
 use solana_sdk::{
     pubkey::Pubkey, signature::Keypair, signer::Signer, system_instruction,
     transaction::Transaction,
@@ -154,7 +156,9 @@ pub async fn mint_to(
     token: &Pubkey,
     amount: u64,
     decimals: u8,
-) -> Result<(), BanksClientError> {
+) -> Result<BanksTransactionResultWithMetadata, BanksClientError> {
+    context.get_new_latest_blockhash().await.unwrap();
+
     let tx = Transaction::new_signed_with_payer(
         &[spl_token_2022::instruction::mint_to_checked(
             &spl_token_2022::ID,
@@ -171,5 +175,8 @@ pub async fn mint_to(
         context.last_blockhash,
     );
 
-    context.banks_client.process_transaction(tx).await
+    context
+        .banks_client
+        .process_transaction_with_metadata(tx)
+        .await
 }
