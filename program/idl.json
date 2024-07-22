@@ -669,7 +669,7 @@
             "type": "u16"
           },
           {
-            "name": "signerBump",
+            "name": "vaultAuthorityBump",
             "type": "u8"
           },
           {

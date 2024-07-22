@@ -159,7 +159,7 @@ pub fn process_initialize_config(
         vault: *ctx.accounts.vault.key,
         cooldown_time_seconds: cooldown_time_seconds as i64,
         max_deactivation_basis_points,
-        signer_bump,
+        vault_authority_bump: signer_bump,
         ..Config::default()
     };
 
