@@ -289,7 +289,7 @@ async fn fail_withdraw_inactive_stake_without_inactive_stake() {
 
     // Then we expect an error.
 
-    assert_custom_error!(err, PaladinStakeProgramError::NoInactivatedTokens);
+    assert_custom_error!(err, PaladinStakeProgramError::NotEnoughInactivatedTokens);
 }
 
 #[tokio::test]

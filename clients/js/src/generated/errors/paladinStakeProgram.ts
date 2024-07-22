@@ -40,8 +40,8 @@ export const PALADIN_STAKE_PROGRAM_ERROR__ACTIVE_DEACTIVATION_COOLDOWN = 0xe; //
 export const PALADIN_STAKE_PROGRAM_ERROR__NO_DEACTIVATED_TOKENS = 0xf; // 15
 /** IncorrectVaultAccount: Incorrect vault account */
 export const PALADIN_STAKE_PROGRAM_ERROR__INCORRECT_VAULT_ACCOUNT = 0x10; // 16
-/** NoInactivatedTokens: No inactivated tokens */
-export const PALADIN_STAKE_PROGRAM_ERROR__NO_INACTIVATED_TOKENS = 0x11; // 17
+/** NotEnoughInactivatedTokens: Not enough inactivated tokens */
+export const PALADIN_STAKE_PROGRAM_ERROR__NOT_ENOUGH_INACTIVATED_TOKENS = 0x11; // 17
 
 export type PaladinStakeProgramError =
   | typeof PALADIN_STAKE_PROGRAM_ERROR__ACTIVE_DEACTIVATION_COOLDOWN
@@ -61,7 +61,7 @@ export type PaladinStakeProgramError =
   | typeof PALADIN_STAKE_PROGRAM_ERROR__MAXIMUM_DEACTIVATION_AMOUNT_EXCEEDED
   | typeof PALADIN_STAKE_PROGRAM_ERROR__MISSING_TRANSFER_HOOK
   | typeof PALADIN_STAKE_PROGRAM_ERROR__NO_DEACTIVATED_TOKENS
-  | typeof PALADIN_STAKE_PROGRAM_ERROR__NO_INACTIVATED_TOKENS;
+  | typeof PALADIN_STAKE_PROGRAM_ERROR__NOT_ENOUGH_INACTIVATED_TOKENS;
 
 let paladinStakeProgramErrorMessages:
   | Record<PaladinStakeProgramError, string>
@@ -85,7 +85,7 @@ if (__DEV__) {
     [PALADIN_STAKE_PROGRAM_ERROR__MAXIMUM_DEACTIVATION_AMOUNT_EXCEEDED]: `Amount exeeds maximum deactivation amount`,
     [PALADIN_STAKE_PROGRAM_ERROR__MISSING_TRANSFER_HOOK]: `Missing transfer hook`,
     [PALADIN_STAKE_PROGRAM_ERROR__NO_DEACTIVATED_TOKENS]: `No deactivated tokens`,
-    [PALADIN_STAKE_PROGRAM_ERROR__NO_INACTIVATED_TOKENS]: `No inactivated tokens`,
+    [PALADIN_STAKE_PROGRAM_ERROR__NOT_ENOUGH_INACTIVATED_TOKENS]: `Not enough inactivated tokens`,
   };
 }
 

@@ -146,7 +146,7 @@ pub fn process_withdraw_inactive_stake<'a>(
 
     require!(
         amount <= stake.inactive_amount,
-        StakeError::NoInactivatedTokens,
+        StakeError::NotEnoughInactivatedTokens,
         "amount"
     );
 
