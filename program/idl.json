@@ -865,8 +865,8 @@
     },
     {
       "code": 17,
-      "name": "NoInactivatedTokens",
-      "msg": "No inactivated tokens"
+      "name": "NotEnoughInactivatedTokens",
+      "msg": "Not enough inactivated tokens"
     }
   ],
   "metadata": {
