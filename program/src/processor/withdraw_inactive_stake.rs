@@ -146,7 +146,7 @@ pub fn process_withdraw_inactive_stake<'a>(
 
     require!(
         amount <= stake.inactive_amount,
-        StakeError::ActiveDeactivationCooldown,
+        StakeError::NoInactivatedTokens,
         "amount"
     );
 
@@ -160,7 +160,7 @@ pub fn process_withdraw_inactive_stake<'a>(
         .checked_sub(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
-    // Transfer the tokens to the vault (stakes them).
+    // Transfer the tokens from the vault to destination (unstakes them).
 
     drop(vault_data);
     drop(mint_data);
