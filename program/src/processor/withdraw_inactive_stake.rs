@@ -106,7 +106,7 @@ pub fn process_withdraw_inactive_stake<'a>(
     // vault authority
     // - derivation must match
 
-    let bump = [config.signer_bump];
+    let bump = [config.vault_authority_bump];
     let vault_signer = create_vault_pda(ctx.accounts.config.key, &bump, program_id)?;
 
     require!(

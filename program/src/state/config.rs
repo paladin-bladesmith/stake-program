@@ -42,7 +42,7 @@ pub struct Config {
     pub max_deactivation_basis_points: u16,
 
     /// Bump seed for the `Vault` signer authority.
-    pub signer_bump: u8,
+    pub vault_authority_bump: u8,
 
     /// Padding for alignment.
     pub _padding: [u8; 5],
