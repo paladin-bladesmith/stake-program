@@ -862,6 +862,11 @@
       "code": 16,
       "name": "IncorrectVaultAccount",
       "msg": "Incorrect vault account"
+    },
+    {
+      "code": 17,
+      "name": "NoInactivatedTokens",
+      "msg": "No inactivated tokens"
     }
   ],
   "metadata": {

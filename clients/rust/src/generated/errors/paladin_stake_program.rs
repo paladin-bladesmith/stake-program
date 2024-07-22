@@ -61,6 +61,9 @@ pub enum PaladinStakeProgramError {
     /// 16 - Incorrect vault account
     #[error("Incorrect vault account")]
     IncorrectVaultAccount = 0x10,
+    /// 17 - No inactivated tokens
+    #[error("No inactivated tokens")]
+    NoInactivatedTokens = 0x11,
 }
 
 impl solana_program::program_error::PrintProgramError for PaladinStakeProgramError {
