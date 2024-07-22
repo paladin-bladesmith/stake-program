@@ -29,11 +29,11 @@ use crate::{
 /// 2. `[w]` Token Account
 /// 3. `[s]` Owner or delegate of the token account
 /// 4. `[ ]` Validator vote account
-/// 3. `[ ]` Stake Token Mint
-/// 4. `[ ]` Stake Token Vault, to hold all staked tokens
+/// 5. `[ ]` Stake Token Mint
+/// 6. `[w]` Stake Token Vault, to hold all staked tokens
 ///          (must be the token account on the stake config account)
-/// 5. `[ ]` Token program
-/// 6.. Extra accounts required for the transfer hook
+/// 7. `[ ]` Token program
+/// 8.. Extra accounts required for the transfer hook
 ///
 /// Instruction data: amount of tokens to stake, as a little-endian u64
 pub fn process_stake_tokens<'a>(
