@@ -1,10 +1,8 @@
 use solana_program::{
-    account_info::AccountInfo, entrypoint::ProgramResult, instruction::AccountMeta,
-    program::invoke, program_error::ProgramError, pubkey::Pubkey, vote::state::VoteState,
+    entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey, vote::state::VoteState,
 };
 use spl_token_2022::{
     extension::PodStateWithExtensions,
-    instruction::transfer_checked,
     pod::{PodAccount, PodMint},
 };
 
@@ -160,32 +158,15 @@ pub fn process_stake_tokens<'a>(
     drop(mint_data);
     drop(vault_data);
 
-    let mut transfer_ix = transfer_checked(
-        ctx.accounts.token_program.key,
-        ctx.accounts.source_token_account.key,
-        ctx.accounts.mint.key,
-        ctx.accounts.vault.key,
-        ctx.accounts.token_account_authority.key,
-        &[],
+    spl_token_2022::onchain::invoke_transfer_checked(
+        &spl_token_2022::ID,
+        ctx.accounts.source_token_account.clone(),
+        ctx.accounts.mint.clone(),
+        ctx.accounts.vault.clone(),
+        ctx.accounts.token_account_authority.clone(),
+        ctx.remaining_accounts,
         amount,
         decimals,
-    )?;
-
-    ctx.remaining_accounts.iter().for_each(|account| {
-        transfer_ix.accounts.push(AccountMeta {
-            is_signer: account.is_signer,
-            is_writable: account.is_writable,
-            pubkey: *account.key,
-        });
-    });
-
-    let mut account_infos: Vec<AccountInfo> = Vec::with_capacity(5 + ctx.remaining_accounts.len());
-    account_infos.push(ctx.accounts.token_program.clone());
-    account_infos.push(ctx.accounts.source_token_account.clone());
-    account_infos.push(ctx.accounts.mint.clone());
-    account_infos.push(ctx.accounts.vault.clone());
-    account_infos.push(ctx.accounts.token_account_authority.clone());
-    account_infos.extend_from_slice(ctx.remaining_accounts);
-
-    invoke(&transfer_ix, &account_infos)
+        &[],
+    )
 }
