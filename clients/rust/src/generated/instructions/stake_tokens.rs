@@ -111,7 +111,7 @@ pub struct StakeTokensInstructionArgs {
 ///   3. `[signer]` token_account_authority
 ///   4. `[]` mint
 ///   5. `[writable]` vault
-///   6. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   6. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
 #[derive(Clone, Debug, Default)]
 pub struct StakeTokensBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
