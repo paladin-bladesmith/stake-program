@@ -96,9 +96,7 @@ pub fn process_slash(
     // When there is no slash authority set, the stake account cannot be slashed and
     // an error is returned.
 
-    let slash_authority = config.slash_authority.into();
-
-    if let Some(slash_authority) = slash_authority {
+    if let Some(slash_authority) = Option::<Pubkey>::from(config.slash_authority) {
         require!(
             ctx.accounts.slash_authority.key == &slash_authority,
             StakeError::InvalidAuthority,
