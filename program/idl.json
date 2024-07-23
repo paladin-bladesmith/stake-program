@@ -139,14 +139,6 @@
           ]
         },
         {
-          "name": "validatorVote",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Validator vote account"
-          ]
-        },
-        {
           "name": "mint",
           "isMut": false,
           "isSigner": false,

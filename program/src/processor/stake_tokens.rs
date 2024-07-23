@@ -1,6 +1,4 @@
-use solana_program::{
-    entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey, vote::state::VoteState,
-};
+use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey};
 use spl_token_2022::{
     extension::PodStateWithExtensions,
     pod::{PodAccount, PodMint},
@@ -26,12 +24,11 @@ use crate::{
 ///          (PDA seeds: ['stake', validator, config_account])
 /// 2. `[w]` Token Account
 /// 3. `[s]` Owner or delegate of the token account
-/// 4. `[ ]` Validator vote account
-/// 5. `[ ]` Stake Token Mint
-/// 6. `[w]` Stake Token Vault, to hold all staked tokens
+/// 4. `[ ]` Stake Token Mint
+/// 5. `[w]` Stake Token Vault, to hold all staked tokens
 ///          (must be the token account on the stake config account)
-/// 7. `[ ]` Token program
-/// 8.. Extra accounts required for the transfer hook
+/// 6. `[ ]` Token program
+/// 7.. Extra accounts required for the transfer hook
 ///
 /// Instruction data: amount of tokens to stake, as a little-endian u64
 pub fn process_stake_tokens<'a>(
@@ -61,45 +58,15 @@ pub fn process_stake_tokens<'a>(
         "config",
     );
 
-    // validator vote
-    // - owner must be the vote program
-    // - must be initialized
-
-    require!(
-        ctx.accounts.validator_vote.owner == &solana_program::vote::program::ID,
-        ProgramError::InvalidAccountOwner,
-        "validator vote"
-    );
-
-    let validator_vote_data = ctx.accounts.validator_vote.try_borrow_data()?;
-
-    require!(
-        VoteState::is_correct_size_and_initialized(&validator_vote_data),
-        ProgramError::InvalidAccountData,
-        "validator vote"
-    );
-
     // stake
     // - owner must be the stake program
-    // - must have the correct derivation
     // - must be initialized
+    // - must have the correct derivation
 
     require!(
         ctx.accounts.stake.owner == program_id,
         ProgramError::InvalidAccountOwner,
         "stake"
-    );
-
-    let (derivation, _) = find_stake_pda(
-        ctx.accounts.validator_vote.key,
-        ctx.accounts.config.key,
-        program_id,
-    );
-
-    require!(
-        ctx.accounts.stake.key == &derivation,
-        ProgramError::InvalidSeeds,
-        "stake",
     );
 
     let mut stake_data = ctx.accounts.stake.try_borrow_mut_data()?;
@@ -109,6 +76,15 @@ pub fn process_stake_tokens<'a>(
     require!(
         stake.is_initialized(),
         ProgramError::UninitializedAccount,
+        "stake",
+    );
+
+    let (derivation, _) =
+        find_stake_pda(&stake.validator_vote, ctx.accounts.config.key, program_id);
+
+    require!(
+        ctx.accounts.stake.key == &derivation,
+        ProgramError::InvalidSeeds,
         "stake",
     );
 

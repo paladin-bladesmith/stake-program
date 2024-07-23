@@ -38,7 +38,6 @@ export type StakeTokensInstruction<
   TAccountStake extends string | IAccountMeta<string> = string,
   TAccountSourceTokenAccount extends string | IAccountMeta<string> = string,
   TAccountTokenAccountAuthority extends string | IAccountMeta<string> = string,
-  TAccountValidatorVote extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountVault extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
@@ -62,9 +61,6 @@ export type StakeTokensInstruction<
         ? ReadonlySignerAccount<TAccountTokenAccountAuthority> &
             IAccountSignerMeta<TAccountTokenAccountAuthority>
         : TAccountTokenAccountAuthority,
-      TAccountValidatorVote extends string
-        ? ReadonlyAccount<TAccountValidatorVote>
-        : TAccountValidatorVote,
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
@@ -117,7 +113,6 @@ export type StakeTokensInput<
   TAccountStake extends string = string,
   TAccountSourceTokenAccount extends string = string,
   TAccountTokenAccountAuthority extends string = string,
-  TAccountValidatorVote extends string = string,
   TAccountMint extends string = string,
   TAccountVault extends string = string,
   TAccountTokenProgram extends string = string,
@@ -130,8 +125,6 @@ export type StakeTokensInput<
   sourceTokenAccount: Address<TAccountSourceTokenAccount>;
   /** Owner or delegate of the token account */
   tokenAccountAuthority: TransactionSigner<TAccountTokenAccountAuthority>;
-  /** Validator vote account */
-  validatorVote: Address<TAccountValidatorVote>;
   /** Stake Token Mint */
   mint: Address<TAccountMint>;
   /** Stake token Vault */
@@ -146,7 +139,6 @@ export function getStakeTokensInstruction<
   TAccountStake extends string,
   TAccountSourceTokenAccount extends string,
   TAccountTokenAccountAuthority extends string,
-  TAccountValidatorVote extends string,
   TAccountMint extends string,
   TAccountVault extends string,
   TAccountTokenProgram extends string,
@@ -156,7 +148,6 @@ export function getStakeTokensInstruction<
     TAccountStake,
     TAccountSourceTokenAccount,
     TAccountTokenAccountAuthority,
-    TAccountValidatorVote,
     TAccountMint,
     TAccountVault,
     TAccountTokenProgram
@@ -167,7 +158,6 @@ export function getStakeTokensInstruction<
   TAccountStake,
   TAccountSourceTokenAccount,
   TAccountTokenAccountAuthority,
-  TAccountValidatorVote,
   TAccountMint,
   TAccountVault,
   TAccountTokenProgram
@@ -187,7 +177,6 @@ export function getStakeTokensInstruction<
       value: input.tokenAccountAuthority ?? null,
       isWritable: false,
     },
-    validatorVote: { value: input.validatorVote ?? null, isWritable: false },
     mint: { value: input.mint ?? null, isWritable: false },
     vault: { value: input.vault ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
@@ -213,7 +202,6 @@ export function getStakeTokensInstruction<
       getAccountMeta(accounts.stake),
       getAccountMeta(accounts.sourceTokenAccount),
       getAccountMeta(accounts.tokenAccountAuthority),
-      getAccountMeta(accounts.validatorVote),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.vault),
       getAccountMeta(accounts.tokenProgram),
@@ -228,7 +216,6 @@ export function getStakeTokensInstruction<
     TAccountStake,
     TAccountSourceTokenAccount,
     TAccountTokenAccountAuthority,
-    TAccountValidatorVote,
     TAccountMint,
     TAccountVault,
     TAccountTokenProgram
@@ -251,14 +238,12 @@ export type ParsedStakeTokensInstruction<
     sourceTokenAccount: TAccountMetas[2];
     /** Owner or delegate of the token account */
     tokenAccountAuthority: TAccountMetas[3];
-    /** Validator vote account */
-    validatorVote: TAccountMetas[4];
     /** Stake Token Mint */
-    mint: TAccountMetas[5];
+    mint: TAccountMetas[4];
     /** Stake token Vault */
-    vault: TAccountMetas[6];
+    vault: TAccountMetas[5];
     /** Token program */
-    tokenProgram: TAccountMetas[7];
+    tokenProgram: TAccountMetas[6];
   };
   data: StakeTokensInstructionData;
 };
@@ -271,7 +256,7 @@ export function parseStakeTokensInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedStakeTokensInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 8) {
+  if (instruction.accounts.length < 7) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -288,7 +273,6 @@ export function parseStakeTokensInstruction<
       stake: getNextAccount(),
       sourceTokenAccount: getNextAccount(),
       tokenAccountAuthority: getNextAccount(),
-      validatorVote: getNextAccount(),
       mint: getNextAccount(),
       vault: getNextAccount(),
       tokenProgram: getNextAccount(),

@@ -18,8 +18,6 @@ pub struct StakeTokens {
     pub source_token_account: solana_program::pubkey::Pubkey,
     /// Owner or delegate of the token account
     pub token_account_authority: solana_program::pubkey::Pubkey,
-    /// Validator vote account
-    pub validator_vote: solana_program::pubkey::Pubkey,
     /// Stake Token Mint
     pub mint: solana_program::pubkey::Pubkey,
     /// Stake token Vault
@@ -41,7 +39,7 @@ impl StakeTokens {
         args: StakeTokensInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(8 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.config,
             false,
@@ -56,10 +54,6 @@ impl StakeTokens {
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.token_account_authority,
             true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.validator_vote,
-            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.mint, false,
@@ -115,17 +109,15 @@ pub struct StakeTokensInstructionArgs {
 ///   1. `[writable]` stake
 ///   2. `[writable]` source_token_account
 ///   3. `[signer]` token_account_authority
-///   4. `[]` validator_vote
-///   5. `[]` mint
-///   6. `[writable]` vault
-///   7. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   4. `[]` mint
+///   5. `[writable]` vault
+///   6. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 #[derive(Clone, Debug, Default)]
 pub struct StakeTokensBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
     stake: Option<solana_program::pubkey::Pubkey>,
     source_token_account: Option<solana_program::pubkey::Pubkey>,
     token_account_authority: Option<solana_program::pubkey::Pubkey>,
-    validator_vote: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
     vault: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
@@ -165,12 +157,6 @@ impl StakeTokensBuilder {
         token_account_authority: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
         self.token_account_authority = Some(token_account_authority);
-        self
-    }
-    /// Validator vote account
-    #[inline(always)]
-    pub fn validator_vote(&mut self, validator_vote: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.validator_vote = Some(validator_vote);
         self
     }
     /// Stake Token Mint
@@ -226,7 +212,6 @@ impl StakeTokensBuilder {
             token_account_authority: self
                 .token_account_authority
                 .expect("token_account_authority is not set"),
-            validator_vote: self.validator_vote.expect("validator_vote is not set"),
             mint: self.mint.expect("mint is not set"),
             vault: self.vault.expect("vault is not set"),
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
@@ -251,8 +236,6 @@ pub struct StakeTokensCpiAccounts<'a, 'b> {
     pub source_token_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// Owner or delegate of the token account
     pub token_account_authority: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator vote account
-    pub validator_vote: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake Token Mint
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake token Vault
@@ -273,8 +256,6 @@ pub struct StakeTokensCpi<'a, 'b> {
     pub source_token_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// Owner or delegate of the token account
     pub token_account_authority: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator vote account
-    pub validator_vote: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake Token Mint
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake token Vault
@@ -297,7 +278,6 @@ impl<'a, 'b> StakeTokensCpi<'a, 'b> {
             stake: accounts.stake,
             source_token_account: accounts.source_token_account,
             token_account_authority: accounts.token_account_authority,
-            validator_vote: accounts.validator_vote,
             mint: accounts.mint,
             vault: accounts.vault,
             token_program: accounts.token_program,
@@ -337,7 +317,7 @@ impl<'a, 'b> StakeTokensCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(8 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.config.key,
             false,
@@ -353,10 +333,6 @@ impl<'a, 'b> StakeTokensCpi<'a, 'b> {
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.token_account_authority.key,
             true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.validator_vote.key,
-            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.mint.key,
@@ -386,13 +362,12 @@ impl<'a, 'b> StakeTokensCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(8 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(7 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.config.clone());
         account_infos.push(self.stake.clone());
         account_infos.push(self.source_token_account.clone());
         account_infos.push(self.token_account_authority.clone());
-        account_infos.push(self.validator_vote.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.vault.clone());
         account_infos.push(self.token_program.clone());
@@ -416,10 +391,9 @@ impl<'a, 'b> StakeTokensCpi<'a, 'b> {
 ///   1. `[writable]` stake
 ///   2. `[writable]` source_token_account
 ///   3. `[signer]` token_account_authority
-///   4. `[]` validator_vote
-///   5. `[]` mint
-///   6. `[writable]` vault
-///   7. `[]` token_program
+///   4. `[]` mint
+///   5. `[writable]` vault
+///   6. `[]` token_program
 #[derive(Clone, Debug)]
 pub struct StakeTokensCpiBuilder<'a, 'b> {
     instruction: Box<StakeTokensCpiBuilderInstruction<'a, 'b>>,
@@ -433,7 +407,6 @@ impl<'a, 'b> StakeTokensCpiBuilder<'a, 'b> {
             stake: None,
             source_token_account: None,
             token_account_authority: None,
-            validator_vote: None,
             mint: None,
             vault: None,
             token_program: None,
@@ -473,15 +446,6 @@ impl<'a, 'b> StakeTokensCpiBuilder<'a, 'b> {
         token_account_authority: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.token_account_authority = Some(token_account_authority);
-        self
-    }
-    /// Validator vote account
-    #[inline(always)]
-    pub fn validator_vote(
-        &mut self,
-        validator_vote: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.validator_vote = Some(validator_vote);
         self
     }
     /// Stake Token Mint
@@ -571,11 +535,6 @@ impl<'a, 'b> StakeTokensCpiBuilder<'a, 'b> {
                 .token_account_authority
                 .expect("token_account_authority is not set"),
 
-            validator_vote: self
-                .instruction
-                .validator_vote
-                .expect("validator_vote is not set"),
-
             mint: self.instruction.mint.expect("mint is not set"),
 
             vault: self.instruction.vault.expect("vault is not set"),
@@ -600,7 +559,6 @@ struct StakeTokensCpiBuilderInstruction<'a, 'b> {
     stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     source_token_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_account_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    validator_vote: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
