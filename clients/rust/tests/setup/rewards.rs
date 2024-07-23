@@ -88,7 +88,11 @@ pub async fn create_holder_rewards_pool(
         context.last_blockhash,
     );
 
-    context.banks_client.process_transaction(tx).await.unwrap();
+    context
+        .banks_client
+        .process_transaction_with_metadata(tx)
+        .await
+        .unwrap();
 
     holder_rewards_pool
 }
@@ -125,7 +129,11 @@ pub async fn create_holder_rewards(
         context.last_blockhash,
     );
 
-    context.banks_client.process_transaction(tx).await.unwrap();
+    context
+        .banks_client
+        .process_transaction_with_metadata(tx)
+        .await
+        .unwrap();
 
     holder_rewards
 }
