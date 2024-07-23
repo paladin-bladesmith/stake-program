@@ -103,7 +103,7 @@ async fn slash() {
     let config = Config::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(config.token_amount_delegated, 50);
 
-    // And the slhed stake account has no tokens.
+    // And the slashed stake account has no tokens.
 
     let account = get_account!(context, stake_manager.stake);
     let stake = Stake::from_bytes(account.data.as_ref()).unwrap();
@@ -186,7 +186,7 @@ async fn fail_slash_with_zero_amount() {
 }
 
 #[tokio::test]
-async fn fail_slash_with_no_staked_amount() {
+async fn slash_with_no_staked_amount() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -221,7 +221,7 @@ async fn fail_slash_with_no_staked_amount() {
     .await
     .unwrap();
 
-    // When we try to slash 50 tokens from the stake account without staked tokens.
+    // When we slash 50 tokens from the stake account without staked tokens.
 
     let slash_ix = SlashBuilder::new()
         .config(config_manager.config)
@@ -240,15 +240,14 @@ async fn fail_slash_with_no_staked_amount() {
         &[&context.payer, &config_manager.authority],
         context.last_blockhash,
     );
-    let err = context
-        .banks_client
-        .process_transaction(tx)
-        .await
-        .unwrap_err();
+    context.banks_client.process_transaction(tx).await.unwrap();
 
-    // Then we expect an error.
+    // Then the slash is successful but not token is burned.
 
-    assert_custom_error!(err, PaladinStakeProgramError::InsufficientStakeAmount);
+    let account = get_account!(context, config_manager.vault);
+    let vault =
+        StateWithExtensions::<spl_token_2022::state::Account>::unpack(&account.data).unwrap();
+    assert_eq!(vault.base.amount, 100);
 }
 
 #[tokio::test]
@@ -670,4 +669,167 @@ async fn fail_slash_with_wrong_config_account() {
     // Then we expect an error.
 
     assert_instruction_error!(err, InstructionError::InvalidSeeds);
+}
+
+#[tokio::test]
+async fn slash_using_inactive_amount() {
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
+
+    // Given a config and stake accounts.
+
+    let config_manager = ConfigManager::new(&mut context).await;
+    let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
+
+    // And we set 100 tokens to the vault account.
+
+    let mut account = get_account!(context, config_manager.config);
+    let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
+    // "manually" set the total amount delegated
+    config_account.token_amount_delegated = 100;
+    account.data = config_account.try_to_vec().unwrap();
+    context.set_account(&config_manager.config, &account.into());
+
+    mint_to(
+        &mut context,
+        &config_manager.mint,
+        &config_manager.mint_authority,
+        &config_manager.vault,
+        100,
+        0,
+    )
+    .await
+    .unwrap();
+
+    // And we set 100 tokens to the stake account (50 staked and 50 inactive).
+
+    let mut account = get_account!(context, stake_manager.stake);
+    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    // "manually" set the amount to 50 and inactive amount to 50
+    stake_account.amount = 50;
+    stake_account.inactive_amount = 50;
+
+    account.data = stake_account.try_to_vec().unwrap();
+    context.set_account(&stake_manager.stake, &account.into());
+
+    // When we slash 100 tokens from the stake account.
+
+    let slash_ix = SlashBuilder::new()
+        .config(config_manager.config)
+        .stake(stake_manager.stake)
+        .slash_authority(config_manager.authority.pubkey())
+        .vault(config_manager.vault)
+        .mint(config_manager.mint)
+        .vault_authority(find_vault_pda(&config_manager.config).0)
+        .token_program(spl_token_2022::ID)
+        .amount(100) // <- 100 tokens
+        .instruction();
+
+    let tx = Transaction::new_signed_with_payer(
+        &[slash_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, &config_manager.authority],
+        context.last_blockhash,
+    );
+    context.banks_client.process_transaction(tx).await.unwrap();
+
+    // Then all tokens are burned.
+
+    let account = get_account!(context, config_manager.vault);
+    let vault =
+        StateWithExtensions::<spl_token_2022::state::Account>::unpack(&account.data).unwrap();
+    assert_eq!(vault.base.amount, 0);
+
+    // And the config account has no tokens delegated.
+
+    let account = get_account!(context, config_manager.config);
+    let config = Config::from_bytes(account.data.as_ref()).unwrap();
+    assert_eq!(config.token_amount_delegated, 0);
+
+    // And the slashed stake account has no tokens.
+
+    let account = get_account!(context, stake_manager.stake);
+    let stake = Stake::from_bytes(account.data.as_ref()).unwrap();
+    assert_eq!(stake.amount, 0);
+    assert_eq!(stake.inactive_amount, 0);
+}
+
+#[tokio::test]
+async fn fail_slash_with_insufficient_total_amount_delegated() {
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
+
+    // Given a config and stake accounts.
+
+    let config_manager = ConfigManager::new(&mut context).await;
+    let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
+
+    // And we set 50 tokens to the vault account.
+
+    let mut account = get_account!(context, config_manager.config);
+    let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
+    // "manually" set the total amount delegated
+    config_account.token_amount_delegated = 50;
+    account.data = config_account.try_to_vec().unwrap();
+    context.set_account(&config_manager.config, &account.into());
+
+    mint_to(
+        &mut context,
+        &config_manager.mint,
+        &config_manager.mint_authority,
+        &config_manager.vault,
+        50,
+        0,
+    )
+    .await
+    .unwrap();
+
+    // And we set 100 tokens to the stake account (50 staked and 50 inactive).
+
+    let mut account = get_account!(context, stake_manager.stake);
+    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    // "manually" set the amount to 100
+    stake_account.amount = 100;
+
+    account.data = stake_account.try_to_vec().unwrap();
+    context.set_account(&stake_manager.stake, &account.into());
+
+    // When we try to slash 100 tokens from the stake account.
+
+    let slash_ix = SlashBuilder::new()
+        .config(config_manager.config)
+        .stake(stake_manager.stake)
+        .slash_authority(config_manager.authority.pubkey())
+        .vault(config_manager.vault)
+        .mint(config_manager.mint)
+        .vault_authority(find_vault_pda(&config_manager.config).0)
+        .token_program(spl_token_2022::ID)
+        .amount(100) // <- 100 tokens
+        .instruction();
+
+    let tx = Transaction::new_signed_with_payer(
+        &[slash_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, &config_manager.authority],
+        context.last_blockhash,
+    );
+    let err = context
+        .banks_client
+        .process_transaction(tx)
+        .await
+        .unwrap_err();
+
+    // Then we expect an error since there are not enough delegated tokens.
+
+    assert_custom_error!(err, PaladinStakeProgramError::InsufficientStakeAmount);
 }
