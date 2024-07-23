@@ -147,12 +147,18 @@ pub fn process_slash(
         "mint"
     );
 
-    // Update the stake amount on both stake and config accounts.
+    // Update the stake amount on both stake and config accounts:
     //
-    // The amount slashed is taken from the active stake first; in case
-    // the amount is not enough, the remaining is then taken from the inactive
-    // stake; if the inactive stake is not enough, the remaining is ignored
-    // and the stake account is left with 0 amount.
+    //   1. the amount slashed is taken from the active amount first;
+    //
+    //   2. in case the amount is not enough, the remaining is taken from
+    //      the inactive amount;
+    //
+    //   3. if the inactive stake is not enough, the remaining is taken
+    //      from the deactivating amount;
+    //
+    //   4. if still not enough, the remaining is ignored and the stake
+    //      account is left with 0 amount.
 
     require!(
         amount > 0,
@@ -171,15 +177,32 @@ pub fn process_slash(
 
     if remaining > 0 && stake.inactive_amount > 0 {
         let remaining = min(remaining, stake.inactive_amount);
-        msg!(
-            "Insufficient active tokens (slashing {} inactive stake tokens)",
-            remaining
-        );
+        msg!("+ slashing {} inactive stake tokens", remaining);
 
         stake.inactive_amount = stake
             .inactive_amount
             .checked_sub(remaining)
             .ok_or(ProgramError::ArithmeticOverflow)?;
+
+        slash_amount = slash_amount.saturating_add(remaining);
+    }
+
+    let remaining = amount.saturating_sub(slash_amount);
+
+    if remaining > 0 && stake.deactivating_amount > 0 {
+        let remaining = min(remaining, stake.deactivating_amount);
+        msg!("+ slashing {} deactivating stake tokens", remaining);
+
+        stake.deactivating_amount = stake
+            .deactivating_amount
+            .checked_sub(remaining)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
+
+        if stake.deactivating_amount == 0 {
+            // if there are no more deactivating tokens, clear the
+            // deactivation timestamp
+            stake.deactivation_timestamp = None;
+        }
 
         slash_amount = slash_amount.saturating_add(remaining);
     }
@@ -203,7 +226,7 @@ pub fn process_slash(
 
     if amount > slash_amount {
         // The amount to slash was greater than the amount available on the
-        // stake account (active and inactive).
+        // stake account (active, inactive and deactivating).
         msg!(
             "Slash amount greater than available tokens on stake account ({} required, {} available)",
             amount,
@@ -211,7 +234,7 @@ pub fn process_slash(
         );
     }
 
-    // Burn the tokens from the vault account (is there are tokens to slash).
+    // Burn the tokens from the vault account (if there are tokens to slash).
 
     if slash_amount > 0 {
         let mint_data = ctx.accounts.mint.try_borrow_data()?;
