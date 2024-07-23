@@ -114,7 +114,7 @@ pub fn process_slash(
     // vault authority
     // - derivation must match
 
-    let signer_bump = [config.signer_bump];
+    let signer_bump = [config.vault_authority_bump];
     let derivation = create_vault_pda(ctx.accounts.config.key, &signer_bump, program_id)?;
 
     require!(
@@ -187,7 +187,7 @@ pub fn process_slash(
     drop(mint_data);
     drop(vault_data);
 
-    let transfer_ix = burn_checked(
+    let burn_ix = burn_checked(
         ctx.accounts.token_program.key,
         ctx.accounts.vault.key,
         ctx.accounts.mint.key,
@@ -198,7 +198,7 @@ pub fn process_slash(
     )?;
 
     invoke_signed(
-        &transfer_ix,
+        &burn_ix,
         &[
             ctx.accounts.token_program.clone(),
             ctx.accounts.vault.clone(),
