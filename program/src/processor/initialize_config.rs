@@ -73,7 +73,7 @@ pub fn process_initialize_config(
     // unpack checks if the token account is initialized
     let vault = PodStateWithExtensions::<PodAccount>::unpack(&vault_data)?;
 
-    let (vault_signer, signer_bump) = find_vault_pda(ctx.accounts.config.key, program_id);
+    let (vault_signer, vault_authority_bump) = find_vault_pda(ctx.accounts.config.key, program_id);
 
     require!(
         vault.base.owner == vault_signer,
@@ -157,9 +157,8 @@ pub fn process_initialize_config(
         *ctx.accounts.vault.key,
         cooldown_time_seconds,
         max_deactivation_basis_points,
-        vault_authority_bump: signer_bump,
-        ..Config::default()
-    };
+        vault_authority_bump,
+    );
 
     Ok(())
 }

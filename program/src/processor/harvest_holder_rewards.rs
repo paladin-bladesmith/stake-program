@@ -136,7 +136,7 @@ pub fn process_harvest_holder_rewards(
     // vault authority
     // - derivation must match
 
-    let signer_bump = [config.signer_bump];
+    let signer_bump = [config.vault_authority_bump];
     let vault_signer = create_vault_pda(ctx.accounts.config.key, &signer_bump, program_id)?;
 
     require!(
@@ -196,7 +196,6 @@ pub fn process_harvest_holder_rewards(
             &[],
         )?;
 
-        let signer_bump = [config.signer_bump];
         let signer_seeds = get_vault_pda_signer_seeds(ctx.accounts.config.key, &signer_bump);
         // Stores the current lamports of the vault authority account before the withdraw so
         // we can calculate the amount of rewards withdrawn.

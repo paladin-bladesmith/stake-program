@@ -62,7 +62,7 @@ impl Config {
         vault: Pubkey,
         cooldown_time_seconds: u64,
         max_deactivation_basis_points: u16,
-        signer_bump: u8,
+        vault_authority_bump: u8,
     ) -> Self {
         Self {
             discriminator: Config::SPL_DISCRIMINATOR.into(),
@@ -73,7 +73,7 @@ impl Config {
             token_amount_delegated: 0,
             accumulated_stake_rewards_per_token: U128_DEFAULT,
             max_deactivation_basis_points,
-            signer_bump,
+            vault_authority_bump,
             _padding: [0; 5],
         }
     }
