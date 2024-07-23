@@ -1,5 +1,8 @@
+use std::cmp::min;
+
 use solana_program::{
-    entrypoint::ProgramResult, program::invoke_signed, program_error::ProgramError, pubkey::Pubkey,
+    entrypoint::ProgramResult, msg, program::invoke_signed, program_error::ProgramError,
+    pubkey::Pubkey,
 };
 use spl_token_2022::{
     extension::PodStateWithExtensions,
@@ -147,30 +150,11 @@ pub fn process_slash(
     );
 
     // Update the stake amount on both stake and config accounts.
-
-    require!(
-        stake.amount >= amount,
-        StakeError::InsufficientStakeAmount,
-        "stake"
-    );
-
-    stake.amount = stake
-        .amount
-        .checked_sub(amount)
-        .ok_or(ProgramError::ArithmeticOverflow)?;
-
-    require!(
-        config.token_amount_delegated >= amount,
-        StakeError::InsufficientStakeAmount,
-        "config"
-    );
-
-    config.token_amount_delegated = config
-        .token_amount_delegated
-        .checked_sub(amount)
-        .ok_or(ProgramError::ArithmeticOverflow)?;
-
-    // Validates the amount of tokens to burn.
+    //
+    // The amount slashed is taken from the active stake first; in case
+    // the amount is not enough, the remaining is then taken from the inactive
+    // stake; if the inactive stake is not enough, the remaining is ignored
+    // and the stake account is left with 0 amount.
 
     require!(
         amount > 0,
@@ -178,33 +162,88 @@ pub fn process_slash(
         "amount must be greater than 0"
     );
 
-    // Burn the tokens from the vault account.
+    let mut slash_amount = min(amount, stake.amount);
 
-    let mint_data = ctx.accounts.mint.try_borrow_data()?;
-    let mint = PodStateWithExtensions::<PodMint>::unpack(&mint_data)?;
-    let decimals = mint.base.decimals;
+    stake.amount = stake
+        .amount
+        .checked_sub(slash_amount)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
 
-    drop(mint_data);
-    drop(vault_data);
+    let remaining = amount.saturating_sub(slash_amount);
 
-    let burn_ix = burn_checked(
-        ctx.accounts.token_program.key,
-        ctx.accounts.vault.key,
-        ctx.accounts.mint.key,
-        ctx.accounts.vault_authority.key,
-        &[],
-        amount,
-        decimals,
-    )?;
+    if remaining > 0 && stake.inactive_amount > 0 {
+        let remaining = min(remaining, stake.inactive_amount);
+        msg!(
+            "Insufficient active tokens (slashing {} inactive stake tokens)",
+            remaining
+        );
 
-    invoke_signed(
-        &burn_ix,
-        &[
-            ctx.accounts.token_program.clone(),
-            ctx.accounts.vault.clone(),
-            ctx.accounts.mint.clone(),
-            ctx.accounts.vault_authority.clone(),
-        ],
-        &[&signer_seeds],
-    )
+        stake.inactive_amount = stake
+            .inactive_amount
+            .checked_sub(remaining)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
+
+        slash_amount = slash_amount.saturating_add(remaining);
+    }
+
+    // Update the token amount delegated on the config account.
+    //
+    // The instruction will fail if the amount to slash is greater than the
+    // total amount delegated (it should never happen).
+    require!(
+        config.token_amount_delegated >= slash_amount,
+        StakeError::InsufficientStakeAmount,
+        "insufficient total amount delegated on config account ({} required, {} delegated)",
+        slash_amount,
+        config.token_amount_delegated
+    );
+
+    config.token_amount_delegated = config
+        .token_amount_delegated
+        .checked_sub(slash_amount)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
+
+    if amount > slash_amount {
+        // The amount to slash was greater than the amount available on the
+        // stake account (active and inactive).
+        msg!(
+            "Slash amount greater than available tokens on stake account ({} required, {} available)",
+            amount,
+            slash_amount,
+        );
+    }
+
+    // Burn the tokens from the vault account (is there are tokens to slash).
+
+    if slash_amount > 0 {
+        let mint_data = ctx.accounts.mint.try_borrow_data()?;
+        let mint = PodStateWithExtensions::<PodMint>::unpack(&mint_data)?;
+        let decimals = mint.base.decimals;
+
+        drop(mint_data);
+        drop(vault_data);
+
+        let burn_ix = burn_checked(
+            ctx.accounts.token_program.key,
+            ctx.accounts.vault.key,
+            ctx.accounts.mint.key,
+            ctx.accounts.vault_authority.key,
+            &[],
+            slash_amount,
+            decimals,
+        )?;
+
+        invoke_signed(
+            &burn_ix,
+            &[
+                ctx.accounts.token_program.clone(),
+                ctx.accounts.vault.clone(),
+                ctx.accounts.mint.clone(),
+                ctx.accounts.vault_authority.clone(),
+            ],
+            &[&signer_seeds],
+        )?;
+    }
+
+    Ok(())
 }
