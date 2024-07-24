@@ -833,7 +833,7 @@ async fn fail_slash_with_insufficient_total_amount_delegated() {
 
     // Then we expect an error since there are not enough delegated tokens.
 
-    assert_custom_error!(err, PaladinStakeProgramError::InsufficientStakeAmount);
+    assert_custom_error!(err, PaladinStakeProgramError::InvalidSlashAmount);
 }
 
 #[tokio::test]
