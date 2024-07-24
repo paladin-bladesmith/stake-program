@@ -80,6 +80,10 @@ pub enum StakeError {
     /// 17 - Not enough inactivated tokens
     #[error("Not enough inactivated tokens")]
     NotEnoughInactivatedTokens,
+
+    /// 18 - Invalid destination account
+    #[error("Invalid destination account")]
+    InvalidDestinationAccount,
 }
 
 impl PrintProgramError for StakeError {

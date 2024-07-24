@@ -267,19 +267,19 @@
           ]
         },
         {
-          "name": "destinationTokenAccount",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Destination token account"
-          ]
-        },
-        {
           "name": "mint",
           "isMut": false,
           "isSigner": false,
           "docs": [
             "Stake Token Mint"
+          ]
+        },
+        {
+          "name": "destinationTokenAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Destination token account"
           ]
         },
         {
@@ -867,6 +867,11 @@
       "code": 17,
       "name": "NotEnoughInactivatedTokens",
       "msg": "Not enough inactivated tokens"
+    },
+    {
+      "code": 18,
+      "name": "InvalidDestinationAccount",
+      "msg": "Invalid destination account"
     }
   ],
   "metadata": {

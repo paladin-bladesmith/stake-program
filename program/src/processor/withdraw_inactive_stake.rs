@@ -121,6 +121,12 @@ pub fn process_withdraw_inactive_stake<'a>(
         StakeError::IncorrectVaultAccount,
     );
 
+    require!(
+        ctx.accounts.vault.key != ctx.accounts.destination_token_account.key,
+        StakeError::InvalidDestinationAccount,
+        "vault matches destination token account"
+    );
+
     let vault_data = ctx.accounts.vault.try_borrow_data()?;
     // unpack to validate the mint
     let vault = PodStateWithExtensions::<PodAccount>::unpack(&vault_data)?;
