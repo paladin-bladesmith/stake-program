@@ -193,14 +193,14 @@ pub enum StakeInstruction {
     )]
     #[account(
         3,
-        writable,
-        name = "destination_token_account",
-        desc = "Destination token account"
+        name = "mint",
+        desc = "Stake Token Mint"
     )]
     #[account(
         4,
-        name = "mint",
-        desc = "Stake Token Mint"
+        writable,
+        name = "destination_token_account",
+        desc = "Destination token account"
     )]
     #[account(
         5,
