@@ -275,11 +275,11 @@
           ]
         },
         {
-          "name": "destinationTokenAccount",
-          "isMut": true,
+          "name": "mint",
+          "isMut": false,
           "isSigner": false,
           "docs": [
-            "Destination token account"
+            "Stake Token Mint"
           ]
         },
         {
@@ -288,6 +288,14 @@
           "isSigner": false,
           "docs": [
             "Stake Token Mint"
+          ]
+        },
+        {
+          "name": "destinationTokenAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Destination token account"
           ]
         },
         {
