@@ -120,7 +120,7 @@ pub struct WithdrawInactiveStakeInstructionArgs {
 ///   4. `[writable]` destination_token_account
 ///   5. `[signer]` stake_authority
 ///   6. `[]` vault_authority
-///   7. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   7. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
 #[derive(Clone, Debug, Default)]
 pub struct WithdrawInactiveStakeBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
@@ -190,7 +190,7 @@ impl WithdrawInactiveStakeBuilder {
         self.vault_authority = Some(vault_authority);
         self
     }
-    /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
+    /// `[optional account, default to 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb']`
     /// Token program
     #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
@@ -233,7 +233,7 @@ impl WithdrawInactiveStakeBuilder {
             stake_authority: self.stake_authority.expect("stake_authority is not set"),
             vault_authority: self.vault_authority.expect("vault_authority is not set"),
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
-                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
             )),
         };
         let args = WithdrawInactiveStakeInstructionArgs {

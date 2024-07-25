@@ -28,6 +28,8 @@ pub struct HarvestHolderRewards {
     pub mint: solana_program::pubkey::Pubkey,
     /// Token program
     pub token_program: solana_program::pubkey::Pubkey,
+    /// System program
+    pub system_program: solana_program::pubkey::Pubkey,
 }
 
 impl HarvestHolderRewards {
@@ -39,7 +41,7 @@ impl HarvestHolderRewards {
         &self,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.config,
             false,
@@ -62,7 +64,7 @@ impl HarvestHolderRewards {
             self.stake_authority,
             true,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             self.vault_authority,
             false,
         ));
@@ -71,6 +73,10 @@ impl HarvestHolderRewards {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.token_program,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.system_program,
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
@@ -113,9 +119,10 @@ impl Default for HarvestHolderRewardsInstructionData {
 ///   3. `[]` holder_rewards
 ///   4. `[writable]` destination
 ///   5. `[signer]` stake_authority
-///   6. `[]` vault_authority
+///   6. `[writable]` vault_authority
 ///   7. `[]` mint
-///   8. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   8. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
+///   9. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct HarvestHolderRewardsBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
@@ -127,6 +134,7 @@ pub struct HarvestHolderRewardsBuilder {
     vault_authority: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
+    system_program: Option<solana_program::pubkey::Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -188,11 +196,18 @@ impl HarvestHolderRewardsBuilder {
         self.mint = Some(mint);
         self
     }
-    /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
+    /// `[optional account, default to 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb']`
     /// Token program
     #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
         self.token_program = Some(token_program);
+        self
+    }
+    /// `[optional account, default to '11111111111111111111111111111111']`
+    /// System program
+    #[inline(always)]
+    pub fn system_program(&mut self, system_program: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.system_program = Some(system_program);
         self
     }
     /// Add an aditional account to the instruction.
@@ -225,8 +240,11 @@ impl HarvestHolderRewardsBuilder {
             vault_authority: self.vault_authority.expect("vault_authority is not set"),
             mint: self.mint.expect("mint is not set"),
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
-                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
             )),
+            system_program: self
+                .system_program
+                .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
         };
 
         accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)
@@ -253,6 +271,8 @@ pub struct HarvestHolderRewardsCpiAccounts<'a, 'b> {
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// Token program
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
+    /// System program
+    pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `harvest_holder_rewards` CPI instruction.
@@ -277,6 +297,8 @@ pub struct HarvestHolderRewardsCpi<'a, 'b> {
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// Token program
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
+    /// System program
+    pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 impl<'a, 'b> HarvestHolderRewardsCpi<'a, 'b> {
@@ -295,6 +317,7 @@ impl<'a, 'b> HarvestHolderRewardsCpi<'a, 'b> {
             vault_authority: accounts.vault_authority,
             mint: accounts.mint,
             token_program: accounts.token_program,
+            system_program: accounts.system_program,
         }
     }
     #[inline(always)]
@@ -330,7 +353,7 @@ impl<'a, 'b> HarvestHolderRewardsCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.config.key,
             false,
@@ -355,7 +378,7 @@ impl<'a, 'b> HarvestHolderRewardsCpi<'a, 'b> {
             *self.stake_authority.key,
             true,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             *self.vault_authority.key,
             false,
         ));
@@ -365,6 +388,10 @@ impl<'a, 'b> HarvestHolderRewardsCpi<'a, 'b> {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.token_program.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.system_program.key,
             false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
@@ -383,7 +410,7 @@ impl<'a, 'b> HarvestHolderRewardsCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(9 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(10 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.config.clone());
         account_infos.push(self.stake.clone());
@@ -394,6 +421,7 @@ impl<'a, 'b> HarvestHolderRewardsCpi<'a, 'b> {
         account_infos.push(self.vault_authority.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.token_program.clone());
+        account_infos.push(self.system_program.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -416,9 +444,10 @@ impl<'a, 'b> HarvestHolderRewardsCpi<'a, 'b> {
 ///   3. `[]` holder_rewards
 ///   4. `[writable]` destination
 ///   5. `[signer]` stake_authority
-///   6. `[]` vault_authority
+///   6. `[writable]` vault_authority
 ///   7. `[]` mint
 ///   8. `[]` token_program
+///   9. `[]` system_program
 #[derive(Clone, Debug)]
 pub struct HarvestHolderRewardsCpiBuilder<'a, 'b> {
     instruction: Box<HarvestHolderRewardsCpiBuilderInstruction<'a, 'b>>,
@@ -437,6 +466,7 @@ impl<'a, 'b> HarvestHolderRewardsCpiBuilder<'a, 'b> {
             vault_authority: None,
             mint: None,
             token_program: None,
+            system_program: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -511,6 +541,15 @@ impl<'a, 'b> HarvestHolderRewardsCpiBuilder<'a, 'b> {
         token_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.token_program = Some(token_program);
+        self
+    }
+    /// System program
+    #[inline(always)]
+    pub fn system_program(
+        &mut self,
+        system_program: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.system_program = Some(system_program);
         self
     }
     /// Add an additional account to the instruction.
@@ -589,6 +628,11 @@ impl<'a, 'b> HarvestHolderRewardsCpiBuilder<'a, 'b> {
                 .instruction
                 .token_program
                 .expect("token_program is not set"),
+
+            system_program: self
+                .instruction
+                .system_program
+                .expect("system_program is not set"),
         };
         instruction.invoke_signed_with_remaining_accounts(
             signers_seeds,
@@ -609,6 +653,7 @@ struct HarvestHolderRewardsCpiBuilderInstruction<'a, 'b> {
     vault_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

@@ -40,6 +40,19 @@ kinobi.update(
   ])
 );
 
+// Set default account values accross multiple instructions.
+kinobi.update(
+  k.setInstructionAccountDefaultValuesVisitor([
+    {
+      account: "tokenProgram",
+      defaultValue: k.publicKeyValueNode(
+        "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+        "spl-token-2022"
+      ),
+    },
+  ])
+);
+
 // Add missing types from the IDL.
 kinobi.update(
   k.bottomUpTransformerVisitor([
@@ -89,6 +102,28 @@ kinobi.update(
         return {
           ...node,
           type: k.definedTypeLinkNode("nullableU64", "hooked"),
+        };
+      },
+    },
+    {
+      // [u8; 16] -> u128
+      select: (node) => {
+        const names = [
+          "lastSeenHolderRewardsPerToken",
+          "lastSeenStakeRewardsPerToken",
+          "accumulatedStakeRewardsPerToken",
+        ];
+        return (
+          names.includes(node.name) &&
+          k.isNode(node, "structFieldTypeNode") &&
+          k.isNode(node.type, "arrayTypeNode")
+        );
+      },
+      transform: (node) => {
+        k.assertIsNode(node, "structFieldTypeNode");
+        return {
+          ...node,
+          type: k.numberTypeNode("u128"),
         };
       },
     },
@@ -153,7 +188,7 @@ kinobi.update(
       size: 136,
     },
     stake: {
-      size: 120,
+      size: 136,
     },
   })
 );

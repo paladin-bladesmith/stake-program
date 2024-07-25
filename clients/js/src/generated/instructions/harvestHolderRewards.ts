@@ -42,7 +42,10 @@ export type HarvestHolderRewardsInstruction<
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
-    | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    | IAccountMeta<string> = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
+  TAccountSystemProgram extends
+    | string
+    | IAccountMeta<string> = '11111111111111111111111111111111',
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -68,7 +71,7 @@ export type HarvestHolderRewardsInstruction<
             IAccountSignerMeta<TAccountStakeAuthority>
         : TAccountStakeAuthority,
       TAccountVaultAuthority extends string
-        ? ReadonlyAccount<TAccountVaultAuthority>
+        ? WritableAccount<TAccountVaultAuthority>
         : TAccountVaultAuthority,
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
@@ -76,6 +79,9 @@ export type HarvestHolderRewardsInstruction<
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
+      TAccountSystemProgram extends string
+        ? ReadonlyAccount<TAccountSystemProgram>
+        : TAccountSystemProgram,
       ...TRemainingAccounts,
     ]
   >;
@@ -115,6 +121,7 @@ export type HarvestHolderRewardsInput<
   TAccountVaultAuthority extends string = string,
   TAccountMint extends string = string,
   TAccountTokenProgram extends string = string,
+  TAccountSystemProgram extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
@@ -134,6 +141,8 @@ export type HarvestHolderRewardsInput<
   mint: Address<TAccountMint>;
   /** Token program */
   tokenProgram?: Address<TAccountTokenProgram>;
+  /** System program */
+  systemProgram?: Address<TAccountSystemProgram>;
 };
 
 export function getHarvestHolderRewardsInstruction<
@@ -146,6 +155,7 @@ export function getHarvestHolderRewardsInstruction<
   TAccountVaultAuthority extends string,
   TAccountMint extends string,
   TAccountTokenProgram extends string,
+  TAccountSystemProgram extends string,
 >(
   input: HarvestHolderRewardsInput<
     TAccountConfig,
@@ -156,7 +166,8 @@ export function getHarvestHolderRewardsInstruction<
     TAccountStakeAuthority,
     TAccountVaultAuthority,
     TAccountMint,
-    TAccountTokenProgram
+    TAccountTokenProgram,
+    TAccountSystemProgram
   >
 ): HarvestHolderRewardsInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
@@ -168,7 +179,8 @@ export function getHarvestHolderRewardsInstruction<
   TAccountStakeAuthority,
   TAccountVaultAuthority,
   TAccountMint,
-  TAccountTokenProgram
+  TAccountTokenProgram,
+  TAccountSystemProgram
 > {
   // Program address.
   const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
@@ -181,9 +193,10 @@ export function getHarvestHolderRewardsInstruction<
     holderRewards: { value: input.holderRewards ?? null, isWritable: false },
     destination: { value: input.destination ?? null, isWritable: true },
     stakeAuthority: { value: input.stakeAuthority ?? null, isWritable: false },
-    vaultAuthority: { value: input.vaultAuthority ?? null, isWritable: false },
+    vaultAuthority: { value: input.vaultAuthority ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -193,7 +206,11 @@ export function getHarvestHolderRewardsInstruction<
   // Resolve default values.
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
-      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
+      'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' as Address<'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'>;
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
@@ -208,6 +225,7 @@ export function getHarvestHolderRewardsInstruction<
       getAccountMeta(accounts.vaultAuthority),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
     data: getHarvestHolderRewardsInstructionDataEncoder().encode({}),
@@ -221,7 +239,8 @@ export function getHarvestHolderRewardsInstruction<
     TAccountStakeAuthority,
     TAccountVaultAuthority,
     TAccountMint,
-    TAccountTokenProgram
+    TAccountTokenProgram,
+    TAccountSystemProgram
   >;
 
   return instruction;
@@ -251,6 +270,8 @@ export type ParsedHarvestHolderRewardsInstruction<
     mint: TAccountMetas[7];
     /** Token program */
     tokenProgram: TAccountMetas[8];
+    /** System program */
+    systemProgram: TAccountMetas[9];
   };
   data: HarvestHolderRewardsInstructionData;
 };
@@ -263,7 +284,7 @@ export function parseHarvestHolderRewardsInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedHarvestHolderRewardsInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 9) {
+  if (instruction.accounts.length < 10) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -285,6 +306,7 @@ export function parseHarvestHolderRewardsInstruction<
       vaultAuthority: getNextAccount(),
       mint: getNextAccount(),
       tokenProgram: getNextAccount(),
+      systemProgram: getNextAccount(),
     },
     data: getHarvestHolderRewardsInstructionDataDecoder().decode(
       instruction.data
