@@ -37,6 +37,7 @@ export type WithdrawInactiveStakeInstruction<
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountStake extends string | IAccountMeta<string> = string,
   TAccountVault extends string | IAccountMeta<string> = string,
+  TAccountMint extends string | IAccountMeta<string> = string,
   TAccountDestinationTokenAccount extends
     | string
     | IAccountMeta<string> = string,
@@ -59,6 +60,9 @@ export type WithdrawInactiveStakeInstruction<
       TAccountVault extends string
         ? WritableAccount<TAccountVault>
         : TAccountVault,
+      TAccountMint extends string
+        ? ReadonlyAccount<TAccountMint>
+        : TAccountMint,
       TAccountDestinationTokenAccount extends string
         ? WritableAccount<TAccountDestinationTokenAccount>
         : TAccountDestinationTokenAccount,
@@ -78,18 +82,18 @@ export type WithdrawInactiveStakeInstruction<
 
 export type WithdrawInactiveStakeInstructionData = {
   discriminator: number;
-  args: bigint;
+  amount: bigint;
 };
 
 export type WithdrawInactiveStakeInstructionDataArgs = {
-  args: number | bigint;
+  amount: number | bigint;
 };
 
 export function getWithdrawInactiveStakeInstructionDataEncoder(): Encoder<WithdrawInactiveStakeInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
-      ['args', getU64Encoder()],
+      ['amount', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: 5 })
   );
@@ -98,7 +102,7 @@ export function getWithdrawInactiveStakeInstructionDataEncoder(): Encoder<Withdr
 export function getWithdrawInactiveStakeInstructionDataDecoder(): Decoder<WithdrawInactiveStakeInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
-    ['args', getU64Decoder()],
+    ['amount', getU64Decoder()],
   ]);
 }
 
@@ -116,6 +120,7 @@ export type WithdrawInactiveStakeInput<
   TAccountConfig extends string = string,
   TAccountStake extends string = string,
   TAccountVault extends string = string,
+  TAccountMint extends string = string,
   TAccountDestinationTokenAccount extends string = string,
   TAccountStakeAuthority extends string = string,
   TAccountVaultAuthority extends string = string,
@@ -127,6 +132,8 @@ export type WithdrawInactiveStakeInput<
   stake: Address<TAccountStake>;
   /** Vault token account */
   vault: Address<TAccountVault>;
+  /** Stake Token Mint */
+  mint: Address<TAccountMint>;
   /** Destination token account */
   destinationTokenAccount: Address<TAccountDestinationTokenAccount>;
   /** Stake authority */
@@ -135,13 +142,14 @@ export type WithdrawInactiveStakeInput<
   vaultAuthority: Address<TAccountVaultAuthority>;
   /** Token program */
   tokenProgram?: Address<TAccountTokenProgram>;
-  args: WithdrawInactiveStakeInstructionDataArgs['args'];
+  amount: WithdrawInactiveStakeInstructionDataArgs['amount'];
 };
 
 export function getWithdrawInactiveStakeInstruction<
   TAccountConfig extends string,
   TAccountStake extends string,
   TAccountVault extends string,
+  TAccountMint extends string,
   TAccountDestinationTokenAccount extends string,
   TAccountStakeAuthority extends string,
   TAccountVaultAuthority extends string,
@@ -151,6 +159,7 @@ export function getWithdrawInactiveStakeInstruction<
     TAccountConfig,
     TAccountStake,
     TAccountVault,
+    TAccountMint,
     TAccountDestinationTokenAccount,
     TAccountStakeAuthority,
     TAccountVaultAuthority,
@@ -161,6 +170,7 @@ export function getWithdrawInactiveStakeInstruction<
   TAccountConfig,
   TAccountStake,
   TAccountVault,
+  TAccountMint,
   TAccountDestinationTokenAccount,
   TAccountStakeAuthority,
   TAccountVaultAuthority,
@@ -174,6 +184,7 @@ export function getWithdrawInactiveStakeInstruction<
     config: { value: input.config ?? null, isWritable: true },
     stake: { value: input.stake ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
+    mint: { value: input.mint ?? null, isWritable: false },
     destinationTokenAccount: {
       value: input.destinationTokenAccount ?? null,
       isWritable: true,
@@ -202,6 +213,7 @@ export function getWithdrawInactiveStakeInstruction<
       getAccountMeta(accounts.config),
       getAccountMeta(accounts.stake),
       getAccountMeta(accounts.vault),
+      getAccountMeta(accounts.mint),
       getAccountMeta(accounts.destinationTokenAccount),
       getAccountMeta(accounts.stakeAuthority),
       getAccountMeta(accounts.vaultAuthority),
@@ -216,6 +228,7 @@ export function getWithdrawInactiveStakeInstruction<
     TAccountConfig,
     TAccountStake,
     TAccountVault,
+    TAccountMint,
     TAccountDestinationTokenAccount,
     TAccountStakeAuthority,
     TAccountVaultAuthority,
@@ -237,14 +250,16 @@ export type ParsedWithdrawInactiveStakeInstruction<
     stake: TAccountMetas[1];
     /** Vault token account */
     vault: TAccountMetas[2];
+    /** Stake Token Mint */
+    mint: TAccountMetas[3];
     /** Destination token account */
-    destinationTokenAccount: TAccountMetas[3];
+    destinationTokenAccount: TAccountMetas[4];
     /** Stake authority */
-    stakeAuthority: TAccountMetas[4];
+    stakeAuthority: TAccountMetas[5];
     /** Vault authority (pda of `['token-owner', config]`) */
-    vaultAuthority: TAccountMetas[5];
+    vaultAuthority: TAccountMetas[6];
     /** Token program */
-    tokenProgram: TAccountMetas[6];
+    tokenProgram: TAccountMetas[7];
   };
   data: WithdrawInactiveStakeInstructionData;
 };
@@ -257,7 +272,7 @@ export function parseWithdrawInactiveStakeInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedWithdrawInactiveStakeInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 7) {
+  if (instruction.accounts.length < 8) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -273,6 +288,7 @@ export function parseWithdrawInactiveStakeInstruction<
       config: getNextAccount(),
       stake: getNextAccount(),
       vault: getNextAccount(),
+      mint: getNextAccount(),
       destinationTokenAccount: getNextAccount(),
       stakeAuthority: getNextAccount(),
       vaultAuthority: getNextAccount(),

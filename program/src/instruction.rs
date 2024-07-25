@@ -193,24 +193,29 @@ pub enum StakeInstruction {
     )]
     #[account(
         3,
+        name = "mint",
+        desc = "Stake Token Mint"
+    )]
+    #[account(
+        4,
         writable,
         name = "destination_token_account",
         desc = "Destination token account"
     )]
     #[account(
-        4,
+        5,
         signer,
         name = "stake_authority",
         desc = "Stake authority"
     )]
     #[account(
-        5,
+        6,
         name = "vault_authority",
         desc = "Vault authority (pda of `['token-owner', config]`)"
     )]
     
     #[account(
-        6,
+        7,
         name = "token_program",
         desc = "Token program"
     )]

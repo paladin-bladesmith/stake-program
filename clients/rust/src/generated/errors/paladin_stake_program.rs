@@ -61,6 +61,12 @@ pub enum PaladinStakeProgramError {
     /// 16 - Incorrect vault account
     #[error("Incorrect vault account")]
     IncorrectVaultAccount = 0x10,
+    /// 17 - Not enough inactivated tokens
+    #[error("Not enough inactivated tokens")]
+    NotEnoughInactivatedTokens = 0x11,
+    /// 18 - Invalid destination account
+    #[error("Invalid destination account")]
+    InvalidDestinationAccount = 0x12,
 }
 
 impl solana_program::program_error::PrintProgramError for PaladinStakeProgramError {
