@@ -12,7 +12,6 @@ use crate::{
     err,
     error::StakeError,
     instruction::accounts::{Context, InitializeConfigAccounts},
-    processor::REWARDS_PROGRAM_ID,
     require,
     state::{find_vault_pda, Config, MAX_BASIS_POINTS},
 };
@@ -53,10 +52,10 @@ pub fn process_initialize_config(
         let hook_program_id: Option<Pubkey> = transfer_hook.program_id.into();
 
         require!(
-            hook_program_id == Some(REWARDS_PROGRAM_ID),
+            hook_program_id == Some(paladin_rewards_program_client::ID),
             StakeError::InvalidTransferHookProgramId,
-            "expected {}, found {:?}",
-            program_id,
+            "expected {:?}, found {:?}",
+            Some(paladin_rewards_program_client::ID),
             hook_program_id
         );
     } else {

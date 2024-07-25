@@ -139,14 +139,6 @@
           ]
         },
         {
-          "name": "validatorVote",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Validator vote account"
-          ]
-        },
-        {
           "name": "mint",
           "isMut": false,
           "isSigner": false,
@@ -857,6 +849,11 @@
       "code": 15,
       "name": "NoDeactivatedTokens",
       "msg": "No deactivated tokens"
+    },
+    {
+      "code": 16,
+      "name": "IncorrectVaultAccount",
+      "msg": "Incorrect vault account"
     }
   ],
   "metadata": {

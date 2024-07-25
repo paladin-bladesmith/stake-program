@@ -104,22 +104,17 @@ pub enum StakeInstruction {
     )]
     #[account(
         4,
-        name = "validator_vote",
-        desc = "Validator vote account"
-    )]
-    #[account(
-        5,
         name = "mint",
         desc = "Stake Token Mint"
     )]
     #[account(
-        6,
+        5,
         writable,
         name = "vault",
         desc = "Stake token Vault"
     )]
     #[account(
-        7,
+        6,
         name = "token_program",
         desc = "Token program"
     )]
