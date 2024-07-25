@@ -149,16 +149,15 @@ pub fn process_slash(
 
     // Update the stake amount on both stake and config accounts:
     //
-    //   1. the amount slashed is taken from the active amount first;
+    //   1. the amount slashed is taken from the stake amount (this includes
+    //      the amount that is currently staked + deactivating);
     //
-    //   2. in case the amount is not enough, the remaining is taken from
-    //      the inactive amount;
+    //   2. if not enough, the remaining is ignored and the stake account is
+    //      left with 0 amount;
     //
-    //   3. if the inactive stake is not enough, the remaining is taken
-    //      from the deactivating amount;
-    //
-    //   4. if still not enough, the remaining is ignored and the stake
-    //      account is left with 0 amount.
+    //   3. if the stake account has deactivating tokens, make sure that the
+    //      deactivating amount is at least the same as the stake amount (it might
+    //      need to be reduced due to slashing).
 
     require!(
         amount > 0,
@@ -166,90 +165,53 @@ pub fn process_slash(
         "amount must be greater than 0"
     );
 
-    let mut remaining_slash_amount = amount;
-
-    // First slash active stake.
+    // slashes active stake
     let active_stake_to_slash = min(amount, stake.amount);
     stake.amount = stake
         .amount
         .checked_sub(active_stake_to_slash)
         .ok_or(ProgramError::ArithmeticOverflow)?;
-    remaining_slash_amount = remaining_slash_amount.saturating_sub(active_stake_to_slash);
 
-    // Then, if the slash amount has not been fulfilled, slash inactive stake
-    // (if there are inactive tokens).
-    if remaining_slash_amount > 0 && stake.inactive_amount > 0 {
-        let inactive_stake_to_slash = min(remaining_slash_amount, stake.inactive_amount);
-
-        msg!(
-            "+ slashing {} inactive stake tokens",
-            inactive_stake_to_slash
-        );
-
-        stake.inactive_amount = stake
-            .inactive_amount
-            .checked_sub(inactive_stake_to_slash)
-            .ok_or(ProgramError::ArithmeticOverflow)?;
-        remaining_slash_amount = remaining_slash_amount.saturating_sub(inactive_stake_to_slash);
-    }
-
-    // Then, if the slash amount has not been fulfilled, slash deactivating stake
-    // (if there are deactivating tokens).
-    if remaining_slash_amount > 0 && stake.deactivating_amount > 0 {
-        let deactivating_stake_to_slash = min(remaining_slash_amount, stake.deactivating_amount);
-
-        msg!(
-            "+ slashing {} deactivating stake tokens",
-            deactivating_stake_to_slash
-        );
-
-        stake.deactivating_amount = stake
-            .deactivating_amount
-            .checked_sub(deactivating_stake_to_slash)
-            .ok_or(ProgramError::ArithmeticOverflow)?;
-
-        if stake.deactivating_amount == 0 {
-            // if there are no more deactivating tokens, clear the
-            // deactivation timestamp
+    if stake.deactivating_amount > stake.amount {
+        // adjust the deactivating amount if it's greater than the "active" stake
+        // after slashing
+        stake.deactivating_amount = stake.amount;
+        // clear the deactivation timestamp if the stake amount is 0
+        if stake.amount == 0 {
             stake.deactivation_timestamp = None;
         }
-
-        remaining_slash_amount = remaining_slash_amount.saturating_sub(deactivating_stake_to_slash);
     }
-
-    // Finally, the adjusted amount to slash.
-    let amount_to_slash = amount - remaining_slash_amount;
 
     // Update the token amount delegated on the config account.
     //
     // The instruction will fail if the amount to slash is greater than the
     // total amount delegated (it should never happen).
     require!(
-        config.token_amount_delegated >= amount_to_slash,
+        config.token_amount_delegated >= active_stake_to_slash,
         StakeError::InvalidSlashAmount,
         "slash amount greater than total amount delegated ({} required, {} delegated)",
-        amount_to_slash,
+        active_stake_to_slash,
         config.token_amount_delegated
     );
 
     config.token_amount_delegated = config
         .token_amount_delegated
-        .checked_sub(amount_to_slash)
+        .checked_sub(active_stake_to_slash)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
-    if amount > amount_to_slash {
+    if amount.saturating_sub(active_stake_to_slash) > 0 {
         // The amount to slash was greater than the amount available on the
         // stake account (active, inactive and deactivating).
         msg!(
             "Slash amount greater than available tokens on stake account ({} required, {} available)",
             amount,
-            amount_to_slash,
+            active_stake_to_slash,
         );
     }
 
     // Burn the tokens from the vault account (if there are tokens to slash).
 
-    if amount_to_slash > 0 {
+    if active_stake_to_slash > 0 {
         let mint_data = ctx.accounts.mint.try_borrow_data()?;
         let mint = PodStateWithExtensions::<PodMint>::unpack(&mint_data)?;
         let decimals = mint.base.decimals;
@@ -263,7 +225,7 @@ pub fn process_slash(
             ctx.accounts.mint.key,
             ctx.accounts.vault_authority.key,
             &[],
-            amount_to_slash,
+            active_stake_to_slash,
             decimals,
         )?;
 
