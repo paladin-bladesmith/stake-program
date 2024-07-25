@@ -674,94 +674,6 @@ async fn fail_slash_with_wrong_config_account() {
 }
 
 #[tokio::test]
-async fn slash_using_inactive_amount() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
-
-    // Given a config and stake accounts.
-
-    let config_manager = ConfigManager::new(&mut context).await;
-    let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
-
-    // And we set 100 tokens to the vault account.
-
-    let mut account = get_account!(context, config_manager.config);
-    let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the total amount delegated
-    config_account.token_amount_delegated = 100;
-    account.data = config_account.try_to_vec().unwrap();
-    context.set_account(&config_manager.config, &account.into());
-
-    mint_to(
-        &mut context,
-        &config_manager.mint,
-        &config_manager.mint_authority,
-        &config_manager.vault,
-        100,
-        0,
-    )
-    .await
-    .unwrap();
-
-    // And we set 100 tokens to the stake account (50 staked and 50 inactive).
-
-    let mut account = get_account!(context, stake_manager.stake);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the amount to 50 and inactive amount to 50
-    stake_account.amount = 50;
-    stake_account.inactive_amount = 50;
-
-    account.data = stake_account.try_to_vec().unwrap();
-    context.set_account(&stake_manager.stake, &account.into());
-
-    // When we slash 100 tokens from the stake account.
-
-    let slash_ix = SlashBuilder::new()
-        .config(config_manager.config)
-        .stake(stake_manager.stake)
-        .slash_authority(config_manager.authority.pubkey())
-        .vault(config_manager.vault)
-        .mint(config_manager.mint)
-        .vault_authority(find_vault_pda(&config_manager.config).0)
-        .token_program(spl_token_2022::ID)
-        .amount(100) // <- 100 tokens
-        .instruction();
-
-    let tx = Transaction::new_signed_with_payer(
-        &[slash_ix],
-        Some(&context.payer.pubkey()),
-        &[&context.payer, &config_manager.authority],
-        context.last_blockhash,
-    );
-    context.banks_client.process_transaction(tx).await.unwrap();
-
-    // Then all tokens are burned.
-
-    let account = get_account!(context, config_manager.vault);
-    let vault =
-        StateWithExtensions::<spl_token_2022::state::Account>::unpack(&account.data).unwrap();
-    assert_eq!(vault.base.amount, 0);
-
-    // And the config account has no tokens delegated.
-
-    let account = get_account!(context, config_manager.config);
-    let config = Config::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(config.token_amount_delegated, 0);
-
-    // And the slashed stake account has no tokens.
-
-    let account = get_account!(context, stake_manager.stake);
-    let stake = Stake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake.amount, 0);
-    assert_eq!(stake.inactive_amount, 0);
-}
-
-#[tokio::test]
 async fn fail_slash_with_insufficient_total_amount_delegated() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
@@ -837,7 +749,7 @@ async fn fail_slash_with_insufficient_total_amount_delegated() {
 }
 
 #[tokio::test]
-async fn slash_using_deactivating_amount() {
+async fn slash_updating_deactivating_amount() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -851,12 +763,12 @@ async fn slash_using_deactivating_amount() {
     let config_manager = ConfigManager::new(&mut context).await;
     let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
 
-    // And we set 100 tokens to the vault account.
+    // And we set 75 tokens to the vault account.
 
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the total amount delegated
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_delegated = 75;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
 
@@ -865,7 +777,7 @@ async fn slash_using_deactivating_amount() {
         &config_manager.mint,
         &config_manager.mint_authority,
         &config_manager.vault,
-        100,
+        100, // <- 100 tokens (25 are inactive)
         0,
     )
     .await
@@ -876,9 +788,9 @@ async fn slash_using_deactivating_amount() {
 
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the amount to 50, inactive amount to 25 and
+    // "manually" set the amount to 75, inactive amount to 25 and
     // deactivating amount to 25
-    stake_account.amount = 50;
+    stake_account.amount = 75;
     stake_account.inactive_amount = 25;
     stake_account.deactivating_amount = 25;
     let timestamp = context
@@ -892,7 +804,7 @@ async fn slash_using_deactivating_amount() {
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
 
-    // When we slash 100 tokens from the stake account.
+    // When we slash 75 tokens from the stake account.
 
     let slash_ix = SlashBuilder::new()
         .config(config_manager.config)
@@ -902,7 +814,7 @@ async fn slash_using_deactivating_amount() {
         .mint(config_manager.mint)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .token_program(spl_token_2022::ID)
-        .amount(100) // <- 100 tokens
+        .amount(75) // <- 75 tokens
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -913,12 +825,12 @@ async fn slash_using_deactivating_amount() {
     );
     context.banks_client.process_transaction(tx).await.unwrap();
 
-    // Then all tokens are burned.
+    // Then 75 tokens are burned.
 
     let account = get_account!(context, config_manager.vault);
     let vault =
         StateWithExtensions::<spl_token_2022::state::Account>::unpack(&account.data).unwrap();
-    assert_eq!(vault.base.amount, 0);
+    assert_eq!(vault.base.amount, 25);
 
     // And the config account has no tokens delegated.
 
@@ -926,14 +838,14 @@ async fn slash_using_deactivating_amount() {
     let config = Config::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(config.token_amount_delegated, 0);
 
-    // And the slashed stake account has no tokens.
+    // And the slashed stake account has no active/deactivating tokens.
 
     let account = get_account!(context, stake_manager.stake);
     let stake = Stake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(stake.amount, 0);
-    assert_eq!(stake.inactive_amount, 0);
     assert_eq!(stake.deactivating_amount, 0);
     assert!(stake.deactivation_timestamp.value().is_none());
+    assert_eq!(stake.inactive_amount, 25);
 }
 
 #[tokio::test]
@@ -956,7 +868,7 @@ async fn slash_with_insufficient_stake_amount() {
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the total amount delegated
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_delegated = 900;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
 
@@ -965,19 +877,19 @@ async fn slash_with_insufficient_stake_amount() {
         &config_manager.mint,
         &config_manager.mint_authority,
         &config_manager.vault,
-        100,
+        1000, // <- 900 tokens delegated (100 are inactive)
         0,
     )
     .await
     .unwrap();
 
-    // And we set 75 tokens to the stake account (50 staked and 25 inactive).
+    // And we set 500 active tokens and 100 inactive.
 
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the amount to 50, inactive amount to 25
-    stake_account.amount = 50;
-    stake_account.inactive_amount = 25;
+    // "manually" set the amount to 500, inactive amount to 100
+    stake_account.amount = 500;
+    stake_account.inactive_amount = 100;
 
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
@@ -992,7 +904,7 @@ async fn slash_with_insufficient_stake_amount() {
         .mint(config_manager.mint)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .token_program(spl_token_2022::ID)
-        .amount(100) // <- 100 tokens
+        .amount(600) // <- 600 tokens
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -1003,24 +915,24 @@ async fn slash_with_insufficient_stake_amount() {
     );
     context.banks_client.process_transaction(tx).await.unwrap();
 
-    // Then only 75 tokens are burned (25 tokens left).
+    // Then only 500 tokens are burned (500 tokens left).
 
     let account = get_account!(context, config_manager.vault);
     let vault =
         StateWithExtensions::<spl_token_2022::state::Account>::unpack(&account.data).unwrap();
-    assert_eq!(vault.base.amount, 25);
+    assert_eq!(vault.base.amount, 500);
 
-    // And the config account has 25 tokens delegated.
+    // And the config account has 500 tokens delegated.
 
     let account = get_account!(context, config_manager.config);
     let config = Config::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(config.token_amount_delegated, 25);
+    assert_eq!(config.token_amount_delegated, 400);
 
-    // And the slashed stake account has no tokens.
+    // And the slashed stake account has no active tokens (100 inactive).
 
     let account = get_account!(context, stake_manager.stake);
     let stake = Stake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(stake.amount, 0);
-    assert_eq!(stake.inactive_amount, 0);
     assert_eq!(stake.deactivating_amount, 0);
+    assert_eq!(stake.inactive_amount, 100);
 }
