@@ -275,22 +275,6 @@
           ]
         },
         {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Stake Token Mint"
-          ]
-        },
-        {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Stake Token Mint"
-          ]
-        },
-        {
           "name": "destinationTokenAccount",
           "isMut": true,
           "isSigner": false,
