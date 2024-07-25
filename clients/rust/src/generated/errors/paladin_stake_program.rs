@@ -60,12 +60,6 @@ pub enum PaladinStakeProgramError {
     NoDeactivatedTokens = 0xF,
     /// 16 - Incorrect vault account
     #[error("Incorrect vault account")]
-    IncorrectVaultAccount = 0xF,
-    /// 16 - No deactivated tokens
-    #[error("No deactivated tokens")]
-    NoDeactivatedTokens = 0xF,
-    /// 16 - Incorrect vault account
-    #[error("Incorrect vault account")]
     IncorrectVaultAccount = 0x10,
     /// 17 - Not enough inactivated tokens
     #[error("Not enough inactivated tokens")]
