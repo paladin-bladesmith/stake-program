@@ -47,11 +47,11 @@ async fn withdraw_inactive_stake() {
     let config_manager = ConfigManager::new(&mut context).await;
     let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
 
-    // And we set total amount delegated = 100 on the config account.
+    // And we set total amount delegated = 50 on the config account.
 
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_delegated = 50;
     // "manually" update the config account data
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
@@ -151,7 +151,7 @@ async fn withdraw_inactive_stake() {
 
     assert_eq!(destination_account.base.amount, 50);
 
-    // And the total delegated on the config should decrease 100 -> 50.
+    // And the total delegated on the config should not change (remains 50).
 
     let account = get_account!(context, config_manager.config);
     let config_account = Config::from_bytes(account.data.as_ref()).unwrap();

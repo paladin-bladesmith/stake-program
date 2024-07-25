@@ -157,11 +157,6 @@ pub fn process_withdraw_inactive_stake<'a>(
         .checked_sub(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
-    config.token_amount_delegated = config
-        .token_amount_delegated
-        .checked_sub(amount)
-        .ok_or(ProgramError::ArithmeticOverflow)?;
-
     // Transfer the tokens from the vault to destination (unstakes them).
 
     drop(vault_data);
