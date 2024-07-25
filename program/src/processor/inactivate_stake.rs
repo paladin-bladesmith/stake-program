@@ -100,12 +100,21 @@ pub fn process_inactivate_stake(
             .amount
             .checked_sub(stake.deactivating_amount)
             .ok_or(ProgramError::ArithmeticOverflow)?;
+
         stake.inactive_amount = stake
             .inactive_amount
             .checked_add(stake.deactivating_amount)
             .ok_or(ProgramError::ArithmeticOverflow)?;
 
-        // clears the deactivation
+        // Update the config and stake account data.
+
+        config.token_amount_delegated = config
+            .token_amount_delegated
+            .checked_sub(stake.deactivating_amount)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
+
+        // Clears the deactivation.
+
         stake.deactivating_amount = 0;
         stake.deactivation_timestamp = None;
 
