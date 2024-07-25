@@ -67,6 +67,9 @@ pub enum PaladinStakeProgramError {
     /// 18 - Invalid destination account
     #[error("Invalid destination account")]
     InvalidDestinationAccount = 0x12,
+    /// 19 - Invalid slash amount
+    #[error("Invalid slash amount")]
+    InvalidSlashAmount = 0x13,
 }
 
 impl solana_program::program_error::PrintProgramError for PaladinStakeProgramError {

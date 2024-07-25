@@ -84,6 +84,10 @@ pub enum StakeError {
     /// 18 - Invalid destination account
     #[error("Invalid destination account")]
     InvalidDestinationAccount,
+
+    /// 19 - Invalid slash amount
+    #[error("Invalid slash amount")]
+    InvalidSlashAmount,
 }
 
 impl PrintProgramError for StakeError {

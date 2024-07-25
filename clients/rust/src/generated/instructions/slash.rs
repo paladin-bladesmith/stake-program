@@ -18,6 +18,8 @@ pub struct Slash {
     pub slash_authority: solana_program::pubkey::Pubkey,
     /// Vault token account
     pub vault: solana_program::pubkey::Pubkey,
+    /// Stake Token Mint
+    pub mint: solana_program::pubkey::Pubkey,
     /// Vault authority (pda of `['token-owner', config]`)
     pub vault_authority: solana_program::pubkey::Pubkey,
     /// Token program
@@ -37,7 +39,7 @@ impl Slash {
         args: SlashInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.config,
             false,
@@ -51,6 +53,9 @@ impl Slash {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.vault, false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.mint, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.vault_authority,
@@ -93,7 +98,7 @@ impl Default for SlashInstructionData {
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SlashInstructionArgs {
-    pub args: u64,
+    pub amount: u64,
 }
 
 /// Instruction builder for `Slash`.
@@ -104,17 +109,19 @@ pub struct SlashInstructionArgs {
 ///   1. `[writable]` stake
 ///   2. `[signer]` slash_authority
 ///   3. `[writable]` vault
-///   4. `[]` vault_authority
-///   5. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   4. `[writable]` mint
+///   5. `[]` vault_authority
+///   6. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 #[derive(Clone, Debug, Default)]
 pub struct SlashBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
     stake: Option<solana_program::pubkey::Pubkey>,
     slash_authority: Option<solana_program::pubkey::Pubkey>,
     vault: Option<solana_program::pubkey::Pubkey>,
+    mint: Option<solana_program::pubkey::Pubkey>,
     vault_authority: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
-    args: Option<u64>,
+    amount: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -149,6 +156,12 @@ impl SlashBuilder {
         self.vault = Some(vault);
         self
     }
+    /// Stake Token Mint
+    #[inline(always)]
+    pub fn mint(&mut self, mint: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.mint = Some(mint);
+        self
+    }
     /// Vault authority (pda of `['token-owner', config]`)
     #[inline(always)]
     pub fn vault_authority(
@@ -166,8 +179,8 @@ impl SlashBuilder {
         self
     }
     #[inline(always)]
-    pub fn args(&mut self, args: u64) -> &mut Self {
-        self.args = Some(args);
+    pub fn amount(&mut self, amount: u64) -> &mut Self {
+        self.amount = Some(amount);
         self
     }
     /// Add an aditional account to the instruction.
@@ -195,13 +208,14 @@ impl SlashBuilder {
             stake: self.stake.expect("stake is not set"),
             slash_authority: self.slash_authority.expect("slash_authority is not set"),
             vault: self.vault.expect("vault is not set"),
+            mint: self.mint.expect("mint is not set"),
             vault_authority: self.vault_authority.expect("vault_authority is not set"),
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
                 "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
             )),
         };
         let args = SlashInstructionArgs {
-            args: self.args.clone().expect("args is not set"),
+            amount: self.amount.clone().expect("amount is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -218,6 +232,8 @@ pub struct SlashCpiAccounts<'a, 'b> {
     pub slash_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Vault token account
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Stake Token Mint
+    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// Vault authority (pda of `['token-owner', config]`)
     pub vault_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Token program
@@ -236,6 +252,8 @@ pub struct SlashCpi<'a, 'b> {
     pub slash_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Vault token account
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Stake Token Mint
+    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// Vault authority (pda of `['token-owner', config]`)
     pub vault_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Token program
@@ -256,6 +274,7 @@ impl<'a, 'b> SlashCpi<'a, 'b> {
             stake: accounts.stake,
             slash_authority: accounts.slash_authority,
             vault: accounts.vault,
+            mint: accounts.mint,
             vault_authority: accounts.vault_authority,
             token_program: accounts.token_program,
             __args: args,
@@ -294,7 +313,7 @@ impl<'a, 'b> SlashCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.config.key,
             false,
@@ -309,6 +328,10 @@ impl<'a, 'b> SlashCpi<'a, 'b> {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.vault.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.mint.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -335,12 +358,13 @@ impl<'a, 'b> SlashCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(6 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(7 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.config.clone());
         account_infos.push(self.stake.clone());
         account_infos.push(self.slash_authority.clone());
         account_infos.push(self.vault.clone());
+        account_infos.push(self.mint.clone());
         account_infos.push(self.vault_authority.clone());
         account_infos.push(self.token_program.clone());
         remaining_accounts
@@ -363,8 +387,9 @@ impl<'a, 'b> SlashCpi<'a, 'b> {
 ///   1. `[writable]` stake
 ///   2. `[signer]` slash_authority
 ///   3. `[writable]` vault
-///   4. `[]` vault_authority
-///   5. `[]` token_program
+///   4. `[writable]` mint
+///   5. `[]` vault_authority
+///   6. `[]` token_program
 #[derive(Clone, Debug)]
 pub struct SlashCpiBuilder<'a, 'b> {
     instruction: Box<SlashCpiBuilderInstruction<'a, 'b>>,
@@ -378,9 +403,10 @@ impl<'a, 'b> SlashCpiBuilder<'a, 'b> {
             stake: None,
             slash_authority: None,
             vault: None,
+            mint: None,
             vault_authority: None,
             token_program: None,
-            args: None,
+            amount: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -415,6 +441,12 @@ impl<'a, 'b> SlashCpiBuilder<'a, 'b> {
         self.instruction.vault = Some(vault);
         self
     }
+    /// Stake Token Mint
+    #[inline(always)]
+    pub fn mint(&mut self, mint: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.mint = Some(mint);
+        self
+    }
     /// Vault authority (pda of `['token-owner', config]`)
     #[inline(always)]
     pub fn vault_authority(
@@ -434,8 +466,8 @@ impl<'a, 'b> SlashCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn args(&mut self, args: u64) -> &mut Self {
-        self.instruction.args = Some(args);
+    pub fn amount(&mut self, amount: u64) -> &mut Self {
+        self.instruction.amount = Some(amount);
         self
     }
     /// Add an additional account to the instruction.
@@ -480,7 +512,7 @@ impl<'a, 'b> SlashCpiBuilder<'a, 'b> {
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
         let args = SlashInstructionArgs {
-            args: self.instruction.args.clone().expect("args is not set"),
+            amount: self.instruction.amount.clone().expect("amount is not set"),
         };
         let instruction = SlashCpi {
             __program: self.instruction.__program,
@@ -495,6 +527,8 @@ impl<'a, 'b> SlashCpiBuilder<'a, 'b> {
                 .expect("slash_authority is not set"),
 
             vault: self.instruction.vault.expect("vault is not set"),
+
+            mint: self.instruction.mint.expect("mint is not set"),
 
             vault_authority: self
                 .instruction
@@ -521,9 +555,10 @@ struct SlashCpiBuilderInstruction<'a, 'b> {
     stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     slash_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    args: Option<u64>,
+    amount: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

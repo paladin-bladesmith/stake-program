@@ -478,6 +478,14 @@
           ]
         },
         {
+          "name": "mint",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Stake Token Mint"
+          ]
+        },
+        {
           "name": "vaultAuthority",
           "isMut": false,
           "isSigner": false,
@@ -872,6 +880,11 @@
       "code": 18,
       "name": "InvalidDestinationAccount",
       "msg": "Invalid destination account"
+    },
+    {
+      "code": 19,
+      "name": "InvalidSlashAmount",
+      "msg": "Invalid slash amount"
     }
   ],
   "metadata": {
