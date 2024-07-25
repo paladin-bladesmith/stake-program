@@ -244,7 +244,7 @@ async fn slash_with_no_staked_amount() {
     );
     context.banks_client.process_transaction(tx).await.unwrap();
 
-    // Then the slash is successful but not token is burned.
+    // Then the slash is successful but no token is burned.
 
     let account = get_account!(context, config_manager.vault);
     let vault =

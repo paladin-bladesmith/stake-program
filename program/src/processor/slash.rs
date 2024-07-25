@@ -176,8 +176,9 @@ pub fn process_slash(
         // adjust the deactivating amount if it's greater than the "active" stake
         // after slashing
         stake.deactivating_amount = stake.amount;
-        // clear the deactivation timestamp if the stake amount is 0
-        if stake.amount == 0 {
+        // clear the deactivation timestamp if there in no deactivating
+        // amount left
+        if stake.deactivating_amount == 0 {
             stake.deactivation_timestamp = None;
         }
     }
@@ -199,9 +200,9 @@ pub fn process_slash(
         .checked_sub(active_stake_to_slash)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
-    if amount.saturating_sub(active_stake_to_slash) > 0 {
+    if amount > active_stake_to_slash {
         // The amount to slash was greater than the amount available on the
-        // stake account (active, inactive and deactivating).
+        // stake account.
         msg!(
             "Slash amount greater than available tokens on stake account ({} required, {} available)",
             amount,
