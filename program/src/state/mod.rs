@@ -4,7 +4,16 @@ pub mod stake;
 pub use config::*;
 pub use stake::*;
 
-use solana_program::pubkey::{Pubkey, PubkeyError};
+use solana_program::{
+    program_error::ProgramError,
+    pubkey::{Pubkey, PubkeyError},
+};
+
+/// Scaling factor for rewards per token (1e9).
+const REWARDS_PER_TOKEN_SCALING_FACTOR: u128 = 1_000_000_000;
+
+/// Default value for a U128 byte array.
+const U128_DEFAULT: [u8; 16] = [0; 16];
 
 /// Defined the maximum valud for basis points (100%).
 pub const MAX_BASIS_POINTS: u128 = 10_000;
@@ -56,4 +65,32 @@ pub fn get_stake_pda_signer_seeds<'a>(
         config.as_ref(),
         bump_seed,
     ]
+}
+
+/// Calculate the eligible rewards for a given token account balance.
+///
+/// This uses the same logic as the Rewards program.
+pub fn calculate_eligible_rewards(
+    current_accumulated_rewards_per_token: u128,
+    last_accumulated_rewards_per_token: u128,
+    token_account_balance: u64,
+) -> Result<u64, ProgramError> {
+    // Calculation:
+    //   (current_accumulated_rewards_per_token
+    //     - last_accumulated_rewards_per_token)
+    //   * token_account_balance
+    let marginal_rate = current_accumulated_rewards_per_token
+        .checked_sub(last_accumulated_rewards_per_token)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
+
+    if marginal_rate == 0 {
+        Ok(0)
+    } else {
+        // Scaled by 1e9 to store 9 decimal places of precision.
+        marginal_rate
+            .checked_mul(token_account_balance as u128)
+            .and_then(|product| product.checked_div(REWARDS_PER_TOKEN_SCALING_FACTOR))
+            .and_then(|product| product.try_into().ok())
+            .ok_or(ProgramError::ArithmeticOverflow)
+    }
 }
