@@ -65,9 +65,9 @@ async fn inactivate_stake() {
         .get_sysvar::<Clock>()
         .await
         .unwrap()
-        .unix_timestamp;
+        .unix_timestamp as u64;
     timestamp = timestamp.saturating_sub(config_account.cooldown_time_seconds);
-    stake_account.deactivation_timestamp = NullableU64::from(timestamp as u64);
+    stake_account.deactivation_timestamp = NullableU64::from(timestamp);
     // "manually" update the stake account data
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_pda, &account.into());
