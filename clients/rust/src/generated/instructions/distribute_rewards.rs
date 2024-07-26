@@ -78,7 +78,7 @@ impl Default for DistributeRewardsInstructionData {
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct DistributeRewardsInstructionArgs {
-    pub args: u64,
+    pub amount: u64,
 }
 
 /// Instruction builder for `DistributeRewards`.
@@ -93,7 +93,7 @@ pub struct DistributeRewardsBuilder {
     payer: Option<solana_program::pubkey::Pubkey>,
     config: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
-    args: Option<u64>,
+    amount: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -121,8 +121,8 @@ impl DistributeRewardsBuilder {
         self
     }
     #[inline(always)]
-    pub fn args(&mut self, args: u64) -> &mut Self {
-        self.args = Some(args);
+    pub fn amount(&mut self, amount: u64) -> &mut Self {
+        self.amount = Some(amount);
         self
     }
     /// Add an aditional account to the instruction.
@@ -153,7 +153,7 @@ impl DistributeRewardsBuilder {
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
         };
         let args = DistributeRewardsInstructionArgs {
-            args: self.args.clone().expect("args is not set"),
+            amount: self.amount.clone().expect("amount is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -298,7 +298,7 @@ impl<'a, 'b> DistributeRewardsCpiBuilder<'a, 'b> {
             payer: None,
             config: None,
             system_program: None,
-            args: None,
+            amount: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -328,8 +328,8 @@ impl<'a, 'b> DistributeRewardsCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn args(&mut self, args: u64) -> &mut Self {
-        self.instruction.args = Some(args);
+    pub fn amount(&mut self, amount: u64) -> &mut Self {
+        self.instruction.amount = Some(amount);
         self
     }
     /// Add an additional account to the instruction.
@@ -374,7 +374,7 @@ impl<'a, 'b> DistributeRewardsCpiBuilder<'a, 'b> {
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
         let args = DistributeRewardsInstructionArgs {
-            args: self.instruction.args.clone().expect("args is not set"),
+            amount: self.instruction.amount.clone().expect("amount is not set"),
         };
         let instruction = DistributeRewardsCpi {
             __program: self.instruction.__program,
@@ -402,7 +402,7 @@ struct DistributeRewardsCpiBuilderInstruction<'a, 'b> {
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    args: Option<u64>,
+    amount: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,
