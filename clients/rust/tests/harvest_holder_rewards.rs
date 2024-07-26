@@ -146,6 +146,16 @@ async fn harvest_holder_rewards() {
         stake_account.last_seen_holder_rewards_per_token,
         40_000_000 * 1_000_000_000
     );
+
+    // And the vault authority did not keep any lamports (the account should not exist).
+
+    let account = context
+        .banks_client
+        .get_account(find_vault_pda(&config_manager.config).0)
+        .await
+        .unwrap();
+
+    assert!(account.is_none());
 }
 
 #[tokio::test]

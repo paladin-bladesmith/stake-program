@@ -156,10 +156,7 @@ pub fn process_harvest_holder_rewards(
         "holder rewards",
     );
 
-    let (derivation, _) = Pubkey::find_program_address(
-        &["holder".as_bytes(), ctx.accounts.vault.key.as_ref()],
-        &paladin_rewards_program_client::ID,
-    );
+    let (derivation, _) = HolderRewards::find_pda(ctx.accounts.vault.key);
 
     require!(
         ctx.accounts.holder_rewards.key == &derivation,
@@ -198,9 +195,9 @@ pub fn process_harvest_holder_rewards(
         )?;
 
         let signer_seeds = get_vault_pda_signer_seeds(ctx.accounts.config.key, &signer_bump);
-        // Stores the current lamports of the vault authority account before the withdraw so
+        // Stores the starting lamports of the vault authority account before the withdraw so
         // we can calculate the amount of rewards withdrawn.
-        let current_lamports = ctx.accounts.vault_authority.lamports();
+        let vault_authority_starting_lamports = ctx.accounts.vault_authority.lamports();
 
         invoke_signed(
             &withdraw_ix,
@@ -220,7 +217,7 @@ pub fn process_harvest_holder_rewards(
             ctx.accounts
                 .vault_authority
                 .lamports()
-                .saturating_sub(current_lamports),
+                .saturating_sub(vault_authority_starting_lamports),
         );
 
         // Move the rewards amount from the vault authority to the destination account and
@@ -243,7 +240,7 @@ pub fn process_harvest_holder_rewards(
             .accounts
             .vault_authority
             .lamports()
-            .checked_sub(current_lamports)
+            .checked_sub(vault_authority_starting_lamports)
             .ok_or(ProgramError::ArithmeticOverflow)?;
 
         invoke_signed(
