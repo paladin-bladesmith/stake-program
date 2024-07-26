@@ -146,6 +146,14 @@ pub fn process_harvest_holder_rewards(
         "vault authority",
     );
 
+    // destination
+    // - must be different than the vault authority
+
+    require!(
+        ctx.accounts.destination.key != ctx.accounts.vault_authority.key,
+        StakeError::InvalidDestinationAccount,
+    );
+
     // holder rewards (for the vault token account)
     // - owner must be the rewards program
     // - derivation must match

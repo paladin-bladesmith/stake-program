@@ -791,3 +791,105 @@ async fn fail_harvest_holder_rewards_with_wrong_config() {
 
     assert_instruction_error!(err, InstructionError::InvalidSeeds);
 }
+
+#[tokio::test]
+async fn fail_harvest_holder_rewards_with_invalid_destination() {
+    let mut program_test = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    );
+    program_test.add_program(
+        "paladin_rewards_program",
+        paladin_rewards_program_client::ID,
+        None,
+    );
+    let mut context = program_test.start_with_context().await;
+
+    // Given a config account with 100 staked amount.
+
+    let config_manager = ConfigManager::new(&mut context).await;
+
+    let mut account = get_account!(context, config_manager.config);
+    let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
+    // "manually" set the total amount delegated
+    config_account.token_amount_delegated = 100;
+    account.data = config_account.try_to_vec().unwrap();
+    context.set_account(&config_manager.config, &account.into());
+
+    // And 4 SOL rewards on its vault account.
+
+    let mut account = get_account!(context, config_manager.vault);
+    account.lamports = account.lamports.saturating_add(4_000_000_000);
+    context.set_account(&config_manager.vault, &account.into());
+
+    // And a stake account wiht a 50 staked amount.
+
+    let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
+
+    let mut account = get_account!(context, stake_manager.stake);
+    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    // "manually" set the amount to 50
+    stake_account.amount = 50;
+
+    account.data = stake_account.try_to_vec().unwrap();
+    context.set_account(&stake_manager.stake, &account.into());
+
+    // And we initialize the holder rewards accounts.
+
+    let holder_rewards_pool = create_holder_rewards_pool(
+        &mut context,
+        &config_manager.mint,
+        &config_manager.mint_authority,
+    )
+    .await;
+
+    let holder_rewards = create_holder_rewards(
+        &mut context,
+        &holder_rewards_pool,
+        &config_manager.mint,
+        &config_manager.vault,
+    )
+    .await;
+
+    let mut account = get_account!(context, holder_rewards);
+    let mut holder_rewards_account = HolderRewards::from_bytes(account.data.as_ref()).unwrap();
+    // "manually" set last accumulated rewards per token to 40_000_000 (0.04 SOL)
+    holder_rewards_account.last_accumulated_rewards_per_token = 40_000_000 * 1_000_000_000;
+
+    account.data = holder_rewards_account.try_to_vec().unwrap();
+    context.set_account(&holder_rewards, &account.into());
+
+    // When we try to harvest the holder rewards using the vault authority as destination.
+
+    let vault_authority = find_vault_pda(&config_manager.config).0;
+    let destination = vault_authority;
+
+    let harvest_holder_rewards_ix = HarvestHolderRewardsBuilder::new()
+        .config(config_manager.config)
+        .stake(stake_manager.stake)
+        .vault(config_manager.vault)
+        .holder_rewards(holder_rewards)
+        .vault_authority(vault_authority)
+        .stake_authority(stake_manager.authority.pubkey())
+        .destination(destination) // <- destination is the vault authority
+        .mint(config_manager.mint)
+        .token_program(spl_token_2022::ID)
+        .instruction();
+
+    let tx = Transaction::new_signed_with_payer(
+        &[harvest_holder_rewards_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, &stake_manager.authority],
+        context.last_blockhash,
+    );
+    let err = context
+        .banks_client
+        .process_transaction(tx)
+        .await
+        .unwrap_err();
+
+    // Then we expect an error.
+
+    assert_custom_error!(err, PaladinStakeProgramError::InvalidDestinationAccount);
+}
