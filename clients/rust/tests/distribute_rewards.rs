@@ -105,7 +105,7 @@ async fn distribute_rewards_with_no_staked_tokens() {
     context.banks_client.process_transaction(tx).await.unwrap();
 
     // Then the config account should not have the accumulated stake rewards per token updated
-    // and the lamports should remain the same.
+    // and the lamports are updated.
 
     let account = get_account!(context, config);
     let account_data = account.data.as_ref();
