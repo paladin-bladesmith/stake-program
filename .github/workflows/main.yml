@@ -225,4 +225,4 @@ jobs:
           path: ./**/*.so
           key: ${{ runner.os }}-builds-${{ github.sha }}
       - name: Test Rust client
-        run: pnpm clients:rust:test
+        run: RUST_LOG=error pnpm clients:rust:test
