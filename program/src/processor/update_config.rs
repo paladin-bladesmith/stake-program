@@ -1,6 +1,4 @@
-use solana_program::{
-    clock::UnixTimestamp, entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey,
-};
+use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey};
 
 use crate::{
     err,
@@ -70,7 +68,7 @@ pub fn process_update_config(
 
         match field {
             ConfigField::CooldownTimeSeconds(seconds) => {
-                config.cooldown_time_seconds = seconds as UnixTimestamp;
+                config.cooldown_time_seconds = seconds;
             }
             ConfigField::MaxDeactivationBasisPoints(points) => {
                 require!(
