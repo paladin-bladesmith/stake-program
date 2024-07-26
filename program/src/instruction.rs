@@ -266,6 +266,7 @@ pub enum StakeInstruction {
     )]
     #[account(
         6,
+        writable,
         name = "vault_authority",
         desc = "Vault authority (pda of `['token-owner', config]`)"
     )]
@@ -278,6 +279,11 @@ pub enum StakeInstruction {
         8,
         name = "token_program",
         desc = "Token program"
+    )]
+    #[account(
+        9,
+        name = "system_program",
+        desc = "System program"
     )]
     HarvestHolderRewards,
 
