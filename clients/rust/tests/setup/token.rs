@@ -35,6 +35,8 @@ pub async fn create_associated_token_account(
         ),
     ];
 
+    context.get_new_latest_blockhash().await.unwrap();
+
     let tx = Transaction::new_signed_with_payer(
         &instructions,
         Some(&context.payer.pubkey()),
@@ -42,7 +44,11 @@ pub async fn create_associated_token_account(
         context.last_blockhash,
     );
 
-    context.banks_client.process_transaction(tx).await.unwrap();
+    context
+        .banks_client
+        .process_transaction_with_metadata(tx)
+        .await
+        .unwrap();
 
     get_associated_token_address_with_program_id(owner, mint, &spl_token_2022::ID)
 }
@@ -54,7 +60,7 @@ pub async fn create_mint(
     freeze_authority: Option<&Pubkey>,
     decimals: u8,
     extensions: &[ExtensionType],
-) -> Result<(), BanksClientError> {
+) -> Result<BanksTransactionResultWithMetadata, BanksClientError> {
     let account_size = ExtensionType::try_calculate_account_len::<Mint>(extensions).unwrap();
     let rent = context.banks_client.get_rent().await.unwrap();
 
@@ -89,6 +95,8 @@ pub async fn create_mint(
         .unwrap(),
     );
 
+    context.get_new_latest_blockhash().await.unwrap();
+
     let tx = Transaction::new_signed_with_payer(
         &instructions,
         Some(&context.payer.pubkey()),
@@ -96,7 +104,10 @@ pub async fn create_mint(
         context.last_blockhash,
     );
 
-    context.banks_client.process_transaction(tx).await
+    context
+        .banks_client
+        .process_transaction_with_metadata(tx)
+        .await
 }
 
 pub async fn create_token_account(
@@ -105,7 +116,7 @@ pub async fn create_token_account(
     token_account: &Keypair,
     mint: &Pubkey,
     extensions: &[ExtensionType],
-) -> Result<(), BanksClientError> {
+) -> Result<BanksTransactionResultWithMetadata, BanksClientError> {
     let length = ExtensionType::try_calculate_account_len::<Account>(extensions).unwrap();
     let rent = context.banks_client.get_rent().await.unwrap();
 
@@ -139,6 +150,8 @@ pub async fn create_token_account(
         .unwrap(),
     );
 
+    context.get_new_latest_blockhash().await.unwrap();
+
     let tx = Transaction::new_signed_with_payer(
         &instructions,
         Some(&context.payer.pubkey()),
@@ -146,7 +159,10 @@ pub async fn create_token_account(
         context.last_blockhash,
     );
 
-    context.banks_client.process_transaction(tx).await
+    context
+        .banks_client
+        .process_transaction_with_metadata(tx)
+        .await
 }
 
 pub async fn mint_to(
