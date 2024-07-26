@@ -50,13 +50,19 @@ impl StakeManager {
             .validator_vote(vote)
             .instruction();
 
+        context.get_new_latest_blockhash().await.unwrap();
+
         let tx = Transaction::new_signed_with_payer(
             &[transfer_ix, initialize_ix],
             Some(&context.payer.pubkey()),
             &[&context.payer],
             context.last_blockhash,
         );
-        context.banks_client.process_transaction(tx).await.unwrap();
+        context
+            .banks_client
+            .process_transaction_with_metadata(tx)
+            .await
+            .unwrap();
 
         Self {
             stake,
@@ -91,13 +97,19 @@ pub async fn create_stake(
         .validator_vote(*vote)
         .instruction();
 
+    context.get_new_latest_blockhash().await.unwrap();
+
     let tx = Transaction::new_signed_with_payer(
         &[transfer_ix, initialize_ix],
         Some(&context.payer.pubkey()),
         &[&context.payer],
         context.last_blockhash,
     );
-    context.banks_client.process_transaction(tx).await.unwrap();
+    context
+        .banks_client
+        .process_transaction_with_metadata(tx)
+        .await
+        .unwrap();
 
     stake_pda
 }

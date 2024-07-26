@@ -17,10 +17,10 @@ import {
   getAddressEncoder,
   getArrayDecoder,
   getArrayEncoder,
-  getI64Decoder,
-  getI64Encoder,
   getStructDecoder,
   getStructEncoder,
+  getU128Decoder,
+  getU128Encoder,
   getU16Decoder,
   getU16Encoder,
   getU64Decoder,
@@ -52,7 +52,7 @@ export type Config = {
   vault: Address;
   cooldownTimeSeconds: bigint;
   tokenAmountDelegated: bigint;
-  totalStakeRewards: bigint;
+  accumulatedStakeRewardsPerToken: bigint;
   maxDeactivationBasisPoints: number;
   vaultAuthorityBump: number;
   padding: Array<number>;
@@ -65,7 +65,7 @@ export type ConfigArgs = {
   vault: Address;
   cooldownTimeSeconds: number | bigint;
   tokenAmountDelegated: number | bigint;
-  totalStakeRewards: number | bigint;
+  accumulatedStakeRewardsPerToken: number | bigint;
   maxDeactivationBasisPoints: number;
   vaultAuthorityBump: number;
   padding: Array<number>;
@@ -77,9 +77,9 @@ export function getConfigEncoder(): Encoder<ConfigArgs> {
     ['authority', getNullableAddressEncoder()],
     ['slashAuthority', getNullableAddressEncoder()],
     ['vault', getAddressEncoder()],
-    ['cooldownTimeSeconds', getI64Encoder()],
+    ['cooldownTimeSeconds', getU64Encoder()],
     ['tokenAmountDelegated', getU64Encoder()],
-    ['totalStakeRewards', getU64Encoder()],
+    ['accumulatedStakeRewardsPerToken', getU128Encoder()],
     ['maxDeactivationBasisPoints', getU16Encoder()],
     ['vaultAuthorityBump', getU8Encoder()],
     ['padding', getArrayEncoder(getU8Encoder(), { size: 5 })],
@@ -92,9 +92,9 @@ export function getConfigDecoder(): Decoder<Config> {
     ['authority', getNullableAddressDecoder()],
     ['slashAuthority', getNullableAddressDecoder()],
     ['vault', getAddressDecoder()],
-    ['cooldownTimeSeconds', getI64Decoder()],
+    ['cooldownTimeSeconds', getU64Decoder()],
     ['tokenAmountDelegated', getU64Decoder()],
-    ['totalStakeRewards', getU64Decoder()],
+    ['accumulatedStakeRewardsPerToken', getU128Decoder()],
     ['maxDeactivationBasisPoints', getU16Decoder()],
     ['vaultAuthorityBump', getU8Decoder()],
     ['padding', getArrayDecoder(getU8Decoder(), { size: 5 })],
@@ -159,5 +159,5 @@ export async function fetchAllMaybeConfig(
 }
 
 export function getConfigSize(): number {
-  return 136;
+  return 144;
 }
