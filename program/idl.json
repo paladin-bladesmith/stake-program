@@ -668,17 +668,20 @@
           },
           {
             "name": "cooldownTimeSeconds",
-            "type": {
-              "defined": "UnixTimestamp"
-            }
+            "type": "u64"
           },
           {
             "name": "tokenAmountDelegated",
             "type": "u64"
           },
           {
-            "name": "totalStakeRewards",
-            "type": "u64"
+            "name": "accumulatedStakeRewardsPerToken",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
           },
           {
             "name": "maxDeactivationBasisPoints",

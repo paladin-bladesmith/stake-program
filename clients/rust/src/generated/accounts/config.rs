@@ -21,16 +21,16 @@ pub struct Config {
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
     pub vault: Pubkey,
-    pub cooldown_time_seconds: i64,
+    pub cooldown_time_seconds: u64,
     pub token_amount_delegated: u64,
-    pub total_stake_rewards: u64,
+    pub accumulated_stake_rewards_per_token: u128,
     pub max_deactivation_basis_points: u16,
     pub vault_authority_bump: u8,
     pub padding: [u8; 5],
 }
 
 impl Config {
-    pub const LEN: usize = 136;
+    pub const LEN: usize = 144;
 
     #[inline(always)]
     pub fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {
