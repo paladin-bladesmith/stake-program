@@ -103,13 +103,19 @@ impl ConfigManager {
             .max_deactivation_basis_points(max_deactivation_basis_points)
             .instruction();
 
+        context.get_new_latest_blockhash().await.unwrap();
+
         let tx = Transaction::new_signed_with_payer(
             &[create_ix, initialize_ix],
             Some(&context.payer.pubkey()),
             &[&context.payer, &config],
             context.last_blockhash,
         );
-        context.banks_client.process_transaction(tx).await.unwrap();
+        context
+            .banks_client
+            .process_transaction_with_metadata(tx)
+            .await
+            .unwrap();
 
         manager.config = config.pubkey();
         manager
