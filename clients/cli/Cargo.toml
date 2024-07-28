@@ -1,5 +1,6 @@
 [package]
-name = "paladin-stake"
+name = "paladin-stake-cli"
+description = "CLI to interact with Paladin Stake program"
 version = "0.0.1"
 edition = "2021"
 publish = false
@@ -7,6 +8,7 @@ publish = false
 [dependencies]
 clap = { version = "3", features = ["cargo", "derive"] }
 futures-util = "0.3.19"
+paladin-stake-program-client = { version="^0", path = "../rust" }
 solana-clap-v3-utils = "=2.0.2"
 solana-cli-config = "=2.0.2"
 solana-client = "=2.0.2"
