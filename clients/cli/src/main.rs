@@ -2,6 +2,7 @@ mod command;
 use command::*;
 
 use clap::{IntoApp, Parser};
+use initialize_config::{process_initialize_config, InitializeConfigArgs};
 use solana_clap_v3_utils::{
     input_parsers::signer::SignerSource, input_validators::normalize_to_url_if_moniker,
     keypair::signer_from_path,
@@ -75,7 +76,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         RpcClient::new_with_commitment(config.json_rpc_url.clone(), config.commitment_config);
 
     match args.command {
-        // TODO: Add more commands here
+        Commands::InitializeConfig {
+            account,
+            slash_authority,
+            config_authority,
+            mint,
+            cooldown_time_seconds,
+            max_deactivation_basis_points,
+        } => {
+            let signature = process_initialize_config(
+                &rpc_client,
+                config.default_signer.as_ref(),
+                InitializeConfigArgs {
+                    account,
+                    slash_authority,
+                    config_authority,
+                    mint,
+                    cooldown_time_seconds,
+                    max_deactivation_basis_points,
+                },
+            )
+            .await
+            .unwrap_or_else(|err| {
+                eprintln!("error: {err}");
+                exit(1);
+            });
+            println!("Signature: {signature}");
+        }
     }
 
     Ok(())
