@@ -27,7 +27,7 @@ pub struct InitializeConfigArgs {
     pub config_authority: Option<String>,
 
     /// Stake deactivation cooldown time in hours.
-    pub cooldown_time_seconds: u64,
+    pub cooldown_hours: u64,
 
     /// Maximum deactivation amount as a percentage of stake.
     pub max_deactivation_basis_points: u16,
@@ -80,8 +80,8 @@ pub async fn process_initialize_config(
         .slash_authority(slash_authority)
         .mint(mint)
         .vault(vault_token_account)
-        .cooldown_time_seconds(1)
-        .max_deactivation_basis_points(500)
+        .cooldown_time_seconds(args.cooldown_hours.checked_mul(3600).unwrap())
+        .max_deactivation_basis_points(args.max_deactivation_basis_points)
         .instruction();
 
     // Send transaction.

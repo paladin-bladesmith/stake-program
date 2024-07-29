@@ -83,19 +83,19 @@ pub enum Commands {
         )]
         config_authority: Option<String>,
 
-        /// Cooldown time for deactivation in hours.
+        /// Deactivation cooldown in hours.
         #[clap(
             long = "cooldown",
             value_name = "COOLDOWN",
             default_value = "720",
         )]
-        cooldown_time_seconds: u64,
+        cooldown_hours: u64,
 
-        /// Maximum deactivation amount as a percentage of stake.
+        /// Maximum deactivation amount basis points.
         #[clap(
             long = "percentage",
             value_name = "DEACTIVATION",
-            default_value = "5",
+            default_value = "500",
         )]
         max_deactivation_basis_points: u16,
     },

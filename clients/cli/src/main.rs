@@ -81,7 +81,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             slash_authority,
             config_authority,
             mint,
-            cooldown_time_seconds,
+            cooldown_hours,
             max_deactivation_basis_points,
         } => {
             let signature = process_initialize_config(
@@ -92,7 +92,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     slash_authority,
                     config_authority,
                     mint,
-                    cooldown_time_seconds,
+                    cooldown_hours,
                     max_deactivation_basis_points,
                 },
             )
