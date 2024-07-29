@@ -1,5 +1,5 @@
 use paladin_stake_program_client::{
-    accounts::ValidatorStake, instructions::InitializeStakeBuilder, pdas::find_stake_pda,
+    accounts::ValidatorStake, instructions::InitializeStakeBuilder, pdas::find_validator_stake_pda,
 };
 use solana_program_test::ProgramTestContext;
 use solana_sdk::{
@@ -78,7 +78,7 @@ pub async fn create_validator_stake(
     vote: &Pubkey,
     config: &Pubkey,
 ) -> Pubkey {
-    let (stake_pda, _) = find_stake_pda(vote, config);
+    let (stake_pda, _) = find_validator_stake_pda(vote, config);
 
     let transfer_ix = system_instruction::transfer(
         &context.payer.pubkey(),

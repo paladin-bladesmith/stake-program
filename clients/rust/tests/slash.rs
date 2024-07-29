@@ -7,7 +7,7 @@ use paladin_stake_program_client::{
     accounts::{Config, ValidatorStake},
     errors::PaladinStakeProgramError,
     instructions::SlashBuilder,
-    pdas::{find_stake_pda, find_vault_pda},
+    pdas::{find_validator_stake_pda, find_vault_pda},
     NullableU64,
 };
 use setup::{
@@ -465,7 +465,7 @@ async fn fail_slash_with_uninitialized_stake_account() {
     // And an uninitialized stake account.
 
     let validator_vote = Pubkey::new_unique();
-    let (stake, _) = find_stake_pda(&validator_vote, &config_manager.config);
+    let (stake, _) = find_validator_stake_pda(&validator_vote, &config_manager.config);
 
     context.set_account(
         &stake,

@@ -33,7 +33,7 @@ pub fn find_vault_pda(config: &Pubkey, program_id: &Pubkey) -> (Pubkey, u8) {
 }
 
 #[inline(always)]
-pub fn find_stake_pda(
+pub fn find_validator_stake_pda(
     validator_vote: &Pubkey,
     config: &Pubkey,
     program_id: &Pubkey,
@@ -54,7 +54,7 @@ pub fn get_vault_pda_signer_seeds<'a>(config: &'a Pubkey, bump_seed: &'a [u8]) -
 }
 
 #[inline(always)]
-pub fn get_stake_pda_signer_seeds<'a>(
+pub fn get_validator_stake_pda_signer_seeds<'a>(
     validator_vote: &'a Pubkey,
     config: &'a Pubkey,
     bump_seed: &'a [u8],

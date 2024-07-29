@@ -7,7 +7,7 @@ use crate::{
     error::StakeError,
     instruction::accounts::{Context, HarvestStakeRewardsAccounts},
     require,
-    state::{calculate_eligible_rewards, find_stake_pda, Config, ValidatorStake},
+    state::{calculate_eligible_rewards, find_validator_stake_pda, Config, ValidatorStake},
 };
 
 /// Harvests stake SOL rewards earned by the given stake account.
@@ -68,7 +68,7 @@ pub fn process_harvest_stake_rewards(
     );
 
     let (derivation, _) =
-        find_stake_pda(&stake.validator_vote, ctx.accounts.config.key, program_id);
+        find_validator_stake_pda(&stake.validator_vote, ctx.accounts.config.key, program_id);
 
     require!(
         ctx.accounts.stake.key == &derivation,

@@ -7,7 +7,7 @@ use paladin_stake_program_client::{
     accounts::{Config, ValidatorStake},
     errors::PaladinStakeProgramError,
     instructions::InactivateStakeBuilder,
-    pdas::find_stake_pda,
+    pdas::find_validator_stake_pda,
     NullableU64,
 };
 use setup::{
@@ -249,7 +249,7 @@ async fn fail_inactivate_stake_with_uninitialized_stake_account() {
 
     // And an uninitialized stake account.
 
-    let (stake_pda, _) = find_stake_pda(&validator, &config);
+    let (stake_pda, _) = find_validator_stake_pda(&validator, &config);
 
     context.set_account(
         &stake_pda,

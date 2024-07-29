@@ -6,7 +6,7 @@ use paladin_stake_program_client::{
     accounts::{Config, ValidatorStake},
     errors::PaladinStakeProgramError,
     instructions::{InitializeConfigBuilder, InitializeStakeBuilder, SetAuthorityBuilder},
-    pdas::{find_stake_pda, find_vault_pda},
+    pdas::{find_validator_stake_pda, find_vault_pda},
     types::AuthorityType,
 };
 use setup::{
@@ -667,7 +667,7 @@ async fn set_authority_on_stake() {
 
     // And we initialize the stake account.
 
-    let (stake_pda, _) = find_stake_pda(&validator_vote, &config);
+    let (stake_pda, _) = find_validator_stake_pda(&validator_vote, &config);
 
     let transfer_ix = system_instruction::transfer(
         &context.payer.pubkey(),
@@ -744,7 +744,7 @@ async fn fail_set_authority_on_stake_with_invalid_authority() {
 
     // And we initialize the stake account.
 
-    let (stake_pda, _) = find_stake_pda(&validator_vote, &config);
+    let (stake_pda, _) = find_validator_stake_pda(&validator_vote, &config);
 
     let transfer_ix = system_instruction::transfer(
         &context.payer.pubkey(),

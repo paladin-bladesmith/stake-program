@@ -5,7 +5,7 @@ mod setup;
 use paladin_stake_program_client::{
     accounts::{Config, ValidatorStake},
     instructions::InitializeStakeBuilder,
-    pdas::find_stake_pda,
+    pdas::find_validator_stake_pda,
 };
 use setup::{
     config::create_config,
@@ -38,7 +38,7 @@ async fn initialize_stake_with_validator_vote() {
 
     // When we initialize the stake account.
 
-    let (stake_pda, _) = find_stake_pda(&validator_vote, &config);
+    let (stake_pda, _) = find_validator_stake_pda(&validator_vote, &config);
 
     let transfer_ix = system_instruction::transfer(
         &context.payer.pubkey(),
@@ -94,7 +94,7 @@ async fn fail_initialize_stake_with_initialized_account() {
 
     // And we initialize the stake account.
 
-    let (stake_pda, _) = find_stake_pda(&validator_vote, &config);
+    let (stake_pda, _) = find_validator_stake_pda(&validator_vote, &config);
 
     let transfer_ix = system_instruction::transfer(
         &context.payer.pubkey(),
@@ -167,7 +167,7 @@ async fn fail_initialize_stake_with_invalid_derivation() {
 
     // When we try initialize the stake account with an invalid derivation.
 
-    let (stake_pda, _) = find_stake_pda(&Pubkey::new_unique(), &config);
+    let (stake_pda, _) = find_validator_stake_pda(&Pubkey::new_unique(), &config);
 
     let initialize_ix = InitializeStakeBuilder::new()
         .config(config)
@@ -217,7 +217,7 @@ async fn fail_initialize_stake_with_invalid_vote_account() {
     // When we try initialize the stake account with an invalid validator vote account
     // (the validator vote account is owned by system program).
 
-    let (stake_pda, _) = find_stake_pda(&Pubkey::new_unique(), &config);
+    let (stake_pda, _) = find_validator_stake_pda(&Pubkey::new_unique(), &config);
 
     let initialize_ix = InitializeStakeBuilder::new()
         .config(config)
@@ -280,7 +280,8 @@ async fn fail_initialize_stake_with_uninitialized_config_account() {
 
     // When we try initialize the stake account with an invalid derivation.
 
-    let (stake_pda, _) = find_stake_pda(&Pubkey::new_unique(), &uninitialized_config.pubkey());
+    let (stake_pda, _) =
+        find_validator_stake_pda(&Pubkey::new_unique(), &uninitialized_config.pubkey());
 
     let initialize_ix = InitializeStakeBuilder::new()
         .config(uninitialized_config.pubkey())

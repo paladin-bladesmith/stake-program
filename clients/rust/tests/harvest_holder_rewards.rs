@@ -8,7 +8,7 @@ use paladin_stake_program_client::{
     accounts::{Config, ValidatorStake},
     errors::PaladinStakeProgramError,
     instructions::HarvestHolderRewardsBuilder,
-    pdas::{find_stake_pda, find_vault_pda},
+    pdas::{find_validator_stake_pda, find_vault_pda},
 };
 use setup::{
     config::ConfigManager,
@@ -624,7 +624,7 @@ async fn fail_harvest_holder_rewards_with_uninitialized_stake() {
     // And an uninitialized stake account.
 
     let validator_vote = Pubkey::new_unique();
-    let (stake, _) = find_stake_pda(&validator_vote, &config_manager.config);
+    let (stake, _) = find_validator_stake_pda(&validator_vote, &config_manager.config);
 
     context.set_account(
         &stake,

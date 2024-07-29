@@ -7,7 +7,7 @@ use paladin_stake_program_client::{
     accounts::{Config, ValidatorStake},
     errors::PaladinStakeProgramError,
     instructions::WithdrawInactiveStakeBuilder,
-    pdas::{find_stake_pda, find_vault_pda},
+    pdas::{find_validator_stake_pda, find_vault_pda},
 };
 use setup::{
     add_extra_account_metas_for_transfer,
@@ -481,7 +481,7 @@ async fn fail_withdraw_inactive_stake_with_uninitialized_stake_account() {
     // And we set the amount = 50 and inactive_account = 50 on t// And an uninitialized stake account.
 
     let validator_vote = Pubkey::new_unique();
-    let (stake, _) = find_stake_pda(&validator_vote, &config_manager.config);
+    let (stake, _) = find_validator_stake_pda(&validator_vote, &config_manager.config);
 
     context.set_account(
         &stake,

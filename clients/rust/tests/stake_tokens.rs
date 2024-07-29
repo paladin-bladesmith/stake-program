@@ -6,7 +6,7 @@ use paladin_stake_program_client::{
     accounts::{Config, ValidatorStake},
     errors::PaladinStakeProgramError,
     instructions::StakeTokensBuilder,
-    pdas::find_stake_pda,
+    pdas::find_validator_stake_pda,
 };
 use setup::{
     add_extra_account_metas_for_transfer,
@@ -469,7 +469,7 @@ async fn fail_stake_tokens_with_uninitialized_stake_account() {
         &config_manager.authority.pubkey(),
     )
     .await;
-    let (stake_pda, _) = find_stake_pda(&validator_vote, &config_manager.config);
+    let (stake_pda, _) = find_validator_stake_pda(&validator_vote, &config_manager.config);
 
     context.set_account(
         &stake_pda,

@@ -8,7 +8,7 @@ use crate::{
     error::StakeError,
     instruction::accounts::{Context, StakeTokensAccounts},
     require,
-    state::{find_stake_pda, Config, ValidatorStake},
+    state::{find_validator_stake_pda, Config, ValidatorStake},
 };
 
 /// Stakes tokens with the given config.
@@ -80,7 +80,7 @@ pub fn process_stake_tokens<'a>(
     );
 
     let (derivation, _) =
-        find_stake_pda(&stake.validator_vote, ctx.accounts.config.key, program_id);
+        find_validator_stake_pda(&stake.validator_vote, ctx.accounts.config.key, program_id);
 
     require!(
         ctx.accounts.stake.key == &derivation,

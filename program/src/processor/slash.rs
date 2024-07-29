@@ -15,7 +15,7 @@ use crate::{
     error::StakeError,
     instruction::accounts::{Context, SlashAccounts},
     require,
-    state::{create_vault_pda, find_stake_pda, get_vault_pda_signer_seeds, Config, ValidatorStake},
+    state::{create_vault_pda, find_validator_stake_pda, get_vault_pda_signer_seeds, Config, ValidatorStake},
 };
 
 /// Slashes a stake account for the given amount
@@ -81,7 +81,7 @@ pub fn process_slash(
     );
 
     let (derivation, _) =
-        find_stake_pda(&stake.validator_vote, ctx.accounts.config.key, program_id);
+        find_validator_stake_pda(&stake.validator_vote, ctx.accounts.config.key, program_id);
 
     require!(
         ctx.accounts.stake.key == &derivation,

@@ -7,7 +7,9 @@ use solana_program::{
 use crate::{
     instruction::accounts::{Context, InitializeStakeAccounts},
     require,
-    state::{find_stake_pda, get_stake_pda_signer_seeds, Config, ValidatorStake},
+    state::{
+        find_validator_stake_pda, get_validator_stake_pda_signer_seeds, Config, ValidatorStake,
+    },
 };
 
 /// Initializes stake account data for a validator.
@@ -75,7 +77,7 @@ pub fn process_initialize_stake(
     // NOTE: The stake account is created and assigned to the stake program, so it needs
     // to be pre-funded with the minimum rent balance by the caller.
 
-    let (derivation, bump) = find_stake_pda(
+    let (derivation, bump) = find_validator_stake_pda(
         ctx.accounts.validator_vote.key,
         ctx.accounts.config.key,
         program_id,
@@ -96,7 +98,7 @@ pub fn process_initialize_stake(
     // Allocate and assign.
 
     let bump_seed = [bump];
-    let signer_seeds = get_stake_pda_signer_seeds(
+    let signer_seeds = get_validator_stake_pda_signer_seeds(
         ctx.accounts.validator_vote.key,
         ctx.accounts.config.key,
         &bump_seed,
