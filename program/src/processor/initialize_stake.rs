@@ -7,7 +7,9 @@ use solana_program::{
 use crate::{
     instruction::accounts::{Context, InitializeStakeAccounts},
     require,
-    state::{find_stake_pda, get_stake_pda_signer_seeds, Config, Stake},
+    state::{
+        find_validator_stake_pda, get_validator_stake_pda_signer_seeds, Config, ValidatorStake,
+    },
 };
 
 /// Initializes stake account data for a validator.
@@ -75,7 +77,7 @@ pub fn process_initialize_stake(
     // NOTE: The stake account is created and assigned to the stake program, so it needs
     // to be pre-funded with the minimum rent balance by the caller.
 
-    let (derivation, bump) = find_stake_pda(
+    let (derivation, bump) = find_validator_stake_pda(
         ctx.accounts.validator_vote.key,
         ctx.accounts.config.key,
         program_id,
@@ -96,14 +98,14 @@ pub fn process_initialize_stake(
     // Allocate and assign.
 
     let bump_seed = [bump];
-    let signer_seeds = get_stake_pda_signer_seeds(
+    let signer_seeds = get_validator_stake_pda_signer_seeds(
         ctx.accounts.validator_vote.key,
         ctx.accounts.config.key,
         &bump_seed,
     );
 
     invoke_signed(
-        &system_instruction::allocate(ctx.accounts.stake.key, Stake::LEN as u64),
+        &system_instruction::allocate(ctx.accounts.stake.key, ValidatorStake::LEN as u64),
         &[ctx.accounts.stake.clone()],
         &[&signer_seeds],
     )?;
@@ -117,9 +119,9 @@ pub fn process_initialize_stake(
     // Initialize the stake account.
 
     let mut data = ctx.accounts.stake.try_borrow_mut_data()?;
-    let stake = bytemuck::from_bytes_mut::<Stake>(&mut data);
+    let stake = bytemuck::from_bytes_mut::<ValidatorStake>(&mut data);
 
-    *stake = Stake::new(withdraw_authority, *ctx.accounts.validator_vote.key);
+    *stake = ValidatorStake::new(withdraw_authority, *ctx.accounts.validator_vote.key);
 
     Ok(())
 }

@@ -8,7 +8,7 @@ use crate::{
         AuthorityType,
     },
     require,
-    state::{Config, Stake},
+    state::{Config, ValidatorStake},
 };
 
 /// Unpacks an initialized account from the given data and
@@ -98,7 +98,7 @@ pub fn process_set_authority(
             config.slash_authority = OptionalNonZeroPubkey(*ctx.accounts.new_authority.key);
         }
         AuthorityType::Stake => {
-            let stake = unpack_initialized_mut!(data, Stake, "stake");
+            let stake = unpack_initialized_mut!(data, ValidatorStake, "stake");
 
             require!(
                 *ctx.accounts.authority.key == stake.authority,

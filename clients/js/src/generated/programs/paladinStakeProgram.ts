@@ -27,7 +27,7 @@ export const PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS =
 
 export enum PaladinStakeProgramAccount {
   Config,
-  Stake,
+  ValidatorStake,
 }
 
 export enum PaladinStakeProgramInstruction {

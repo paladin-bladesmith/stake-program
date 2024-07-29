@@ -3,10 +3,10 @@
 mod setup;
 
 use paladin_stake_program_client::{
-    accounts::{Config, Stake},
+    accounts::{Config, ValidatorStake},
     errors::PaladinStakeProgramError,
     instructions::{InitializeConfigBuilder, InitializeStakeBuilder, SetAuthorityBuilder},
-    pdas::{find_stake_pda, find_vault_pda},
+    pdas::{find_validator_stake_pda, find_vault_pda},
     types::AuthorityType,
 };
 use setup::{
@@ -667,7 +667,7 @@ async fn set_authority_on_stake() {
 
     // And we initialize the stake account.
 
-    let (stake_pda, _) = find_stake_pda(&validator_vote, &config);
+    let (stake_pda, _) = find_validator_stake_pda(&validator_vote, &config);
 
     let transfer_ix = system_instruction::transfer(
         &context.payer.pubkey(),
@@ -677,7 +677,7 @@ async fn set_authority_on_stake() {
             .get_rent()
             .await
             .unwrap()
-            .minimum_balance(Stake::LEN),
+            .minimum_balance(ValidatorStake::LEN),
     );
 
     let initialize_ix = InitializeStakeBuilder::new()
@@ -695,7 +695,7 @@ async fn set_authority_on_stake() {
     context.banks_client.process_transaction(tx).await.unwrap();
 
     let account = get_account!(context, stake_pda);
-    let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(stake_account.authority, withdraw_authority.pubkey());
 
     // When we set a new authority on the stake account.
@@ -720,7 +720,7 @@ async fn set_authority_on_stake() {
     // Then the stake authority is updated.
 
     let account = get_account!(context, stake_pda);
-    let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(stake_account.authority, new_authority);
 }
 
@@ -744,7 +744,7 @@ async fn fail_set_authority_on_stake_with_invalid_authority() {
 
     // And we initialize the stake account.
 
-    let (stake_pda, _) = find_stake_pda(&validator_vote, &config);
+    let (stake_pda, _) = find_validator_stake_pda(&validator_vote, &config);
 
     let transfer_ix = system_instruction::transfer(
         &context.payer.pubkey(),
@@ -754,7 +754,7 @@ async fn fail_set_authority_on_stake_with_invalid_authority() {
             .get_rent()
             .await
             .unwrap()
-            .minimum_balance(Stake::LEN),
+            .minimum_balance(ValidatorStake::LEN),
     );
 
     let initialize_ix = InitializeStakeBuilder::new()
@@ -772,7 +772,7 @@ async fn fail_set_authority_on_stake_with_invalid_authority() {
     context.banks_client.process_transaction(tx).await.unwrap();
 
     let account = get_account!(context, stake_pda);
-    let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(stake_account.authority, withdraw_authority.pubkey());
 
     // When we try to set a new authority on the stake account with an invalid authority.

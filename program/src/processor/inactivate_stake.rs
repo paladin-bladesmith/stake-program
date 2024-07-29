@@ -7,7 +7,7 @@ use crate::{
     error::StakeError,
     instruction::accounts::{Context, InactivateStakeAccounts},
     require,
-    state::{find_stake_pda, Config, Stake},
+    state::{find_validator_stake_pda, Config, ValidatorStake},
 };
 
 /// Move tokens from deactivating to inactive.
@@ -58,7 +58,7 @@ pub fn process_inactivate_stake(
     );
 
     let data = &mut ctx.accounts.stake.try_borrow_mut_data()?;
-    let stake = bytemuck::try_from_bytes_mut::<Stake>(data)
+    let stake = bytemuck::try_from_bytes_mut::<ValidatorStake>(data)
         .map_err(|_error| ProgramError::InvalidAccountData)?;
 
     require!(
@@ -70,7 +70,7 @@ pub fn process_inactivate_stake(
     // validates that the stake account corresponds to the received
     // config account
     let (derivation, _) =
-        find_stake_pda(&stake.validator_vote, ctx.accounts.config.key, program_id);
+        find_validator_stake_pda(&stake.validator_vote, ctx.accounts.config.key, program_id);
 
     require!(
         ctx.accounts.stake.key == &derivation,

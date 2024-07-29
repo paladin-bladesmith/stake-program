@@ -4,14 +4,14 @@ mod setup;
 
 use borsh::BorshSerialize;
 use paladin_stake_program_client::{
-    accounts::{Config, Stake},
+    accounts::{Config, ValidatorStake},
     errors::PaladinStakeProgramError,
     instructions::DeactivateStakeBuilder,
-    pdas::find_stake_pda,
+    pdas::find_validator_stake_pda,
 };
 use setup::{
     config::{create_config, create_config_with_args},
-    stake::create_stake,
+    validator_stake::create_validator_stake,
     vote::create_vote_account,
 };
 use solana_program_test::{tokio, ProgramTest};
@@ -57,10 +57,10 @@ async fn deactivate_stake() {
 
     // And a stake account.
 
-    let stake_pda = create_stake(&mut context, &vote, &config).await;
+    let stake_pda = create_validator_stake(&mut context, &vote, &config).await;
 
     let account = get_account!(context, stake_pda);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 100
     stake_account.amount = 100;
 
@@ -94,7 +94,7 @@ async fn deactivate_stake() {
     // Then the deactivation should be successful.
 
     let account = get_account!(context, stake_pda);
-    let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
 
     assert_eq!(stake_account.amount, 100);
     assert_eq!(stake_account.deactivating_amount, 5);
@@ -134,10 +134,10 @@ async fn deactivate_stake_with_active_deactivation() {
 
     // And a stake account.
 
-    let stake_pda = create_stake(&mut context, &vote, &config).await;
+    let stake_pda = create_validator_stake(&mut context, &vote, &config).await;
 
     let account = get_account!(context, stake_pda);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 100
     stake_account.amount = 100;
 
@@ -169,7 +169,7 @@ async fn deactivate_stake_with_active_deactivation() {
     context.banks_client.process_transaction(tx).await.unwrap();
 
     let account = get_account!(context, stake_pda);
-    let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(stake_account.deactivating_amount, 5);
 
     let mut clock = context.banks_client.get_sysvar::<Clock>().await.unwrap();
@@ -199,7 +199,7 @@ async fn deactivate_stake_with_active_deactivation() {
     // Then the deactivation should have the updated amount and timestamp.
 
     let account = get_account!(context, stake_pda);
-    let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(stake_account.deactivating_amount, 1);
     assert_eq!(
         updated_timestamp as u64,
@@ -226,10 +226,10 @@ async fn fail_deactivate_stake_with_amount_greater_than_stake_amount() {
 
     // And a stake account.
 
-    let stake_pda = create_stake(&mut context, &vote, &config).await;
+    let stake_pda = create_validator_stake(&mut context, &vote, &config).await;
 
     let account = get_account!(context, stake_pda);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 100
     stake_account.amount = 100;
 
@@ -288,10 +288,10 @@ async fn fail_deactivate_stake_with_invalid_authority() {
 
     // And a stake account.
 
-    let stake_pda = create_stake(&mut context, &vote, &config).await;
+    let stake_pda = create_validator_stake(&mut context, &vote, &config).await;
 
     let account = get_account!(context, stake_pda);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 100
     stake_account.amount = 100;
 
@@ -352,10 +352,10 @@ async fn deactivate_stake_with_zero_amount() {
 
     // And a stake account.
 
-    let stake_pda = create_stake(&mut context, &vote, &config).await;
+    let stake_pda = create_validator_stake(&mut context, &vote, &config).await;
 
     let account = get_account!(context, stake_pda);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 100
     stake_account.amount = 100;
 
@@ -389,7 +389,7 @@ async fn deactivate_stake_with_zero_amount() {
     // Then the deactivation should be cancelled.
 
     let account = get_account!(context, stake_pda);
-    let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
 
     assert_eq!(stake_account.deactivating_amount, 0);
     assert!(stake_account.deactivation_timestamp.value().is_none())
@@ -418,13 +418,13 @@ async fn fail_deactivate_stake_with_uninitialized_stake_account() {
 
     // And an uninitialized stake account.
 
-    let (stake_pda, _) = find_stake_pda(&validator, &config);
+    let (stake_pda, _) = find_validator_stake_pda(&validator, &config);
 
     context.set_account(
         &stake_pda,
         &AccountSharedData::from(Account {
             lamports: 100_000_000,
-            data: vec![5; Stake::LEN],
+            data: vec![5; ValidatorStake::LEN],
             owner: paladin_stake_program_client::ID,
             ..Default::default()
         }),
@@ -489,10 +489,10 @@ async fn fail_deactivate_stake_with_maximum_deactivation_amount_exceeded() {
 
     // And a stake account.
 
-    let stake_pda = create_stake(&mut context, &vote, &config).await;
+    let stake_pda = create_validator_stake(&mut context, &vote, &config).await;
 
     let account = get_account!(context, stake_pda);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 100
     stake_account.amount = 100;
 
@@ -568,10 +568,10 @@ async fn fail_deactivate_stake_with_uninitialized_config_account() {
 
     // And a stake account.
 
-    let stake_pda = create_stake(&mut context, &vote, &config).await;
+    let stake_pda = create_validator_stake(&mut context, &vote, &config).await;
 
     let account = get_account!(context, stake_pda);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 100
     stake_account.amount = 100;
 

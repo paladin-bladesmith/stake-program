@@ -12,8 +12,8 @@ use crate::{
     instruction::accounts::{Context, HarvestHolderRewardsAccounts},
     require,
     state::{
-        calculate_eligible_rewards, create_vault_pda, find_stake_pda, get_vault_pda_signer_seeds,
-        Config, Stake,
+        calculate_eligible_rewards, create_vault_pda, find_validator_stake_pda,
+        get_vault_pda_signer_seeds, Config, ValidatorStake,
     },
 };
 
@@ -77,7 +77,7 @@ pub fn process_harvest_holder_rewards(
     );
 
     let mut stake_data = ctx.accounts.stake.try_borrow_mut_data()?;
-    let stake = bytemuck::try_from_bytes_mut::<Stake>(&mut stake_data)
+    let stake = bytemuck::try_from_bytes_mut::<ValidatorStake>(&mut stake_data)
         .map_err(|_error| ProgramError::InvalidAccountData)?;
 
     require!(
@@ -87,7 +87,7 @@ pub fn process_harvest_holder_rewards(
     );
 
     let (derivation, _) =
-        find_stake_pda(&stake.validator_vote, ctx.accounts.config.key, program_id);
+        find_validator_stake_pda(&stake.validator_vote, ctx.accounts.config.key, program_id);
 
     require!(
         ctx.accounts.stake.key == &derivation,

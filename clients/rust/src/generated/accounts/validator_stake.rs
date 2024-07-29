@@ -12,7 +12,7 @@ use solana_program::pubkey::Pubkey;
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Stake {
+pub struct ValidatorStake {
     pub discriminator: [u8; 8],
     pub amount: u64,
     pub deactivation_timestamp: NullableU64,
@@ -32,7 +32,7 @@ pub struct Stake {
     pub last_seen_stake_rewards_per_token: u128,
 }
 
-impl Stake {
+impl ValidatorStake {
     pub const LEN: usize = 136;
 
     #[inline(always)]
@@ -42,7 +42,7 @@ impl Stake {
     }
 }
 
-impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for Stake {
+impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for ValidatorStake {
     type Error = std::io::Error;
 
     fn try_from(
@@ -54,26 +54,26 @@ impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for Stake {
 }
 
 #[cfg(feature = "anchor")]
-impl anchor_lang::AccountDeserialize for Stake {
+impl anchor_lang::AccountDeserialize for ValidatorStake {
     fn try_deserialize_unchecked(buf: &mut &[u8]) -> anchor_lang::Result<Self> {
         Ok(Self::deserialize(buf)?)
     }
 }
 
 #[cfg(feature = "anchor")]
-impl anchor_lang::AccountSerialize for Stake {}
+impl anchor_lang::AccountSerialize for ValidatorStake {}
 
 #[cfg(feature = "anchor")]
-impl anchor_lang::Owner for Stake {
+impl anchor_lang::Owner for ValidatorStake {
     fn owner() -> Pubkey {
         crate::PALADIN_STAKE_PROGRAM_ID
     }
 }
 
 #[cfg(feature = "anchor-idl-build")]
-impl anchor_lang::IdlBuild for Stake {}
+impl anchor_lang::IdlBuild for ValidatorStake {}
 
 #[cfg(feature = "anchor-idl-build")]
-impl anchor_lang::Discriminator for Stake {
+impl anchor_lang::Discriminator for ValidatorStake {
     const DISCRIMINATOR: [u8; 8] = [0; 8];
 }

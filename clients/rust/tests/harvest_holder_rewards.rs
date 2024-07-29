@@ -5,15 +5,15 @@ mod setup;
 use borsh::BorshSerialize;
 use paladin_rewards_program_client::accounts::HolderRewards;
 use paladin_stake_program_client::{
-    accounts::{Config, Stake},
+    accounts::{Config, ValidatorStake},
     errors::PaladinStakeProgramError,
     instructions::HarvestHolderRewardsBuilder,
-    pdas::{find_stake_pda, find_vault_pda},
+    pdas::{find_validator_stake_pda, find_vault_pda},
 };
 use setup::{
     config::ConfigManager,
     rewards::{create_holder_rewards, create_holder_rewards_pool},
-    stake::StakeManager,
+    validator_stake::ValidatorStakeManager,
 };
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
@@ -58,10 +58,10 @@ async fn harvest_holder_rewards() {
 
     // And a stake account wiht a 50 staked amount.
 
-    let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
+    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     let mut account = get_account!(context, stake_manager.stake);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
     stake_account.amount = 50;
 
@@ -141,7 +141,7 @@ async fn harvest_holder_rewards() {
     // And the stake account last seen holder rewards per token is update.
 
     let account = get_account!(context, stake_manager.stake);
-    let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
         stake_account.last_seen_holder_rewards_per_token,
         40_000_000 * 1_000_000_000
@@ -192,7 +192,7 @@ async fn harvest_holder_rewards_with_no_rewards_available() {
 
     // And a stake account wiht a no staked amount.
 
-    let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
+    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we initialize the holder rewards accounts.
 
@@ -256,7 +256,7 @@ async fn harvest_holder_rewards_with_no_rewards_available() {
     // And the stake account last seen holder rewards per token is not updated.
 
     let account = get_account!(context, stake_manager.stake);
-    let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(stake_account.last_seen_holder_rewards_per_token, 0);
 }
 
@@ -294,10 +294,10 @@ async fn harvest_holder_rewards_after_harvesting() {
 
     // And a stake account wiht a 50 staked amount.
 
-    let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
+    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     let mut account = get_account!(context, stake_manager.stake);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
     stake_account.amount = 50;
 
@@ -400,7 +400,7 @@ async fn harvest_holder_rewards_after_harvesting() {
     // And the stake account last seen holder rewards per token is update.
 
     let account = get_account!(context, stake_manager.stake);
-    let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
         stake_account.last_seen_holder_rewards_per_token,
         40_000_000 * 1_000_000_000
@@ -440,10 +440,10 @@ async fn fail_harvest_holder_rewards_with_wrong_authority() {
 
     // And a stake account wiht a 50 staked amount.
 
-    let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
+    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     let mut account = get_account!(context, stake_manager.stake);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
     stake_account.amount = 50;
 
@@ -526,7 +526,7 @@ async fn fail_harvest_holder_rewards_with_uninitialized_config() {
     // Given a config account (which will be uninitialized) and a stake account.
 
     let config_manager = ConfigManager::new(&mut context).await;
-    let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
+    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we initialize the holder rewards accounts.
 
@@ -624,13 +624,13 @@ async fn fail_harvest_holder_rewards_with_uninitialized_stake() {
     // And an uninitialized stake account.
 
     let validator_vote = Pubkey::new_unique();
-    let (stake, _) = find_stake_pda(&validator_vote, &config_manager.config);
+    let (stake, _) = find_validator_stake_pda(&validator_vote, &config_manager.config);
 
     context.set_account(
         &stake,
         &AccountSharedData::from(Account {
             lamports: 100_000_000,
-            data: vec![5; Stake::LEN],
+            data: vec![5; ValidatorStake::LEN],
             owner: paladin_stake_program_client::ID,
             ..Default::default()
         }),
@@ -720,10 +720,10 @@ async fn fail_harvest_holder_rewards_with_wrong_config() {
 
     // And a stake account wiht a 50 staked amount.
 
-    let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
+    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     let mut account = get_account!(context, stake_manager.stake);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
     stake_account.amount = 50;
 
@@ -825,10 +825,10 @@ async fn fail_harvest_holder_rewards_with_invalid_destination() {
 
     // And a stake account wiht a 50 staked amount.
 
-    let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
+    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     let mut account = get_account!(context, stake_manager.stake);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
     stake_account.amount = 50;
 
