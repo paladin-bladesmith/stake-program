@@ -10,7 +10,7 @@ use super::U128_DEFAULT;
 /// Data for an amount of tokens staked with a validator
 #[repr(C)]
 #[derive(Clone, Copy, Default, Pod, ShankAccount, SplDiscriminate, Zeroable)]
-#[discriminator_hash_input("stake::state::stake")]
+#[discriminator_hash_input("stake::state::validator_stake")]
 pub struct ValidatorStake {
     /// Account disciminator.
     ///

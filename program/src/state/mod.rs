@@ -40,7 +40,7 @@ pub fn find_stake_pda(
 ) -> (Pubkey, u8) {
     Pubkey::find_program_address(
         &[
-            "stake::state::stake".as_bytes(),
+            "stake::state::validator_stake".as_bytes(),
             validator_vote.as_ref(),
             config.as_ref(),
         ],
@@ -60,7 +60,7 @@ pub fn get_stake_pda_signer_seeds<'a>(
     bump_seed: &'a [u8],
 ) -> [&'a [u8]; 4] {
     [
-        "stake::state::stake".as_bytes(),
+        "stake::state::validator_stake".as_bytes(),
         validator_vote.as_ref(),
         config.as_ref(),
         bump_seed,
