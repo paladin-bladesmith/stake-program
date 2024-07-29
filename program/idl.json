@@ -704,7 +704,7 @@
       }
     },
     {
-      "name": "Stake",
+      "name": "ValidatorStake",
       "type": {
         "kind": "struct",
         "fields": [

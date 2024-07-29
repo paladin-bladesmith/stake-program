@@ -43,7 +43,7 @@ import {
   type NullableU64Args,
 } from '../../hooked';
 
-export type Stake = {
+export type ValidatorStake = {
   discriminator: Array<number>;
   amount: bigint;
   deactivationTimestamp: NullableU64;
@@ -55,7 +55,7 @@ export type Stake = {
   lastSeenStakeRewardsPerToken: bigint;
 };
 
-export type StakeArgs = {
+export type ValidatorStakeArgs = {
   discriminator: Array<number>;
   amount: number | bigint;
   deactivationTimestamp: NullableU64Args;
@@ -67,7 +67,7 @@ export type StakeArgs = {
   lastSeenStakeRewardsPerToken: number | bigint;
 };
 
-export function getStakeEncoder(): Encoder<StakeArgs> {
+export function getValidatorStakeEncoder(): Encoder<ValidatorStakeArgs> {
   return getStructEncoder([
     ['discriminator', getArrayEncoder(getU8Encoder(), { size: 8 })],
     ['amount', getU64Encoder()],
@@ -81,7 +81,7 @@ export function getStakeEncoder(): Encoder<StakeArgs> {
   ]);
 }
 
-export function getStakeDecoder(): Decoder<Stake> {
+export function getValidatorStakeDecoder(): Decoder<ValidatorStake> {
   return getStructDecoder([
     ['discriminator', getArrayDecoder(getU8Decoder(), { size: 8 })],
     ['amount', getU64Decoder()],
@@ -95,63 +95,74 @@ export function getStakeDecoder(): Decoder<Stake> {
   ]);
 }
 
-export function getStakeCodec(): Codec<StakeArgs, Stake> {
-  return combineCodec(getStakeEncoder(), getStakeDecoder());
+export function getValidatorStakeCodec(): Codec<
+  ValidatorStakeArgs,
+  ValidatorStake
+> {
+  return combineCodec(getValidatorStakeEncoder(), getValidatorStakeDecoder());
 }
 
-export function decodeStake<TAddress extends string = string>(
+export function decodeValidatorStake<TAddress extends string = string>(
   encodedAccount: EncodedAccount<TAddress>
-): Account<Stake, TAddress>;
-export function decodeStake<TAddress extends string = string>(
+): Account<ValidatorStake, TAddress>;
+export function decodeValidatorStake<TAddress extends string = string>(
   encodedAccount: MaybeEncodedAccount<TAddress>
-): MaybeAccount<Stake, TAddress>;
-export function decodeStake<TAddress extends string = string>(
+): MaybeAccount<ValidatorStake, TAddress>;
+export function decodeValidatorStake<TAddress extends string = string>(
   encodedAccount: EncodedAccount<TAddress> | MaybeEncodedAccount<TAddress>
-): Account<Stake, TAddress> | MaybeAccount<Stake, TAddress> {
+): Account<ValidatorStake, TAddress> | MaybeAccount<ValidatorStake, TAddress> {
   return decodeAccount(
     encodedAccount as MaybeEncodedAccount<TAddress>,
-    getStakeDecoder()
+    getValidatorStakeDecoder()
   );
 }
 
-export async function fetchStake<TAddress extends string = string>(
+export async function fetchValidatorStake<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
   config?: FetchAccountConfig
-): Promise<Account<Stake, TAddress>> {
-  const maybeAccount = await fetchMaybeStake(rpc, address, config);
+): Promise<Account<ValidatorStake, TAddress>> {
+  const maybeAccount = await fetchMaybeValidatorStake(rpc, address, config);
   assertAccountExists(maybeAccount);
   return maybeAccount;
 }
 
-export async function fetchMaybeStake<TAddress extends string = string>(
+export async function fetchMaybeValidatorStake<
+  TAddress extends string = string,
+>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
   config?: FetchAccountConfig
-): Promise<MaybeAccount<Stake, TAddress>> {
+): Promise<MaybeAccount<ValidatorStake, TAddress>> {
   const maybeAccount = await fetchEncodedAccount(rpc, address, config);
-  return decodeStake(maybeAccount);
+  return decodeValidatorStake(maybeAccount);
 }
 
-export async function fetchAllStake(
+export async function fetchAllValidatorStake(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
   config?: FetchAccountsConfig
-): Promise<Account<Stake>[]> {
-  const maybeAccounts = await fetchAllMaybeStake(rpc, addresses, config);
+): Promise<Account<ValidatorStake>[]> {
+  const maybeAccounts = await fetchAllMaybeValidatorStake(
+    rpc,
+    addresses,
+    config
+  );
   assertAccountsExist(maybeAccounts);
   return maybeAccounts;
 }
 
-export async function fetchAllMaybeStake(
+export async function fetchAllMaybeValidatorStake(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
   config?: FetchAccountsConfig
-): Promise<MaybeAccount<Stake>[]> {
+): Promise<MaybeAccount<ValidatorStake>[]> {
   const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
-  return maybeAccounts.map((maybeAccount) => decodeStake(maybeAccount));
+  return maybeAccounts.map((maybeAccount) =>
+    decodeValidatorStake(maybeAccount)
+  );
 }
 
-export function getStakeSize(): number {
+export function getValidatorStakeSize(): number {
   return 136;
 }

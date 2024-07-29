@@ -180,7 +180,7 @@ kinobi.update(
     config: {
       size: 144,
     },
-    stake: {
+    validatorStake: {
       size: 136,
     },
   })

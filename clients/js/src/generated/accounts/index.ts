@@ -7,4 +7,4 @@
  */
 
 export * from './config';
-export * from './stake';
+export * from './validatorStake';

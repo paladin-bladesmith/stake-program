@@ -6,7 +6,7 @@
 //!
 
 pub(crate) mod r#config;
-pub(crate) mod r#stake;
+pub(crate) mod r#validator_stake;
 
 pub use self::r#config::*;
-pub use self::r#stake::*;
+pub use self::r#validator_stake::*;
