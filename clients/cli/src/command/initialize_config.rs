@@ -1,12 +1,15 @@
 use std::{path::PathBuf, str::FromStr};
 
-use paladin_stake_program_client::{instructions::InitializeConfigBuilder, pdas::find_vault_pda};
+use paladin_stake_program_client::{
+    accounts::Config, instructions::InitializeConfigBuilder, pdas::find_vault_pda,
+};
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::{
     message::Message,
     pubkey::Pubkey,
     signature::{read_keypair_file, Keypair, Signature},
     signer::Signer,
+    system_instruction,
     transaction::Transaction,
 };
 
@@ -35,6 +38,8 @@ pub async fn process_initialize_config(
     signer: &dyn Signer,
     args: InitializeConfigArgs,
 ) -> Result<Signature, Box<dyn std::error::Error>> {
+    // Account input.
+
     let account = if let Some(account) = args.account {
         read_keypair_file(account)?
     } else {
@@ -57,6 +62,18 @@ pub async fn process_initialize_config(
 
     let (vault_token_account, _) = find_vault_pda(&account.pubkey());
 
+    // Instruction creation.
+
+    let create_ix = system_instruction::create_account(
+        &signer.pubkey(),
+        &account.pubkey(),
+        rpc_client
+            .get_minimum_balance_for_rent_exemption(Config::LEN)
+            .await?,
+        Config::LEN as u64,
+        &paladin_stake_program_client::ID,
+    );
+
     let initialize_ix = InitializeConfigBuilder::new()
         .config(account.pubkey())
         .config_authority(config_authority)
@@ -67,8 +84,12 @@ pub async fn process_initialize_config(
         .max_deactivation_basis_points(500)
         .instruction();
 
-    let mut transaction =
-        Transaction::new_unsigned(Message::new(&[initialize_ix], Some(&signer.pubkey())));
+    // Send transaction.
+
+    let mut transaction = Transaction::new_unsigned(Message::new(
+        &[create_ix, initialize_ix],
+        Some(&signer.pubkey()),
+    ));
 
     let blockhash = rpc_client
         .get_latest_blockhash()
@@ -76,7 +97,7 @@ pub async fn process_initialize_config(
         .map_err(|err| format!("error: unable to get latest blockhash: {err}"))?;
 
     transaction
-        .try_sign(&vec![signer], blockhash)
+        .try_sign(&vec![signer, &account], blockhash)
         .map_err(|err| format!("error: failed to sign transaction: {err}"))?;
 
     let signature = rpc_client
