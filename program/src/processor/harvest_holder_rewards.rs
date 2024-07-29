@@ -12,8 +12,8 @@ use crate::{
     instruction::accounts::{Context, HarvestHolderRewardsAccounts},
     require,
     state::{
-        calculate_eligible_rewards, create_vault_pda, find_validator_stake_pda, get_vault_pda_signer_seeds,
-        Config, ValidatorStake,
+        calculate_eligible_rewards, create_vault_pda, find_validator_stake_pda,
+        get_vault_pda_signer_seeds, Config, ValidatorStake,
     },
 };
 

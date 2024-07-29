@@ -15,7 +15,10 @@ use crate::{
     error::StakeError,
     instruction::accounts::{Context, SlashAccounts},
     require,
-    state::{create_vault_pda, find_validator_stake_pda, get_vault_pda_signer_seeds, Config, ValidatorStake},
+    state::{
+        create_vault_pda, find_validator_stake_pda, get_vault_pda_signer_seeds, Config,
+        ValidatorStake,
+    },
 };
 
 /// Slashes a stake account for the given amount
