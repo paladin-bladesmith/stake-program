@@ -11,7 +11,7 @@ use super::U128_DEFAULT;
 #[repr(C)]
 #[derive(Clone, Copy, Default, Pod, ShankAccount, SplDiscriminate, Zeroable)]
 #[discriminator_hash_input("stake::state::stake")]
-pub struct Stake {
+pub struct ValidatorStake {
     /// Account disciminator.
     ///
     /// The discriminator is equal to `ArrayDiscriminator:: UNINITIALIZED` when
@@ -50,17 +50,17 @@ pub struct Stake {
     last_seen_stake_rewards_per_token: [u8; 16],
 }
 
-impl Stake {
-    pub const LEN: usize = std::mem::size_of::<Stake>();
+impl ValidatorStake {
+    pub const LEN: usize = std::mem::size_of::<ValidatorStake>();
 
     #[inline(always)]
     pub fn is_initialized(&self) -> bool {
-        self.discriminator.as_slice() == Stake::SPL_DISCRIMINATOR_SLICE
+        self.discriminator.as_slice() == ValidatorStake::SPL_DISCRIMINATOR_SLICE
     }
 
     pub fn new(authority: Pubkey, validator_vote: Pubkey) -> Self {
         Self {
-            discriminator: Stake::SPL_DISCRIMINATOR.into(),
+            discriminator: ValidatorStake::SPL_DISCRIMINATOR.into(),
             amount: u64::default(),
             deactivation_timestamp: Option::default(),
             deactivating_amount: u64::default(),

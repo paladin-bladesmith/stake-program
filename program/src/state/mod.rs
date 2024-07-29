@@ -1,8 +1,8 @@
 pub mod config;
-pub mod stake;
+pub mod validator_stake;
 
 pub use config::*;
-pub use stake::*;
+pub use validator_stake::*;
 
 use solana_program::{
     program_error::ProgramError,

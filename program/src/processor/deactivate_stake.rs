@@ -9,7 +9,7 @@ use crate::{
     error::StakeError,
     instruction::accounts::{Context, DeactivateStakeAccounts},
     require,
-    state::{find_stake_pda, Config, Stake, MAX_BASIS_POINTS},
+    state::{find_stake_pda, Config, ValidatorStake, MAX_BASIS_POINTS},
 };
 
 /// Helper to calculate the maximum amount that can be deactivated.
@@ -72,7 +72,7 @@ pub fn process_deactivate_stake(
     );
 
     let data = &mut ctx.accounts.stake.try_borrow_mut_data()?;
-    let stake = bytemuck::try_from_bytes_mut::<Stake>(data)
+    let stake = bytemuck::try_from_bytes_mut::<ValidatorStake>(data)
         .map_err(|_error| ProgramError::InvalidAccountData)?;
 
     require!(

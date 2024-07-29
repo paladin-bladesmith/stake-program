@@ -15,7 +15,7 @@ use crate::{
     error::StakeError,
     instruction::accounts::{Context, SlashAccounts},
     require,
-    state::{create_vault_pda, find_stake_pda, get_vault_pda_signer_seeds, Config, Stake},
+    state::{create_vault_pda, find_stake_pda, get_vault_pda_signer_seeds, Config, ValidatorStake},
 };
 
 /// Slashes a stake account for the given amount
@@ -71,7 +71,7 @@ pub fn process_slash(
     );
 
     let mut stake_data = ctx.accounts.stake.try_borrow_mut_data()?;
-    let stake = bytemuck::try_from_bytes_mut::<Stake>(&mut stake_data)
+    let stake = bytemuck::try_from_bytes_mut::<ValidatorStake>(&mut stake_data)
         .map_err(|_error| ProgramError::InvalidAccountData)?;
 
     require!(
