@@ -3,7 +3,7 @@
 mod setup;
 
 use paladin_stake_program_client::{
-    accounts::{Config, Stake},
+    accounts::{Config, ValidatorStake},
     errors::PaladinStakeProgramError,
     instructions::StakeTokensBuilder,
     pdas::find_stake_pda,
@@ -12,8 +12,8 @@ use setup::{
     add_extra_account_metas_for_transfer,
     config::ConfigManager,
     rewards::{create_holder_rewards, RewardsManager},
-    stake::StakeManager,
     token::{create_token_account, mint_to, TOKEN_ACCOUNT_EXTENSIONS},
+    validator_stake::ValidatorStakeManager,
     vote::create_vote_account,
 };
 use solana_program_test::{tokio, ProgramTest};
@@ -43,7 +43,7 @@ async fn stake_tokens() {
     // Given a config and stake accounts.
 
     let config_manager = ConfigManager::new(&mut context).await;
-    let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
+    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we initialize the holder rewards accounts and mint 100 tokens.
 
@@ -111,7 +111,7 @@ async fn stake_tokens() {
     // Then the tokens are staked.
 
     let account = get_account!(context, stake_manager.stake);
-    let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(stake_account.amount, 50);
 
     // And the vault account has 50 tokens.
@@ -144,7 +144,7 @@ async fn fail_stake_tokens_with_wrong_vault_account() {
     // Given a config and stake accounts.
 
     let config_manager = ConfigManager::new(&mut context).await;
-    let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
+    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we initialize the holder rewards accounts and mint 100 tokens.
 
@@ -246,7 +246,7 @@ async fn fail_stake_tokens_with_wrong_config_account() {
     // Given a config and stake accounts.
 
     let config_manager = ConfigManager::new(&mut context).await;
-    let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
+    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we initialize the holder rewards accounts and mint 100 tokens.
 
@@ -339,7 +339,7 @@ async fn fail_stake_tokens_with_zero_amount() {
     // Given a config and stake accounts.
 
     let config_manager = ConfigManager::new(&mut context).await;
-    let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
+    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we initialize the holder rewards accounts and mint 100 tokens.
 
@@ -475,7 +475,7 @@ async fn fail_stake_tokens_with_uninitialized_stake_account() {
         &stake_pda,
         &AccountSharedData::from(solana_sdk::account::Account {
             lamports: 100_000_000,
-            data: vec![5; Stake::LEN],
+            data: vec![5; ValidatorStake::LEN],
             owner: paladin_stake_program_client::ID,
             ..Default::default()
         }),

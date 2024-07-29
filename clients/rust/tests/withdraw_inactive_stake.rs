@@ -4,7 +4,7 @@ mod setup;
 
 use borsh::BorshSerialize;
 use paladin_stake_program_client::{
-    accounts::{Config, Stake},
+    accounts::{Config, ValidatorStake},
     errors::PaladinStakeProgramError,
     instructions::WithdrawInactiveStakeBuilder,
     pdas::{find_stake_pda, find_vault_pda},
@@ -13,10 +13,10 @@ use setup::{
     add_extra_account_metas_for_transfer,
     config::ConfigManager,
     rewards::{create_holder_rewards, RewardsManager},
-    stake::StakeManager,
     token::{
         create_associated_token_account, create_token_account, mint_to, TOKEN_ACCOUNT_EXTENSIONS,
     },
+    validator_stake::ValidatorStakeManager,
 };
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
@@ -45,7 +45,7 @@ async fn withdraw_inactive_stake() {
     // Given a config and stake accounts.
 
     let config_manager = ConfigManager::new(&mut context).await;
-    let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
+    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we set total amount delegated = 50 on the config account.
 
@@ -70,7 +70,7 @@ async fn withdraw_inactive_stake() {
     // And we set the amount = 50 and inactive_account = 50 on the stake account.
 
     let mut account = get_account!(context, stake_manager.stake);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the stake values
     stake_account.amount = 50;
     stake_account.inactive_amount = 50;
@@ -160,7 +160,7 @@ async fn withdraw_inactive_stake() {
     // And the inactive amount on the stake account should be updated.
 
     let account = get_account!(context, stake_manager.stake);
-    let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(stake_account.inactive_amount, 0);
 
     // And the vault account should have 50 tokens (decreased from 100).
@@ -188,7 +188,7 @@ async fn fail_withdraw_inactive_stake_without_inactive_stake() {
     // Given a config and stake accounts.
 
     let config_manager = ConfigManager::new(&mut context).await;
-    let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
+    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we set total amount delegated = 100 on the config account.
 
@@ -213,7 +213,7 @@ async fn fail_withdraw_inactive_stake_without_inactive_stake() {
     // And we set the amount = 100 and no inactive stake.
 
     let mut account = get_account!(context, stake_manager.stake);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the stake values
     stake_account.amount = 100;
     // "manually" update the stake account data
@@ -311,7 +311,7 @@ async fn fail_withdraw_inactive_stake_with_invalid_stake_authority() {
     // Given a config and stake accounts.
 
     let config_manager = ConfigManager::new(&mut context).await;
-    let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
+    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we set total amount delegated = 100 on the config account.
 
@@ -356,7 +356,7 @@ async fn fail_withdraw_inactive_stake_with_invalid_stake_authority() {
     // And we set the amount = 50 and inactive_account = 50 on the stake account.
 
     let mut account = get_account!(context, stake_manager.stake);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the stake values
     stake_account.amount = 50;
     stake_account.inactive_amount = 50;
@@ -487,7 +487,7 @@ async fn fail_withdraw_inactive_stake_with_uninitialized_stake_account() {
         &stake,
         &AccountSharedData::from(Account {
             lamports: 100_000_000,
-            data: vec![5; Stake::LEN],
+            data: vec![5; ValidatorStake::LEN],
             owner: paladin_stake_program_client::ID,
             ..Default::default()
         }),
@@ -584,7 +584,7 @@ async fn fail_withdraw_inactive_stake_with_uninitialized_config_account() {
     // Given a config and stake accounts.
 
     let config_manager = ConfigManager::new(&mut context).await;
-    let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
+    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we set total amount delegated = 100 on the config account.
 
@@ -609,7 +609,7 @@ async fn fail_withdraw_inactive_stake_with_uninitialized_config_account() {
     // And we set the amount = 50 and inactive_account = 50 on the stake account.
 
     let mut account = get_account!(context, stake_manager.stake);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the stake values
     stake_account.amount = 50;
     stake_account.inactive_amount = 50;
@@ -720,7 +720,7 @@ async fn fail_withdraw_inactive_stake_with_wrong_config_account() {
     // Given a config and stake accounts.
 
     let config_manager = ConfigManager::new(&mut context).await;
-    let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
+    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we set total amount delegated = 100 on the config account.
 
@@ -745,7 +745,7 @@ async fn fail_withdraw_inactive_stake_with_wrong_config_account() {
     // And we set the amount = 50 and inactive_account = 50 on the stake account.
 
     let mut account = get_account!(context, stake_manager.stake);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the stake values
     stake_account.amount = 50;
     stake_account.inactive_amount = 50;
@@ -848,7 +848,7 @@ async fn fail_withdraw_inactive_stake_with_wrong_mint() {
     // Given a config and stake accounts.
 
     let config_manager = ConfigManager::new(&mut context).await;
-    let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
+    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we set total amount delegated = 100 on the config account.
 
@@ -873,7 +873,7 @@ async fn fail_withdraw_inactive_stake_with_wrong_mint() {
     // And we set the amount = 50 and inactive_account = 50 on the stake account.
 
     let mut account = get_account!(context, stake_manager.stake);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the stake values
     stake_account.amount = 50;
     stake_account.inactive_amount = 50;
@@ -983,7 +983,7 @@ async fn fail_withdraw_inactive_stake_with_wrong_vault_account() {
     // Given a config and stake accounts.
 
     let config_manager = ConfigManager::new(&mut context).await;
-    let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
+    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we set total amount delegated = 100 on the config account.
 
@@ -1008,7 +1008,7 @@ async fn fail_withdraw_inactive_stake_with_wrong_vault_account() {
     // And we set the amount = 50 and inactive_account = 50 on the stake account.
 
     let mut account = get_account!(context, stake_manager.stake);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the stake values
     stake_account.amount = 50;
     stake_account.inactive_amount = 50;
@@ -1120,7 +1120,7 @@ async fn fail_withdraw_inactive_stake_with_vault_as_destination() {
     // Given a config and stake accounts.
 
     let config_manager = ConfigManager::new(&mut context).await;
-    let stake_manager = StakeManager::new(&mut context, &config_manager.config).await;
+    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we set total amount delegated = 100 on the config account.
 
@@ -1145,7 +1145,7 @@ async fn fail_withdraw_inactive_stake_with_vault_as_destination() {
     // And we set the amount = 50 and inactive_account = 50 on the stake account.
 
     let mut account = get_account!(context, stake_manager.stake);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the stake values
     stake_account.amount = 50;
     stake_account.inactive_amount = 50;

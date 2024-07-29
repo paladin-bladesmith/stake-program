@@ -1,5 +1,5 @@
 use paladin_stake_program_client::{
-    accounts::Stake, instructions::InitializeStakeBuilder, pdas::find_stake_pda,
+    accounts::ValidatorStake, instructions::InitializeStakeBuilder, pdas::find_stake_pda,
 };
 use solana_program_test::ProgramTestContext;
 use solana_sdk::{
@@ -9,7 +9,7 @@ use solana_sdk::{
 
 use super::vote::create_vote_account;
 
-pub struct StakeManager {
+pub struct ValidatorStakeManager {
     // Stake account.
     pub stake: Pubkey,
     // Stake authority.
@@ -20,7 +20,7 @@ pub struct StakeManager {
     pub vote: Pubkey,
 }
 
-impl StakeManager {
+impl ValidatorStakeManager {
     pub async fn new(context: &mut ProgramTestContext, config: &Pubkey) -> Self {
         let authority = Keypair::new();
         let validator = Pubkey::new_unique();
@@ -31,7 +31,7 @@ impl StakeManager {
 
         // And a stake account.
 
-        let stake = create_stake(context, &vote, config).await;
+        let stake = create_validator_stake(context, &vote, config).await;
 
         let transfer_ix = system_instruction::transfer(
             &context.payer.pubkey(),
@@ -41,7 +41,7 @@ impl StakeManager {
                 .get_rent()
                 .await
                 .unwrap()
-                .minimum_balance(Stake::LEN),
+                .minimum_balance(ValidatorStake::LEN),
         );
 
         let initialize_ix = InitializeStakeBuilder::new()
@@ -73,7 +73,7 @@ impl StakeManager {
     }
 }
 
-pub async fn create_stake(
+pub async fn create_validator_stake(
     context: &mut ProgramTestContext,
     vote: &Pubkey,
     config: &Pubkey,
@@ -88,7 +88,7 @@ pub async fn create_stake(
             .get_rent()
             .await
             .unwrap()
-            .minimum_balance(Stake::LEN),
+            .minimum_balance(ValidatorStake::LEN),
     );
 
     let initialize_ix = InitializeStakeBuilder::new()

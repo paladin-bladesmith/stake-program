@@ -4,12 +4,14 @@ mod setup;
 
 use borsh::BorshSerialize;
 use paladin_stake_program_client::{
-    accounts::{Config, Stake},
+    accounts::{Config, ValidatorStake},
     errors::PaladinStakeProgramError,
     instructions::HarvestStakeRewardsBuilder,
     pdas::find_stake_pda,
 };
-use setup::{config::create_config, stake::create_stake, vote::create_vote_account};
+use setup::{
+    config::create_config, validator_stake::create_validator_stake, vote::create_vote_account,
+};
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
     account::{Account, AccountSharedData},
@@ -65,10 +67,10 @@ async fn harvest_stake_rewards() {
 
     // And a stake account wiht a 50 staked amount.
 
-    let stake_pda = create_stake(&mut context, &vote, &config).await;
+    let stake_pda = create_validator_stake(&mut context, &vote, &config).await;
 
     let mut account = get_account!(context, stake_pda);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
     stake_account.amount = 50;
 
@@ -109,7 +111,7 @@ async fn harvest_stake_rewards() {
 
     // And the stake account has the updated last seen stake rewards per token.
     let account = get_account!(context, stake_pda);
-    let stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
         stake_account.last_seen_stake_rewards_per_token,
         40_000_000 * 1_000_000_000 // 0.04 * 1e9
@@ -144,10 +146,10 @@ async fn harvest_stake_rewards_with_no_rewards_available() {
 
     // And a stake account wiht a 50 staked amount.
 
-    let stake_pda = create_stake(&mut context, &vote, &config).await;
+    let stake_pda = create_validator_stake(&mut context, &vote, &config).await;
 
     let mut account = get_account!(context, stake_pda);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
     stake_account.amount = 50;
 
@@ -211,10 +213,10 @@ async fn harvest_stake_rewards_after_harvesting() {
 
     // And a stake account wiht a 50 staked amount.
 
-    let stake_pda = create_stake(&mut context, &vote, &config).await;
+    let stake_pda = create_validator_stake(&mut context, &vote, &config).await;
 
     let mut account = get_account!(context, stake_pda);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
     stake_account.amount = 50;
 
@@ -329,10 +331,10 @@ async fn fail_harvest_stake_rewards_with_wrong_authority() {
 
     // And a stake account wiht a 50 staked amount.
 
-    let stake_pda = create_stake(&mut context, &vote, &config).await;
+    let stake_pda = create_validator_stake(&mut context, &vote, &config).await;
 
     let mut account = get_account!(context, stake_pda);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
     stake_account.amount = 50;
 
@@ -387,10 +389,10 @@ async fn fail_harvest_stake_rewards_with_uninitialized_config_account() {
 
     // And a stake account.
 
-    let stake_pda = create_stake(&mut context, &vote, &config).await;
+    let stake_pda = create_validator_stake(&mut context, &vote, &config).await;
 
     let mut account = get_account!(context, stake_pda);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
     stake_account.amount = 50;
 
@@ -473,7 +475,7 @@ async fn fail_harvest_stake_rewards_with_uninitialized_stake_account() {
         &stake_pda,
         &AccountSharedData::from(Account {
             lamports: 100_000_000,
-            data: vec![5; Stake::LEN],
+            data: vec![5; ValidatorStake::LEN],
             owner: paladin_stake_program_client::ID,
             ..Default::default()
         }),
@@ -539,10 +541,10 @@ async fn fail_harvest_stake_rewards_with_wrong_config_account() {
 
     // And a stake account wiht a 50 staked amount.
 
-    let stake_pda = create_stake(&mut context, &vote, &config).await;
+    let stake_pda = create_validator_stake(&mut context, &vote, &config).await;
 
     let mut account = get_account!(context, stake_pda);
-    let mut stake_account = Stake::from_bytes(account.data.as_ref()).unwrap();
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
     stake_account.amount = 50;
 

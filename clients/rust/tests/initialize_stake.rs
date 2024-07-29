@@ -3,7 +3,7 @@
 mod setup;
 
 use paladin_stake_program_client::{
-    accounts::{Config, Stake},
+    accounts::{Config, ValidatorStake},
     instructions::InitializeStakeBuilder,
     pdas::find_stake_pda,
 };
@@ -48,7 +48,7 @@ async fn initialize_stake_with_validator_vote() {
             .get_rent()
             .await
             .unwrap()
-            .minimum_balance(Stake::LEN),
+            .minimum_balance(ValidatorStake::LEN),
     );
 
     let initialize_ix = InitializeStakeBuilder::new()
@@ -68,10 +68,10 @@ async fn initialize_stake_with_validator_vote() {
     // Then an account was created with the correct data.
 
     let account = get_account!(context, stake_pda);
-    assert_eq!(account.data.len(), Stake::LEN);
+    assert_eq!(account.data.len(), ValidatorStake::LEN);
 
     let account_data = account.data.as_ref();
-    let stake_account = Stake::from_bytes(account_data).unwrap();
+    let stake_account = ValidatorStake::from_bytes(account_data).unwrap();
     assert_eq!(stake_account.validator_vote, validator_vote);
     assert_eq!(stake_account.authority, validator);
 }
@@ -104,7 +104,7 @@ async fn fail_initialize_stake_with_initialized_account() {
             .get_rent()
             .await
             .unwrap()
-            .minimum_balance(Stake::LEN),
+            .minimum_balance(ValidatorStake::LEN),
     );
 
     let initialize_ix = InitializeStakeBuilder::new()
@@ -122,7 +122,7 @@ async fn fail_initialize_stake_with_initialized_account() {
     context.banks_client.process_transaction(tx).await.unwrap();
 
     let account = get_account!(context, stake_pda);
-    assert_eq!(account.data.len(), Stake::LEN);
+    assert_eq!(account.data.len(), ValidatorStake::LEN);
 
     // When we try to initialize the stake account again.
 
