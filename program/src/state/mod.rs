@@ -2,6 +2,9 @@ pub mod config;
 pub mod sol_staker_stake;
 pub mod validator_stake;
 
+use std::num::NonZeroU64;
+
+use bytemuck::{Pod, Zeroable};
 pub use config::*;
 pub use sol_staker_stake::*;
 use spl_pod::primitives::PodU128;
