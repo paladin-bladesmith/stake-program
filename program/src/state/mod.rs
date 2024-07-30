@@ -1,7 +1,12 @@
 pub mod config;
+pub mod sol_staker_stake;
 pub mod validator_stake;
 
+use std::num::NonZeroU64;
+
+use bytemuck::{Pod, Zeroable};
 pub use config::*;
+pub use sol_staker_stake::*;
 pub use validator_stake::*;
 
 use solana_program::{
@@ -33,6 +38,22 @@ pub fn find_vault_pda(config: &Pubkey, program_id: &Pubkey) -> (Pubkey, u8) {
 }
 
 #[inline(always)]
+pub fn find_sol_staker_stake_pda(
+    stake_state: &Pubkey,
+    config: &Pubkey,
+    program_id: &Pubkey,
+) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &[
+            "stake::state::sol_staker_stake".as_bytes(),
+            stake_state.as_ref(),
+            config.as_ref(),
+        ],
+        program_id,
+    )
+}
+
+#[inline(always)]
 pub fn find_validator_stake_pda(
     validator_vote: &Pubkey,
     config: &Pubkey,
@@ -51,6 +72,20 @@ pub fn find_validator_stake_pda(
 #[inline(always)]
 pub fn get_vault_pda_signer_seeds<'a>(config: &'a Pubkey, bump_seed: &'a [u8]) -> [&'a [u8]; 3] {
     ["token-owner".as_bytes(), config.as_ref(), bump_seed]
+}
+
+#[inline(always)]
+pub fn get_sol_staker_stake_pda_signer_seeds<'a>(
+    stake_state: &'a Pubkey,
+    config: &'a Pubkey,
+    bump_seed: &'a [u8],
+) -> [&'a [u8]; 4] {
+    [
+        "stake::state::sol_staker_stake".as_bytes(),
+        stake_state.as_ref(),
+        config.as_ref(),
+        bump_seed,
+    ]
 }
 
 #[inline(always)]
@@ -109,5 +144,55 @@ pub fn calculate_stake_rewards_per_token(
             .checked_mul(REWARDS_PER_TOKEN_SCALING_FACTOR)
             .and_then(|product| product.checked_div(stake_amount as u128))
             .ok_or(ProgramError::ArithmeticOverflow)
+    }
+}
+
+/// Struct to hold information about a delegation.
+#[repr(C)]
+#[derive(Clone, Copy, Default, Pod, Zeroable)]
+pub struct Delegation {
+    /// Amount of staked tokens currently active.
+    pub amount: u64,
+
+    /// Timestamp for when deactivation began. Used to judge if a given stake
+    /// is inactive.
+    pub deactivation_timestamp: Option<NonZeroU64>,
+
+    /// Amount of tokens in the cooling down phase, waiting to become inactive.
+    pub deactivating_amount: u64,
+
+    /// Amount that has passed the deactivation period, ready to be withdrawn.
+    pub inactive_amount: u64,
+
+    /// Authority permitted to deactivate and withdraw stake.
+    pub authority: Pubkey,
+
+    /// The address of the validator vote account to whom this stake is delegated.
+    pub validator_vote: Pubkey,
+
+    /// Stores the "last_seen_holder_rewards" just for this stake account, allowing
+    /// stakers to withdraw rewards whenever, just like normal token users.
+    last_seen_holder_rewards_per_token: [u8; 16],
+
+    /// Stores the "last_seen_stake_rewards" just for this stake account, allowing
+    /// stakers to withdraw rewards on their own schedule.
+    last_seen_stake_rewards_per_token: [u8; 16],
+}
+
+impl Delegation {
+    pub fn last_seen_holder_rewards_per_token(&self) -> u128 {
+        u128::from_le_bytes(self.last_seen_holder_rewards_per_token)
+    }
+
+    pub fn set_last_seen_holder_rewards_per_token(&mut self, value: u128) {
+        self.last_seen_holder_rewards_per_token = value.to_le_bytes();
+    }
+
+    pub fn last_seen_stake_rewards_per_token(&self) -> u128 {
+        u128::from_le_bytes(self.last_seen_stake_rewards_per_token)
+    }
+
+    pub fn set_last_seen_stake_rewards_per_token(&mut self, value: u128) {
+        self.last_seen_stake_rewards_per_token = value.to_le_bytes();
     }
 }
