@@ -4,6 +4,7 @@ use solana_program::{
     clock::Clock, entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey,
     sysvar::Sysvar,
 };
+use spl_discriminator::{ArrayDiscriminator, SplDiscriminate};
 
 use crate::{
     error::StakeError,
