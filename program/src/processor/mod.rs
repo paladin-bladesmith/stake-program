@@ -144,3 +144,61 @@ macro_rules! require {
         require!( $constraint, $error, format!($message, $($args)+) );
     };
 }
+
+/// Unpacks an initialized account from the given data and
+/// returns a mutable reference to it.
+#[macro_export]
+macro_rules! unpack_initialized_mut {
+    ( $data:expr, $type:ty, $name:literal ) => {{
+        let account = bytemuck::try_from_bytes_mut::<$type>($data)
+            .map_err(|_error| ProgramError::InvalidAccountData)?;
+
+        require!(
+            account.is_initialized(),
+            ProgramError::UninitializedAccount,
+            $name,
+        );
+
+        account
+    }};
+}
+
+/// Unpacks the delegation information of both `SolStakerStake` and `ValidatorStake` accounts.
+#[macro_export]
+macro_rules! unpack_stake_delegation_mut {
+    ( $data:expr, $ctx:expr, $program_id:expr ) => {{
+        let (delegation, derivation) = match &$data[..ArrayDiscriminator::LENGTH] {
+            SolStakerStake::SPL_DISCRIMINATOR_SLICE => {
+                let sol_staker = unpack_initialized_mut!($data, SolStakerStake, "stake");
+
+                let (derivation, _) = $crate::state::find_sol_staker_stake_pda(
+                    &sol_staker.stake_state,
+                    $ctx.accounts.config.key,
+                    $program_id,
+                );
+
+                (sol_staker.delegation, derivation)
+            }
+            ValidatorStake::SPL_DISCRIMINATOR_SLICE => {
+                let validator = unpack_initialized_mut!($data, ValidatorStake, "stake");
+
+                let (derivation, _) = $crate::state::find_validator_stake_pda(
+                    &validator.delegation.validator_vote,
+                    $ctx.accounts.config.key,
+                    $program_id,
+                );
+
+                (validator.delegation, derivation)
+            }
+            _ => return Err(ProgramError::InvalidAccountData),
+        };
+
+        require!(
+            $ctx.accounts.stake.key == &derivation,
+            ProgramError::InvalidSeeds,
+            "stake",
+        );
+
+        delegation
+    }};
+}
