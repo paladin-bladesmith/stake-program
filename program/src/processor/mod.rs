@@ -1,25 +1,34 @@
-use solana_program::{account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey};
+use solana_program::{
+    account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError,
+    pubkey::Pubkey,
+};
+use spl_discriminator::{ArrayDiscriminator, SplDiscriminate};
 
-use crate::instruction::{
-    accounts::{
-        DeactivateStakeAccounts, DistributeRewardsAccounts, HarvestHolderRewardsAccounts,
-        HarvestStakeRewardsAccounts, InactivateStakeAccounts, InitializeConfigAccounts,
-        InitializeStakeAccounts, SetAuthorityAccounts, SlashAccounts, StakeTokensAccounts,
-        UpdateConfigAccounts, WithdrawInactiveStakeAccounts,
+use crate::{
+    instruction::{
+        accounts::{
+            DeactivateStakeAccounts, DistributeRewardsAccounts, HarvestHolderRewardsAccounts,
+            InactivateStakeAccounts, InitializeConfigAccounts, SetAuthorityAccounts,
+            UpdateConfigAccounts, WithdrawInactiveStakeAccounts,
+        },
+        StakeInstruction,
     },
-    StakeInstruction,
+    state::{
+        find_sol_staker_stake_pda, find_validator_stake_pda, Delegation, SolStakerStake,
+        ValidatorStake,
+    },
 };
 
 mod deactivate_stake;
 mod distribute_rewards;
 mod harvest_holder_rewards;
-mod harvest_stake_rewards;
+//mod harvest_stake_rewards;
 mod inactivate_stake;
 mod initialize_config;
-mod initialize_stake;
+//mod initialize_stake;
 mod set_authority;
-mod slash;
-mod stake_tokens;
+//mod slash;
+//mod stake_tokens;
 mod update_config;
 mod withdraw_inactive_stake;
 
@@ -57,10 +66,12 @@ pub fn process_instruction<'a>(
         }
         StakeInstruction::HarvestStakeRewards => {
             msg!("Instruction: HarvestStakeRewards");
-            harvest_stake_rewards::process_harvest_stake_rewards(
-                program_id,
-                HarvestStakeRewardsAccounts::context(accounts)?,
-            )
+            // Note: needs to be refactored
+            //harvest_stake_rewards::process_harvest_stake_rewards(
+            //    program_id,
+            //    HarvestStakeRewardsAccounts::context(accounts)?,
+            //)
+            todo!();
         }
         StakeInstruction::InactivateStake => {
             msg!("Instruction: InactivateStake");
@@ -83,10 +94,12 @@ pub fn process_instruction<'a>(
         }
         StakeInstruction::InitializeStake => {
             msg!("Instruction: InitializeStake");
-            initialize_stake::process_initialize_stake(
-                program_id,
-                InitializeStakeAccounts::context(accounts)?,
-            )
+            // Note: needs to be refactored
+            //initialize_stake::process_initialize_stake(
+            //    program_id,
+            //    InitializeStakeAccounts::context(accounts)?,
+            //)
+            todo!();
         }
         StakeInstruction::SetAuthority(authority) => {
             msg!("Instruction: SetAuthority");
@@ -96,17 +109,21 @@ pub fn process_instruction<'a>(
                 authority,
             )
         }
-        StakeInstruction::Slash(amount) => {
+        StakeInstruction::Slash(_amount) => {
             msg!("Instruction: Slash");
-            slash::process_slash(program_id, SlashAccounts::context(accounts)?, amount)
+            // Note: needs to be refactored
+            //slash::process_slash(program_id, SlashAccounts::context(accounts)?, amount)
+            todo!();
         }
-        StakeInstruction::StakeTokens(amount) => {
+        StakeInstruction::StakeTokens(_amount) => {
             msg!("Instruction: StakeTokens");
-            stake_tokens::process_stake_tokens(
-                program_id,
-                StakeTokensAccounts::context(accounts)?,
-                amount,
-            )
+            // Note: needs to be refactored
+            //stake_tokens::process_stake_tokens(
+            //    program_id,
+            //    StakeTokensAccounts::context(accounts)?,
+            //    amount,
+            //)
+            todo!();
         }
         StakeInstruction::UpdateConfig(field) => {
             msg!("Instruction: UpdateConfig");
@@ -163,42 +180,60 @@ macro_rules! unpack_initialized_mut {
     }};
 }
 
-/// Unpacks the delegation information of both `SolStakerStake` and `ValidatorStake` accounts.
-#[macro_export]
-macro_rules! unpack_stake_delegation_mut {
-    ( $data:expr, $ctx:expr, $program_id:expr ) => {{
-        let (delegation, derivation) = match &$data[..ArrayDiscriminator::LENGTH] {
-            SolStakerStake::SPL_DISCRIMINATOR_SLICE => {
-                let sol_staker = unpack_initialized_mut!($data, SolStakerStake, "stake");
+/// Unpacks the delegation information from either a `SolStakerStake` and `ValidatorStake`
+/// accounts.
+///
+/// This function will validate that the account data is initialized and deriavation matches
+/// the expected PDA derivation.
+#[inline]
+pub fn unpack_delegation_mut(
+    stake_data: &mut [u8],
+    stake: &Pubkey,
+    config: &Pubkey,
+    program_id: &Pubkey,
+) -> Result<Delegation, ProgramError> {
+    let (delegation, derivation) = match &stake_data[..ArrayDiscriminator::LENGTH] {
+        SolStakerStake::SPL_DISCRIMINATOR_SLICE => {
+            let sol_staker = unpack_initialized_mut!(stake_data, SolStakerStake, "stake");
 
-                let (derivation, _) = $crate::state::find_sol_staker_stake_pda(
-                    &sol_staker.stake_state,
-                    $ctx.accounts.config.key,
-                    $program_id,
-                );
+            let (derivation, _) =
+                find_sol_staker_stake_pda(&sol_staker.stake_state, config, program_id);
 
-                (sol_staker.delegation, derivation)
-            }
-            ValidatorStake::SPL_DISCRIMINATOR_SLICE => {
-                let validator = unpack_initialized_mut!($data, ValidatorStake, "stake");
+            (sol_staker.delegation, derivation)
+        }
+        ValidatorStake::SPL_DISCRIMINATOR_SLICE => {
+            let validator = unpack_initialized_mut!(stake_data, ValidatorStake, "stake");
 
-                let (derivation, _) = $crate::state::find_validator_stake_pda(
-                    &validator.delegation.validator_vote,
-                    $ctx.accounts.config.key,
-                    $program_id,
-                );
+            let (derivation, _) =
+                find_validator_stake_pda(&validator.delegation.validator_vote, config, program_id);
 
-                (validator.delegation, derivation)
-            }
-            _ => return Err(ProgramError::InvalidAccountData),
-        };
+            (validator.delegation, derivation)
+        }
+        _ => return Err(ProgramError::InvalidAccountData),
+    };
 
-        require!(
-            $ctx.accounts.stake.key == &derivation,
-            ProgramError::InvalidSeeds,
-            "stake",
-        );
+    require!(stake == &derivation, ProgramError::InvalidSeeds, "stake");
 
-        delegation
-    }};
+    Ok(delegation)
+}
+
+/// Unpacks the delegation information from either a `SolStakerStake` and `ValidatorStake`
+/// accounts.
+///
+/// This function will validate that the account data is initialized.
+#[inline]
+pub fn unpack_delegation_mut_uncheked(stake_data: &mut [u8]) -> Result<Delegation, ProgramError> {
+    let delegation = match &stake_data[..ArrayDiscriminator::LENGTH] {
+        SolStakerStake::SPL_DISCRIMINATOR_SLICE => {
+            let sol_staker = unpack_initialized_mut!(stake_data, SolStakerStake, "stake");
+            sol_staker.delegation
+        }
+        ValidatorStake::SPL_DISCRIMINATOR_SLICE => {
+            let validator = unpack_initialized_mut!(stake_data, ValidatorStake, "stake");
+            validator.delegation
+        }
+        _ => return Err(ProgramError::InvalidAccountData),
+    };
+
+    Ok(delegation)
 }

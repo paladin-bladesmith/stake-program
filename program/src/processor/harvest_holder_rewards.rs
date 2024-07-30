@@ -10,11 +10,9 @@ use spl_token_2022::{
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, HarvestHolderRewardsAccounts},
+    processor::unpack_delegation_mut,
     require,
-    state::{
-        calculate_eligible_rewards, create_vault_pda, find_validator_stake_pda,
-        get_vault_pda_signer_seeds, Config, ValidatorStake,
-    },
+    state::{calculate_eligible_rewards, create_vault_pda, get_vault_pda_signer_seeds, Config},
 };
 
 /// Harvests holder SOL rewards earned by the given stake account.
@@ -76,24 +74,14 @@ pub fn process_harvest_holder_rewards(
         "stake"
     );
 
-    let mut stake_data = ctx.accounts.stake.try_borrow_mut_data()?;
-    let stake = bytemuck::try_from_bytes_mut::<ValidatorStake>(&mut stake_data)
-        .map_err(|_error| ProgramError::InvalidAccountData)?;
-
-    require!(
-        stake.is_initialized(),
-        ProgramError::UninitializedAccount,
-        "stake",
-    );
-
-    let (derivation, _) =
-        find_validator_stake_pda(&stake.validator_vote, ctx.accounts.config.key, program_id);
-
-    require!(
-        ctx.accounts.stake.key == &derivation,
-        ProgramError::InvalidSeeds,
-        "stake",
-    );
+    let stake_data = &mut ctx.accounts.stake.try_borrow_mut_data()?;
+    // checks that the stake account is initialized and has the correct derivation
+    let mut delegation = unpack_delegation_mut(
+        stake_data,
+        ctx.accounts.stake.key,
+        ctx.accounts.config.key,
+        program_id,
+    )?;
 
     // vault
     // - must be the token account on the stake config account
@@ -129,7 +117,7 @@ pub fn process_harvest_holder_rewards(
     );
 
     require!(
-        ctx.accounts.stake_authority.key == &stake.authority,
+        ctx.accounts.stake_authority.key == &delegation.authority,
         StakeError::InvalidAuthority,
         "stake authority",
     );
@@ -177,15 +165,15 @@ pub fn process_harvest_holder_rewards(
     let holder_rewards = HolderRewards::try_from(ctx.accounts.holder_rewards)?;
     let rewards = calculate_eligible_rewards(
         holder_rewards.last_accumulated_rewards_per_token,
-        stake.last_seen_holder_rewards_per_token(),
-        stake.amount,
+        delegation.last_seen_holder_rewards_per_token(),
+        delegation.amount,
     )?;
 
     // Withdraw the holder rewards to the destination account.
 
     if rewards != 0 {
         // update the last seen holder rewards
-        stake.set_last_seen_holder_rewards_per_token(
+        delegation.set_last_seen_holder_rewards_per_token(
             holder_rewards.last_accumulated_rewards_per_token,
         );
 

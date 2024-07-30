@@ -7,26 +7,11 @@ use crate::{
         accounts::{Context, SetAuthorityAccounts},
         AuthorityType,
     },
+    processor::unpack_delegation_mut_uncheked,
     require,
-    state::{Config, ValidatorStake},
+    state::Config,
+    unpack_initialized_mut,
 };
-
-/// Unpacks an initialized account from the given data and
-/// returns a mutable reference to it.
-macro_rules! unpack_initialized_mut {
-    ( $data:expr, $type:ty, $name:literal ) => {{
-        let account = bytemuck::try_from_bytes_mut::<$type>($data)
-            .map_err(|_error| ProgramError::InvalidAccountData)?;
-
-        require!(
-            account.is_initialized(),
-            ProgramError::UninitializedAccount,
-            $name,
-        );
-
-        account
-    }};
-}
 
 /// Sets new authority on a config or stake account
 ///
@@ -98,15 +83,15 @@ pub fn process_set_authority(
             config.slash_authority = OptionalNonZeroPubkey(*ctx.accounts.new_authority.key);
         }
         AuthorityType::Stake => {
-            let stake = unpack_initialized_mut!(data, ValidatorStake, "stake");
+            let mut delegation = unpack_delegation_mut_uncheked(data)?;
 
             require!(
-                *ctx.accounts.authority.key == stake.authority,
+                *ctx.accounts.authority.key == delegation.authority,
                 StakeError::InvalidAuthority,
                 "authority (stake)"
             );
 
-            stake.authority = *ctx.accounts.new_authority.key;
+            delegation.authority = *ctx.accounts.new_authority.key;
         }
     }
 

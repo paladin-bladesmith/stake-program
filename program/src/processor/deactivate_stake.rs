@@ -4,14 +4,13 @@ use solana_program::{
     clock::Clock, entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey,
     sysvar::Sysvar,
 };
-use spl_discriminator::{ArrayDiscriminator, SplDiscriminate};
 
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, DeactivateStakeAccounts},
+    processor::unpack_delegation_mut,
     require,
-    state::{Config, SolStakerStake, ValidatorStake, MAX_BASIS_POINTS},
-    unpack_initialized_mut, unpack_stake_delegation_mut,
+    state::{Config, MAX_BASIS_POINTS},
 };
 
 /// Helper to calculate the maximum amount that can be deactivated.
@@ -75,7 +74,12 @@ pub fn process_deactivate_stake(
 
     let stake_data = &mut ctx.accounts.stake.try_borrow_mut_data()?;
     // checks that the stake account is initialized and has the correct derivation
-    let mut delegation = unpack_stake_delegation_mut!(stake_data, ctx, program_id);
+    let mut delegation = unpack_delegation_mut(
+        stake_data,
+        ctx.accounts.stake.key,
+        ctx.accounts.config.key,
+        program_id,
+    )?;
 
     // authority
     // - must be a signer

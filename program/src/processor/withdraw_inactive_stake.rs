@@ -7,11 +7,9 @@ use spl_token_2022::{
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, WithdrawInactiveStakeAccounts},
+    processor::unpack_delegation_mut,
     require,
-    state::{
-        create_vault_pda, find_validator_stake_pda, get_vault_pda_signer_seeds, Config,
-        ValidatorStake,
-    },
+    state::{create_vault_pda, get_vault_pda_signer_seeds, Config},
 };
 
 /// Withdraw inactive staked tokens from the vault
@@ -67,24 +65,14 @@ pub fn process_withdraw_inactive_stake<'a>(
         "stake"
     );
 
-    let mut stake_data = ctx.accounts.stake.try_borrow_mut_data()?;
-    let stake = bytemuck::try_from_bytes_mut::<ValidatorStake>(&mut stake_data)
-        .map_err(|_error| ProgramError::InvalidAccountData)?;
-
-    require!(
-        stake.is_initialized(),
-        ProgramError::UninitializedAccount,
-        "stake",
-    );
-
-    let (derivation, _) =
-        find_validator_stake_pda(&stake.validator_vote, ctx.accounts.config.key, program_id);
-
-    require!(
-        ctx.accounts.stake.key == &derivation,
-        ProgramError::InvalidSeeds,
-        "stake",
-    );
+    let stake_data = &mut ctx.accounts.stake.try_borrow_mut_data()?;
+    // checks that the stake account is initialized and has the correct derivation
+    let mut delegation = unpack_delegation_mut(
+        stake_data,
+        ctx.accounts.stake.key,
+        ctx.accounts.config.key,
+        program_id,
+    )?;
 
     // stake authority
     // - must be a signer
@@ -97,7 +85,7 @@ pub fn process_withdraw_inactive_stake<'a>(
     );
 
     require!(
-        ctx.accounts.stake_authority.key == &stake.authority,
+        ctx.accounts.stake_authority.key == &delegation.authority,
         StakeError::InvalidAuthority,
         "stake authority",
     );
@@ -150,12 +138,12 @@ pub fn process_withdraw_inactive_stake<'a>(
     // Update the config and stake account data.
 
     require!(
-        amount <= stake.inactive_amount,
+        amount <= delegation.inactive_amount,
         StakeError::NotEnoughInactivatedTokens,
         "amount"
     );
 
-    stake.inactive_amount = stake
+    delegation.inactive_amount = delegation
         .inactive_amount
         .checked_sub(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
