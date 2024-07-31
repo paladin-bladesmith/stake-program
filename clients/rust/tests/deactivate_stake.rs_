@@ -62,7 +62,7 @@ async fn deactivate_stake() {
     let account = get_account!(context, stake_pda);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 100
-    stake_account.amount = 100;
+    stake_account.delegation.amount = 100;
 
     let updated_stake = Account {
         lamports: account.lamports,
@@ -96,9 +96,13 @@ async fn deactivate_stake() {
     let account = get_account!(context, stake_pda);
     let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
 
-    assert_eq!(stake_account.amount, 100);
-    assert_eq!(stake_account.deactivating_amount, 5);
-    assert!(stake_account.deactivation_timestamp.value().is_some())
+    assert_eq!(stake_account.delegation.amount, 100);
+    assert_eq!(stake_account.delegation.deactivating_amount, 5);
+    assert!(stake_account
+        .delegation
+        .deactivation_timestamp
+        .value()
+        .is_some())
 }
 
 #[tokio::test]
@@ -139,7 +143,7 @@ async fn deactivate_stake_with_active_deactivation() {
     let account = get_account!(context, stake_pda);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 100
-    stake_account.amount = 100;
+    stake_account.delegation.amount = 100;
 
     let updated_stake = Account {
         lamports: account.lamports,
@@ -170,7 +174,7 @@ async fn deactivate_stake_with_active_deactivation() {
 
     let account = get_account!(context, stake_pda);
     let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake_account.deactivating_amount, 5);
+    assert_eq!(stake_account.delegation.deactivating_amount, 5);
 
     let mut clock = context.banks_client.get_sysvar::<Clock>().await.unwrap();
     // updated timestamp
@@ -200,10 +204,14 @@ async fn deactivate_stake_with_active_deactivation() {
 
     let account = get_account!(context, stake_pda);
     let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake_account.deactivating_amount, 1);
+    assert_eq!(stake_account.delegation.deactivating_amount, 1);
     assert_eq!(
         updated_timestamp as u64,
-        stake_account.deactivation_timestamp.value().unwrap()
+        stake_account
+            .delegation
+            .deactivation_timestamp
+            .value()
+            .unwrap()
     );
 }
 
@@ -231,7 +239,7 @@ async fn fail_deactivate_stake_with_amount_greater_than_stake_amount() {
     let account = get_account!(context, stake_pda);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 100
-    stake_account.amount = 100;
+    stake_account.delegation.amount = 100;
 
     let updated_stake = Account {
         lamports: account.lamports,
@@ -293,7 +301,7 @@ async fn fail_deactivate_stake_with_invalid_authority() {
     let account = get_account!(context, stake_pda);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 100
-    stake_account.amount = 100;
+    stake_account.delegation.amount = 100;
 
     let updated_stake = Account {
         lamports: account.lamports,
@@ -357,7 +365,7 @@ async fn deactivate_stake_with_zero_amount() {
     let account = get_account!(context, stake_pda);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 100
-    stake_account.amount = 100;
+    stake_account.delegation.amount = 100;
 
     let updated_stake = Account {
         lamports: account.lamports,
@@ -391,8 +399,12 @@ async fn deactivate_stake_with_zero_amount() {
     let account = get_account!(context, stake_pda);
     let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
 
-    assert_eq!(stake_account.deactivating_amount, 0);
-    assert!(stake_account.deactivation_timestamp.value().is_none())
+    assert_eq!(stake_account.delegation.deactivating_amount, 0);
+    assert!(stake_account
+        .delegation
+        .deactivation_timestamp
+        .value()
+        .is_none())
 }
 
 #[tokio::test]
@@ -494,7 +506,7 @@ async fn fail_deactivate_stake_with_maximum_deactivation_amount_exceeded() {
     let account = get_account!(context, stake_pda);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 100
-    stake_account.amount = 100;
+    stake_account.delegation.amount = 100;
 
     let updated_stake = Account {
         lamports: account.lamports,
@@ -573,7 +585,7 @@ async fn fail_deactivate_stake_with_uninitialized_config_account() {
     let account = get_account!(context, stake_pda);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 100
-    stake_account.amount = 100;
+    stake_account.delegation.amount = 100;
 
     let updated_stake = Account {
         lamports: account.lamports,
