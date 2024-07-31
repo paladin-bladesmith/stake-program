@@ -1,5 +1,6 @@
 use paladin_stake_program_client::{
-    accounts::ValidatorStake, instructions::InitializeStakeBuilder, pdas::find_validator_stake_pda,
+    accounts::ValidatorStake, instructions::InitializeValidatorStakeBuilder,
+    pdas::find_validator_stake_pda,
 };
 use solana_program_test::ProgramTestContext;
 use solana_sdk::{
@@ -44,7 +45,7 @@ impl ValidatorStakeManager {
                 .minimum_balance(ValidatorStake::LEN),
         );
 
-        let initialize_ix = InitializeStakeBuilder::new()
+        let initialize_ix = InitializeValidatorStakeBuilder::new()
             .config(*config)
             .stake(stake)
             .validator_vote(vote)
@@ -91,7 +92,7 @@ pub async fn create_validator_stake(
             .minimum_balance(ValidatorStake::LEN),
     );
 
-    let initialize_ix = InitializeStakeBuilder::new()
+    let initialize_ix = InitializeValidatorStakeBuilder::new()
         .config(*config)
         .stake(stake_pda)
         .validator_vote(*vote)

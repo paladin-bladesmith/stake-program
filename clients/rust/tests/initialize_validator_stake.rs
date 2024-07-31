@@ -4,7 +4,7 @@ mod setup;
 
 use paladin_stake_program_client::{
     accounts::{Config, ValidatorStake},
-    instructions::InitializeStakeBuilder,
+    instructions::InitializeValidatorStakeBuilder,
     pdas::find_validator_stake_pda,
 };
 use setup::{
@@ -51,7 +51,7 @@ async fn initialize_stake_with_validator_vote() {
             .minimum_balance(ValidatorStake::LEN),
     );
 
-    let initialize_ix = InitializeStakeBuilder::new()
+    let initialize_ix = InitializeValidatorStakeBuilder::new()
         .config(config)
         .stake(stake_pda)
         .validator_vote(validator_vote)
@@ -72,8 +72,8 @@ async fn initialize_stake_with_validator_vote() {
 
     let account_data = account.data.as_ref();
     let stake_account = ValidatorStake::from_bytes(account_data).unwrap();
-    assert_eq!(stake_account.validator_vote, validator_vote);
-    assert_eq!(stake_account.authority, validator);
+    assert_eq!(stake_account.delegation.validator_vote, validator_vote);
+    assert_eq!(stake_account.delegation.authority, validator);
 }
 
 #[tokio::test]
@@ -107,7 +107,7 @@ async fn fail_initialize_stake_with_initialized_account() {
             .minimum_balance(ValidatorStake::LEN),
     );
 
-    let initialize_ix = InitializeStakeBuilder::new()
+    let initialize_ix = InitializeValidatorStakeBuilder::new()
         .config(config)
         .stake(stake_pda)
         .validator_vote(validator_vote)
@@ -126,7 +126,7 @@ async fn fail_initialize_stake_with_initialized_account() {
 
     // When we try to initialize the stake account again.
 
-    let initialize_ix = InitializeStakeBuilder::new()
+    let initialize_ix = InitializeValidatorStakeBuilder::new()
         .config(config)
         .stake(stake_pda)
         .validator_vote(validator_vote)
@@ -169,7 +169,7 @@ async fn fail_initialize_stake_with_invalid_derivation() {
 
     let (stake_pda, _) = find_validator_stake_pda(&Pubkey::new_unique(), &config);
 
-    let initialize_ix = InitializeStakeBuilder::new()
+    let initialize_ix = InitializeValidatorStakeBuilder::new()
         .config(config)
         .stake(stake_pda)
         .validator_vote(validator_vote)
@@ -219,7 +219,7 @@ async fn fail_initialize_stake_with_invalid_vote_account() {
 
     let (stake_pda, _) = find_validator_stake_pda(&Pubkey::new_unique(), &config);
 
-    let initialize_ix = InitializeStakeBuilder::new()
+    let initialize_ix = InitializeValidatorStakeBuilder::new()
         .config(config)
         .stake(stake_pda)
         .validator_vote(validator_vote)
@@ -283,7 +283,7 @@ async fn fail_initialize_stake_with_uninitialized_config_account() {
     let (stake_pda, _) =
         find_validator_stake_pda(&Pubkey::new_unique(), &uninitialized_config.pubkey());
 
-    let initialize_ix = InitializeStakeBuilder::new()
+    let initialize_ix = InitializeValidatorStakeBuilder::new()
         .config(uninitialized_config.pubkey())
         .stake(stake_pda)
         .validator_vote(validator_vote)
