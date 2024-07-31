@@ -14,7 +14,7 @@ import {
   type ParsedHarvestStakeRewardsInstruction,
   type ParsedInactivateStakeInstruction,
   type ParsedInitializeConfigInstruction,
-  type ParsedInitializeStakeInstruction,
+  type ParsedInitializeValidatorStakeInstruction,
   type ParsedSetAuthorityInstruction,
   type ParsedSlashInstruction,
   type ParsedStakeTokensInstruction,
@@ -33,7 +33,7 @@ export enum PaladinStakeProgramAccount {
 
 export enum PaladinStakeProgramInstruction {
   InitializeConfig,
-  InitializeStake,
+  InitializeValidatorStake,
   StakeTokens,
   DeactivateStake,
   InactivateStake,
@@ -55,7 +55,7 @@ export function identifyPaladinStakeProgramInstruction(
     return PaladinStakeProgramInstruction.InitializeConfig;
   }
   if (containsBytes(data, getU8Encoder().encode(1), 0)) {
-    return PaladinStakeProgramInstruction.InitializeStake;
+    return PaladinStakeProgramInstruction.InitializeValidatorStake;
   }
   if (containsBytes(data, getU8Encoder().encode(2), 0)) {
     return PaladinStakeProgramInstruction.StakeTokens;
@@ -99,8 +99,8 @@ export type ParsedPaladinStakeProgramInstruction<
       instructionType: PaladinStakeProgramInstruction.InitializeConfig;
     } & ParsedInitializeConfigInstruction<TProgram>)
   | ({
-      instructionType: PaladinStakeProgramInstruction.InitializeStake;
-    } & ParsedInitializeStakeInstruction<TProgram>)
+      instructionType: PaladinStakeProgramInstruction.InitializeValidatorStake;
+    } & ParsedInitializeValidatorStakeInstruction<TProgram>)
   | ({
       instructionType: PaladinStakeProgramInstruction.StakeTokens;
     } & ParsedStakeTokensInstruction<TProgram>)

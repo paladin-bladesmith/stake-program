@@ -27,7 +27,7 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export type InitializeStakeInstruction<
+export type InitializeValidatorStakeInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountStake extends string | IAccountMeta<string> = string,
@@ -56,32 +56,32 @@ export type InitializeStakeInstruction<
     ]
   >;
 
-export type InitializeStakeInstructionData = { discriminator: number };
+export type InitializeValidatorStakeInstructionData = { discriminator: number };
 
-export type InitializeStakeInstructionDataArgs = {};
+export type InitializeValidatorStakeInstructionDataArgs = {};
 
-export function getInitializeStakeInstructionDataEncoder(): Encoder<InitializeStakeInstructionDataArgs> {
+export function getInitializeValidatorStakeInstructionDataEncoder(): Encoder<InitializeValidatorStakeInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', getU8Encoder()]]),
     (value) => ({ ...value, discriminator: 1 })
   );
 }
 
-export function getInitializeStakeInstructionDataDecoder(): Decoder<InitializeStakeInstructionData> {
+export function getInitializeValidatorStakeInstructionDataDecoder(): Decoder<InitializeValidatorStakeInstructionData> {
   return getStructDecoder([['discriminator', getU8Decoder()]]);
 }
 
-export function getInitializeStakeInstructionDataCodec(): Codec<
-  InitializeStakeInstructionDataArgs,
-  InitializeStakeInstructionData
+export function getInitializeValidatorStakeInstructionDataCodec(): Codec<
+  InitializeValidatorStakeInstructionDataArgs,
+  InitializeValidatorStakeInstructionData
 > {
   return combineCodec(
-    getInitializeStakeInstructionDataEncoder(),
-    getInitializeStakeInstructionDataDecoder()
+    getInitializeValidatorStakeInstructionDataEncoder(),
+    getInitializeValidatorStakeInstructionDataDecoder()
   );
 }
 
-export type InitializeStakeInput<
+export type InitializeValidatorStakeInput<
   TAccountConfig extends string = string,
   TAccountStake extends string = string,
   TAccountValidatorVote extends string = string,
@@ -89,7 +89,7 @@ export type InitializeStakeInput<
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
-  /** Validator stake account (pda of `['stake::state::stake', validator, config]`) */
+  /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
   stake: Address<TAccountStake>;
   /** Validator vote account */
   validatorVote: Address<TAccountValidatorVote>;
@@ -97,19 +97,19 @@ export type InitializeStakeInput<
   systemProgram?: Address<TAccountSystemProgram>;
 };
 
-export function getInitializeStakeInstruction<
+export function getInitializeValidatorStakeInstruction<
   TAccountConfig extends string,
   TAccountStake extends string,
   TAccountValidatorVote extends string,
   TAccountSystemProgram extends string,
 >(
-  input: InitializeStakeInput<
+  input: InitializeValidatorStakeInput<
     TAccountConfig,
     TAccountStake,
     TAccountValidatorVote,
     TAccountSystemProgram
   >
-): InitializeStakeInstruction<
+): InitializeValidatorStakeInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountStake,
@@ -146,8 +146,8 @@ export function getInitializeStakeInstruction<
       getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
-    data: getInitializeStakeInstructionDataEncoder().encode({}),
-  } as InitializeStakeInstruction<
+    data: getInitializeValidatorStakeInstructionDataEncoder().encode({}),
+  } as InitializeValidatorStakeInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountStake,
@@ -158,7 +158,7 @@ export function getInitializeStakeInstruction<
   return instruction;
 }
 
-export type ParsedInitializeStakeInstruction<
+export type ParsedInitializeValidatorStakeInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
@@ -166,24 +166,24 @@ export type ParsedInitializeStakeInstruction<
   accounts: {
     /** Stake config account */
     config: TAccountMetas[0];
-    /** Validator stake account (pda of `['stake::state::stake', validator, config]`) */
+    /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
     stake: TAccountMetas[1];
     /** Validator vote account */
     validatorVote: TAccountMetas[2];
     /** System program */
     systemProgram: TAccountMetas[3];
   };
-  data: InitializeStakeInstructionData;
+  data: InitializeValidatorStakeInstructionData;
 };
 
-export function parseInitializeStakeInstruction<
+export function parseInitializeValidatorStakeInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedInitializeStakeInstruction<TProgram, TAccountMetas> {
+): ParsedInitializeValidatorStakeInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 4) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -202,6 +202,8 @@ export function parseInitializeStakeInstruction<
       validatorVote: getNextAccount(),
       systemProgram: getNextAccount(),
     },
-    data: getInitializeStakeInstructionDataDecoder().decode(instruction.data),
+    data: getInitializeValidatorStakeInstructionDataDecoder().decode(
+      instruction.data
+    ),
   };
 }
