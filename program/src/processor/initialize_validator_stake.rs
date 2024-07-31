@@ -5,7 +5,7 @@ use solana_program::{
 };
 
 use crate::{
-    instruction::accounts::{Context, InitializeStakeAccounts},
+    instruction::accounts::{Context, InitializeValidatorStakeAccounts},
     require,
     state::{
         find_validator_stake_pda, get_validator_stake_pda_signer_seeds, Config, ValidatorStake,
@@ -20,12 +20,12 @@ use crate::{
 ///
 /// 0. `[]` Stake config account
 /// 1. `[w]` Validator stake account
-///     * PDA seeds: ['stake::state::stake', validator, config]
+///     * PDA seeds: ['stake::state::validator_stake', validator, config]
 /// 2. `[]` Validator vote account
 /// 3. `[]` System program
-pub fn process_initialize_stake(
+pub fn process_initialize_validator_stake(
     program_id: &Pubkey,
-    ctx: Context<InitializeStakeAccounts>,
+    ctx: Context<InitializeValidatorStakeAccounts>,
 ) -> ProgramResult {
     // Accounts validation.
 

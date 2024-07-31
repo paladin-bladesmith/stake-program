@@ -55,7 +55,7 @@ pub enum StakeInstruction {
         1,
         writable,
         name = "stake",
-        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
+        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
     )]
     #[account(
         2,
@@ -67,7 +67,7 @@ pub enum StakeInstruction {
         name = "system_program",
         desc = "System program"
     )]
-    InitializeStake,
+    InitializeValidatorStake,
 
     /// Stakes tokens with the given config.
     /// 
@@ -437,7 +437,7 @@ impl StakeInstruction {
                 data.extend_from_slice(&max_deactivation_basis_points.to_le_bytes());
                 data
             }
-            StakeInstruction::InitializeStake => vec![1],
+            StakeInstruction::InitializeValidatorStake => vec![1],
             StakeInstruction::StakeTokens(amount) => {
                 let mut data = Vec::with_capacity(9);
                 data.push(2);
@@ -513,7 +513,7 @@ impl StakeInstruction {
                 })
             }
             // 1 - InitializeStake
-            Some((&1, _)) => Ok(StakeInstruction::InitializeStake),
+            Some((&1, _)) => Ok(StakeInstruction::InitializeValidatorStake),
             // 2 - StakeTokens: u64 (8)
             Some((&2, rest)) if rest.len() == 8 => {
                 let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
@@ -613,7 +613,7 @@ mod tests {
 
     #[test]
     fn test_pack_unpack_initialize_stake() {
-        let original = StakeInstruction::InitializeStake;
+        let original = StakeInstruction::InitializeValidatorStake;
         let packed = original.pack();
         let unpacked = StakeInstruction::unpack(&packed).unwrap();
         assert_eq!(original, unpacked);

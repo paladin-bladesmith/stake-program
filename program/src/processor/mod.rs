@@ -9,8 +9,8 @@ use crate::{
     instruction::{
         accounts::{
             DeactivateStakeAccounts, DistributeRewardsAccounts, HarvestHolderRewardsAccounts,
-            InactivateStakeAccounts, InitializeConfigAccounts, SetAuthorityAccounts,
-            UpdateConfigAccounts, WithdrawInactiveStakeAccounts,
+            InactivateStakeAccounts, InitializeConfigAccounts, InitializeValidatorStakeAccounts,
+            SetAuthorityAccounts, UpdateConfigAccounts, WithdrawInactiveStakeAccounts,
         },
         StakeInstruction,
     },
@@ -26,7 +26,7 @@ mod harvest_holder_rewards;
 //mod harvest_stake_rewards;
 mod inactivate_stake;
 mod initialize_config;
-//mod initialize_stake;
+mod initialize_validator_stake;
 mod set_authority;
 //mod slash;
 //mod stake_tokens;
@@ -93,14 +93,12 @@ pub fn process_instruction<'a>(
                 max_deactivation_basis_points,
             )
         }
-        StakeInstruction::InitializeStake => {
+        StakeInstruction::InitializeValidatorStake => {
             msg!("Instruction: InitializeStake");
-            // Note: needs to be refactored
-            //initialize_stake::process_initialize_stake(
-            //    program_id,
-            //    InitializeStakeAccounts::context(accounts)?,
-            //)
-            todo!();
+            initialize_validator_stake::process_initialize_validator_stake(
+                program_id,
+                InitializeValidatorStakeAccounts::context(accounts)?,
+            )
         }
         StakeInstruction::SetAuthority(authority) => {
             msg!("Instruction: SetAuthority");
