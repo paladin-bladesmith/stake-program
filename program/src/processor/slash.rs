@@ -17,7 +17,7 @@ use crate::{
     require,
     state::{
         create_vault_pda, find_validator_stake_pda, get_vault_pda_signer_seeds, Config,
-        SolStakerStake,
+        ValidatorStake,
     },
 };
 
@@ -74,7 +74,7 @@ pub fn process_slash(
     );
 
     let mut stake_data = ctx.accounts.stake.try_borrow_mut_data()?;
-    let stake = bytemuck::try_from_bytes_mut::<SolStakerStake>(&mut stake_data)
+    let stake = bytemuck::try_from_bytes_mut::<ValidatorStake>(&mut stake_data)
         .map_err(|_error| ProgramError::InvalidAccountData)?;
 
     require!(
