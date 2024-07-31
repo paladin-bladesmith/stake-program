@@ -140,3 +140,7 @@ export async function fetchAllMaybeSolStakerStake(
     decodeSolStakerStake(maybeAccount)
   );
 }
+
+export function getSolStakerStakeSize(): number {
+  return 176;
+}

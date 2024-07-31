@@ -140,5 +140,5 @@ export async function fetchAllMaybeValidatorStake(
 }
 
 export function getValidatorStakeSize(): number {
-  return 136;
+  return 152;
 }
