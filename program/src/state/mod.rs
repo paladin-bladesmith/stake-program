@@ -2,17 +2,17 @@ pub mod config;
 pub mod sol_staker_stake;
 pub mod validator_stake;
 
-use std::num::NonZeroU64;
-
-use bytemuck::{Pod, Zeroable};
 pub use config::*;
 pub use sol_staker_stake::*;
 pub use validator_stake::*;
 
+use bytemuck::{Pod, Zeroable};
+use shank::ShankType;
 use solana_program::{
     program_error::ProgramError,
     pubkey::{Pubkey, PubkeyError},
 };
+use std::num::NonZeroU64;
 
 /// Scaling factor for rewards per token (1e9).
 const REWARDS_PER_TOKEN_SCALING_FACTOR: u128 = 1_000_000_000;
@@ -148,8 +148,11 @@ pub fn calculate_stake_rewards_per_token(
 }
 
 /// Struct to hold information about a delegation.
+///
+/// This holds the stake information for both `SolStakerStake` and `ValidatorStake`
+/// accounts.
 #[repr(C)]
-#[derive(Clone, Copy, Default, Pod, Zeroable)]
+#[derive(Clone, Copy, Default, Pod, ShankType, Zeroable)]
 pub struct Delegation {
     /// Amount of staked tokens currently active.
     pub amount: u64,

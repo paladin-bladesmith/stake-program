@@ -5,7 +5,13 @@ use spl_discriminator::SplDiscriminate;
 
 use super::{Delegation, U128_DEFAULT};
 
-/// Data for an amount of tokens staked by with a validator
+/// Data for an amount of tokens staked by a SOL staker.
+///
+/// A staker is able to stake tokens on the same validator where it is currently staking
+/// SOL subject the maximum amount of tokens that can be staked being the minumum value
+/// between:
+///   * `lamports_amount * 1.3 * 0.5`; and
+///   * `total_staked_sol_amount - total_staked_pal_amount` on the `ValidatorStake` account.
 #[repr(C)]
 #[derive(Clone, Copy, Default, Pod, ShankAccount, SplDiscriminate, Zeroable)]
 #[discriminator_hash_input("stake::state::sol_staker_stake")]
@@ -24,10 +30,6 @@ pub struct SolStakerStake {
     pub delegation: Delegation,
 
     /// Amount of SOL (lamports) staked on the stake state account.
-    ///
-    /// The maximum amount of tokens that can be staked is the minumum value between:
-    ///   * lamports_amount * 1.3 * 0.5; and
-    ///   * total_staked_sol_amount - total_staked_pal_amount on the `ValidatorStake` account.
     pub lamports_amount: u64,
 
     /// The address of the stake state account.

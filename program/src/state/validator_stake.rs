@@ -5,16 +5,19 @@ use spl_discriminator::SplDiscriminate;
 
 use super::{Delegation, U128_DEFAULT};
 
-/// Data for an amount of tokens staked with a validator.
+/// Data for an amount of tokens staked by a validator.
 ///
-/// This account represents the stake of a validator.
+/// The amount of tokens that a validator can stake is proportional to the amount of
+/// SOL staked to the validator, subject to a limit equal to the minimum value between:
+///   * `1.3 * 0.5 * total_staked_sol_amount`; and
+///   * `total_staked_sol_amount - total_staked_pal_amount`
 #[repr(C)]
 #[derive(Clone, Copy, Default, Pod, ShankAccount, SplDiscriminate, Zeroable)]
 #[discriminator_hash_input("stake::state::validator_stake")]
 pub struct ValidatorStake {
-    /// Account disciminator.
+    /// Account discriminator.
     ///
-    /// The discriminator is equal to `ArrayDiscriminator:: UNINITIALIZED` when
+    /// The discriminator is equal to `ArrayDiscriminator::UNINITIALIZED` when
     /// the account is empty, and equal to `Stake::DISCRIMINATOR` when the account
     /// is initialized.
     ///
@@ -25,16 +28,13 @@ pub struct ValidatorStake {
     /// Delegation values for the stake account.
     pub delegation: Delegation,
 
-    /// Total amount of PAL tokens staked on validator stake account.
+    /// Total amount of PAL tokens staked on a validator stake account.
     ///
-    /// The total includes the amount staked by the validator and the amount staked by
-    /// all `SolStakerStake` accounts delegating to the validator.
+    /// The total includes the amount staked by the validator and  all `SolStakerStake`
+    /// accounts delegating to the validator.
     pub total_staked_pal_amount: u64,
 
-    /// Total amount of SOL (lamports) staked on validator stake account.
-    ///
-    /// The total includes the amount staked by the validator and the amount staked by
-    /// all `SolStakerStake` accounts delegating to the validator.
+    /// Total amount of SOL (lamports) staked on the validator.
     pub total_staked_lamports_amount: u64,
 }
 
