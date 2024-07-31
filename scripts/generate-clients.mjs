@@ -181,7 +181,10 @@ kinobi.update(
       size: 144,
     },
     validatorStake: {
-      size: 136,
+      size: 152,
+    },
+    solStakerStake: {
+      size: 176,
     },
   })
 );

@@ -7,6 +7,8 @@
 
 pub(crate) mod r#authority_type;
 pub(crate) mod r#config_field;
+pub(crate) mod r#delegation;
 
 pub use self::r#authority_type::*;
 pub use self::r#config_field::*;
+pub use self::r#delegation::*;
