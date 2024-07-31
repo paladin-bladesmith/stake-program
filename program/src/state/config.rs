@@ -2,9 +2,7 @@ use bytemuck::{Pod, Zeroable};
 use shank::ShankAccount;
 use solana_program::pubkey::Pubkey;
 use spl_discriminator::{ArrayDiscriminator, SplDiscriminate};
-use spl_pod::optional_keys::OptionalNonZeroPubkey;
-
-use super::U128_DEFAULT;
+use spl_pod::{optional_keys::OptionalNonZeroPubkey, primitives::PodU128};
 
 /// Configuration for a staking system.
 #[repr(C)]
@@ -40,7 +38,7 @@ pub struct Config {
     ///
     /// Stored as a `u128`, which includes a scaling factor of `1e9` to
     /// represent the exchange rate with 9 decimal places of precision.
-    accumulated_stake_rewards_per_token: [u8; 16],
+    pub accumulated_stake_rewards_per_token: PodU128,
 
     /// The maximum proportion that can be deactivated at once, given as basis
     /// points (1 / 10,000).
@@ -71,7 +69,7 @@ impl Config {
             vault,
             cooldown_time_seconds,
             token_amount_delegated: 0,
-            accumulated_stake_rewards_per_token: U128_DEFAULT,
+            accumulated_stake_rewards_per_token: PodU128::default(),
             max_deactivation_basis_points,
             vault_authority_bump,
             _padding: [0; 5],
@@ -86,15 +84,5 @@ impl Config {
     #[inline(always)]
     pub fn is_uninitialized(&self) -> bool {
         self.discriminator.as_slice() == ArrayDiscriminator::UNINITIALIZED.as_slice()
-    }
-
-    #[inline(always)]
-    pub fn accumulated_stake_rewards_per_token(&self) -> u128 {
-        u128::from_le_bytes(self.accumulated_stake_rewards_per_token)
-    }
-
-    #[inline(always)]
-    pub fn set_accumulated_stake_rewards_per_token(&mut self, value: u128) {
-        self.accumulated_stake_rewards_per_token = value.to_le_bytes();
     }
 }

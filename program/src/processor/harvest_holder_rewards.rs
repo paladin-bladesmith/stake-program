@@ -165,7 +165,7 @@ pub fn process_harvest_holder_rewards(
     let holder_rewards = HolderRewards::try_from(ctx.accounts.holder_rewards)?;
     let rewards = calculate_eligible_rewards(
         holder_rewards.last_accumulated_rewards_per_token,
-        delegation.last_seen_holder_rewards_per_token(),
+        delegation.last_seen_holder_rewards_per_token.into(),
         delegation.amount,
     )?;
 
@@ -173,9 +173,8 @@ pub fn process_harvest_holder_rewards(
 
     if rewards != 0 {
         // update the last seen holder rewards
-        delegation.set_last_seen_holder_rewards_per_token(
-            holder_rewards.last_accumulated_rewards_per_token,
-        );
+        delegation.last_seen_holder_rewards_per_token =
+            holder_rewards.last_accumulated_rewards_per_token.into();
 
         // Rewards are stored on the `vault` token account. We need to first withdraw the excess lamports
         // from the vault token account to the vault authority account. Then transfer the rewards amount

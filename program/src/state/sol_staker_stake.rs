@@ -2,8 +2,9 @@ use bytemuck::{Pod, Zeroable};
 use shank::ShankAccount;
 use solana_program::pubkey::Pubkey;
 use spl_discriminator::SplDiscriminate;
+use spl_pod::primitives::PodU128;
 
-use super::{Delegation, U128_DEFAULT};
+use super::Delegation;
 
 /// Data for an amount of tokens staked by a SOL staker.
 ///
@@ -60,8 +61,8 @@ impl SolStakerStake {
                 inactive_amount: u64::default(),
                 authority,
                 validator_vote,
-                last_seen_holder_rewards_per_token: U128_DEFAULT,
-                last_seen_stake_rewards_per_token: U128_DEFAULT,
+                last_seen_holder_rewards_per_token: PodU128::default(),
+                last_seen_stake_rewards_per_token: PodU128::default(),
             },
             lamports_amount: u64::default(),
             stake_state,

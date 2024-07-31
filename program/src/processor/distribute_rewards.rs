@@ -2,6 +2,7 @@ use solana_program::{
     entrypoint::ProgramResult, program::invoke, program_error::ProgramError, pubkey::Pubkey,
     system_instruction, system_program,
 };
+use spl_pod::primitives::PodU128;
 
 use crate::{
     instruction::accounts::{Context, DistributeRewardsAccounts},
@@ -68,11 +69,10 @@ pub fn process_distribute_rewards(
 
     if rewards_per_token != 0 {
         // updates the accumulated stake rewards per token
-        let accumulated = config
-            .accumulated_stake_rewards_per_token()
+        let accumulated = <PodU128 as Into<u128>>::into(config.accumulated_stake_rewards_per_token)
             .checked_add(rewards_per_token)
             .ok_or(ProgramError::ArithmeticOverflow)?;
-        config.set_accumulated_stake_rewards_per_token(accumulated);
+        config.accumulated_stake_rewards_per_token = accumulated.into();
     }
 
     // Transfers the rewards to the config account.

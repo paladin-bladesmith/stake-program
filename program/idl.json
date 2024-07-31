@@ -677,10 +677,7 @@
           {
             "name": "accumulatedStakeRewardsPerToken",
             "type": {
-              "array": [
-                "u8",
-                16
-              ]
+              "defined": "PodU128"
             }
           },
           {
@@ -803,19 +800,13 @@
           {
             "name": "lastSeenHolderRewardsPerToken",
             "type": {
-              "array": [
-                "u8",
-                16
-              ]
+              "defined": "PodU128"
             }
           },
           {
             "name": "lastSeenStakeRewardsPerToken",
             "type": {
-              "array": [
-                "u8",
-                16
-              ]
+              "defined": "PodU128"
             }
           }
         ]

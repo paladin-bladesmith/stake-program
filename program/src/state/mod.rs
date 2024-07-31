@@ -4,6 +4,7 @@ pub mod validator_stake;
 
 pub use config::*;
 pub use sol_staker_stake::*;
+use spl_pod::primitives::PodU128;
 pub use validator_stake::*;
 
 use bytemuck::{Pod, Zeroable};
@@ -16,9 +17,6 @@ use std::num::NonZeroU64;
 
 /// Scaling factor for rewards per token (1e9).
 const REWARDS_PER_TOKEN_SCALING_FACTOR: u128 = 1_000_000_000;
-
-/// Default value for a U128 byte array.
-const U128_DEFAULT: [u8; 16] = [0; 16];
 
 /// Defined the maximum valud for basis points (100%).
 pub const MAX_BASIS_POINTS: u128 = 10_000;
@@ -175,27 +173,9 @@ pub struct Delegation {
 
     /// Stores the "last_seen_holder_rewards" just for this stake account, allowing
     /// stakers to withdraw rewards whenever, just like normal token users.
-    last_seen_holder_rewards_per_token: [u8; 16],
+    pub last_seen_holder_rewards_per_token: PodU128,
 
     /// Stores the "last_seen_stake_rewards" just for this stake account, allowing
     /// stakers to withdraw rewards on their own schedule.
-    last_seen_stake_rewards_per_token: [u8; 16],
-}
-
-impl Delegation {
-    pub fn last_seen_holder_rewards_per_token(&self) -> u128 {
-        u128::from_le_bytes(self.last_seen_holder_rewards_per_token)
-    }
-
-    pub fn set_last_seen_holder_rewards_per_token(&mut self, value: u128) {
-        self.last_seen_holder_rewards_per_token = value.to_le_bytes();
-    }
-
-    pub fn last_seen_stake_rewards_per_token(&self) -> u128 {
-        u128::from_le_bytes(self.last_seen_stake_rewards_per_token)
-    }
-
-    pub fn set_last_seen_stake_rewards_per_token(&mut self, value: u128) {
-        self.last_seen_stake_rewards_per_token = value.to_le_bytes();
-    }
+    pub last_seen_stake_rewards_per_token: PodU128,
 }
