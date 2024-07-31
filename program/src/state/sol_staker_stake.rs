@@ -1,6 +1,6 @@
 use bytemuck::{Pod, Zeroable};
 use shank::ShankAccount;
-use solana_program::pubkey::Pubkey;
+use solana_program::{program_pack::IsInitialized, pubkey::Pubkey};
 use spl_discriminator::SplDiscriminate;
 use spl_pod::primitives::PodU128;
 
@@ -67,5 +67,11 @@ impl SolStakerStake {
             lamports_amount: u64::default(),
             stake_state,
         }
+    }
+}
+
+impl IsInitialized for SolStakerStake {
+    fn is_initialized(&self) -> bool {
+        self.is_initialized()
     }
 }

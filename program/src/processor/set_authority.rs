@@ -7,10 +7,9 @@ use crate::{
         accounts::{Context, SetAuthorityAccounts},
         AuthorityType,
     },
-    processor::unpack_delegation_mut_uncheked,
+    processor::{unpack_delegation_mut_uncheked, unpack_initialized_mut},
     require,
     state::Config,
-    unpack_initialized_mut,
 };
 
 /// Sets new authority on a config or stake account
@@ -53,11 +52,10 @@ pub fn process_set_authority(
 
     match authority_type {
         AuthorityType::Config => {
-            let config = unpack_initialized_mut!(data, Config, "config");
+            let config = unpack_initialized_mut::<Config>(data)?;
 
             let config_authority =
-                <OptionalNonZeroPubkey as Into<Option<Pubkey>>>::into(config.authority)
-                    .ok_or(StakeError::AuthorityNotSet)?;
+                Option::<Pubkey>::from(config.authority).ok_or(StakeError::AuthorityNotSet)?;
 
             require!(
                 *ctx.accounts.authority.key == config_authority,
@@ -68,11 +66,10 @@ pub fn process_set_authority(
             config.authority = OptionalNonZeroPubkey(*ctx.accounts.new_authority.key)
         }
         AuthorityType::Slash => {
-            let config = unpack_initialized_mut!(data, Config, "config");
+            let config = unpack_initialized_mut::<Config>(data)?;
 
-            let slash_authority =
-                <OptionalNonZeroPubkey as Into<Option<Pubkey>>>::into(config.slash_authority)
-                    .ok_or(StakeError::AuthorityNotSet)?;
+            let slash_authority = Option::<Pubkey>::from(config.slash_authority)
+                .ok_or(StakeError::AuthorityNotSet)?;
 
             require!(
                 *ctx.accounts.authority.key == slash_authority,

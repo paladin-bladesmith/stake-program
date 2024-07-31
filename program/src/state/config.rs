@@ -1,6 +1,6 @@
 use bytemuck::{Pod, Zeroable};
 use shank::ShankAccount;
-use solana_program::pubkey::Pubkey;
+use solana_program::{program_pack::IsInitialized, pubkey::Pubkey};
 use spl_discriminator::{ArrayDiscriminator, SplDiscriminate};
 use spl_pod::{optional_keys::OptionalNonZeroPubkey, primitives::PodU128};
 
@@ -84,5 +84,11 @@ impl Config {
     #[inline(always)]
     pub fn is_uninitialized(&self) -> bool {
         self.discriminator.as_slice() == ArrayDiscriminator::UNINITIALIZED.as_slice()
+    }
+}
+
+impl IsInitialized for Config {
+    fn is_initialized(&self) -> bool {
+        self.is_initialized()
     }
 }

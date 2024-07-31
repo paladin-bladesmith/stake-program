@@ -1,6 +1,7 @@
+use bytemuck::Pod;
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError,
-    pubkey::Pubkey,
+    program_pack::IsInitialized, pubkey::Pubkey,
 };
 use spl_discriminator::{ArrayDiscriminator, SplDiscriminate};
 
@@ -164,20 +165,16 @@ macro_rules! require {
 
 /// Unpacks an initialized account from the given data and
 /// returns a mutable reference to it.
-#[macro_export]
-macro_rules! unpack_initialized_mut {
-    ( $data:expr, $type:ty, $name:literal ) => {{
-        let account = bytemuck::try_from_bytes_mut::<$type>($data)
-            .map_err(|_error| ProgramError::InvalidAccountData)?;
+#[inline]
+pub fn unpack_initialized_mut<T: Pod + IsInitialized>(
+    data: &mut [u8],
+) -> Result<&mut T, ProgramError> {
+    let account = bytemuck::try_from_bytes_mut::<T>(data)
+        .map_err(|_error| ProgramError::InvalidAccountData)?;
 
-        require!(
-            account.is_initialized(),
-            ProgramError::UninitializedAccount,
-            $name,
-        );
+    require!(account.is_initialized(), ProgramError::UninitializedAccount);
 
-        account
-    }};
+    Ok(account)
 }
 
 /// Unpacks the delegation information from either a `SolStakerStake` and `ValidatorStake`
@@ -194,7 +191,7 @@ pub fn unpack_delegation_mut(
 ) -> Result<Delegation, ProgramError> {
     let (delegation, derivation) = match &stake_data[..ArrayDiscriminator::LENGTH] {
         SolStakerStake::SPL_DISCRIMINATOR_SLICE => {
-            let sol_staker = unpack_initialized_mut!(stake_data, SolStakerStake, "stake");
+            let sol_staker = unpack_initialized_mut::<SolStakerStake>(stake_data)?;
 
             let (derivation, _) =
                 find_sol_staker_stake_pda(&sol_staker.stake_state, config, program_id);
@@ -202,7 +199,7 @@ pub fn unpack_delegation_mut(
             (sol_staker.delegation, derivation)
         }
         ValidatorStake::SPL_DISCRIMINATOR_SLICE => {
-            let validator = unpack_initialized_mut!(stake_data, ValidatorStake, "stake");
+            let validator = unpack_initialized_mut::<ValidatorStake>(stake_data)?;
 
             let (derivation, _) =
                 find_validator_stake_pda(&validator.delegation.validator_vote, config, program_id);
@@ -225,11 +222,11 @@ pub fn unpack_delegation_mut(
 pub fn unpack_delegation_mut_uncheked(stake_data: &mut [u8]) -> Result<Delegation, ProgramError> {
     let delegation = match &stake_data[..ArrayDiscriminator::LENGTH] {
         SolStakerStake::SPL_DISCRIMINATOR_SLICE => {
-            let sol_staker = unpack_initialized_mut!(stake_data, SolStakerStake, "stake");
+            let sol_staker = unpack_initialized_mut::<SolStakerStake>(stake_data)?;
             sol_staker.delegation
         }
         ValidatorStake::SPL_DISCRIMINATOR_SLICE => {
-            let validator = unpack_initialized_mut!(stake_data, ValidatorStake, "stake");
+            let validator = unpack_initialized_mut::<ValidatorStake>(stake_data)?;
             validator.delegation
         }
         _ => return Err(ProgramError::InvalidAccountData),
