@@ -76,7 +76,7 @@ pub fn process_harvest_holder_rewards(
 
     let stake_data = &mut ctx.accounts.stake.try_borrow_mut_data()?;
     // checks that the stake account is initialized and has the correct derivation
-    let mut delegation = unpack_delegation_mut(
+    let delegation = unpack_delegation_mut(
         stake_data,
         ctx.accounts.stake.key,
         ctx.accounts.config.key,
