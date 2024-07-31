@@ -80,7 +80,7 @@ pub fn process_set_authority(
             config.slash_authority = OptionalNonZeroPubkey(*ctx.accounts.new_authority.key);
         }
         AuthorityType::Stake => {
-            let mut delegation = unpack_delegation_mut_uncheked(data)?;
+            let delegation = unpack_delegation_mut_uncheked(data)?;
 
             require!(
                 *ctx.accounts.authority.key == delegation.authority,
