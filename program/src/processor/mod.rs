@@ -183,12 +183,12 @@ pub fn unpack_initialized_mut<T: Pod + IsInitialized>(
 /// This function will validate that the account data is initialized and deriavation matches
 /// the expected PDA derivation.
 #[inline]
-pub fn unpack_delegation_mut(
-    stake_data: &mut [u8],
-    stake: &Pubkey,
-    config: &Pubkey,
-    program_id: &Pubkey,
-) -> Result<Delegation, ProgramError> {
+pub fn unpack_delegation_mut<'a, 'b, 'c, 'd>(
+    stake_data: &'a mut [u8],
+    stake: &'b Pubkey,
+    config: &'c Pubkey,
+    program_id: &'d Pubkey,
+) -> Result<&'a mut Delegation, ProgramError> {
     let (delegation, derivation) = match &stake_data[..ArrayDiscriminator::LENGTH] {
         SolStakerStake::SPL_DISCRIMINATOR_SLICE => {
             let sol_staker = unpack_initialized_mut::<SolStakerStake>(stake_data)?;
@@ -196,7 +196,7 @@ pub fn unpack_delegation_mut(
             let (derivation, _) =
                 find_sol_staker_stake_pda(&sol_staker.stake_state, config, program_id);
 
-            (sol_staker.delegation, derivation)
+            (&mut sol_staker.delegation, derivation)
         }
         ValidatorStake::SPL_DISCRIMINATOR_SLICE => {
             let validator = unpack_initialized_mut::<ValidatorStake>(stake_data)?;
@@ -204,7 +204,7 @@ pub fn unpack_delegation_mut(
             let (derivation, _) =
                 find_validator_stake_pda(&validator.delegation.validator_vote, config, program_id);
 
-            (validator.delegation, derivation)
+            (&mut validator.delegation, derivation)
         }
         _ => return Err(ProgramError::InvalidAccountData),
     };
