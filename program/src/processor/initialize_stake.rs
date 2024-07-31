@@ -8,7 +8,7 @@ use crate::{
     instruction::accounts::{Context, InitializeStakeAccounts},
     require,
     state::{
-        find_validator_stake_pda, get_validator_stake_pda_signer_seeds, Config, SolStakerStake,
+        find_validator_stake_pda, get_validator_stake_pda_signer_seeds, Config, ValidatorStake,
     },
 };
 
@@ -105,7 +105,7 @@ pub fn process_initialize_stake(
     );
 
     invoke_signed(
-        &system_instruction::allocate(ctx.accounts.stake.key, SolStakerStake::LEN as u64),
+        &system_instruction::allocate(ctx.accounts.stake.key, ValidatorStake::LEN as u64),
         &[ctx.accounts.stake.clone()],
         &[&signer_seeds],
     )?;
@@ -119,9 +119,9 @@ pub fn process_initialize_stake(
     // Initialize the stake account.
 
     let mut data = ctx.accounts.stake.try_borrow_mut_data()?;
-    let stake = bytemuck::from_bytes_mut::<SolStakerStake>(&mut data);
+    let stake = bytemuck::from_bytes_mut::<ValidatorStake>(&mut data);
 
-    *stake = SolStakerStake::new(withdraw_authority, *ctx.accounts.validator_vote.key);
+    *stake = ValidatorStake::new(withdraw_authority, *ctx.accounts.validator_vote.key);
 
     Ok(())
 }
