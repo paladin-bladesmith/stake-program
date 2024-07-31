@@ -8,18 +8,23 @@
 use crate::generated::types::Delegation;
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
+use solana_program::pubkey::Pubkey;
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct ValidatorStake {
+pub struct SolStakerStake {
     pub discriminator: [u8; 8],
     pub delegation: Delegation,
-    pub total_staked_pal_amount: u64,
-    pub total_staked_lamports_amount: u64,
+    pub lamports_amount: u64,
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
+    )]
+    pub stake_state: Pubkey,
 }
 
-impl ValidatorStake {
-    pub const LEN: usize = 152;
+impl SolStakerStake {
+    pub const LEN: usize = 176;
 
     #[inline(always)]
     pub fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {
@@ -28,7 +33,7 @@ impl ValidatorStake {
     }
 }
 
-impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for ValidatorStake {
+impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for SolStakerStake {
     type Error = std::io::Error;
 
     fn try_from(
@@ -40,26 +45,26 @@ impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for ValidatorSt
 }
 
 #[cfg(feature = "anchor")]
-impl anchor_lang::AccountDeserialize for ValidatorStake {
+impl anchor_lang::AccountDeserialize for SolStakerStake {
     fn try_deserialize_unchecked(buf: &mut &[u8]) -> anchor_lang::Result<Self> {
         Ok(Self::deserialize(buf)?)
     }
 }
 
 #[cfg(feature = "anchor")]
-impl anchor_lang::AccountSerialize for ValidatorStake {}
+impl anchor_lang::AccountSerialize for SolStakerStake {}
 
 #[cfg(feature = "anchor")]
-impl anchor_lang::Owner for ValidatorStake {
+impl anchor_lang::Owner for SolStakerStake {
     fn owner() -> Pubkey {
         crate::PALADIN_STAKE_PROGRAM_ID
     }
 }
 
 #[cfg(feature = "anchor-idl-build")]
-impl anchor_lang::IdlBuild for ValidatorStake {}
+impl anchor_lang::IdlBuild for SolStakerStake {}
 
 #[cfg(feature = "anchor-idl-build")]
-impl anchor_lang::Discriminator for ValidatorStake {
+impl anchor_lang::Discriminator for SolStakerStake {
     const DISCRIMINATOR: [u8; 8] = [0; 8];
 }

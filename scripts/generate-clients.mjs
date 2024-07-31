@@ -87,7 +87,7 @@ kinobi.update(
       },
     },
     {
-      // [u8; 16] -> u128
+      // PodU128 -> u128
       select: (node) => {
         const names = [
           "lastSeenHolderRewardsPerToken",
@@ -97,7 +97,8 @@ kinobi.update(
         return (
           names.includes(node.name) &&
           k.isNode(node, "structFieldTypeNode") &&
-          k.isNode(node.type, "arrayTypeNode")
+          k.isNode(node.type, "definedTypeLinkNode") &&
+          node.type.name === "podU128"
         );
       },
       transform: (node) => {
@@ -181,7 +182,10 @@ kinobi.update(
       size: 144,
     },
     validatorStake: {
-      size: 136,
+      size: 152,
+    },
+    solStakerStake: {
+      size: 176,
     },
   })
 );

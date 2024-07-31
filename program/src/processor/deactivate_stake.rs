@@ -8,8 +8,9 @@ use solana_program::{
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, DeactivateStakeAccounts},
+    processor::unpack_delegation_mut,
     require,
-    state::{find_validator_stake_pda, Config, ValidatorStake, MAX_BASIS_POINTS},
+    state::{Config, MAX_BASIS_POINTS},
 };
 
 /// Helper to calculate the maximum amount that can be deactivated.
@@ -71,25 +72,14 @@ pub fn process_deactivate_stake(
         "stake"
     );
 
-    let data = &mut ctx.accounts.stake.try_borrow_mut_data()?;
-    let stake = bytemuck::try_from_bytes_mut::<ValidatorStake>(data)
-        .map_err(|_error| ProgramError::InvalidAccountData)?;
-
-    require!(
-        stake.is_initialized(),
-        ProgramError::UninitializedAccount,
-        "stake",
-    );
-
-    // validates that the stake account corresponds to the received config account
-    let (derivation, _) =
-        find_validator_stake_pda(&stake.validator_vote, ctx.accounts.config.key, program_id);
-
-    require!(
-        ctx.accounts.stake.key == &derivation,
-        ProgramError::InvalidSeeds,
-        "stake",
-    );
+    let stake_data = &mut ctx.accounts.stake.try_borrow_mut_data()?;
+    // checks that the stake account is initialized and has the correct derivation
+    let delegation = unpack_delegation_mut(
+        stake_data,
+        ctx.accounts.stake.key,
+        ctx.accounts.config.key,
+        program_id,
+    )?;
 
     // authority
     // - must be a signer
@@ -102,17 +92,20 @@ pub fn process_deactivate_stake(
     );
 
     require!(
-        ctx.accounts.stake_authority.key == &stake.authority,
+        ctx.accounts.stake_authority.key == &delegation.authority,
         StakeError::InvalidAuthority,
         "stake_authority"
     );
 
     // Validate the amount.
 
-    require!(stake.amount >= amount, StakeError::InsufficientStakeAmount);
+    require!(
+        delegation.amount >= amount,
+        StakeError::InsufficientStakeAmount
+    );
 
     let max_deactivation_amount =
-        get_max_deactivation_amount(stake.amount, config.max_deactivation_basis_points)?;
+        get_max_deactivation_amount(delegation.amount, config.max_deactivation_basis_points)?;
 
     require!(
         amount <= max_deactivation_amount,
@@ -127,12 +120,12 @@ pub fn process_deactivate_stake(
     // If the stake is already deactivating, this will reset the deactivation.
 
     if amount > 0 {
-        stake.deactivating_amount = amount;
-        stake.deactivation_timestamp = NonZeroU64::new(Clock::get()?.unix_timestamp as u64);
+        delegation.deactivating_amount = amount;
+        delegation.deactivation_timestamp = NonZeroU64::new(Clock::get()?.unix_timestamp as u64);
     } else {
         // cancels the deactivation if the amount is 0
-        stake.deactivating_amount = 0;
-        stake.deactivation_timestamp = None;
+        delegation.deactivating_amount = 0;
+        delegation.deactivation_timestamp = None;
     }
 
     Ok(())

@@ -63,7 +63,7 @@ async fn harvest_holder_rewards() {
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
-    stake_account.amount = 50;
+    stake_account.delegation.amount = 50;
 
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
@@ -143,7 +143,7 @@ async fn harvest_holder_rewards() {
     let account = get_account!(context, stake_manager.stake);
     let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
-        stake_account.last_seen_holder_rewards_per_token,
+        stake_account.delegation.last_seen_holder_rewards_per_token,
         40_000_000 * 1_000_000_000
     );
 
@@ -257,7 +257,10 @@ async fn harvest_holder_rewards_with_no_rewards_available() {
 
     let account = get_account!(context, stake_manager.stake);
     let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake_account.last_seen_holder_rewards_per_token, 0);
+    assert_eq!(
+        stake_account.delegation.last_seen_holder_rewards_per_token,
+        0
+    );
 }
 
 #[tokio::test]
@@ -299,7 +302,7 @@ async fn harvest_holder_rewards_after_harvesting() {
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
-    stake_account.amount = 50;
+    stake_account.delegation.amount = 50;
 
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
@@ -402,7 +405,7 @@ async fn harvest_holder_rewards_after_harvesting() {
     let account = get_account!(context, stake_manager.stake);
     let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
-        stake_account.last_seen_holder_rewards_per_token,
+        stake_account.delegation.last_seen_holder_rewards_per_token,
         40_000_000 * 1_000_000_000
     );
 }
@@ -445,7 +448,7 @@ async fn fail_harvest_holder_rewards_with_wrong_authority() {
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
-    stake_account.amount = 50;
+    stake_account.delegation.amount = 50;
 
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
@@ -725,7 +728,7 @@ async fn fail_harvest_holder_rewards_with_wrong_config() {
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
-    stake_account.amount = 50;
+    stake_account.delegation.amount = 50;
 
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
@@ -830,7 +833,7 @@ async fn fail_harvest_holder_rewards_with_invalid_destination() {
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
-    stake_account.amount = 50;
+    stake_account.delegation.amount = 50;
 
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());

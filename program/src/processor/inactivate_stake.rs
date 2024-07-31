@@ -6,8 +6,9 @@ use solana_program::{
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, InactivateStakeAccounts},
+    processor::unpack_delegation_mut,
     require,
-    state::{find_validator_stake_pda, Config, ValidatorStake},
+    state::Config,
 };
 
 /// Move tokens from deactivating to inactive.
@@ -57,30 +58,18 @@ pub fn process_inactivate_stake(
         "stake"
     );
 
-    let data = &mut ctx.accounts.stake.try_borrow_mut_data()?;
-    let stake = bytemuck::try_from_bytes_mut::<ValidatorStake>(data)
-        .map_err(|_error| ProgramError::InvalidAccountData)?;
-
-    require!(
-        stake.is_initialized(),
-        ProgramError::UninitializedAccount,
-        "stake",
-    );
-
-    // validates that the stake account corresponds to the received
-    // config account
-    let (derivation, _) =
-        find_validator_stake_pda(&stake.validator_vote, ctx.accounts.config.key, program_id);
-
-    require!(
-        ctx.accounts.stake.key == &derivation,
-        ProgramError::InvalidSeeds,
-        "stake",
-    );
+    let stake_data = &mut ctx.accounts.stake.try_borrow_mut_data()?;
+    // checks that the stake account is initialized and has the correct derivation
+    let delegation = unpack_delegation_mut(
+        stake_data,
+        ctx.accounts.stake.key,
+        ctx.accounts.config.key,
+        program_id,
+    )?;
 
     // Inactivates the stake if elegible.
 
-    if let Some(timestamp) = stake.deactivation_timestamp {
+    if let Some(timestamp) = delegation.deactivation_timestamp {
         let inactive_timestamp = config.cooldown_time_seconds.saturating_add(timestamp.get());
         let current_timestamp = Clock::get()?.unix_timestamp as u64;
 
@@ -91,30 +80,30 @@ pub fn process_inactivate_stake(
             inactive_timestamp.saturating_sub(current_timestamp),
         );
 
-        msg!("Inactivating {} token(s)", stake.deactivating_amount);
+        msg!("Inactivating {} token(s)", delegation.deactivating_amount);
 
         // moves deactivating amount to inactive
-        stake.amount = stake
+        delegation.amount = delegation
             .amount
-            .checked_sub(stake.deactivating_amount)
+            .checked_sub(delegation.deactivating_amount)
             .ok_or(ProgramError::ArithmeticOverflow)?;
 
-        stake.inactive_amount = stake
+        delegation.inactive_amount = delegation
             .inactive_amount
-            .checked_add(stake.deactivating_amount)
+            .checked_add(delegation.deactivating_amount)
             .ok_or(ProgramError::ArithmeticOverflow)?;
 
         // Update the config and stake account data.
 
         config.token_amount_delegated = config
             .token_amount_delegated
-            .checked_sub(stake.deactivating_amount)
+            .checked_sub(delegation.deactivating_amount)
             .ok_or(ProgramError::ArithmeticOverflow)?;
 
         // Clears the deactivation.
 
-        stake.deactivating_amount = 0;
-        stake.deactivation_timestamp = None;
+        delegation.deactivating_amount = 0;
+        delegation.deactivation_timestamp = None;
 
         Ok(())
     } else {

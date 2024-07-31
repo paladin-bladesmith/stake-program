@@ -1,20 +1,24 @@
-use std::num::NonZeroU64;
-
 use bytemuck::{Pod, Zeroable};
 use shank::ShankAccount;
-use solana_program::pubkey::Pubkey;
+use solana_program::{program_pack::IsInitialized, pubkey::Pubkey};
 use spl_discriminator::SplDiscriminate;
+use spl_pod::primitives::PodU128;
 
-use super::U128_DEFAULT;
+use super::Delegation;
 
-/// Data for an amount of tokens staked with a validator
+/// Data for an amount of tokens staked by a validator.
+///
+/// The amount of tokens that a validator can stake is proportional to the amount of
+/// SOL staked to the validator, subject to a limit equal to the minimum value between:
+///   * `1.3 * 0.5 * total_staked_sol_amount`; and
+///   * `total_staked_sol_amount - total_staked_pal_amount`
 #[repr(C)]
 #[derive(Clone, Copy, Default, Pod, ShankAccount, SplDiscriminate, Zeroable)]
 #[discriminator_hash_input("stake::state::validator_stake")]
 pub struct ValidatorStake {
-    /// Account disciminator.
+    /// Account discriminator.
     ///
-    /// The discriminator is equal to `ArrayDiscriminator:: UNINITIALIZED` when
+    /// The discriminator is equal to `ArrayDiscriminator::UNINITIALIZED` when
     /// the account is empty, and equal to `Stake::DISCRIMINATOR` when the account
     /// is initialized.
     ///
@@ -22,69 +26,51 @@ pub struct ValidatorStake {
     /// `"stake::state::stake"` used to derive the PDA address.
     discriminator: [u8; 8],
 
-    /// Amount of staked tokens currently active
-    pub amount: u64,
+    /// Delegation values for the stake account.
+    pub delegation: Delegation,
 
-    /// Timestamp for when deactivation began. Used to judge if a given stake
-    /// is inactive.
-    pub deactivation_timestamp: Option<NonZeroU64>,
+    /// Total amount of PAL tokens staked on a validator stake account.
+    ///
+    /// The total includes the amount staked by the validator and  all `SolStakerStake`
+    /// accounts delegating to the validator.
+    pub total_staked_pal_amount: u64,
 
-    /// Amount of tokens in the cooling down phase, waiting to become inactive
-    pub deactivating_amount: u64,
-
-    /// Amount that has passed the deactivation period, ready to be withdrawn
-    pub inactive_amount: u64,
-
-    /// Authority permitted to deactivate and withdraw stake
-    pub authority: Pubkey,
-
-    /// The address of the validator vote account
-    pub validator_vote: Pubkey,
-
-    /// Stores the "last_seen_holder_rewards" just for this stake account, allowing
-    /// stakers to withdraw rewards whenever, just like normal token users
-    last_seen_holder_rewards_per_token: [u8; 16],
-
-    /// Stores the "last_seen_stake_rewards" just for this stake account, allowing
-    /// stakers to withdraw rewards on their own schedule
-    last_seen_stake_rewards_per_token: [u8; 16],
+    /// Total amount of SOL (lamports) staked on the validator.
+    pub total_staked_lamports_amount: u64,
 }
 
 impl ValidatorStake {
     pub const LEN: usize = std::mem::size_of::<ValidatorStake>();
 
+    /// Checks whether the discriminator has been set and it is equal to
+    /// `ValidatorStake::SPL_DISCRIMINATOR_SLICE` or not.
     #[inline(always)]
     pub fn is_initialized(&self) -> bool {
         self.discriminator.as_slice() == ValidatorStake::SPL_DISCRIMINATOR_SLICE
     }
 
+    /// Creates a new `ValidatorStake`.
     pub fn new(authority: Pubkey, validator_vote: Pubkey) -> Self {
         Self {
             discriminator: ValidatorStake::SPL_DISCRIMINATOR.into(),
-            amount: u64::default(),
-            deactivation_timestamp: Option::default(),
-            deactivating_amount: u64::default(),
-            inactive_amount: u64::default(),
-            authority,
-            validator_vote,
-            last_seen_holder_rewards_per_token: U128_DEFAULT,
-            last_seen_stake_rewards_per_token: U128_DEFAULT,
+            delegation: Delegation {
+                amount: u64::default(),
+                deactivation_timestamp: Option::default(),
+                deactivating_amount: u64::default(),
+                inactive_amount: u64::default(),
+                authority,
+                validator_vote,
+                last_seen_holder_rewards_per_token: PodU128::default(),
+                last_seen_stake_rewards_per_token: PodU128::default(),
+            },
+            total_staked_pal_amount: u64::default(),
+            total_staked_lamports_amount: u64::default(),
         }
     }
+}
 
-    pub fn last_seen_holder_rewards_per_token(&self) -> u128 {
-        u128::from_le_bytes(self.last_seen_holder_rewards_per_token)
-    }
-
-    pub fn set_last_seen_holder_rewards_per_token(&mut self, value: u128) {
-        self.last_seen_holder_rewards_per_token = value.to_le_bytes();
-    }
-
-    pub fn last_seen_stake_rewards_per_token(&self) -> u128 {
-        u128::from_le_bytes(self.last_seen_stake_rewards_per_token)
-    }
-
-    pub fn set_last_seen_stake_rewards_per_token(&mut self, value: u128) {
-        self.last_seen_stake_rewards_per_token = value.to_le_bytes();
+impl IsInitialized for ValidatorStake {
+    fn is_initialized(&self) -> bool {
+        self.is_initialized()
     }
 }

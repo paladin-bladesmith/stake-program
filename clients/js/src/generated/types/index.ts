@@ -8,3 +8,4 @@
 
 export * from './authorityType';
 export * from './configField';
+export * from './delegation';

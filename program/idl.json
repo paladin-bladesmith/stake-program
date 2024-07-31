@@ -677,10 +677,7 @@
           {
             "name": "accumulatedStakeRewardsPerToken",
             "type": {
-              "array": [
-                "u8",
-                16
-              ]
+              "defined": "PodU128"
             }
           },
           {
@@ -704,6 +701,37 @@
       }
     },
     {
+      "name": "SolStakerStake",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "discriminator",
+            "type": {
+              "array": [
+                "u8",
+                8
+              ]
+            }
+          },
+          {
+            "name": "delegation",
+            "type": {
+              "defined": "Delegation"
+            }
+          },
+          {
+            "name": "lamportsAmount",
+            "type": "u64"
+          },
+          {
+            "name": "stakeState",
+            "type": "publicKey"
+          }
+        ]
+      }
+    },
+    {
       "name": "ValidatorStake",
       "type": {
         "kind": "struct",
@@ -717,6 +745,30 @@
               ]
             }
           },
+          {
+            "name": "delegation",
+            "type": {
+              "defined": "Delegation"
+            }
+          },
+          {
+            "name": "totalStakedPalAmount",
+            "type": "u64"
+          },
+          {
+            "name": "totalStakedLamportsAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "Delegation",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
             "name": "amount",
             "type": "u64"
@@ -748,26 +800,18 @@
           {
             "name": "lastSeenHolderRewardsPerToken",
             "type": {
-              "array": [
-                "u8",
-                16
-              ]
+              "defined": "PodU128"
             }
           },
           {
             "name": "lastSeenStakeRewardsPerToken",
             "type": {
-              "array": [
-                "u8",
-                16
-              ]
+              "defined": "PodU128"
             }
           }
         ]
       }
-    }
-  ],
-  "types": [
+    },
     {
       "name": "AuthorityType",
       "type": {
