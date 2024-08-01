@@ -421,6 +421,43 @@ pub enum StakeInstruction {
         desc = "System program"
     )]
     DistributeRewards(u64),
+
+    /// Initializes stake account data for a SOL staker.
+    ///
+    /// NOTE: Anybody can create the stake account for a SOL staker. For new
+    /// accounts, the authority is initialized to the stake state account's withdrawer.
+    #[account(
+        0,
+        name = "config",
+        desc = "Stake config account"
+    )]
+    #[account(
+        1,
+        writable,
+        name = "stake",
+        desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+    )]
+    #[account(
+        2,
+        name = "stake_state",
+        desc = "SOL stake state account"
+    )]
+    #[account(
+        3,
+        name = "stake_history",
+        desc = "Stake history sysvar"
+    )]
+    #[account(
+        4,
+        name = "system_program",
+        desc = "System program"
+    )]
+    #[account(
+        5,
+        name = "sol_stake_view_program",
+        desc = "Paladin SOL Stake View program"
+    )]
+    InitializeSolStakerStake,
 }
 
 impl StakeInstruction {
@@ -496,6 +533,7 @@ impl StakeInstruction {
                 data.extend_from_slice(&amount.to_le_bytes());
                 data
             }
+            StakeInstruction::InitializeSolStakerStake => vec![12],
         }
     }
 
@@ -512,7 +550,7 @@ impl StakeInstruction {
                     max_deactivation_basis_points,
                 })
             }
-            // 1 - InitializeStake
+            // 1 - InitializeValidatorStake
             Some((&1, _)) => Ok(StakeInstruction::InitializeValidatorStake),
             // 2 - StakeTokens: u64 (8)
             Some((&2, rest)) if rest.len() == 8 => {
@@ -574,6 +612,8 @@ impl StakeInstruction {
 
                 Ok(StakeInstruction::DistributeRewards(amount))
             }
+            // 12 - InitializeSolStakerStake
+            Some((&12, _)) => Ok(StakeInstruction::InitializeSolStakerStake),
             _ => Err(ProgramError::InvalidInstructionData),
         }
     }

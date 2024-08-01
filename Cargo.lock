@@ -2408,6 +2408,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "paladin-sol-stake-view-program-client"
+version = "0.0.0"
+source = "git+https://github.com/paladin-bladesmith/sol-stake-view-program.git#864c74e97f88ba3007865f0256eb95759f01bf46"
+dependencies = [
+ "borsh 0.10.3",
+ "bytemuck",
+ "bytemuck_derive",
+ "num-derive 0.3.3",
+ "num-traits",
+ "solana-program",
+ "spl-pod",
+ "thiserror",
+]
+
+[[package]]
 name = "paladin-stake-program"
 version = "0.0.1"
 dependencies = [
@@ -2416,6 +2431,7 @@ dependencies = [
  "num-derive 0.3.3",
  "num-traits",
  "paladin-rewards-program-client",
+ "paladin-sol-stake-view-program-client",
  "shank",
  "solana-program",
  "spl-discriminator",
