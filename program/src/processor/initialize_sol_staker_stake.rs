@@ -22,6 +22,9 @@ use crate::{
 
 /// Initializes stake account data for a SOL staker.
 ///
+/// There can be only one SOL staker stake account per stake state and config account, since
+/// the stake state is part of the SOL staker stake account seeds.
+///
 /// NOTE: Anybody can create the stake account for a SOL staker. For new
 /// accounts, the authority is initialized to the stake state account's withdrawer.
 ///
