@@ -50,6 +50,13 @@ kinobi.update(
         "spl-token-2022"
       ),
     },
+    {
+      account: "stakeHistory",
+      defaultValue: k.publicKeyValueNode(
+        "SysvarStakeHistory1111111111111111111111111",
+        "stake-history"
+      ),
+    },
   ])
 );
 

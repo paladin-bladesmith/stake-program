@@ -70,6 +70,9 @@ pub enum PaladinStakeProgramError {
     /// 19 - Invalid slash amount
     #[error("Invalid slash amount")]
     InvalidSlashAmount = 0x13,
+    /// 20 - Undelegated stake state account
+    #[error("Undelegated stake state account")]
+    UndelegatedStakeStateAccount = 0x14,
 }
 
 impl solana_program::program_error::PrintProgramError for PaladinStakeProgramError {

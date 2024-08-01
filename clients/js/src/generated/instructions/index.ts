@@ -12,6 +12,7 @@ export * from './harvestHolderRewards';
 export * from './harvestStakeRewards';
 export * from './inactivateStake';
 export * from './initializeConfig';
+export * from './initializeSolStakerStake';
 export * from './initializeValidatorStake';
 export * from './setAuthority';
 export * from './slash';
