@@ -9,6 +9,7 @@ use spl_transfer_hook_interface::{
 
 pub mod config;
 pub mod rewards;
+pub mod stake;
 pub mod token;
 pub mod validator_stake;
 pub mod vote;

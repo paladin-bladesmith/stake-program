@@ -34,37 +34,6 @@ impl ValidatorStakeManager {
 
         let stake = create_validator_stake(context, &vote, config).await;
 
-        let transfer_ix = system_instruction::transfer(
-            &context.payer.pubkey(),
-            &stake,
-            context
-                .banks_client
-                .get_rent()
-                .await
-                .unwrap()
-                .minimum_balance(ValidatorStake::LEN),
-        );
-
-        let initialize_ix = InitializeValidatorStakeBuilder::new()
-            .config(*config)
-            .stake(stake)
-            .validator_vote(vote)
-            .instruction();
-
-        context.get_new_latest_blockhash().await.unwrap();
-
-        let tx = Transaction::new_signed_with_payer(
-            &[transfer_ix, initialize_ix],
-            Some(&context.payer.pubkey()),
-            &[&context.payer],
-            context.last_blockhash,
-        );
-        context
-            .banks_client
-            .process_transaction_with_metadata(tx)
-            .await
-            .unwrap();
-
         Self {
             stake,
             authority,

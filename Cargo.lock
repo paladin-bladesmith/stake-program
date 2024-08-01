@@ -2450,6 +2450,7 @@ dependencies = [
  "num-derive 0.3.3",
  "num-traits",
  "paladin-rewards-program-client",
+ "paladin-sol-stake-view-program-client",
  "serde",
  "serde_with 3.9.0",
  "solana-program",
