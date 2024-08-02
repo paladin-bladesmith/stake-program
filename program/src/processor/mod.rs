@@ -201,7 +201,7 @@ pub fn unpack_delegation_mut<'a>(
             let sol_staker = unpack_initialized_mut::<SolStakerStake>(stake_data)?;
 
             let (derivation, _) =
-                find_sol_staker_stake_pda(&sol_staker.stake_state, config, program_id);
+                find_sol_staker_stake_pda(&sol_staker.sol_stake, config, program_id);
 
             (&mut sol_staker.delegation, derivation)
         }

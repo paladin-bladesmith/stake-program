@@ -103,7 +103,7 @@ async fn initialize_sol_staker_stake() {
     let stake_account = SolStakerStake::from_bytes(account_data).unwrap();
     assert_eq!(stake_account.delegation.validator_vote, stake_manager.vote);
     assert_eq!(stake_account.delegation.authority, context.payer.pubkey());
-    assert_eq!(stake_account.stake_state, stake_state);
+    assert_eq!(stake_account.sol_stake, stake_state);
     assert_eq!(stake_account.lamports_amount, 1_000_000_000);
 
     // And the validator stake account was updated.
