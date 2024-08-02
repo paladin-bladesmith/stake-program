@@ -41,20 +41,20 @@ async fn validator_stake_tokens() {
     );
     let mut context = program_test.start_with_context().await;
 
-    // Given a config account and a validator stake with 100 SOL staked.
+    // Given a config account and a validator stake with 50 SOL staked.
 
     let config_manager = ConfigManager::new(&mut context).await;
     let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the amount to 50
+    // "manually" set the amount to 50 SOL
     stake_account.total_staked_lamports_amount = 50 * 1_000_000_000;
 
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
 
-    // And we initialize the holder rewards accounts and mint 100 tokens.
+    // And we initialize the holder rewards accounts and mint 50 tokens.
 
     let rewards_manager = RewardsManager::new(
         &mut context,
@@ -137,7 +137,7 @@ async fn validator_stake_tokens() {
 }
 
 #[tokio::test]
-async fn fail_stake_tokens_with_wrong_vault_account() {
+async fn fail_validator_stake_tokens_with_wrong_vault_account() {
     let mut program_test = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -239,7 +239,7 @@ async fn fail_stake_tokens_with_wrong_vault_account() {
 }
 
 #[tokio::test]
-async fn fail_stake_tokens_with_wrong_config_account() {
+async fn fail_validator_stake_tokens_with_wrong_config_account() {
     let mut program_test = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -292,14 +292,14 @@ async fn fail_stake_tokens_with_wrong_config_account() {
     // When we try to stake tokens using the wrong config account.
 
     let mut stake_ix = ValidatorStakeTokensBuilder::new()
-        .config(another_config.config)
+        .config(another_config.config) // <- wrong config account
         .validator_stake(stake_manager.stake)
         .source_token_account(rewards_manager.token_account)
         .token_account_authority(rewards_manager.owner.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
         .token_program(spl_token_2022::ID)
-        .amount(50) // <- stake 50 tokens
+        .amount(50)
         .instruction();
 
     add_extra_account_metas_for_transfer(
@@ -332,7 +332,7 @@ async fn fail_stake_tokens_with_wrong_config_account() {
 }
 
 #[tokio::test]
-async fn fail_stake_tokens_with_zero_amount() {
+async fn fail_validator_stake_tokens_with_zero_amount() {
     let mut program_test = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -423,7 +423,7 @@ async fn fail_stake_tokens_with_zero_amount() {
 }
 
 #[tokio::test]
-async fn fail_stake_tokens_with_uninitialized_stake_account() {
+async fn fail_validator_stake_tokens_with_uninitialized_stake_account() {
     let mut program_test = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -592,6 +592,111 @@ async fn fail_validator_stake_tokens_without_staked_sol() {
         .vault(config_manager.vault)
         .token_program(spl_token_2022::ID)
         .amount(50) // <- stake 50 tokens
+        .instruction();
+
+    add_extra_account_metas_for_transfer(
+        &mut context,
+        &mut stake_ix,
+        &paladin_rewards_program_client::ID,
+        &rewards_manager.token_account,
+        &config_manager.mint,
+        &config_manager.vault,
+        &rewards_manager.owner.pubkey(),
+        50,
+    )
+    .await;
+
+    let tx = Transaction::new_signed_with_payer(
+        &[stake_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, &rewards_manager.owner],
+        context.last_blockhash,
+    );
+    let err = context
+        .banks_client
+        .process_transaction(tx)
+        .await
+        .unwrap_err();
+
+    // Then we expect an error.
+
+    assert_custom_error!(err, PaladinStakeProgramError::TotalStakeAmountExceedsLimit);
+}
+
+#[tokio::test]
+async fn fail_validator_stake_tokens_with_insufficient_staked_sol() {
+    let mut program_test = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    );
+    program_test.add_program(
+        "paladin_rewards_program",
+        paladin_rewards_program_client::ID,
+        None,
+    );
+    let mut context = program_test.start_with_context().await;
+
+    // Given a config account and a validator stake with 2 SOL staked.
+
+    let config_manager = ConfigManager::new(&mut context).await;
+    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
+
+    let mut account = get_account!(context, stake_manager.stake);
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
+    // "manually" set the amount to 2 SOL
+    stake_account.total_staked_lamports_amount = 2 * 1_000_000_000;
+
+    account.data = stake_account.try_to_vec().unwrap();
+    context.set_account(&stake_manager.stake, &account.into());
+
+    // And we initialize the holder rewards accounts and mint 100 tokens.
+
+    let rewards_manager = RewardsManager::new(
+        &mut context,
+        &config_manager.mint,
+        &config_manager.mint_authority,
+    )
+    .await;
+
+    mint_to(
+        &mut context,
+        &config_manager.mint,
+        &config_manager.mint_authority,
+        &rewards_manager.token_account,
+        100,
+        9, // <- 9 decimals
+    )
+    .await
+    .unwrap();
+
+    // And we create the holder rewards account for the vault account.
+
+    create_holder_rewards(
+        &mut context,
+        &rewards_manager.pool,
+        &config_manager.mint,
+        &config_manager.vault,
+    )
+    .await;
+
+    // When we try to stake 50 tokens on a validator stake account with only 2 SOL staked.
+    //
+    // - raw amount to be staked: 50_000_000_000
+    // - current lamports (SOL) staked: 2_000_000_000
+    // - stake limit: 1.3 * 2_000_000_000 = 2_600_000_000
+    //
+    // Stake amount exceeds the limit: 50_000_000_000 > 2_600_000_000
+
+    let mut stake_ix = ValidatorStakeTokensBuilder::new()
+        .config(config_manager.config)
+        .validator_stake(stake_manager.stake)
+        .source_token_account(rewards_manager.token_account)
+        .token_account_authority(rewards_manager.owner.pubkey())
+        .mint(config_manager.mint)
+        .vault(config_manager.vault)
+        .token_program(spl_token_2022::ID)
+        .amount(50_000_000_000) // <- stake 50 tokens (raw value with 9 digits precision)
         .instruction();
 
     add_extra_account_metas_for_transfer(
