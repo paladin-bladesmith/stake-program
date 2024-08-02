@@ -2410,7 +2410,7 @@ dependencies = [
 [[package]]
 name = "paladin-sol-stake-view-program-client"
 version = "0.0.0"
-source = "git+https://github.com/paladin-bladesmith/sol-stake-view-program.git#864c74e97f88ba3007865f0256eb95759f01bf46"
+source = "git+https://github.com/paladin-bladesmith/sol-stake-view-program.git#a5558dd763bdf9217b7ea01b4684916638f993aa"
 dependencies = [
  "borsh 0.10.3",
  "bytemuck",
