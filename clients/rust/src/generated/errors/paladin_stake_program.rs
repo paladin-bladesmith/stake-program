@@ -73,6 +73,9 @@ pub enum PaladinStakeProgramError {
     /// 20 - Undelegated SOL stake account
     #[error("Undelegated SOL stake account")]
     UndelegatedSolStakeAccount = 0x14,
+    /// 21 - Total stake amount exceeds limit
+    #[error("Total stake amount exceeds limit")]
+    TotalStakeAmountExceedsLimit = 0x15,
 }
 
 impl solana_program::program_error::PrintProgramError for PaladinStakeProgramError {

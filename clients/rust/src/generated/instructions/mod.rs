@@ -15,8 +15,8 @@ pub(crate) mod r#initialize_sol_staker_stake;
 pub(crate) mod r#initialize_validator_stake;
 pub(crate) mod r#set_authority;
 pub(crate) mod r#slash;
-pub(crate) mod r#stake_tokens;
 pub(crate) mod r#update_config;
+pub(crate) mod r#validator_stake_tokens;
 pub(crate) mod r#withdraw_inactive_stake;
 
 pub use self::r#deactivate_stake::*;
@@ -29,6 +29,6 @@ pub use self::r#initialize_sol_staker_stake::*;
 pub use self::r#initialize_validator_stake::*;
 pub use self::r#set_authority::*;
 pub use self::r#slash::*;
-pub use self::r#stake_tokens::*;
 pub use self::r#update_config::*;
+pub use self::r#validator_stake_tokens::*;
 pub use self::r#withdraw_inactive_stake::*;

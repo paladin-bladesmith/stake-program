@@ -104,7 +104,7 @@
       }
     },
     {
-      "name": "StakeTokens",
+      "name": "ValidatorStakeTokens",
       "accounts": [
         {
           "name": "config",
@@ -115,11 +115,11 @@
           ]
         },
         {
-          "name": "stake",
+          "name": "validatorStake",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
+            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
           ]
         },
         {
@@ -1021,6 +1021,11 @@
       "code": 20,
       "name": "UndelegatedSolStakeAccount",
       "msg": "Undelegated SOL stake account"
+    },
+    {
+      "code": 21,
+      "name": "TotalStakeAmountExceedsLimit",
+      "msg": "Total stake amount exceeds limit"
     }
   ],
   "metadata": {

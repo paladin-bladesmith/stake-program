@@ -158,7 +158,7 @@ kinobi.update(
     },
     {
       // StakeTokens
-      select: "[instructionNode]stakeTokens.[instructionArgumentNode]args",
+      select: "[instructionNode]validatorStakeTokens.[instructionArgumentNode]args",
       transform: (node) => {
         k.assertIsNode(node, "instructionArgumentNode");
         return {
