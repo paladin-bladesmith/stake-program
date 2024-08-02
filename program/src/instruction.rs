@@ -71,11 +71,8 @@ pub enum StakeInstruction {
 
     /// Stakes tokens with the given config.
     /// 
-    /// Limited to the current amount of SOL staked to the validator.
-    ///
-    /// NOTE: Anybody can stake tokens to a validator, but this does not work
-    /// like native staking, because the validator can take control of staked
-    /// tokens by deactivating and withdrawing.
+    /// NOTE: This instruction is used by validator stake accounts. The total amount of staked
+    /// tokens is limited to the 1.3 * current amount of SOL staked to the validator.
     /// 
     /// Instruction data: amount of tokens to stake, as a little-endian `u64`.
     #[account(
@@ -87,8 +84,8 @@ pub enum StakeInstruction {
     #[account(
         1,
         writable,
-        name = "stake",
-        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
+        name = "validator_stake",
+        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
     )]
     #[account(
         2,
@@ -118,7 +115,7 @@ pub enum StakeInstruction {
         name = "token_program",
         desc = "Token program"
     )]
-    StakeTokens(u64),
+    ValidatorStakeTokens(u64),
 
     /// Deactivate staked tokens for the validator.
     /// 
@@ -481,7 +478,7 @@ impl StakeInstruction {
                 data
             }
             StakeInstruction::InitializeValidatorStake => vec![1],
-            StakeInstruction::StakeTokens(amount) => {
+            StakeInstruction::ValidatorStakeTokens(amount) => {
                 let mut data = Vec::with_capacity(9);
                 data.push(2);
                 data.extend_from_slice(&amount.to_le_bytes());
@@ -562,7 +559,7 @@ impl StakeInstruction {
             Some((&2, rest)) if rest.len() == 8 => {
                 let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
 
-                Ok(StakeInstruction::StakeTokens(amount))
+                Ok(StakeInstruction::ValidatorStakeTokens(amount))
             }
             // 3 - DeactivateStake: u64 (8)
             Some((&3, rest)) if rest.len() == 8 => {
@@ -667,7 +664,7 @@ mod tests {
 
     #[test]
     fn test_pack_unpack_stake_tokens() {
-        let original = StakeInstruction::StakeTokens(100);
+        let original = StakeInstruction::ValidatorStakeTokens(100);
         let packed = original.pack();
         let unpacked = StakeInstruction::unpack(&packed).unwrap();
         assert_eq!(original, unpacked);

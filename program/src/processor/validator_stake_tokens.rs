@@ -6,22 +6,22 @@ use spl_token_2022::{
 
 use crate::{
     error::StakeError,
-    instruction::accounts::{Context, StakeTokensAccounts},
+    instruction::accounts::{Context, ValidatorStakeTokensAccounts},
+    processor::unpack_initialized_mut,
     require,
-    state::{find_validator_stake_pda, Config, SolStakerStake},
+    state::{
+        calculate_maximum_stake_for_sol_amount, find_validator_stake_pda, Config, ValidatorStake,
+    },
 };
 
 /// Stakes tokens with the given config.
 ///
-/// Limited to the current amount of SOL staked to the validator.
-///
-/// NOTE: Anybody can stake tokens to a validator, but this does not work
-/// like native staking, because the validator can take control of staked
-/// tokens by deactivating and withdrawing.
+/// NOTE: This instruction is used by validator stake accounts. The total amount of staked
+/// tokens is limited to the 1.3 * current amount of SOL staked to the validator.
 ///
 /// 0. `[w]` Stake config account
 /// 1. `[w]` Validator stake account
-///          (PDA seeds: ['stake', validator, config_account])
+///          (PDA seeds: ['stake::state::validator_stake', validator, config_account])
 /// 2. `[w]` Token Account
 /// 3. `[s]` Owner or delegate of the token account
 /// 4. `[ ]` Stake Token Mint
@@ -31,9 +31,9 @@ use crate::{
 /// 7.. Extra accounts required for the transfer hook
 ///
 /// Instruction data: amount of tokens to stake, as a little-endian u64
-pub fn process_stake_tokens<'a>(
+pub fn process_validator_stake_tokens<'a>(
     program_id: &Pubkey,
-    ctx: Context<'a, StakeTokensAccounts<'a>>,
+    ctx: Context<'a, ValidatorStakeTokensAccounts<'a>>,
     amount: u64,
 ) -> ProgramResult {
     // Account validation.
@@ -58,34 +58,30 @@ pub fn process_stake_tokens<'a>(
         "config",
     );
 
-    // stake
+    // validator stake
     // - owner must be the stake program
     // - must be initialized
     // - must have the correct derivation
 
     require!(
-        ctx.accounts.stake.owner == program_id,
+        ctx.accounts.validator_stake.owner == program_id,
         ProgramError::InvalidAccountOwner,
-        "stake"
+        "validator stake"
     );
 
-    let mut stake_data = ctx.accounts.stake.try_borrow_mut_data()?;
-    let stake = bytemuck::try_from_bytes_mut::<SolStakerStake>(&mut stake_data)
-        .map_err(|_error| ProgramError::InvalidAccountData)?;
+    let mut stake_data = ctx.accounts.validator_stake.try_borrow_mut_data()?;
+    let stake = unpack_initialized_mut::<ValidatorStake>(&mut stake_data)?;
 
-    require!(
-        stake.is_initialized(),
-        ProgramError::UninitializedAccount,
-        "stake",
+    let (derivation, _) = find_validator_stake_pda(
+        &stake.delegation.validator_vote,
+        ctx.accounts.config.key,
+        program_id,
     );
 
-    let (derivation, _) =
-        find_validator_stake_pda(&stake.validator_vote, ctx.accounts.config.key, program_id);
-
     require!(
-        ctx.accounts.stake.key == &derivation,
+        ctx.accounts.validator_stake.key == &derivation,
         ProgramError::InvalidSeeds,
-        "stake",
+        "validator stake",
     );
 
     // vault
@@ -114,22 +110,29 @@ pub fn process_stake_tokens<'a>(
     let decimals = mint.base.decimals;
 
     // Update the config and stake account data.
-    //
-    // Note: validate the amount against the total SOL staked on the validator.
 
     require!(amount > 0, StakeError::InvalidAmount);
 
-    require!(amount > 0, StakeError::InvalidAmount);
-
-    require!(amount > 0, StakeError::InvalidAmount);
-
-    config.token_amount_delegated = config
-        .token_amount_delegated
+    let limit = calculate_maximum_stake_for_sol_amount(stake.total_staked_lamports_amount)?;
+    let updated_staked_amount = stake
+        .delegation
+        .amount
         .checked_add(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
-    stake.amount = stake
-        .amount
+    require!(
+        updated_staked_amount as u128 <= limit,
+        StakeError::TotalStakeAmountExceedsLimit,
+        "current staked amount ({}) + new amount ({}) exceeds limit ({})",
+        stake.delegation.amount,
+        amount,
+        limit
+    );
+
+    stake.delegation.amount = updated_staked_amount;
+
+    config.token_amount_delegated = config
+        .token_amount_delegated
         .checked_add(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
