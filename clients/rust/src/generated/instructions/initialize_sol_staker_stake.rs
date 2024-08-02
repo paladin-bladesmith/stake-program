@@ -13,7 +13,9 @@ pub struct InitializeSolStakerStake {
     /// Stake config account
     pub config: solana_program::pubkey::Pubkey,
     /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
-    pub stake: solana_program::pubkey::Pubkey,
+    pub sol_staker_stake: solana_program::pubkey::Pubkey,
+    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    pub validator_stake: solana_program::pubkey::Pubkey,
     /// SOL stake state account
     pub stake_state: solana_program::pubkey::Pubkey,
     /// Stake history sysvar
@@ -33,13 +35,18 @@ impl InitializeSolStakerStake {
         &self,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.config,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.stake, false,
+            self.sol_staker_stake,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.validator_stake,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.stake_state,
@@ -92,15 +99,17 @@ impl Default for InitializeSolStakerStakeInstructionData {
 /// ### Accounts:
 ///
 ///   0. `[]` config
-///   1. `[writable]` stake
-///   2. `[]` stake_state
-///   3. `[optional]` stake_history (default to `SysvarStakeHistory1111111111111111111111111`)
-///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   5. `[]` sol_stake_view_program
+///   1. `[writable]` sol_staker_stake
+///   2. `[writable]` validator_stake
+///   3. `[]` stake_state
+///   4. `[optional]` stake_history (default to `SysvarStakeHistory1111111111111111111111111`)
+///   5. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   6. `[]` sol_stake_view_program
 #[derive(Clone, Debug, Default)]
 pub struct InitializeSolStakerStakeBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
-    stake: Option<solana_program::pubkey::Pubkey>,
+    sol_staker_stake: Option<solana_program::pubkey::Pubkey>,
+    validator_stake: Option<solana_program::pubkey::Pubkey>,
     stake_state: Option<solana_program::pubkey::Pubkey>,
     stake_history: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
@@ -120,8 +129,20 @@ impl InitializeSolStakerStakeBuilder {
     }
     /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
     #[inline(always)]
-    pub fn stake(&mut self, stake: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.stake = Some(stake);
+    pub fn sol_staker_stake(
+        &mut self,
+        sol_staker_stake: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.sol_staker_stake = Some(sol_staker_stake);
+        self
+    }
+    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    #[inline(always)]
+    pub fn validator_stake(
+        &mut self,
+        validator_stake: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.validator_stake = Some(validator_stake);
         self
     }
     /// SOL stake state account
@@ -175,7 +196,8 @@ impl InitializeSolStakerStakeBuilder {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = InitializeSolStakerStake {
             config: self.config.expect("config is not set"),
-            stake: self.stake.expect("stake is not set"),
+            sol_staker_stake: self.sol_staker_stake.expect("sol_staker_stake is not set"),
+            validator_stake: self.validator_stake.expect("validator_stake is not set"),
             stake_state: self.stake_state.expect("stake_state is not set"),
             stake_history: self.stake_history.unwrap_or(solana_program::pubkey!(
                 "SysvarStakeHistory1111111111111111111111111"
@@ -197,7 +219,9 @@ pub struct InitializeSolStakerStakeCpiAccounts<'a, 'b> {
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
     /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
-    pub stake: &'b solana_program::account_info::AccountInfo<'a>,
+    pub sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    pub validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// SOL stake state account
     pub stake_state: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake history sysvar
@@ -215,7 +239,9 @@ pub struct InitializeSolStakerStakeCpi<'a, 'b> {
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
     /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
-    pub stake: &'b solana_program::account_info::AccountInfo<'a>,
+    pub sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    pub validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// SOL stake state account
     pub stake_state: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake history sysvar
@@ -234,7 +260,8 @@ impl<'a, 'b> InitializeSolStakerStakeCpi<'a, 'b> {
         Self {
             __program: program,
             config: accounts.config,
-            stake: accounts.stake,
+            sol_staker_stake: accounts.sol_staker_stake,
+            validator_stake: accounts.validator_stake,
             stake_state: accounts.stake_state,
             stake_history: accounts.stake_history,
             system_program: accounts.system_program,
@@ -274,13 +301,17 @@ impl<'a, 'b> InitializeSolStakerStakeCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.config.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.stake.key,
+            *self.sol_staker_stake.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.validator_stake.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -315,10 +346,11 @@ impl<'a, 'b> InitializeSolStakerStakeCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(6 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(7 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.config.clone());
-        account_infos.push(self.stake.clone());
+        account_infos.push(self.sol_staker_stake.clone());
+        account_infos.push(self.validator_stake.clone());
         account_infos.push(self.stake_state.clone());
         account_infos.push(self.stake_history.clone());
         account_infos.push(self.system_program.clone());
@@ -340,11 +372,12 @@ impl<'a, 'b> InitializeSolStakerStakeCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[]` config
-///   1. `[writable]` stake
-///   2. `[]` stake_state
-///   3. `[]` stake_history
-///   4. `[]` system_program
-///   5. `[]` sol_stake_view_program
+///   1. `[writable]` sol_staker_stake
+///   2. `[writable]` validator_stake
+///   3. `[]` stake_state
+///   4. `[]` stake_history
+///   5. `[]` system_program
+///   6. `[]` sol_stake_view_program
 #[derive(Clone, Debug)]
 pub struct InitializeSolStakerStakeCpiBuilder<'a, 'b> {
     instruction: Box<InitializeSolStakerStakeCpiBuilderInstruction<'a, 'b>>,
@@ -355,7 +388,8 @@ impl<'a, 'b> InitializeSolStakerStakeCpiBuilder<'a, 'b> {
         let instruction = Box::new(InitializeSolStakerStakeCpiBuilderInstruction {
             __program: program,
             config: None,
-            stake: None,
+            sol_staker_stake: None,
+            validator_stake: None,
             stake_state: None,
             stake_history: None,
             system_program: None,
@@ -375,8 +409,20 @@ impl<'a, 'b> InitializeSolStakerStakeCpiBuilder<'a, 'b> {
     }
     /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
     #[inline(always)]
-    pub fn stake(&mut self, stake: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.stake = Some(stake);
+    pub fn sol_staker_stake(
+        &mut self,
+        sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.sol_staker_stake = Some(sol_staker_stake);
+        self
+    }
+    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    #[inline(always)]
+    pub fn validator_stake(
+        &mut self,
+        validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.validator_stake = Some(validator_stake);
         self
     }
     /// SOL stake state account
@@ -461,7 +507,15 @@ impl<'a, 'b> InitializeSolStakerStakeCpiBuilder<'a, 'b> {
 
             config: self.instruction.config.expect("config is not set"),
 
-            stake: self.instruction.stake.expect("stake is not set"),
+            sol_staker_stake: self
+                .instruction
+                .sol_staker_stake
+                .expect("sol_staker_stake is not set"),
+
+            validator_stake: self
+                .instruction
+                .validator_stake
+                .expect("validator_stake is not set"),
 
             stake_state: self
                 .instruction
@@ -494,7 +548,8 @@ impl<'a, 'b> InitializeSolStakerStakeCpiBuilder<'a, 'b> {
 struct InitializeSolStakerStakeCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    sol_staker_stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    validator_stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     stake_state: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     stake_history: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,

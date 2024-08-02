@@ -3,7 +3,7 @@
 mod setup;
 
 use paladin_stake_program_client::{
-    accounts::{Config, SolStakerStake},
+    accounts::{Config, SolStakerStake, ValidatorStake},
     instructions::InitializeSolStakerStakeBuilder,
     pdas::find_sol_staker_stake_pda,
 };
@@ -80,7 +80,8 @@ async fn initialize_sol_staker_stake() {
 
     let initialize_ix = InitializeSolStakerStakeBuilder::new()
         .config(config_manager.config)
-        .stake(stake_pda)
+        .sol_staker_stake(stake_pda)
+        .validator_stake(stake_manager.stake)
         .stake_state(stake_state)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
@@ -103,6 +104,16 @@ async fn initialize_sol_staker_stake() {
     assert_eq!(stake_account.delegation.validator_vote, stake_manager.vote);
     assert_eq!(stake_account.delegation.authority, context.payer.pubkey());
     assert_eq!(stake_account.stake_state, stake_state);
+    assert_eq!(stake_account.lamports_amount, 1_000_000_000);
+
+    // And the validator stake account was updated.
+
+    let account = get_account!(context, stake_manager.stake);
+    let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
+    assert_eq!(
+        validator_stake_account.total_staked_lamports_amount,
+        1_000_000_000
+    );
 }
 
 #[tokio::test]
@@ -159,7 +170,8 @@ async fn fail_initialize_sol_staker_stake_with_initialized_account() {
 
     let initialize_ix = InitializeSolStakerStakeBuilder::new()
         .config(config_manager.config)
-        .stake(stake_pda)
+        .sol_staker_stake(stake_pda)
+        .validator_stake(stake_manager.stake)
         .stake_state(stake_state)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
@@ -176,7 +188,8 @@ async fn fail_initialize_sol_staker_stake_with_initialized_account() {
 
     let initialize_ix = InitializeSolStakerStakeBuilder::new()
         .config(config_manager.config)
-        .stake(stake_pda)
+        .sol_staker_stake(stake_pda)
+        .validator_stake(stake_manager.stake)
         .stake_state(stake_state)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
@@ -253,7 +266,8 @@ async fn fail_initialize_sol_staker_stake_with_invalid_derivation() {
 
     let initialize_ix = InitializeSolStakerStakeBuilder::new()
         .config(config_manager.config)
-        .stake(stake_pda)
+        .sol_staker_stake(stake_pda)
+        .validator_stake(stake_manager.stake)
         .stake_state(stake_state)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
@@ -289,9 +303,10 @@ async fn fail_initialize_stake_with_invalid_stake_state() {
     );
     let mut context = program_test.start_with_context().await;
 
-    // Given a config account.
+    // Given a config and a validator stake accounts.
 
     let config_manager = ConfigManager::new(&mut context).await;
+    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we create an invalid SOL stake account.
 
@@ -322,7 +337,8 @@ async fn fail_initialize_stake_with_invalid_stake_state() {
 
     let initialize_ix = InitializeSolStakerStakeBuilder::new()
         .config(config_manager.config)
-        .stake(stake_pda)
+        .sol_staker_stake(stake_pda)
+        .validator_stake(stake_manager.stake)
         .stake_state(fake_stake_state)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
@@ -410,7 +426,8 @@ async fn fail_initialize_sol_staker_stake_with_uninitialized_config() {
 
     let initialize_ix = InitializeSolStakerStakeBuilder::new()
         .config(config_manager.config)
-        .stake(stake_pda)
+        .sol_staker_stake(stake_pda)
+        .validator_stake(stake_manager.stake)
         .stake_state(stake_state)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
