@@ -27,11 +27,9 @@ impl ValidatorStakeManager {
         let validator = Pubkey::new_unique();
 
         // Creates the validator vote account.
-
         let vote = create_vote_account(context, &validator, &authority.pubkey()).await;
 
         // And a stake account.
-
         let stake = create_validator_stake(context, &vote, config).await;
 
         Self {
