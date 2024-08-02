@@ -89,9 +89,9 @@ pub enum StakeError {
     #[error("Invalid slash amount")]
     InvalidSlashAmount,
 
-    /// 20 - Undelegated stake state account
-    #[error("Undelegated stake state account")]
-    UndelegatedStakeStateAccount,
+    /// 20 - Undelegated SOL stake account
+    #[error("Undelegated SOL stake account")]
+    UndelegatedSolStakeAccount,
 }
 
 impl PrintProgramError for StakeError {

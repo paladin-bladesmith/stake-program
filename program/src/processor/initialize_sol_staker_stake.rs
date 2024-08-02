@@ -32,11 +32,13 @@ use crate::{
 ///
 /// 0. `[]` Stake config account
 /// 1. `[w]` SOL staker stake account
-///     * PDA seeds: ['stake::state::sol_staker_stake', stake state, config]
-/// 2. `[]` SOL stake state account
-/// 3. `[]` Stake history sysvar
-/// 4. `[]` System program
-/// 5. `[]` Paladin SOL Stake View program
+///     * PDA seeds: ['stake::state::sol_staker_stake', SOL stake, config]
+/// 2. `[w]` Validator stake account
+///     * PDA seeds: ['stake::state::validator_stake', validator, config]
+/// 3. `[]` SOL stake account
+/// 4. `[]` Stake history sysvar
+/// 5. `[]` System program
+/// 6. `[]` Paladin SOL Stake View program
 #[allow(clippy::useless_conversion)]
 pub fn process_initialize_sol_staker_stake(
     program_id: &Pubkey,
@@ -68,9 +70,15 @@ pub fn process_initialize_sol_staker_stake(
     // stake state (validated by the SOL Stake View program)
     // - must have a delegation
 
+    require!(
+        ctx.accounts.sol_stake_view_program.key == &paladin_sol_stake_view_program_client::ID,
+        ProgramError::IncorrectProgramId,
+        "invalid sol stake view program"
+    );
+
     GetStakeActivatingAndDeactivatingCpiBuilder::new(ctx.accounts.sol_stake_view_program)
-        .stake(ctx.accounts.stake_state)
-        .stake_history(ctx.accounts.stake_history)
+        .stake(ctx.accounts.sol_stake)
+        .stake_history(ctx.accounts.sysvar_stake_history)
         .invoke()?;
 
     let (_, return_data) = get_return_data().ok_or(ProgramError::InvalidAccountData)?;
@@ -89,7 +97,7 @@ pub fn process_initialize_sol_staker_stake(
                 delegated_vote,
             )
         } else {
-            return err!(StakeError::UndelegatedStakeStateAccount);
+            return err!(StakeError::UndelegatedSolStakeAccount);
         };
 
     // validator stake
@@ -125,7 +133,7 @@ pub fn process_initialize_sol_staker_stake(
     // to be pre-funded with the minimum rent balance by the caller.
 
     let (derivation, bump) = find_sol_staker_stake_pda(
-        ctx.accounts.stake_state.key,
+        ctx.accounts.sol_stake.key,
         ctx.accounts.config.key,
         program_id,
     );
@@ -146,7 +154,7 @@ pub fn process_initialize_sol_staker_stake(
 
     let bump_seed = [bump];
     let signer_seeds = get_sol_staker_stake_pda_signer_seeds(
-        ctx.accounts.stake_state.key,
+        ctx.accounts.sol_stake.key,
         ctx.accounts.config.key,
         &bump_seed,
     );
@@ -171,7 +179,7 @@ pub fn process_initialize_sol_staker_stake(
     let mut data = ctx.accounts.sol_staker_stake.try_borrow_mut_data()?;
     let stake = bytemuck::from_bytes_mut::<SolStakerStake>(&mut data);
 
-    *stake = SolStakerStake::new(withdrawer, *ctx.accounts.stake_state.key, validator_vote);
+    *stake = SolStakerStake::new(withdrawer, *ctx.accounts.sol_stake.key, validator_vote);
     stake.lamports_amount = u64::from(stake_state_data.activating)
         .checked_add(stake_state_data.effective.into())
         .ok_or(ProgramError::ArithmeticOverflow)?;
