@@ -662,15 +662,15 @@
           ]
         },
         {
-          "name": "stakeState",
+          "name": "solStake",
           "isMut": false,
           "isSigner": false,
           "docs": [
-            "SOL stake state account"
+            "SOL stake account"
           ]
         },
         {
-          "name": "stakeHistory",
+          "name": "sysvarStakeHistory",
           "isMut": false,
           "isSigner": false,
           "docs": [
@@ -791,7 +791,7 @@
             "type": "u64"
           },
           {
-            "name": "stakeState",
+            "name": "solStake",
             "type": "publicKey"
           }
         ]
@@ -1019,8 +1019,8 @@
     },
     {
       "code": 20,
-      "name": "UndelegatedStakeStateAccount",
-      "msg": "Undelegated stake state account"
+      "name": "UndelegatedSolStakeAccount",
+      "msg": "Undelegated SOL stake account"
     }
   ],
   "metadata": {

@@ -51,7 +51,7 @@ kinobi.update(
       ),
     },
     {
-      account: "stakeHistory",
+      account: "sysvarStakeHistory",
       defaultValue: k.publicKeyValueNode(
         "SysvarStakeHistory1111111111111111111111111",
         "stake-history"

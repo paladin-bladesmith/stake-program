@@ -20,7 +20,7 @@ pub struct SolStakerStake {
         feature = "serde",
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
-    pub stake_state: Pubkey,
+    pub sol_stake: Pubkey,
 }
 
 impl SolStakerStake {

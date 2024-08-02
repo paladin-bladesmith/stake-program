@@ -45,14 +45,14 @@ export type SolStakerStake = {
   discriminator: Array<number>;
   delegation: Delegation;
   lamportsAmount: bigint;
-  stakeState: Address;
+  solStake: Address;
 };
 
 export type SolStakerStakeArgs = {
   discriminator: Array<number>;
   delegation: DelegationArgs;
   lamportsAmount: number | bigint;
-  stakeState: Address;
+  solStake: Address;
 };
 
 export function getSolStakerStakeEncoder(): Encoder<SolStakerStakeArgs> {
@@ -60,7 +60,7 @@ export function getSolStakerStakeEncoder(): Encoder<SolStakerStakeArgs> {
     ['discriminator', getArrayEncoder(getU8Encoder(), { size: 8 })],
     ['delegation', getDelegationEncoder()],
     ['lamportsAmount', getU64Encoder()],
-    ['stakeState', getAddressEncoder()],
+    ['solStake', getAddressEncoder()],
   ]);
 }
 
@@ -69,7 +69,7 @@ export function getSolStakerStakeDecoder(): Decoder<SolStakerStake> {
     ['discriminator', getArrayDecoder(getU8Decoder(), { size: 8 })],
     ['delegation', getDelegationDecoder()],
     ['lamportsAmount', getU64Decoder()],
-    ['stakeState', getAddressDecoder()],
+    ['solStake', getAddressDecoder()],
   ]);
 }
 
