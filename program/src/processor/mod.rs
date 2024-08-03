@@ -149,6 +149,14 @@ pub fn process_instruction<'a>(
                 InitializeSolStakerStakeAccounts::context(accounts)?,
             )
         }
+        StakeInstruction::SolStakerStakeTokens(amount) => {
+            msg!("Instruction: SolStakerStakeTokens");
+            sol_staker_stake_tokens::process_sol_staker_stake_tokens(
+                program_id,
+                SolStakerStakeTokensAccounts::context(accounts)?,
+                amount,
+            )
+        }
     }
 }
 

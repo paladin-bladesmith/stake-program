@@ -68,7 +68,7 @@ pub fn process_sol_staker_stake_tokens<'a>(
     let sol_staker_stake = unpack_initialized_mut::<SolStakerStake>(&mut sol_staker_stake_data)?;
 
     let (derivation, _) = find_sol_staker_stake_pda(
-        &sol_staker_stake.stake_state,
+        &sol_staker_stake.sol_stake,
         ctx.accounts.config.key,
         program_id,
     );
@@ -146,8 +146,7 @@ pub fn process_sol_staker_stake_tokens<'a>(
 
     require!(
         updated_staked_amount as u128 <= limit,
-        //StakeError::TotalStakeAmountExceedsSolLimit
-        ProgramError::InvalidArgument,
+        StakeError::TotalStakeAmountExceedsSolLimit,
         "current staked amount ({}) + new amount ({}) exceeds limit ({})",
         sol_staker_stake.delegation.amount,
         amount,
@@ -156,8 +155,8 @@ pub fn process_sol_staker_stake_tokens<'a>(
     // update the degation amount of the SOL staker stake account
     sol_staker_stake.delegation.amount = updated_staked_amount;
     // update the total tokens amount of the validator stake account
-    validator_stake.total_staked_pal_amount = validator_stake
-        .total_staked_pal_amount
+    validator_stake.total_staked_token_amount = validator_stake
+        .total_staked_token_amount
         .checked_add(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
     // update the total amount delegated on the config account
