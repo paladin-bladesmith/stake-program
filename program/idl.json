@@ -633,6 +633,72 @@
         "type": "u8",
         "value": 11
       }
+    },
+    {
+      "name": "InitializeSolStakerStake",
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Stake config account"
+          ]
+        },
+        {
+          "name": "solStakerStake",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+          ]
+        },
+        {
+          "name": "validatorStake",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+          ]
+        },
+        {
+          "name": "solStake",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "SOL stake account"
+          ]
+        },
+        {
+          "name": "sysvarStakeHistory",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Stake history sysvar"
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "System program"
+          ]
+        },
+        {
+          "name": "solStakeViewProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Paladin SOL Stake View program"
+          ]
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 12
+      }
     }
   ],
   "accounts": [
@@ -725,7 +791,7 @@
             "type": "u64"
           },
           {
-            "name": "stakeState",
+            "name": "solStake",
             "type": "publicKey"
           }
         ]
@@ -950,6 +1016,11 @@
       "code": 19,
       "name": "InvalidSlashAmount",
       "msg": "Invalid slash amount"
+    },
+    {
+      "code": 20,
+      "name": "UndelegatedSolStakeAccount",
+      "msg": "Undelegated SOL stake account"
     }
   ],
   "metadata": {

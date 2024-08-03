@@ -9,8 +9,9 @@ use crate::{
     instruction::{
         accounts::{
             DeactivateStakeAccounts, DistributeRewardsAccounts, HarvestHolderRewardsAccounts,
-            InactivateStakeAccounts, InitializeConfigAccounts, InitializeValidatorStakeAccounts,
-            SetAuthorityAccounts, UpdateConfigAccounts, WithdrawInactiveStakeAccounts,
+            InactivateStakeAccounts, InitializeConfigAccounts, InitializeSolStakerStakeAccounts,
+            InitializeValidatorStakeAccounts, SetAuthorityAccounts, UpdateConfigAccounts,
+            WithdrawInactiveStakeAccounts,
         },
         StakeInstruction,
     },
@@ -26,6 +27,7 @@ mod harvest_holder_rewards;
 //mod harvest_stake_rewards;
 mod inactivate_stake;
 mod initialize_config;
+mod initialize_sol_staker_stake;
 mod initialize_validator_stake;
 mod set_authority;
 //mod slash;
@@ -94,7 +96,7 @@ pub fn process_instruction<'a>(
             )
         }
         StakeInstruction::InitializeValidatorStake => {
-            msg!("Instruction: InitializeStake");
+            msg!("Instruction: InitializeValidatorStake");
             initialize_validator_stake::process_initialize_validator_stake(
                 program_id,
                 InitializeValidatorStakeAccounts::context(accounts)?,
@@ -138,6 +140,13 @@ pub fn process_instruction<'a>(
                 program_id,
                 WithdrawInactiveStakeAccounts::context(accounts)?,
                 amount,
+            )
+        }
+        StakeInstruction::InitializeSolStakerStake => {
+            msg!("Instruction: InitializeSolStakerStake");
+            initialize_sol_staker_stake::process_initialize_sol_staker_stake(
+                program_id,
+                InitializeSolStakerStakeAccounts::context(accounts)?,
             )
         }
     }
@@ -192,7 +201,7 @@ pub fn unpack_delegation_mut<'a>(
             let sol_staker = unpack_initialized_mut::<SolStakerStake>(stake_data)?;
 
             let (derivation, _) =
-                find_sol_staker_stake_pda(&sol_staker.stake_state, config, program_id);
+                find_sol_staker_stake_pda(&sol_staker.sol_stake, config, program_id);
 
             (&mut sol_staker.delegation, derivation)
         }

@@ -33,11 +33,11 @@ pub struct SolStakerStake {
     /// Amount of SOL (lamports) staked on the stake state account.
     pub lamports_amount: u64,
 
-    /// The address of the stake state account.
+    /// The address of the SOL stake account.
     ///
     /// The `voter_pubkey` on the `StakeState` account must be equal to the `validator_vote`
-    /// on the base `Stake` struct.
-    pub stake_state: Pubkey,
+    /// on the `delegation` struct.
+    pub sol_stake: Pubkey,
 }
 
 impl SolStakerStake {
@@ -65,7 +65,7 @@ impl SolStakerStake {
                 last_seen_stake_rewards_per_token: PodU128::default(),
             },
             lamports_amount: u64::default(),
-            stake_state,
+            sol_stake: stake_state,
         }
     }
 }
