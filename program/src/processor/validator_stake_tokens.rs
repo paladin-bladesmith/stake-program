@@ -122,7 +122,7 @@ pub fn process_validator_stake_tokens<'a>(
 
     require!(
         updated_staked_amount as u128 <= limit,
-        StakeError::TotalStakeAmountExceedsLimit,
+        StakeError::TotalStakeAmountExceedsSolLimit,
         "current staked amount ({}) + new amount ({}) exceeds limit ({})",
         stake.delegation.amount,
         amount,

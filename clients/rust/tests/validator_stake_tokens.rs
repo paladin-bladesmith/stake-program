@@ -48,13 +48,13 @@ async fn validator_stake_tokens() {
 
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the amount to 50 SOL
-    stake_account.total_staked_lamports_amount = 50 * 1_000_000_000;
+    // "manually" set the amount to 50 lamports
+    stake_account.total_staked_lamports_amount = 50;
 
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
 
-    // And we initialize the holder rewards accounts and mint 50 tokens.
+    // And we initialize the holder rewards accounts and mint 100 tokens.
 
     let rewards_manager = RewardsManager::new(
         &mut context,
@@ -84,7 +84,11 @@ async fn validator_stake_tokens() {
     )
     .await;
 
-    // When we stake 50 tokens.
+    // When we stake 65 tokens.
+    //
+    // - raw amount to be staked: 65
+    // - current lamports staked: 50
+    // - stake limit: 1.3 * 50 = 65
 
     let mut stake_ix = ValidatorStakeTokensBuilder::new()
         .config(config_manager.config)
@@ -94,7 +98,7 @@ async fn validator_stake_tokens() {
         .mint(config_manager.mint)
         .vault(config_manager.vault)
         .token_program(spl_token_2022::ID)
-        .amount(50) // <- stake 50 tokens
+        .amount(65) // <- stake 65 tokens
         .instruction();
 
     add_extra_account_metas_for_transfer(
@@ -121,19 +125,19 @@ async fn validator_stake_tokens() {
 
     let account = get_account!(context, stake_manager.stake);
     let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake_account.delegation.amount, 50);
+    assert_eq!(stake_account.delegation.amount, 65);
 
     // And the vault account has 50 tokens.
 
     let account = get_account!(context, config_manager.vault);
     let vault = StateWithExtensions::<Account>::unpack(&account.data).unwrap();
-    assert_eq!(vault.base.amount, 50);
+    assert_eq!(vault.base.amount, 65);
 
-    // And the config account has 50 tokens delegated (staked).
+    // And the config account has 65 tokens delegated (staked).
 
     let account = get_account!(context, config_manager.config);
     let config = Config::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(config.token_amount_delegated, 50);
+    assert_eq!(config.token_amount_delegated, 65);
 }
 
 #[tokio::test]
@@ -620,7 +624,10 @@ async fn fail_validator_stake_tokens_without_staked_sol() {
 
     // Then we expect an error.
 
-    assert_custom_error!(err, PaladinStakeProgramError::TotalStakeAmountExceedsLimit);
+    assert_custom_error!(
+        err,
+        PaladinStakeProgramError::TotalStakeAmountExceedsSolLimit
+    );
 }
 
 #[tokio::test]
@@ -664,7 +671,7 @@ async fn fail_validator_stake_tokens_with_insufficient_staked_sol() {
         &config_manager.mint,
         &config_manager.mint_authority,
         &rewards_manager.token_account,
-        100,
+        2_600_000_001,
         9, // <- 9 decimals
     )
     .await
@@ -682,11 +689,11 @@ async fn fail_validator_stake_tokens_with_insufficient_staked_sol() {
 
     // When we try to stake 50 tokens on a validator stake account with only 2 SOL staked.
     //
-    // - raw amount to be staked: 50_000_000_000
+    // - raw amount to be staked: 2_600_000_001
     // - current lamports (SOL) staked: 2_000_000_000
     // - stake limit: 1.3 * 2_000_000_000 = 2_600_000_000
     //
-    // Stake amount exceeds the limit: 50_000_000_000 > 2_600_000_000
+    // Stake amount exceeds the limit: 2_600_000_001 > 2_600_000_000
 
     let mut stake_ix = ValidatorStakeTokensBuilder::new()
         .config(config_manager.config)
@@ -696,7 +703,7 @@ async fn fail_validator_stake_tokens_with_insufficient_staked_sol() {
         .mint(config_manager.mint)
         .vault(config_manager.vault)
         .token_program(spl_token_2022::ID)
-        .amount(50_000_000_000) // <- stake 50 tokens (raw value with 9 digits precision)
+        .amount(2_600_000_001) // <- stake 2_600_000_001 tokens (raw value with 9 digits precision)
         .instruction();
 
     add_extra_account_metas_for_transfer(
@@ -725,5 +732,8 @@ async fn fail_validator_stake_tokens_with_insufficient_staked_sol() {
 
     // Then we expect an error.
 
-    assert_custom_error!(err, PaladinStakeProgramError::TotalStakeAmountExceedsLimit);
+    assert_custom_error!(
+        err,
+        PaladinStakeProgramError::TotalStakeAmountExceedsSolLimit
+    );
 }
