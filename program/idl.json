@@ -818,7 +818,7 @@
             }
           },
           {
-            "name": "totalStakedPalAmount",
+            "name": "totalStakedTokenAmount",
             "type": "u64"
           },
           {
