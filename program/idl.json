@@ -1024,8 +1024,8 @@
     },
     {
       "code": 21,
-      "name": "TotalStakeAmountExceedsLimit",
-      "msg": "Total stake amount exceeds limit"
+      "name": "TotalStakeAmountExceedsSolLimit",
+      "msg": "Total stake amount exceeds SOL limit"
     }
   ],
   "metadata": {
