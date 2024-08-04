@@ -1,7 +1,7 @@
 #![cfg(feature = "test-sbf")]
 #![allow(dead_code)]
 
-use solana_program_test::ProgramTestContext;
+use solana_program_test::{ProgramTest, ProgramTestContext};
 use solana_sdk::{instruction::Instruction, pubkey::Pubkey};
 use spl_transfer_hook_interface::{
     get_extra_account_metas_address, offchain::add_extra_account_metas_for_execute,
@@ -9,6 +9,7 @@ use spl_transfer_hook_interface::{
 
 pub mod config;
 pub mod rewards;
+pub mod sol_staker_stake;
 pub mod stake;
 pub mod token;
 pub mod validator_stake;
@@ -16,6 +17,25 @@ pub mod vote;
 
 /// Scaling factor for rewards per token (1e9).
 pub const REWARDS_PER_TOKEN_SCALING_FACTOR: u128 = 1_000_000_000;
+
+pub async fn setup() -> ProgramTestContext {
+    let mut program_test = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    );
+    program_test.add_program(
+        "paladin_rewards_program",
+        paladin_rewards_program_client::ID,
+        None,
+    );
+    program_test.add_program(
+        "paladin_sol_stake_view_program",
+        paladin_sol_stake_view_program_client::ID,
+        None,
+    );
+    program_test.start_with_context().await
+}
 
 #[macro_export]
 macro_rules! assert_instruction_error {
