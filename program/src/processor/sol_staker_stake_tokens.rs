@@ -10,7 +10,8 @@ use crate::{
     processor::unpack_initialized_mut,
     require,
     state::{
-        find_sol_staker_stake_pda, find_validator_stake_pda, Config, SolStakerStake, ValidatorStake,
+        calculate_maximum_stake_for_sol_amount, find_sol_staker_stake_pda,
+        find_validator_stake_pda, Config, SolStakerStake, ValidatorStake,
     },
 };
 
@@ -141,8 +142,7 @@ pub fn process_sol_staker_stake_tokens<'a>(
         .checked_add(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
     // maximum allowed stake based on the SOL amount
-    //let limit = calculate_maximum_stake_for_sol_amount(sol_staker_stake.lamports_amount)?;
-    let limit = u128::MAX;
+    let limit = calculate_maximum_stake_for_sol_amount(sol_staker_stake.lamports_amount)?;
 
     require!(
         updated_staked_amount as u128 <= limit,
