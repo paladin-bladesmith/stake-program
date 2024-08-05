@@ -515,6 +515,43 @@ pub enum StakeInstruction {
         desc = "Token program"
     )]
     SolStakerStakeTokens(u64),
+
+    /// Sync the SOL stake balance with a validator and SOL staker stake accounts.
+    ///
+    /// NOTE: Anybody can sync the balance of a SOL stake account.
+    #[account(
+        0,
+        name = "config",
+        desc = "Stake config account"
+    )]
+    #[account(
+        1,
+        writable,
+        name = "sol_staker_stake",
+        desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+    )]
+    #[account(
+        2,
+        writable,
+        name = "validator_stake",
+        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+    )]
+    #[account(
+        3,
+        name = "sol_stake",
+        desc = "SOL stake account"
+    )]
+    #[account(
+        4,
+        name = "sysvar_stake_history",
+        desc = "Stake history sysvar"
+    )]
+    #[account(
+        5,
+        name = "sol_stake_view_program",
+        desc = "Paladin SOL Stake View program"
+    )]
+    SyncSolStake,
 }
 
 impl StakeInstruction {
@@ -597,6 +634,7 @@ impl StakeInstruction {
                 data.extend_from_slice(&amount.to_le_bytes());
                 data
             }
+            StakeInstruction::SyncSolStake => vec![14],
         }
     }
 
@@ -683,6 +721,8 @@ impl StakeInstruction {
 
                 Ok(StakeInstruction::SolStakerStakeTokens(amount))
             }
+            // 13 - InitializeSolStakerStake
+            Some((&14, _)) => Ok(StakeInstruction::SyncSolStake),
             _ => Err(ProgramError::InvalidInstructionData),
         }
     }
