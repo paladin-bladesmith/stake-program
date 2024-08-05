@@ -778,6 +778,64 @@
         "type": "u8",
         "value": 13
       }
+    },
+    {
+      "name": "SyncSolStake",
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Stake config account"
+          ]
+        },
+        {
+          "name": "solStakerStake",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+          ]
+        },
+        {
+          "name": "validatorStake",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+          ]
+        },
+        {
+          "name": "solStake",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "SOL stake account"
+          ]
+        },
+        {
+          "name": "sysvarStakeHistory",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Stake history sysvar"
+          ]
+        },
+        {
+          "name": "solStakeViewProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Paladin SOL Stake View program"
+          ]
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 14
+      }
     }
   ],
   "accounts": [
