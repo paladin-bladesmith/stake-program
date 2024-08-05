@@ -18,8 +18,15 @@ use std::num::NonZeroU64;
 /// Scaling factor for rewards per token (1e9).
 const REWARDS_PER_TOKEN_SCALING_FACTOR: u128 = 1_000_000_000;
 
-/// Defined the maximum valud for basis points (100%).
+/// Defined the maximum value for basis points (100%).
 pub const MAX_BASIS_POINTS: u128 = 10_000;
+
+/// Stake factor for the maximum amount of staked tokens as a percentage of the total
+/// SOL staked (STAKE_FACTOR / STAKE_SCALING_FACTOR).
+pub const STAKE_FACTOR: u128 = 13;
+
+/// Scaling factor for stake amount.
+pub const STAKE_SCALING_FACTOR: u128 = 10;
 
 #[inline(always)]
 pub fn create_vault_pda<'a>(
@@ -141,6 +148,17 @@ pub fn calculate_stake_rewards_per_token(
         (rewards as u128)
             .checked_mul(REWARDS_PER_TOKEN_SCALING_FACTOR)
             .and_then(|product| product.checked_div(stake_amount as u128))
+            .ok_or(ProgramError::ArithmeticOverflow)
+    }
+}
+
+pub fn calculate_maximum_stake_for_sol_amount(sol_amount: u64) -> Result<u128, ProgramError> {
+    if sol_amount == 0 {
+        Ok(0)
+    } else {
+        (sol_amount as u128)
+            .checked_mul(STAKE_FACTOR)
+            .and_then(|product| product.checked_div(STAKE_SCALING_FACTOR))
             .ok_or(ProgramError::ArithmeticOverflow)
     }
 }

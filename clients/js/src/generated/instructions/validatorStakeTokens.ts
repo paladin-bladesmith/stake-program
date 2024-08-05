@@ -32,10 +32,10 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export type StakeTokensInstruction<
+export type ValidatorStakeTokensInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
-  TAccountStake extends string | IAccountMeta<string> = string,
+  TAccountValidatorStake extends string | IAccountMeta<string> = string,
   TAccountSourceTokenAccount extends string | IAccountMeta<string> = string,
   TAccountTokenAccountAuthority extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
@@ -51,9 +51,9 @@ export type StakeTokensInstruction<
       TAccountConfig extends string
         ? WritableAccount<TAccountConfig>
         : TAccountConfig,
-      TAccountStake extends string
-        ? WritableAccount<TAccountStake>
-        : TAccountStake,
+      TAccountValidatorStake extends string
+        ? WritableAccount<TAccountValidatorStake>
+        : TAccountValidatorStake,
       TAccountSourceTokenAccount extends string
         ? WritableAccount<TAccountSourceTokenAccount>
         : TAccountSourceTokenAccount,
@@ -74,14 +74,16 @@ export type StakeTokensInstruction<
     ]
   >;
 
-export type StakeTokensInstructionData = {
+export type ValidatorStakeTokensInstructionData = {
   discriminator: number;
   amount: bigint;
 };
 
-export type StakeTokensInstructionDataArgs = { amount: number | bigint };
+export type ValidatorStakeTokensInstructionDataArgs = {
+  amount: number | bigint;
+};
 
-export function getStakeTokensInstructionDataEncoder(): Encoder<StakeTokensInstructionDataArgs> {
+export function getValidatorStakeTokensInstructionDataEncoder(): Encoder<ValidatorStakeTokensInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
@@ -91,26 +93,26 @@ export function getStakeTokensInstructionDataEncoder(): Encoder<StakeTokensInstr
   );
 }
 
-export function getStakeTokensInstructionDataDecoder(): Decoder<StakeTokensInstructionData> {
+export function getValidatorStakeTokensInstructionDataDecoder(): Decoder<ValidatorStakeTokensInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
     ['amount', getU64Decoder()],
   ]);
 }
 
-export function getStakeTokensInstructionDataCodec(): Codec<
-  StakeTokensInstructionDataArgs,
-  StakeTokensInstructionData
+export function getValidatorStakeTokensInstructionDataCodec(): Codec<
+  ValidatorStakeTokensInstructionDataArgs,
+  ValidatorStakeTokensInstructionData
 > {
   return combineCodec(
-    getStakeTokensInstructionDataEncoder(),
-    getStakeTokensInstructionDataDecoder()
+    getValidatorStakeTokensInstructionDataEncoder(),
+    getValidatorStakeTokensInstructionDataDecoder()
   );
 }
 
-export type StakeTokensInput<
+export type ValidatorStakeTokensInput<
   TAccountConfig extends string = string,
-  TAccountStake extends string = string,
+  TAccountValidatorStake extends string = string,
   TAccountSourceTokenAccount extends string = string,
   TAccountTokenAccountAuthority extends string = string,
   TAccountMint extends string = string,
@@ -119,8 +121,8 @@ export type StakeTokensInput<
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
-  /** Validator stake account (pda of `['stake::state::stake', validator, config]`) */
-  stake: Address<TAccountStake>;
+  /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
+  validatorStake: Address<TAccountValidatorStake>;
   /** Token account */
   sourceTokenAccount: Address<TAccountSourceTokenAccount>;
   /** Owner or delegate of the token account */
@@ -131,31 +133,31 @@ export type StakeTokensInput<
   vault: Address<TAccountVault>;
   /** Token program */
   tokenProgram?: Address<TAccountTokenProgram>;
-  amount: StakeTokensInstructionDataArgs['amount'];
+  amount: ValidatorStakeTokensInstructionDataArgs['amount'];
 };
 
-export function getStakeTokensInstruction<
+export function getValidatorStakeTokensInstruction<
   TAccountConfig extends string,
-  TAccountStake extends string,
+  TAccountValidatorStake extends string,
   TAccountSourceTokenAccount extends string,
   TAccountTokenAccountAuthority extends string,
   TAccountMint extends string,
   TAccountVault extends string,
   TAccountTokenProgram extends string,
 >(
-  input: StakeTokensInput<
+  input: ValidatorStakeTokensInput<
     TAccountConfig,
-    TAccountStake,
+    TAccountValidatorStake,
     TAccountSourceTokenAccount,
     TAccountTokenAccountAuthority,
     TAccountMint,
     TAccountVault,
     TAccountTokenProgram
   >
-): StakeTokensInstruction<
+): ValidatorStakeTokensInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
-  TAccountStake,
+  TAccountValidatorStake,
   TAccountSourceTokenAccount,
   TAccountTokenAccountAuthority,
   TAccountMint,
@@ -168,7 +170,7 @@ export function getStakeTokensInstruction<
   // Original accounts.
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
-    stake: { value: input.stake ?? null, isWritable: true },
+    validatorStake: { value: input.validatorStake ?? null, isWritable: true },
     sourceTokenAccount: {
       value: input.sourceTokenAccount ?? null,
       isWritable: true,
@@ -199,7 +201,7 @@ export function getStakeTokensInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.config),
-      getAccountMeta(accounts.stake),
+      getAccountMeta(accounts.validatorStake),
       getAccountMeta(accounts.sourceTokenAccount),
       getAccountMeta(accounts.tokenAccountAuthority),
       getAccountMeta(accounts.mint),
@@ -207,13 +209,13 @@ export function getStakeTokensInstruction<
       getAccountMeta(accounts.tokenProgram),
     ],
     programAddress,
-    data: getStakeTokensInstructionDataEncoder().encode(
-      args as StakeTokensInstructionDataArgs
+    data: getValidatorStakeTokensInstructionDataEncoder().encode(
+      args as ValidatorStakeTokensInstructionDataArgs
     ),
-  } as StakeTokensInstruction<
+  } as ValidatorStakeTokensInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
-    TAccountStake,
+    TAccountValidatorStake,
     TAccountSourceTokenAccount,
     TAccountTokenAccountAuthority,
     TAccountMint,
@@ -224,7 +226,7 @@ export function getStakeTokensInstruction<
   return instruction;
 }
 
-export type ParsedStakeTokensInstruction<
+export type ParsedValidatorStakeTokensInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
@@ -232,8 +234,8 @@ export type ParsedStakeTokensInstruction<
   accounts: {
     /** Stake config account */
     config: TAccountMetas[0];
-    /** Validator stake account (pda of `['stake::state::stake', validator, config]`) */
-    stake: TAccountMetas[1];
+    /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
+    validatorStake: TAccountMetas[1];
     /** Token account */
     sourceTokenAccount: TAccountMetas[2];
     /** Owner or delegate of the token account */
@@ -245,17 +247,17 @@ export type ParsedStakeTokensInstruction<
     /** Token program */
     tokenProgram: TAccountMetas[6];
   };
-  data: StakeTokensInstructionData;
+  data: ValidatorStakeTokensInstructionData;
 };
 
-export function parseStakeTokensInstruction<
+export function parseValidatorStakeTokensInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedStakeTokensInstruction<TProgram, TAccountMetas> {
+): ParsedValidatorStakeTokensInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 7) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -270,13 +272,15 @@ export function parseStakeTokensInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       config: getNextAccount(),
-      stake: getNextAccount(),
+      validatorStake: getNextAccount(),
       sourceTokenAccount: getNextAccount(),
       tokenAccountAuthority: getNextAccount(),
       mint: getNextAccount(),
       vault: getNextAccount(),
       tokenProgram: getNextAccount(),
     },
-    data: getStakeTokensInstructionDataDecoder().decode(instruction.data),
+    data: getValidatorStakeTokensInstructionDataDecoder().decode(
+      instruction.data
+    ),
   };
 }

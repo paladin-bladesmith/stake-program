@@ -18,8 +18,8 @@ import {
   type ParsedInitializeValidatorStakeInstruction,
   type ParsedSetAuthorityInstruction,
   type ParsedSlashInstruction,
-  type ParsedStakeTokensInstruction,
   type ParsedUpdateConfigInstruction,
+  type ParsedValidatorStakeTokensInstruction,
   type ParsedWithdrawInactiveStakeInstruction,
 } from '../instructions';
 
@@ -35,7 +35,7 @@ export enum PaladinStakeProgramAccount {
 export enum PaladinStakeProgramInstruction {
   InitializeConfig,
   InitializeValidatorStake,
-  StakeTokens,
+  ValidatorStakeTokens,
   DeactivateStake,
   InactivateStake,
   WithdrawInactiveStake,
@@ -60,7 +60,7 @@ export function identifyPaladinStakeProgramInstruction(
     return PaladinStakeProgramInstruction.InitializeValidatorStake;
   }
   if (containsBytes(data, getU8Encoder().encode(2), 0)) {
-    return PaladinStakeProgramInstruction.StakeTokens;
+    return PaladinStakeProgramInstruction.ValidatorStakeTokens;
   }
   if (containsBytes(data, getU8Encoder().encode(3), 0)) {
     return PaladinStakeProgramInstruction.DeactivateStake;
@@ -107,8 +107,8 @@ export type ParsedPaladinStakeProgramInstruction<
       instructionType: PaladinStakeProgramInstruction.InitializeValidatorStake;
     } & ParsedInitializeValidatorStakeInstruction<TProgram>)
   | ({
-      instructionType: PaladinStakeProgramInstruction.StakeTokens;
-    } & ParsedStakeTokensInstruction<TProgram>)
+      instructionType: PaladinStakeProgramInstruction.ValidatorStakeTokens;
+    } & ParsedValidatorStakeTokensInstruction<TProgram>)
   | ({
       instructionType: PaladinStakeProgramInstruction.DeactivateStake;
     } & ParsedDeactivateStakeInstruction<TProgram>)

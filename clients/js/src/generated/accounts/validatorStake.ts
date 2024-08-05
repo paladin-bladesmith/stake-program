@@ -42,14 +42,14 @@ import {
 export type ValidatorStake = {
   discriminator: Array<number>;
   delegation: Delegation;
-  totalStakedPalAmount: bigint;
+  totalStakedTokenAmount: bigint;
   totalStakedLamportsAmount: bigint;
 };
 
 export type ValidatorStakeArgs = {
   discriminator: Array<number>;
   delegation: DelegationArgs;
-  totalStakedPalAmount: number | bigint;
+  totalStakedTokenAmount: number | bigint;
   totalStakedLamportsAmount: number | bigint;
 };
 
@@ -57,7 +57,7 @@ export function getValidatorStakeEncoder(): Encoder<ValidatorStakeArgs> {
   return getStructEncoder([
     ['discriminator', getArrayEncoder(getU8Encoder(), { size: 8 })],
     ['delegation', getDelegationEncoder()],
-    ['totalStakedPalAmount', getU64Encoder()],
+    ['totalStakedTokenAmount', getU64Encoder()],
     ['totalStakedLamportsAmount', getU64Encoder()],
   ]);
 }
@@ -66,7 +66,7 @@ export function getValidatorStakeDecoder(): Decoder<ValidatorStake> {
   return getStructDecoder([
     ['discriminator', getArrayDecoder(getU8Decoder(), { size: 8 })],
     ['delegation', getDelegationDecoder()],
-    ['totalStakedPalAmount', getU64Decoder()],
+    ['totalStakedTokenAmount', getU64Decoder()],
     ['totalStakedLamportsAmount', getU64Decoder()],
   ]);
 }

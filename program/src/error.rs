@@ -92,6 +92,10 @@ pub enum StakeError {
     /// 20 - Undelegated SOL stake account
     #[error("Undelegated SOL stake account")]
     UndelegatedSolStakeAccount,
+
+    /// 21 - Total stake amount exceeds SOL limit
+    #[error("Total stake amount exceeds SOL limit")]
+    TotalStakeAmountExceedsSolLimit,
 }
 
 impl PrintProgramError for StakeError {

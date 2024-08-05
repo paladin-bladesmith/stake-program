@@ -11,7 +11,7 @@ use crate::{
             DeactivateStakeAccounts, DistributeRewardsAccounts, HarvestHolderRewardsAccounts,
             InactivateStakeAccounts, InitializeConfigAccounts, InitializeSolStakerStakeAccounts,
             InitializeValidatorStakeAccounts, SetAuthorityAccounts, UpdateConfigAccounts,
-            WithdrawInactiveStakeAccounts,
+            ValidatorStakeTokensAccounts, WithdrawInactiveStakeAccounts,
         },
         StakeInstruction,
     },
@@ -31,8 +31,8 @@ mod initialize_sol_staker_stake;
 mod initialize_validator_stake;
 mod set_authority;
 //mod slash;
-//mod stake_tokens;
 mod update_config;
+mod validator_stake_tokens;
 mod withdraw_inactive_stake;
 
 #[inline(always)]
@@ -116,15 +116,13 @@ pub fn process_instruction<'a>(
             //slash::process_slash(program_id, SlashAccounts::context(accounts)?, amount)
             todo!();
         }
-        StakeInstruction::StakeTokens(_amount) => {
-            msg!("Instruction: StakeTokens");
-            // Note: needs to be refactored
-            //stake_tokens::process_stake_tokens(
-            //    program_id,
-            //    StakeTokensAccounts::context(accounts)?,
-            //    amount,
-            //)
-            todo!();
+        StakeInstruction::ValidatorStakeTokens(amount) => {
+            msg!("Instruction: ValidatorStakeTokens");
+            validator_stake_tokens::process_validator_stake_tokens(
+                program_id,
+                ValidatorStakeTokensAccounts::context(accounts)?,
+                amount,
+            )
         }
         StakeInstruction::UpdateConfig(field) => {
             msg!("Instruction: UpdateConfig");
