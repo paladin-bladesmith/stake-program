@@ -18,7 +18,7 @@ pub mod vote;
 /// Scaling factor for rewards per token (1e9).
 pub const REWARDS_PER_TOKEN_SCALING_FACTOR: u128 = 1_000_000_000;
 
-pub async fn setup() -> ProgramTestContext {
+pub fn new_program_test() -> ProgramTest {
     let mut program_test = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -34,6 +34,11 @@ pub async fn setup() -> ProgramTestContext {
         paladin_sol_stake_view_program_client::ID,
         None,
     );
+    program_test
+}
+
+pub async fn setup() -> ProgramTestContext {
+    let program_test = new_program_test();
     program_test.start_with_context().await
 }
 
