@@ -157,6 +157,17 @@ kinobi.update(
       },
     },
     {
+      // SolStakerStakeTokens
+      select: "[instructionNode]solStakerStakeTokens.[instructionArgumentNode]args",
+      transform: (node) => {
+        k.assertIsNode(node, "instructionArgumentNode");
+        return {
+          ...node,
+          name: "amount",
+        };
+      },
+    },
+    {
       // StakeTokens
       select: "[instructionNode]validatorStakeTokens.[instructionArgumentNode]args",
       transform: (node) => {

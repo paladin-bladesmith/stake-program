@@ -45,11 +45,12 @@ pub async fn delegate_stake_account(
     context: &mut ProgramTestContext,
     stake_address: &Pubkey,
     vote: &Pubkey,
+    authorized: &Keypair,
 ) {
     let transaction = Transaction::new_signed_with_payer(
-        &[delegate_stake(stake_address, &context.payer.pubkey(), vote)],
+        &[delegate_stake(stake_address, &authorized.pubkey(), vote)],
         Some(&context.payer.pubkey()),
-        &[&context.payer],
+        &[&context.payer, authorized],
         context.last_blockhash,
     );
     context

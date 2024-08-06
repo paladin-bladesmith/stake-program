@@ -6,35 +6,37 @@ use spl_token_2022::{
 
 use crate::{
     error::StakeError,
-    instruction::accounts::{Context, ValidatorStakeTokensAccounts},
+    instruction::accounts::{Context, SolStakerStakeTokensAccounts},
     processor::unpack_initialized_mut,
     require,
     state::{
-        calculate_maximum_stake_for_lamports_amount, find_validator_stake_pda, Config,
-        ValidatorStake,
+        calculate_maximum_stake_for_lamports_amount, find_sol_staker_stake_pda,
+        find_validator_stake_pda, Config, SolStakerStake, ValidatorStake,
     },
 };
 
 /// Stakes tokens with the given config.
 ///
-/// NOTE: This instruction is used by validator stake accounts. The total amount of staked
-/// tokens is limited to the 1.3 * current amount of SOL staked to the validator.
+/// NOTE: This instruction is used by SOL staker stake accounts. The total amount of staked
+/// tokens is limited to the 1.3 * current amount of SOL staked by the SOL staker.
 ///
 /// 0. `[w]` Stake config account
-/// 1. `[w]` Validator stake account
+/// 1. `[w]` SOL staker stake account
+///          (PDA seeds: ['stake::state::sol_staker_stake', validator, config_account])
+/// 2. `[w]` Validator stake account
 ///          (PDA seeds: ['stake::state::validator_stake', validator, config_account])
-/// 2. `[w]` Token Account
-/// 3. `[s]` Owner or delegate of the token account
-/// 4. `[ ]` Stake Token Mint
-/// 5. `[w]` Stake Token Vault, to hold all staked tokens
+/// 3. `[w]` Token Account
+/// 4. `[s]` Owner or delegate of the token account
+/// 5. `[ ]` Stake Token Mint
+/// 6. `[w]` Stake Token Vault, to hold all staked tokens
 ///          (must be the token account on the stake config account)
-/// 6. `[ ]` Token program
-/// 7.. Extra accounts required for the transfer hook
+/// 7. `[ ]` Token program
+/// 8.. Extra accounts required for the transfer hook
 ///
-/// Instruction data: amount of tokens to stake, as a little-endian u64
-pub fn process_validator_stake_tokens<'a>(
+/// Instruction data: amount of tokens to stake, as a little-endian `u64`.
+pub fn process_sol_staker_stake_tokens<'a>(
     program_id: &Pubkey,
-    ctx: Context<'a, ValidatorStakeTokensAccounts<'a>>,
+    ctx: Context<'a, SolStakerStakeTokensAccounts<'a>>,
     amount: u64,
 ) -> ProgramResult {
     // Account validation.
@@ -50,19 +52,39 @@ pub fn process_validator_stake_tokens<'a>(
     );
 
     let mut config_data = ctx.accounts.config.try_borrow_mut_data()?;
-    let config = bytemuck::try_from_bytes_mut::<Config>(&mut config_data)
-        .map_err(|_error| ProgramError::InvalidAccountData)?;
+    let config = unpack_initialized_mut::<Config>(&mut config_data)?;
+
+    // sol staker stake
+    // - owner must be the stake program
+    // - must be initialized
+    // - must have the correct derivation (validates the config account)
 
     require!(
-        config.is_initialized(),
-        ProgramError::UninitializedAccount,
-        "config",
+        ctx.accounts.sol_staker_stake.owner == program_id,
+        ProgramError::InvalidAccountOwner,
+        "sol staker stake"
+    );
+
+    let mut sol_staker_stake_data = ctx.accounts.sol_staker_stake.try_borrow_mut_data()?;
+    let sol_staker_stake = unpack_initialized_mut::<SolStakerStake>(&mut sol_staker_stake_data)?;
+
+    let (derivation, _) = find_sol_staker_stake_pda(
+        &sol_staker_stake.sol_stake,
+        ctx.accounts.config.key,
+        program_id,
+    );
+
+    require!(
+        ctx.accounts.sol_staker_stake.key == &derivation,
+        ProgramError::InvalidSeeds,
+        "sol staker stake",
     );
 
     // validator stake
     // - owner must be the stake program
     // - must be initialized
-    // - must have the correct derivation
+    // - must have the correct derivation (validator vote must match the validator vote in
+    //   the sol staker stake account)
 
     require!(
         ctx.accounts.validator_stake.owner == program_id,
@@ -70,11 +92,11 @@ pub fn process_validator_stake_tokens<'a>(
         "validator stake"
     );
 
-    let mut stake_data = ctx.accounts.validator_stake.try_borrow_mut_data()?;
-    let stake = unpack_initialized_mut::<ValidatorStake>(&mut stake_data)?;
+    let mut validator_stake_data = ctx.accounts.validator_stake.try_borrow_mut_data()?;
+    let validator_stake = unpack_initialized_mut::<ValidatorStake>(&mut validator_stake_data)?;
 
     let (derivation, _) = find_validator_stake_pda(
-        &stake.delegation.validator_vote,
+        &sol_staker_stake.delegation.validator_vote,
         ctx.accounts.config.key,
         program_id,
     );
@@ -114,24 +136,30 @@ pub fn process_validator_stake_tokens<'a>(
 
     require!(amount > 0, StakeError::InvalidAmount);
 
-    let limit = calculate_maximum_stake_for_lamports_amount(stake.total_staked_lamports_amount)?;
-    let updated_staked_amount = stake
+    let updated_staked_amount = sol_staker_stake
         .delegation
         .amount
         .checked_add(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
+    // maximum allowed stake based on the SOL amount
+    let limit = calculate_maximum_stake_for_lamports_amount(sol_staker_stake.lamports_amount)?;
 
     require!(
         updated_staked_amount as u128 <= limit,
         StakeError::TotalStakeAmountExceedsSolLimit,
         "current staked amount ({}) + new amount ({}) exceeds limit ({})",
-        stake.delegation.amount,
+        sol_staker_stake.delegation.amount,
         amount,
         limit
     );
-
-    stake.delegation.amount = updated_staked_amount;
-
+    // update the degation amount of the SOL staker stake account
+    sol_staker_stake.delegation.amount = updated_staked_amount;
+    // update the total tokens amount of the validator stake account
+    validator_stake.total_staked_token_amount = validator_stake
+        .total_staked_token_amount
+        .checked_add(amount)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
+    // update the total amount delegated on the config account
     config.token_amount_delegated = config
         .token_amount_delegated
         .checked_add(amount)

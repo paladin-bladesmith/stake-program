@@ -49,19 +49,19 @@ async fn initialize_sol_staker_stake() {
 
     let stake_state = Keypair::new();
     let stake_amount = 1_000_000_000;
-    let withdrawer = context.payer.pubkey();
+    let withdrawer = Keypair::new();
 
     create_stake_account(
         &mut context,
         &stake_state,
-        &Authorized::auto(&withdrawer),
+        &Authorized::auto(&withdrawer.pubkey()),
         &Lockup::default(),
         stake_amount,
     )
     .await;
 
     let stake_state = stake_state.pubkey();
-    delegate_stake_account(&mut context, &stake_state, &stake_manager.vote).await;
+    delegate_stake_account(&mut context, &stake_state, &stake_manager.vote, &withdrawer).await;
 
     // When we initialize the SOL staker stake account.
 
@@ -102,7 +102,7 @@ async fn initialize_sol_staker_stake() {
     let account_data = account.data.as_ref();
     let stake_account = SolStakerStake::from_bytes(account_data).unwrap();
     assert_eq!(stake_account.delegation.validator_vote, stake_manager.vote);
-    assert_eq!(stake_account.delegation.authority, context.payer.pubkey());
+    assert_eq!(stake_account.delegation.authority, withdrawer.pubkey());
     assert_eq!(stake_account.sol_stake, stake_state);
     assert_eq!(stake_account.lamports_amount, 1_000_000_000);
 
@@ -139,19 +139,19 @@ async fn fail_initialize_sol_staker_stake_with_initialized_account() {
 
     let stake_state = Keypair::new();
     let stake_amount = 1_000_000_000;
-    let withdrawer = context.payer.pubkey();
+    let withdrawer = Keypair::new();
 
     create_stake_account(
         &mut context,
         &stake_state,
-        &Authorized::auto(&withdrawer),
+        &Authorized::auto(&withdrawer.pubkey()),
         &Lockup::default(),
         stake_amount,
     )
     .await;
 
     let stake_state = stake_state.pubkey();
-    delegate_stake_account(&mut context, &stake_state, &stake_manager.vote).await;
+    delegate_stake_account(&mut context, &stake_state, &stake_manager.vote, &withdrawer).await;
 
     // And we initialize the SOL staker stake account.
 
@@ -236,19 +236,19 @@ async fn fail_initialize_sol_staker_stake_with_invalid_derivation() {
 
     let stake_state = Keypair::new();
     let stake_amount = 1_000_000_000;
-    let withdrawer = context.payer.pubkey();
+    let withdrawer = Keypair::new();
 
     create_stake_account(
         &mut context,
         &stake_state,
-        &Authorized::auto(&withdrawer),
+        &Authorized::auto(&withdrawer.pubkey()),
         &Lockup::default(),
         stake_amount,
     )
     .await;
 
     let stake_state = stake_state.pubkey();
-    delegate_stake_account(&mut context, &stake_state, &stake_manager.vote).await;
+    delegate_stake_account(&mut context, &stake_state, &stake_manager.vote, &withdrawer).await;
 
     // When we try to initialize the SOL staker stake account with the wrong derivation
     // (different address as the stake state account).
@@ -385,19 +385,19 @@ async fn fail_initialize_sol_staker_stake_with_uninitialized_config() {
 
     let stake_state = Keypair::new();
     let stake_amount = 1_000_000_000;
-    let withdrawer = context.payer.pubkey();
+    let withdrawer = Keypair::new();
 
     create_stake_account(
         &mut context,
         &stake_state,
-        &Authorized::auto(&withdrawer),
+        &Authorized::auto(&withdrawer.pubkey()),
         &Lockup::default(),
         stake_amount,
     )
     .await;
 
     let stake_state = stake_state.pubkey();
-    delegate_stake_account(&mut context, &stake_state, &stake_manager.vote).await;
+    delegate_stake_account(&mut context, &stake_state, &stake_manager.vote, &withdrawer).await;
 
     // And we uninitialize the config account.
 
@@ -481,19 +481,19 @@ async fn fail_initialize_sol_staker_stake_with_invalid_sol_stake_view_program() 
 
     let stake_state = Keypair::new();
     let stake_amount = 1_000_000_000;
-    let withdrawer = context.payer.pubkey();
+    let withdrawer = Keypair::new();
 
     create_stake_account(
         &mut context,
         &stake_state,
-        &Authorized::auto(&withdrawer),
+        &Authorized::auto(&withdrawer.pubkey()),
         &Lockup::default(),
         stake_amount,
     )
     .await;
 
     let stake_state = stake_state.pubkey();
-    delegate_stake_account(&mut context, &stake_state, &stake_manager.vote).await;
+    delegate_stake_account(&mut context, &stake_state, &stake_manager.vote, &withdrawer).await;
 
     // When we try initialize the SOL staker stake account with an invalid SOL stake view program.
 

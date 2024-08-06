@@ -461,6 +461,60 @@ pub enum StakeInstruction {
         desc = "Paladin SOL Stake View program"
     )]
     InitializeSolStakerStake,
+
+    /// Stakes tokens with the given config.
+    /// 
+    /// NOTE: This instruction is used by SOL staker stake accounts. The total amount of staked
+    /// tokens is limited to the 1.3 * current amount of SOL staked by the SOL staker.
+    /// 
+    /// Instruction data: amount of tokens to stake, as a little-endian `u64`.
+    #[account(
+        0,
+        writable,
+        name = "config",
+        desc = "Stake config account"
+    )]
+    #[account(
+        1,
+        writable,
+        name = "sol_staker_stake",
+        desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+    )]
+    #[account(
+        2,
+        writable,
+        name = "validator_stake",
+        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+    )]
+    #[account(
+        3,
+        writable,
+        name = "source_token_account",
+        desc = "Token account"
+    )]
+    #[account(
+        4,
+        signer,
+        name = "token_account_authority",
+        desc = "Owner or delegate of the token account"
+    )]
+    #[account(
+        5,
+        name = "mint",
+        desc = "Stake Token Mint"
+    )]
+    #[account(
+        6,
+        writable,
+        name = "vault",
+        desc = "Stake token Vault"
+    )]
+    #[account(
+        7,
+        name = "token_program",
+        desc = "Token program"
+    )]
+    SolStakerStakeTokens(u64),
 }
 
 impl StakeInstruction {
@@ -537,6 +591,12 @@ impl StakeInstruction {
                 data
             }
             StakeInstruction::InitializeSolStakerStake => vec![12],
+            StakeInstruction::SolStakerStakeTokens(amount) => {
+                let mut data = Vec::with_capacity(9);
+                data.push(13);
+                data.extend_from_slice(&amount.to_le_bytes());
+                data
+            }
         }
     }
 
@@ -617,6 +677,12 @@ impl StakeInstruction {
             }
             // 12 - InitializeSolStakerStake
             Some((&12, _)) => Ok(StakeInstruction::InitializeSolStakerStake),
+            // 13 - SolStakerStakeTokens: u64 (8)
+            Some((&13, rest)) if rest.len() == 8 => {
+                let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
+
+                Ok(StakeInstruction::SolStakerStakeTokens(amount))
+            }
             _ => Err(ProgramError::InvalidInstructionData),
         }
     }
