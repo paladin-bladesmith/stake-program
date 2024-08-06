@@ -1163,6 +1163,11 @@
       "code": 21,
       "name": "TotalStakeAmountExceedsSolLimit",
       "msg": "Total stake amount exceeds SOL limit"
+    },
+    {
+      "code": 22,
+      "name": "IncorrectSolStakeAccount",
+      "msg": "Incorrect SOL stake account"
     }
   ],
   "metadata": {

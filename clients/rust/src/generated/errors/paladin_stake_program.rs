@@ -76,6 +76,9 @@ pub enum PaladinStakeProgramError {
     /// 21 - Total stake amount exceeds SOL limit
     #[error("Total stake amount exceeds SOL limit")]
     TotalStakeAmountExceedsSolLimit = 0x15,
+    /// 22 - Incorrect SOL stake account
+    #[error("Incorrect SOL stake account")]
+    IncorrectSolStakeAccount = 0x16,
 }
 
 impl solana_program::program_error::PrintProgramError for PaladinStakeProgramError {
