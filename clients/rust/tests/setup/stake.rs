@@ -4,7 +4,7 @@ use solana_sdk::{
     signature::Keypair,
     signer::Signer,
     stake::{
-        instruction::{create_account, delegate_stake},
+        instruction::{create_account, deactivate_stake, delegate_stake},
         state::{Authorized, Lockup, StakeStateV2},
     },
     transaction::Transaction,
@@ -51,6 +51,24 @@ pub async fn delegate_stake_account(
         &[delegate_stake(stake_address, &authorized.pubkey(), vote)],
         Some(&context.payer.pubkey()),
         &[&context.payer, authorized],
+        context.last_blockhash,
+    );
+    context
+        .banks_client
+        .process_transaction(transaction)
+        .await
+        .unwrap();
+}
+
+pub async fn deactivate_stake_account(
+    context: &mut ProgramTestContext,
+    stake_address: &Pubkey,
+    authority: &Keypair,
+) {
+    let transaction = Transaction::new_signed_with_payer(
+        &[deactivate_stake(stake_address, &authority.pubkey())],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, authority],
         context.last_blockhash,
     );
     context
