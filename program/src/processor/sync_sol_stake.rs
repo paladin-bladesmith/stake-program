@@ -64,7 +64,7 @@ pub fn process_sync_sol_stake(
     require!(
         ctx.accounts.sol_staker_stake.owner == program_id,
         ProgramError::InvalidAccountOwner,
-        "validator stake"
+        "sol staker stake"
     );
 
     let mut sol_staker_stake_data = ctx.accounts.sol_staker_stake.try_borrow_mut_data()?;
@@ -84,7 +84,8 @@ pub fn process_sync_sol_stake(
 
     // validator stake
     // - owner must be the stake program
-    // - must have the correct derivation
+    // - must have the correct derivation (validates both the validator vote
+    //   and config accounts)
     // - must be initialized
 
     require!(
