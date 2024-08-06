@@ -19,7 +19,7 @@ pub struct SolStakerStakeManager {
     pub stake: Pubkey,
     // Stake authority.
     pub authority: Keypair,
-    // Validator account.
+    // SOL stake account.
     pub sol_stake: Pubkey,
 }
 

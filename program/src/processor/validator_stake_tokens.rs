@@ -10,7 +10,8 @@ use crate::{
     processor::unpack_initialized_mut,
     require,
     state::{
-        calculate_maximum_stake_for_sol_amount, find_validator_stake_pda, Config, ValidatorStake,
+        calculate_maximum_stake_for_lamports_amount, find_validator_stake_pda, Config,
+        ValidatorStake,
     },
 };
 
@@ -113,7 +114,7 @@ pub fn process_validator_stake_tokens<'a>(
 
     require!(amount > 0, StakeError::InvalidAmount);
 
-    let limit = calculate_maximum_stake_for_sol_amount(stake.total_staked_lamports_amount)?;
+    let limit = calculate_maximum_stake_for_lamports_amount(stake.total_staked_lamports_amount)?;
     let updated_staked_amount = stake
         .delegation
         .amount

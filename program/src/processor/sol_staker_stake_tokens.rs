@@ -10,7 +10,7 @@ use crate::{
     processor::unpack_initialized_mut,
     require,
     state::{
-        calculate_maximum_stake_for_sol_amount, find_sol_staker_stake_pda,
+        calculate_maximum_stake_for_lamports_amount, find_sol_staker_stake_pda,
         find_validator_stake_pda, Config, SolStakerStake, ValidatorStake,
     },
 };
@@ -62,7 +62,7 @@ pub fn process_sol_staker_stake_tokens<'a>(
     require!(
         ctx.accounts.sol_staker_stake.owner == program_id,
         ProgramError::InvalidAccountOwner,
-        "validator stake"
+        "sol staker stake"
     );
 
     let mut sol_staker_stake_data = ctx.accounts.sol_staker_stake.try_borrow_mut_data()?;
@@ -142,7 +142,7 @@ pub fn process_sol_staker_stake_tokens<'a>(
         .checked_add(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
     // maximum allowed stake based on the SOL amount
-    let limit = calculate_maximum_stake_for_sol_amount(sol_staker_stake.lamports_amount)?;
+    let limit = calculate_maximum_stake_for_lamports_amount(sol_staker_stake.lamports_amount)?;
 
     require!(
         updated_staked_amount as u128 <= limit,
