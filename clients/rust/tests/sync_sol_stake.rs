@@ -7,11 +7,12 @@ use paladin_stake_program_client::{
     instructions::SyncSolStakeBuilder,
 };
 use setup::{
-    config::ConfigManager, setup, sol_staker_stake::SolStakerStakeManager,
+    config::ConfigManager, new_program_test, setup, sol_staker_stake::SolStakerStakeManager,
     stake::deactivate_stake_account, validator_stake::ValidatorStakeManager,
+    vote::add_vote_account,
 };
 use solana_program_test::tokio;
-use solana_sdk::{signature::Signer, transaction::Transaction};
+use solana_sdk::{pubkey::Pubkey, signature::Signer, transaction::Transaction};
 
 #[tokio::test]
 async fn sync_sol_stake_when_deactivating() {
@@ -86,13 +87,21 @@ async fn sync_sol_stake_when_deactivating() {
 
 #[tokio::test]
 async fn sync_sol_stake_when_inactive() {
-    let mut context = setup().await;
+    let mut program_test = new_program_test();
+    let vote = add_vote_account(
+        &mut program_test,
+        &Pubkey::new_unique(),
+        &Pubkey::new_unique(),
+    );
+    let mut context = program_test.start_with_context().await;
+    let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
+    context.warp_to_slot(slot).unwrap();
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
 
     let config_manager = ConfigManager::new(&mut context).await;
     let validator_stake_manager =
-        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
+        ValidatorStakeManager::new_with_vote(&mut context, &config_manager.config, vote).await;
     let sol_staker_staker_manager = SolStakerStakeManager::new(
         &mut context,
         &config_manager.config,
@@ -118,7 +127,7 @@ async fn sync_sol_stake_when_inactive() {
 
     // And we deactivate the stake and wait for the deactivation to take effect.
 
-    let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
+    let slot = slot + context.genesis_config().epoch_schedule.slots_per_epoch;
     context.warp_to_slot(slot).unwrap();
 
     deactivate_stake_account(
