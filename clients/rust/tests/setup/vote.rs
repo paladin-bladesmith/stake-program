@@ -66,6 +66,6 @@ pub fn add_vote_account(
         rent_epoch: Epoch::default(),
     };
 
-    program_test.add_account(vote, vote_account.into());
+    program_test.add_account(vote, vote_account);
     vote
 }
