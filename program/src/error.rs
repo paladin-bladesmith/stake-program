@@ -96,6 +96,10 @@ pub enum StakeError {
     /// 21 - Total stake amount exceeds SOL limit
     #[error("Total stake amount exceeds SOL limit")]
     TotalStakeAmountExceedsSolLimit,
+
+    /// 22 - Incorrect SOL stake account
+    #[error("Incorrect SOL stake account")]
+    IncorrectSolStakeAccount,
 }
 
 impl PrintProgramError for StakeError {

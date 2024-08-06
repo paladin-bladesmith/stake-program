@@ -8,7 +8,6 @@ use solana_program::{
 };
 
 use crate::{
-    err,
     error::StakeError,
     instruction::accounts::{Context, SyncSolStakeAccounts},
     processor::unpack_initialized_mut,
@@ -57,31 +56,6 @@ pub fn process_sync_sol_stake(
         "config"
     );
 
-    // stake state (validated by the SOL Stake View program)
-    // - must have a delegation
-
-    require!(
-        ctx.accounts.sol_stake_view_program.key == &paladin_sol_stake_view_program_client::ID,
-        ProgramError::IncorrectProgramId,
-        "invalid sol stake view program"
-    );
-
-    GetStakeActivatingAndDeactivatingCpiBuilder::new(ctx.accounts.sol_stake_view_program)
-        .stake(ctx.accounts.sol_stake)
-        .stake_history(ctx.accounts.sysvar_stake_history)
-        .invoke()?;
-
-    let (_, return_data) = get_return_data().ok_or(ProgramError::InvalidAccountData)?;
-    let stake_state_data =
-        bytemuck::try_from_bytes::<GetStakeActivatingAndDeactivatingReturnData>(&return_data)
-            .map_err(|_error| ProgramError::InvalidAccountData)?;
-
-    let validator_vote = if let Some(delegated_vote) = stake_state_data.delegated_vote.get() {
-        delegated_vote
-    } else {
-        return err!(StakeError::UndelegatedSolStakeAccount);
-    };
-
     // sol staker stake
     // - owner must be the stake program
     // - must be initialized
@@ -119,10 +93,13 @@ pub fn process_sync_sol_stake(
         "validator stake"
     );
 
-    // validator vote must match the stake state account's validator vote (validation
-    // done on the derivation of the expected address)
-    let (derivation, _) =
-        find_validator_stake_pda(&validator_vote, ctx.accounts.config.key, program_id);
+    // validator vote must match the SOL staker stake state account's validator vote
+    // (validation done on the derivation of the expected address)
+    let (derivation, _) = find_validator_stake_pda(
+        &sol_staker_stake.delegation.validator_vote,
+        ctx.accounts.config.key,
+        program_id,
+    );
 
     require!(
         ctx.accounts.validator_stake.key == &derivation,
@@ -132,6 +109,31 @@ pub fn process_sync_sol_stake(
 
     let mut stake_data = ctx.accounts.validator_stake.try_borrow_mut_data()?;
     let validator_stake = unpack_initialized_mut::<ValidatorStake>(&mut stake_data)?;
+
+    // stake state (validated by the SOL Stake View program)
+    // - must match the one on the SOL staker stake account
+
+    require!(
+        ctx.accounts.sol_stake.key == &sol_staker_stake.sol_stake,
+        StakeError::IncorrectSolStakeAccount,
+        "sol stake"
+    );
+
+    require!(
+        ctx.accounts.sol_stake_view_program.key == &paladin_sol_stake_view_program_client::ID,
+        ProgramError::IncorrectProgramId,
+        "invalid sol stake view program"
+    );
+
+    GetStakeActivatingAndDeactivatingCpiBuilder::new(ctx.accounts.sol_stake_view_program)
+        .stake(ctx.accounts.sol_stake)
+        .stake_history(ctx.accounts.sysvar_stake_history)
+        .invoke()?;
+
+    let (_, return_data) = get_return_data().ok_or(ProgramError::InvalidAccountData)?;
+    let stake_state_data =
+        bytemuck::try_from_bytes::<GetStakeActivatingAndDeactivatingReturnData>(&return_data)
+            .map_err(|_error| ProgramError::InvalidAccountData)?;
 
     // Updates the SOL stake on both the validator and SOL staker stake accounts.
     //
