@@ -9,10 +9,10 @@ use crate::{
     instruction::{
         accounts::{
             DeactivateStakeAccounts, DistributeRewardsAccounts, HarvestHolderRewardsAccounts,
-            InactivateStakeAccounts, InitializeConfigAccounts, InitializeSolStakerStakeAccounts,
-            InitializeValidatorStakeAccounts, SetAuthorityAccounts, SolStakerStakeTokensAccounts,
-            SyncSolStakeAccounts, UpdateConfigAccounts, ValidatorStakeTokensAccounts,
-            WithdrawInactiveStakeAccounts,
+            HarvestValidatorRewardsAccounts, InactivateStakeAccounts, InitializeConfigAccounts,
+            InitializeSolStakerStakeAccounts, InitializeValidatorStakeAccounts,
+            SetAuthorityAccounts, SolStakerStakeTokensAccounts, SyncSolStakeAccounts,
+            UpdateConfigAccounts, ValidatorStakeTokensAccounts, WithdrawInactiveStakeAccounts,
         },
         StakeInstruction,
     },
@@ -25,7 +25,7 @@ use crate::{
 mod deactivate_stake;
 mod distribute_rewards;
 mod harvest_holder_rewards;
-//mod harvest_stake_rewards;
+mod harvest_validator_rewards;
 mod inactivate_stake;
 mod initialize_config;
 mod initialize_sol_staker_stake;
@@ -70,14 +70,12 @@ pub fn process_instruction<'a>(
                 HarvestHolderRewardsAccounts::context(accounts)?,
             )
         }
-        StakeInstruction::HarvestStakeRewards => {
-            msg!("Instruction: HarvestStakeRewards");
-            // Note: needs to be refactored
-            //harvest_stake_rewards::process_harvest_stake_rewards(
-            //    program_id,
-            //    HarvestStakeRewardsAccounts::context(accounts)?,
-            //)
-            todo!();
+        StakeInstruction::HarvestValidatorRewards => {
+            msg!("Instruction: HarvestValidatorRewards");
+            harvest_validator_rewards::process_harvest_validator_rewards(
+                program_id,
+                HarvestValidatorRewardsAccounts::context(accounts)?,
+            )
         }
         StakeInstruction::InactivateStake => {
             msg!("Instruction: InactivateStake");
