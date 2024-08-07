@@ -21,13 +21,14 @@ use crate::{
 ///
 /// NOTE: Anybody can sync the balance of a SOL stake account.
 ///
-/// 0. `[w]` SOL staker stake account
+/// 0. `[]` Stake config account
+/// 1. `[w]` SOL staker stake account
 ///     * PDA seeds: ['stake::state::sol_staker_stake', SOL stake, config]
-/// 1. `[w]` Validator stake account
+/// 2. `[w]` Validator stake account
 ///     * PDA seeds: ['stake::state::validator_stake', validator, config]
-/// 2. `[]` SOL stake account
-/// 3. `[]` Stake history sysvar
-/// 4. `[]` Paladin SOL Stake View program
+/// 3. `[]` SOL stake account
+/// 4. `[]` Stake history sysvar
+/// 5. `[]` Paladin SOL Stake View program
 #[allow(clippy::useless_conversion)]
 pub fn process_sync_sol_stake(
     program_id: &Pubkey,
@@ -151,6 +152,7 @@ pub fn process_sync_sol_stake(
 
     sol_staker_stake.lamports_amount = u64::from(stake_state_data.activating)
         .checked_add(stake_state_data.effective.into())
+        .and_then(|amount| amount.checked_sub(u64::from(stake_state_data.deactivating)))
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
     validator_stake.total_staked_lamports_amount = validator_stake

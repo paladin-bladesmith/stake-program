@@ -27,13 +27,21 @@ use solana_sdk::{
 
 #[tokio::test]
 async fn sync_sol_stake_when_deactivating() {
-    let mut context = setup().await;
+    let mut program_test = new_program_test();
+    let vote = add_vote_account(
+        &mut program_test,
+        &Pubkey::new_unique(),
+        &Pubkey::new_unique(),
+    );
+    let mut context = program_test.start_with_context().await;
+    let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
+    context.warp_to_slot(slot).unwrap();
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
 
     let config_manager = ConfigManager::new(&mut context).await;
     let validator_stake_manager =
-        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
+        ValidatorStakeManager::new_with_vote(&mut context, &config_manager.config, vote).await;
     let sol_staker_staker_manager = SolStakerStakeManager::new(
         &mut context,
         &config_manager.config,
@@ -56,6 +64,11 @@ async fn sync_sol_stake_when_deactivating() {
         validator_stake_account.total_staked_lamports_amount,
         5_000_000_000
     );
+
+    // And we wait for the stake to be effective.
+
+    let slot = slot + context.genesis_config().epoch_schedule.slots_per_epoch;
+    context.warp_to_slot(slot).unwrap();
 
     // And we deactivate the stake.
 

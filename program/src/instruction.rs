@@ -721,7 +721,7 @@ impl StakeInstruction {
 
                 Ok(StakeInstruction::SolStakerStakeTokens(amount))
             }
-            // 13 - InitializeSolStakerStake
+            // 14 - SyncSolStake
             Some((&14, _)) => Ok(StakeInstruction::SyncSolStake),
             _ => Err(ProgramError::InvalidInstructionData),
         }
