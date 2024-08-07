@@ -39,6 +39,25 @@ impl ValidatorStakeManager {
             vote,
         }
     }
+
+    pub async fn new_with_vote(
+        context: &mut ProgramTestContext,
+        config: &Pubkey,
+        vote: Pubkey,
+    ) -> Self {
+        let authority = Keypair::new();
+        let validator = Pubkey::new_unique();
+
+        // And a stake account.
+        let stake = create_validator_stake(context, &vote, config).await;
+
+        Self {
+            stake,
+            authority,
+            validator,
+            vote,
+        }
+    }
 }
 
 pub async fn create_validator_stake(

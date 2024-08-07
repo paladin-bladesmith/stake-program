@@ -11,7 +11,8 @@ use crate::{
             DeactivateStakeAccounts, DistributeRewardsAccounts, HarvestHolderRewardsAccounts,
             InactivateStakeAccounts, InitializeConfigAccounts, InitializeSolStakerStakeAccounts,
             InitializeValidatorStakeAccounts, SetAuthorityAccounts, SolStakerStakeTokensAccounts,
-            UpdateConfigAccounts, ValidatorStakeTokensAccounts, WithdrawInactiveStakeAccounts,
+            SyncSolStakeAccounts, UpdateConfigAccounts, ValidatorStakeTokensAccounts,
+            WithdrawInactiveStakeAccounts,
         },
         StakeInstruction,
     },
@@ -31,8 +32,8 @@ mod initialize_sol_staker_stake;
 mod initialize_validator_stake;
 mod set_authority;
 //mod slash;
-//mod stake_tokens;
 mod sol_staker_stake_tokens;
+mod sync_sol_stake;
 mod update_config;
 mod validator_stake_tokens;
 mod withdraw_inactive_stake;
@@ -155,6 +156,13 @@ pub fn process_instruction<'a>(
                 program_id,
                 SolStakerStakeTokensAccounts::context(accounts)?,
                 amount,
+            )
+        }
+        StakeInstruction::SyncSolStake => {
+            msg!("Instruction: SyncSolStake");
+            sync_sol_stake::process_sync_sol_stake(
+                program_id,
+                SyncSolStakeAccounts::context(accounts)?,
             )
         }
     }
