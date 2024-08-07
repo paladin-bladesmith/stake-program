@@ -1,3 +1,5 @@
+use std::mem::size_of;
+
 use paladin_sol_stake_view_program_client::{
     instructions::GetStakeActivatingAndDeactivatingCpiBuilder,
     GetStakeActivatingAndDeactivatingReturnData,
@@ -16,6 +18,10 @@ use crate::{
         find_sol_staker_stake_pda, find_validator_stake_pda, Config, SolStakerStake, ValidatorStake,
     },
 };
+
+/// Represents a return data with no delegated values.
+const EMPTY_RETURN_DATA: [u8; size_of::<GetStakeActivatingAndDeactivatingReturnData>()] =
+    [0; size_of::<GetStakeActivatingAndDeactivatingReturnData>()];
 
 /// Sync the SOL stake balance with a validator and SOL staker stake accounts.
 ///
@@ -133,9 +139,19 @@ pub fn process_sync_sol_stake(
         .invoke()?;
 
     let (_, return_data) = get_return_data().ok_or(ProgramError::InvalidAccountData)?;
-    let stake_state_data =
+    let mut stake_state_data =
         bytemuck::try_from_bytes::<GetStakeActivatingAndDeactivatingReturnData>(&return_data)
             .map_err(|_error| ProgramError::InvalidAccountData)?;
+
+    let delegated_vote = stake_state_data.delegated_vote.get();
+    // If we have the correct sol stake account, but the delegated vote is not the same
+    // as the validator vote, then the stake is not delegated to the SOL staker stake
+    // account's validator vote anymore; we will clear the lamports amount in this case.
+    if delegated_vote.is_none()
+        || delegated_vote != Some(sol_staker_stake.delegation.validator_vote)
+    {
+        stake_state_data = bytemuck::from_bytes(&EMPTY_RETURN_DATA);
+    }
 
     // Updates the SOL stake on both the validator and SOL staker stake accounts.
     //
