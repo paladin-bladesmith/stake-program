@@ -153,9 +153,9 @@ pub fn process_harvest_validator_rewards(
         **ctx.accounts.config.try_borrow_mut_lamports()? = updated_config_lamports;
         **ctx.accounts.destination.try_borrow_mut_lamports()? = updated_destination_lamports;
 
-        // Checked whether the staked amount exceeded the validated amount.
+        // Check whether the staked amount exceeded the validated amount.
         //
-        // When there is an excees, the rewards for the excees token amount are distributed back
+        // When there is an excess, the rewards for the excess token amount are distributed back
         // to the stakers without taking into consideration the validator's stake amount – i.e.,
         // the rewards for the exceeding amount are forfeited by the validator.
         if validated_amount < validator_stake.delegation.amount {
