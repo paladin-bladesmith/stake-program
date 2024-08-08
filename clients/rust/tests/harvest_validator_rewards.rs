@@ -34,7 +34,7 @@ fn calculate_stake_rewards_per_token(rewards: u64, stake_amount: u64) -> u128 {
 }
 
 #[tokio::test]
-async fn harvest_stake_rewards() {
+async fn harvest_validator_rewards() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -122,7 +122,7 @@ async fn harvest_stake_rewards() {
 }
 
 #[tokio::test]
-async fn harvest_stake_rewards_with_no_rewards_available() {
+async fn harvest_validator_rewards_with_no_rewards_available() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -183,7 +183,7 @@ async fn harvest_stake_rewards_with_no_rewards_available() {
 }
 
 #[tokio::test]
-async fn harvest_stake_rewards_after_harvesting() {
+async fn harvest_validator_rewards_after_harvesting() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -336,7 +336,7 @@ async fn fail_harvest_validator_rewards_with_wrong_authority() {
 }
 
 #[tokio::test]
-async fn fail_harvest_stake_rewards_with_uninitialized_config_account() {
+async fn fail_harvest_validator_rewards_with_uninitialized_config_account() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -391,7 +391,7 @@ async fn fail_harvest_stake_rewards_with_uninitialized_config_account() {
 }
 
 #[tokio::test]
-async fn fail_harvest_stake_rewards_with_uninitialized_stake_account() {
+async fn fail_harvest_validator_rewards_with_uninitialized_stake_account() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -445,7 +445,7 @@ async fn fail_harvest_stake_rewards_with_uninitialized_stake_account() {
 }
 
 #[tokio::test]
-async fn fail_harvest_stake_rewards_with_wrong_config_account() {
+async fn failharvest_validator_rewards_with_wrong_config_account() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -512,7 +512,7 @@ async fn fail_harvest_stake_rewards_with_wrong_config_account() {
 }
 
 #[tokio::test]
-async fn harvest_stake_rewards_with_excess_rewards() {
+async fn harvest_validator_rewards_with_excess_rewards() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
