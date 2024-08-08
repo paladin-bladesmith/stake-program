@@ -35,6 +35,7 @@ pub fn process_initialize_config(
     ctx: Context<InitializeConfigAccounts>,
     cooldown_time_seconds: u64,
     max_deactivation_basis_points: u16,
+    sync_rewards_lamports: u64,
 ) -> ProgramResult {
     // Accounts validation.
 
@@ -157,6 +158,7 @@ pub fn process_initialize_config(
         *ctx.accounts.vault.key,
         cooldown_time_seconds,
         max_deactivation_basis_points,
+        sync_rewards_lamports,
         signer_bump,
     );
 

@@ -34,6 +34,9 @@ pub struct Config {
     /// is maintained independently.
     pub token_amount_delegated: u64,
 
+    /// Lamports amount paid to for syncing a SOL stake account.
+    pub sync_rewards_lamports: u64,
+
     /// The current stake rewards per token exchange rate.
     ///
     /// Stored as a `u128`, which includes a scaling factor of `1e9` to
@@ -60,6 +63,7 @@ impl Config {
         vault: Pubkey,
         cooldown_time_seconds: u64,
         max_deactivation_basis_points: u16,
+        sync_rewards_lamports: u64,
         vault_authority_bump: u8,
     ) -> Self {
         Self {
@@ -71,6 +75,7 @@ impl Config {
             token_amount_delegated: 0,
             accumulated_stake_rewards_per_token: PodU128::default(),
             max_deactivation_basis_points,
+            sync_rewards_lamports,
             vault_authority_bump,
             _padding: [0; 5],
         }

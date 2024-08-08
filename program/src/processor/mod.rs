@@ -93,6 +93,7 @@ pub fn process_instruction<'a>(
         StakeInstruction::InitializeConfig {
             cooldown_time_seconds,
             max_deactivation_basis_points,
+            sync_rewards_lamports,
         } => {
             msg!("Instruction: InitializeConfig");
             initialize_config::process_initialize_config(
@@ -100,6 +101,7 @@ pub fn process_instruction<'a>(
                 InitializeConfigAccounts::context(accounts)?,
                 cooldown_time_seconds,
                 max_deactivation_basis_points,
+                sync_rewards_lamports,
             )
         }
         StakeInstruction::InitializeValidatorStake => {

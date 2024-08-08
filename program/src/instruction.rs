@@ -39,6 +39,7 @@ pub enum StakeInstruction {
     InitializeConfig {
         cooldown_time_seconds: u64,
         max_deactivation_basis_points: u16,
+        sync_rewards_lamports: u64,
     },
 
     /// Initializes stake account data for a validator.
@@ -636,11 +637,13 @@ impl StakeInstruction {
             StakeInstruction::InitializeConfig {
                 cooldown_time_seconds,
                 max_deactivation_basis_points,
+                sync_rewards_lamports,
             } => {
                 let mut data = Vec::with_capacity(11);
                 data.push(0);
                 data.extend_from_slice(&cooldown_time_seconds.to_le_bytes());
                 data.extend_from_slice(&max_deactivation_basis_points.to_le_bytes());
+                data.extend_from_slice(&sync_rewards_lamports.to_le_bytes());
                 data
             }
             StakeInstruction::InitializeValidatorStake => vec![1],
@@ -718,14 +721,16 @@ impl StakeInstruction {
     /// Unpacks a byte buffer into a [StakeInstruction](enum.StakeInstruction.html).
     pub fn unpack(input: &[u8]) -> Result<Self, ProgramError> {
         match input.split_first() {
-            // 0 - InitializeConfig: u64 (8) + u16 (2)
-            Some((&0, rest)) if rest.len() == 10 => {
+            // 0 - InitializeConfig: u64 (8) + u16 (2) + u64 (8)
+            Some((&0, rest)) if rest.len() == 18 => {
                 let cooldown_time_seconds = u64::from_le_bytes(*array_ref![rest, 0, 8]);
                 let max_deactivation_basis_points = u16::from_le_bytes(*array_ref![rest, 8, 2]);
+                let sync_rewards_lamports = u64::from_le_bytes(*array_ref![rest, 10, 8]);
 
                 Ok(StakeInstruction::InitializeConfig {
                     cooldown_time_seconds,
                     max_deactivation_basis_points,
+                    sync_rewards_lamports,
                 })
             }
             // 1 - InitializeValidatorStake
@@ -834,6 +839,7 @@ mod tests {
         let original = StakeInstruction::InitializeConfig {
             cooldown_time_seconds: 120,
             max_deactivation_basis_points: 500,
+            sync_rewards_lamports: 100,
         };
         let packed = original.pack();
         let unpacked = StakeInstruction::unpack(&packed).unwrap();
