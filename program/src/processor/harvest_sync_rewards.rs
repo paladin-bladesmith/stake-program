@@ -6,7 +6,7 @@ use solana_program::{
     entrypoint::ProgramResult, msg, program::get_return_data, program_error::ProgramError,
     pubkey::Pubkey,
 };
-use std::mem::size_of;
+use std::cmp::min;
 
 use crate::{
     error::StakeError,
@@ -14,15 +14,14 @@ use crate::{
     processor::unpack_initialized_mut,
     require,
     state::{
-        find_sol_staker_stake_pda, find_validator_stake_pda, Config, SolStakerStake, ValidatorStake,
+        calculate_eligible_rewards, calculate_maximum_stake_for_lamports_amount,
+        calculate_stake_rewards_per_token, find_sol_staker_stake_pda, find_validator_stake_pda,
+        Config, SolStakerStake, ValidatorStake, EMPTY_RETURN_DATA,
     },
 };
 
-/// Represents a return data with no delegated values.
-const EMPTY_RETURN_DATA: [u8; size_of::<GetStakeActivatingAndDeactivatingReturnData>()] =
-    [0; size_of::<GetStakeActivatingAndDeactivatingReturnData>()];
-
-/// Sync the SOL stake balance with a validator and SOL staker stake accounts.
+/// Harvest the rewards from syncing the SOL stake balance with a validator and SOL staker
+/// stake accounts.
 ///
 /// NOTE: Anybody can sync the balance of a SOL stake account.
 ///
@@ -53,7 +52,7 @@ pub fn process_harvest_sync_rewards(
     );
 
     let mut data = ctx.accounts.config.try_borrow_mut_data()?;
-    let _config = unpack_initialized_mut::<Config>(&mut data);
+    let config = unpack_initialized_mut::<Config>(&mut data)?;
 
     // sol staker stake
     // - owner must be the stake program
@@ -108,7 +107,7 @@ pub fn process_harvest_sync_rewards(
     );
 
     let mut stake_data = ctx.accounts.validator_stake.try_borrow_mut_data()?;
-    let _validator_stake = unpack_initialized_mut::<ValidatorStake>(&mut stake_data)?;
+    let validator_stake = unpack_initialized_mut::<ValidatorStake>(&mut stake_data)?;
 
     // stake state (validated by the SOL Stake View program)
     // - must match the one on the SOL staker stake account
@@ -154,15 +153,82 @@ pub fn process_harvest_sync_rewards(
     if stake_amount == sol_staker_stake.lamports_amount {
         msg!("SOL stake is out-of-sync sync");
 
-        // 1. calculates how much rewards the SOL staker stake account has earned
+        // When the SOL stake is out-of-sync, we need to:
         //
-        // 2. Searcher fee is the min of (rewards available, config search fee)
+        //   1. Update the SOL staker and validator stake accounts' lamports amount
         //
-        // 3. Accumulate the searcher fee on the SOL stake account
+        //   2. Calculate the rewards earned by the SOL staker stake account, so we
+        //      can determine how much fees the searcher should receive. Searcher fee
+        //      is the min of (rewards available, config search fee)
         //
-        // 4. Sync the SOL amount on the validator and SOL staker stake accounts
+        //   3. Update the `last_seen_stake_rewards_per_token` on the SOL staker stake
+        //      account to deduct the searcher fee. This will decrease the rewards per
+        //      token for the current SOL staker stake account.
         //
-        // 5. Transfer the searcher fee to the destination account
+        //   4. Transfer the searcher fee to the destination account
+
+        // update lamports amount
+        validator_stake.total_staked_lamports_amount = validator_stake
+            .total_staked_lamports_amount
+            .checked_sub(sol_staker_stake.lamports_amount)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
+
+        sol_staker_stake.lamports_amount = u64::from(stake_state_data.activating)
+            .checked_add(stake_state_data.effective.into())
+            .and_then(|amount| amount.checked_sub(u64::from(stake_state_data.deactivating)))
+            .ok_or(ProgramError::ArithmeticOverflow)?;
+
+        validator_stake.total_staked_lamports_amount = validator_stake
+            .total_staked_lamports_amount
+            .checked_add(sol_staker_stake.lamports_amount)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
+
+        // searcher rewards
+        let stake_limit =
+            calculate_maximum_stake_for_lamports_amount(sol_staker_stake.lamports_amount)?;
+        let validated_amount = min(sol_staker_stake.delegation.amount, stake_limit as u64);
+
+        let accumulated_rewards_per_token = u128::from(config.accumulated_stake_rewards_per_token);
+        let rewards = calculate_eligible_rewards(
+            accumulated_rewards_per_token,
+            u128::from(
+                sol_staker_stake
+                    .delegation
+                    .last_seen_stake_rewards_per_token,
+            ),
+            validated_amount,
+        )?;
+        let searcher_rewards = min(config.sync_rewards_lamports, rewards);
+
+        // update last seen stake rewards per token
+        let remaining_rewards = rewards
+            .checked_sub(searcher_rewards)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
+
+        sol_staker_stake
+            .delegation
+            .last_seen_stake_rewards_per_token = calculate_stake_rewards_per_token(
+            remaining_rewards,
+            sol_staker_stake.delegation.amount,
+        )?
+        .into();
+
+        // transfer searcher rewards
+        let updated_config_lamports = ctx
+            .accounts
+            .config
+            .lamports()
+            .checked_sub(searcher_rewards)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
+        let updated_destination_lamports = ctx
+            .accounts
+            .destination
+            .lamports()
+            .checked_add(searcher_rewards)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
+
+        **ctx.accounts.config.try_borrow_mut_lamports()? = updated_config_lamports;
+        **ctx.accounts.destination.try_borrow_mut_lamports()? = updated_destination_lamports;
     } else {
         msg!("SOL stake is in-sync");
     }
