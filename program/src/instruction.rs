@@ -583,6 +583,50 @@ pub enum StakeInstruction {
         desc = "Stake authority"
     )]
     HarvestSolStakerRewards,
+
+    /// Harvest rewards for syncing the SOL stake balance with a validator and SOL staker stake accounts.
+    ///
+    /// NOTE: Rewards are collected only if the stake balance is out-of-sync.
+    #[account(
+        0,
+        writable,
+        name = "config",
+        desc = "Stake config account"
+    )]
+    #[account(
+        1,
+        writable,
+        name = "sol_staker_stake",
+        desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+    )]
+    #[account(
+        2,
+        writable,
+        name = "validator_stake",
+        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+    )]
+    #[account(
+        3,
+        name = "sol_stake",
+        desc = "SOL stake account"
+    )]
+    #[account(
+        4,
+        writable,
+        name = "destination",
+        desc = "Destination account for withdrawn lamports"
+    )]
+    #[account(
+        5,
+        name = "sysvar_stake_history",
+        desc = "Stake history sysvar"
+    )]
+    #[account(
+        6,
+        name = "sol_stake_view_program",
+        desc = "Paladin SOL Stake View program"
+    )]
+    HarvestSyncRewards,
 }
 
 impl StakeInstruction {
@@ -667,6 +711,7 @@ impl StakeInstruction {
             }
             StakeInstruction::SyncSolStake => vec![14],
             StakeInstruction::HarvestSolStakerRewards => vec![15],
+            StakeInstruction::HarvestSyncRewards => vec![16],
         }
     }
 
@@ -757,6 +802,7 @@ impl StakeInstruction {
             Some((&14, _)) => Ok(StakeInstruction::SyncSolStake),
             // 15 - HarvestSolStakerRewards
             Some((&15, _)) => Ok(StakeInstruction::HarvestSolStakerRewards),
+            Some((&16, _)) => Ok(StakeInstruction::HarvestSyncRewards),
             _ => Err(ProgramError::InvalidInstructionData),
         }
     }
