@@ -10,6 +10,7 @@ export * from './deactivateStake';
 export * from './distributeRewards';
 export * from './harvestHolderRewards';
 export * from './harvestSolStakerRewards';
+export * from './harvestSyncRewards';
 export * from './harvestValidatorRewards';
 export * from './inactivateStake';
 export * from './initializeConfig';

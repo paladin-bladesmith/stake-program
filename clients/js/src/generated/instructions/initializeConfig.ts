@@ -66,11 +66,13 @@ export type InitializeConfigInstructionData = {
   discriminator: number;
   cooldownTimeSeconds: bigint;
   maxDeactivationBasisPoints: number;
+  syncRewardsLamports: bigint;
 };
 
 export type InitializeConfigInstructionDataArgs = {
   cooldownTimeSeconds: number | bigint;
   maxDeactivationBasisPoints: number;
+  syncRewardsLamports: number | bigint;
 };
 
 export function getInitializeConfigInstructionDataEncoder(): Encoder<InitializeConfigInstructionDataArgs> {
@@ -79,6 +81,7 @@ export function getInitializeConfigInstructionDataEncoder(): Encoder<InitializeC
       ['discriminator', getU8Encoder()],
       ['cooldownTimeSeconds', getU64Encoder()],
       ['maxDeactivationBasisPoints', getU16Encoder()],
+      ['syncRewardsLamports', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: 0 })
   );
@@ -89,6 +92,7 @@ export function getInitializeConfigInstructionDataDecoder(): Decoder<InitializeC
     ['discriminator', getU8Decoder()],
     ['cooldownTimeSeconds', getU64Decoder()],
     ['maxDeactivationBasisPoints', getU16Decoder()],
+    ['syncRewardsLamports', getU64Decoder()],
   ]);
 }
 
@@ -121,6 +125,7 @@ export type InitializeConfigInput<
   vault: Address<TAccountVault>;
   cooldownTimeSeconds: InitializeConfigInstructionDataArgs['cooldownTimeSeconds'];
   maxDeactivationBasisPoints: InitializeConfigInstructionDataArgs['maxDeactivationBasisPoints'];
+  syncRewardsLamports: InitializeConfigInstructionDataArgs['syncRewardsLamports'];
 };
 
 export function getInitializeConfigInstruction<
