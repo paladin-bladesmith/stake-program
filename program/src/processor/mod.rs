@@ -1,7 +1,9 @@
+use std::cmp::min;
+
 use bytemuck::Pod;
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError,
-    program_pack::IsInitialized, pubkey::Pubkey,
+    program_pack::IsInitialized, pubkey::Pubkey, rent::Rent, sysvar::Sysvar,
 };
 use spl_discriminator::{ArrayDiscriminator, SplDiscriminate};
 
@@ -9,22 +11,25 @@ use crate::{
     instruction::{
         accounts::{
             DeactivateStakeAccounts, DistributeRewardsAccounts, HarvestHolderRewardsAccounts,
-            HarvestValidatorRewardsAccounts, InactivateStakeAccounts, InitializeConfigAccounts,
-            InitializeSolStakerStakeAccounts, InitializeValidatorStakeAccounts,
-            SetAuthorityAccounts, SolStakerStakeTokensAccounts, SyncSolStakeAccounts,
-            UpdateConfigAccounts, ValidatorStakeTokensAccounts, WithdrawInactiveStakeAccounts,
+            HarvestSolStakerRewardsAccounts, HarvestValidatorRewardsAccounts,
+            InactivateStakeAccounts, InitializeConfigAccounts, InitializeSolStakerStakeAccounts,
+            InitializeValidatorStakeAccounts, SetAuthorityAccounts, SolStakerStakeTokensAccounts,
+            SyncSolStakeAccounts, UpdateConfigAccounts, ValidatorStakeTokensAccounts,
+            WithdrawInactiveStakeAccounts,
         },
         StakeInstruction,
     },
     state::{
-        find_sol_staker_stake_pda, find_validator_stake_pda, Delegation, SolStakerStake,
-        ValidatorStake,
+        calculate_eligible_rewards, calculate_maximum_stake_for_lamports_amount,
+        calculate_stake_rewards_per_token, find_sol_staker_stake_pda, find_validator_stake_pda,
+        Config, Delegation, SolStakerStake, ValidatorStake,
     },
 };
 
 mod deactivate_stake;
 mod distribute_rewards;
 mod harvest_holder_rewards;
+mod harvest_sol_staker_rewards;
 mod harvest_validator_rewards;
 mod inactivate_stake;
 mod initialize_config;
@@ -163,6 +168,13 @@ pub fn process_instruction<'a>(
                 SyncSolStakeAccounts::context(accounts)?,
             )
         }
+        StakeInstruction::HarvestSolStakerRewards => {
+            msg!("Instruction: HarvestSolStakerRewards");
+            harvest_sol_staker_rewards::process_harvest_sol_staker_rewards(
+                program_id,
+                HarvestSolStakerRewardsAccounts::context(accounts)?,
+            )
+        }
     }
 }
 
@@ -201,7 +213,7 @@ pub fn unpack_initialized_mut<T: Pod + IsInitialized>(
 /// Unpacks the delegation information from either a `SolStakerStake` and `ValidatorStake`
 /// accounts.
 ///
-/// This function will validate that the account data is initialized and deriavation matches
+/// This function will validate that the account data is initialized and derivation matches
 /// the expected PDA derivation.
 #[inline]
 pub fn unpack_delegation_mut<'a>(
@@ -256,4 +268,118 @@ pub fn unpack_delegation_mut_uncheked(
     };
 
     Ok(delegation)
+}
+
+/// Processes the harvest for a stake delegation.
+///
+/// This function will calculate the rewards for the delegation, either `ValidatorStake` or
+/// `SolStakerStake` and transfer the elegible rewards. It will check whether the stake amount
+/// exceeds the maximum stake limit and distribute the rewards back to the stakers if the stake
+/// amount exceeds the limit.
+pub fn process_harvest_for_delegation(
+    config: &mut Config,
+    delegation: &mut Delegation,
+    lamports_amount: u64,
+    config_info: &AccountInfo,
+    destination_info: &AccountInfo,
+) -> ProgramResult {
+    // Determine the stake rewards.
+    //
+    // The rewards are caped using the minimum of the token amount staked and the
+    // token amount limit calculated from the SOL amount staked. This is to prevent getting
+    // rewards from exceeding token amount based on the SOL amount staked.
+    //
+    // Any excess rewards are distributes back to stakers and the SOL staker forfeits
+    // the rewards for the exceeding amount.
+
+    let stake_limit = calculate_maximum_stake_for_lamports_amount(lamports_amount)?;
+    let validated_amount = min(delegation.amount, stake_limit as u64);
+
+    let accumulated_rewards_per_token = u128::from(config.accumulated_stake_rewards_per_token);
+    let rewards = calculate_eligible_rewards(
+        accumulated_rewards_per_token,
+        u128::from(delegation.last_seen_stake_rewards_per_token),
+        validated_amount,
+    )?;
+
+    // Transfer the rewards to the destination account.
+
+    if rewards == 0 {
+        msg!("No rewards to harvest");
+        Ok(())
+    } else {
+        // If the config does not have enough lamports to cover the rewards, only
+        // harvest the available lamports. This should never happen, but the check
+        // is a failsafe.
+        let rewards = {
+            let rent = Rent::get()?;
+            let rent_exempt_lamports = rent.minimum_balance(Config::LEN);
+
+            std::cmp::min(
+                rewards,
+                config_info.lamports().saturating_sub(rent_exempt_lamports),
+            )
+        };
+
+        // Move the amount from the config to the destination account.
+        let updated_config_lamports = config_info
+            .lamports()
+            .checked_sub(rewards)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
+        let updated_destination_lamports = destination_info
+            .lamports()
+            .checked_add(rewards)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
+
+        **config_info.try_borrow_mut_lamports()? = updated_config_lamports;
+        **destination_info.try_borrow_mut_lamports()? = updated_destination_lamports;
+
+        // Check whether the staked token amount exceeded the validated amount.
+        //
+        // When there is an excess, the rewards for the excess token amount are distributed back
+        // to the stakers without taking into consideration the stakers' stake amount – i.e.,
+        // the rewards for the exceeding amount are forfeited by the staker.
+        if validated_amount < delegation.amount {
+            msg!(
+                "Staked amount ({}) exceeds maximum stake limit ({})",
+                delegation.amount,
+                stake_limit
+            );
+
+            let excess = (delegation.amount as u128)
+                .checked_sub(stake_limit)
+                .ok_or(ProgramError::ArithmeticOverflow)?;
+
+            let excess_rewards = calculate_eligible_rewards(
+                accumulated_rewards_per_token,
+                u128::from(delegation.last_seen_stake_rewards_per_token),
+                excess as u64,
+            )?;
+
+            // Calculate the rewards per token without considering the stakes' stake
+            // amount, since the staker with the exceeding amount won't be claiming a
+            // a share of these rewards.
+            let rewards_per_token = calculate_stake_rewards_per_token(
+                excess_rewards,
+                config
+                    .token_amount_delegated
+                    .checked_sub(delegation.amount)
+                    .ok_or(ProgramError::ArithmeticOverflow)?,
+            )?;
+
+            if rewards_per_token != 0 {
+                // Update the accumulated stake rewards per token on the config to
+                // reflect the addition of the rewards for the exceeding amount.
+                let accumulated = u128::from(config.accumulated_stake_rewards_per_token)
+                    .checked_add(rewards_per_token)
+                    .ok_or(ProgramError::ArithmeticOverflow)?;
+                config.accumulated_stake_rewards_per_token = accumulated.into();
+            }
+        }
+
+        // Update the last seen stake rewards.
+        delegation.last_seen_stake_rewards_per_token = config.accumulated_stake_rewards_per_token;
+
+        Ok(())
+    }
 }
