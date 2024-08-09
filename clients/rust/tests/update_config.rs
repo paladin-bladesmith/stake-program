@@ -295,7 +295,7 @@ async fn update_sync_rewards_lamports() {
     let config_account = Config::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(config_account.sync_rewards_lamports, 1_000_000);
 
-    // When we update the cooldown time config.
+    // When we update the sync rewards lamports.
 
     let ix = UpdateConfigBuilder::new()
         .config(config.pubkey())
@@ -311,7 +311,7 @@ async fn update_sync_rewards_lamports() {
     );
     context.banks_client.process_transaction(tx).await.unwrap();
 
-    // Then the cooldown time was updated.
+    // Then the sync rewards lamports field was updated.
 
     let account = get_account!(context, config.pubkey());
     let config_account = Config::from_bytes(account.data.as_ref()).unwrap();
