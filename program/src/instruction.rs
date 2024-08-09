@@ -552,6 +552,37 @@ pub enum StakeInstruction {
         desc = "Paladin SOL Stake View program"
     )]
     SyncSolStake,
+
+    /// Harvests stake SOL rewards earned by the given sol staker stake account.
+    /// 
+    /// NOTE: This is very similar to the logic in the rewards program. Since the
+    /// staking rewards are held in a separate account, they must be distributed
+    /// based on the proportion of total stake.
+    #[account(
+        0,
+        writable,
+        name = "config",
+        desc = "Stake config account"
+    )]
+    #[account(
+        1,
+        writable,
+        name = "sol_staker_stake",
+        desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+    )]
+    #[account(
+        2,
+        writable,
+        name = "destination",
+        desc = "Destination account for withdrawn lamports"
+    )]
+    #[account(
+        3,
+        signer,
+        name = "stake_authority",
+        desc = "Stake authority"
+    )]
+    HarvestSolStakerRewards,
 }
 
 impl StakeInstruction {
@@ -635,6 +666,7 @@ impl StakeInstruction {
                 data
             }
             StakeInstruction::SyncSolStake => vec![14],
+            StakeInstruction::HarvestSolStakerRewards => vec![15],
         }
     }
 
@@ -723,6 +755,8 @@ impl StakeInstruction {
             }
             // 14 - SyncSolStake
             Some((&14, _)) => Ok(StakeInstruction::SyncSolStake),
+            // 15 - HarvestSolStakerRewards
+            Some((&15, _)) => Ok(StakeInstruction::HarvestSolStakerRewards),
             _ => Err(ProgramError::InvalidInstructionData),
         }
     }
