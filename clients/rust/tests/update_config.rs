@@ -220,6 +220,107 @@ async fn update_max_deactivation_basis_points_config() {
 }
 
 #[tokio::test]
+async fn update_sync_rewards_lamports() {
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
+
+    // Given an empty config account and a mint.
+
+    let config = Keypair::new();
+    let authority = Keypair::new();
+
+    let mint = Keypair::new();
+    create_mint(
+        &mut context,
+        &mint,
+        &authority.pubkey(),
+        Some(&authority.pubkey()),
+        0,
+        MINT_EXTENSIONS,
+    )
+    .await
+    .unwrap();
+
+    let token = Keypair::new();
+    create_token_account(
+        &mut context,
+        &find_vault_pda(&config.pubkey()).0,
+        &token,
+        &mint.pubkey(),
+        TOKEN_ACCOUNT_EXTENSIONS,
+    )
+    .await
+    .unwrap();
+
+    // And we create a config.
+
+    let create_ix = system_instruction::create_account(
+        &context.payer.pubkey(),
+        &config.pubkey(),
+        context
+            .banks_client
+            .get_rent()
+            .await
+            .unwrap()
+            .minimum_balance(Config::LEN),
+        Config::LEN as u64,
+        &paladin_stake_program_client::ID,
+    );
+
+    let initialize_ix = InitializeConfigBuilder::new()
+        .config(config.pubkey())
+        .config_authority(authority.pubkey())
+        .slash_authority(authority.pubkey())
+        .mint(mint.pubkey())
+        .vault(token.pubkey())
+        .cooldown_time_seconds(1) // 1 second
+        .max_deactivation_basis_points(500) // 5%
+        .sync_rewards_lamports(1_000_000) // 0.001 SOL
+        .instruction();
+
+    let tx = Transaction::new_signed_with_payer(
+        &[create_ix, initialize_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, &config],
+        context.last_blockhash,
+    );
+    context.banks_client.process_transaction(tx).await.unwrap();
+
+    let account = get_account!(context, config.pubkey());
+    let config_account = Config::from_bytes(account.data.as_ref()).unwrap();
+    assert_eq!(config_account.sync_rewards_lamports, 1_000_000);
+
+    // When we update the cooldown time config.
+
+    let ix = UpdateConfigBuilder::new()
+        .config(config.pubkey())
+        .config_authority(authority.pubkey())
+        .config_field(ConfigField::SyncRewardsLamports(200_000_000)) // 0.2 SOL
+        .instruction();
+
+    let tx = Transaction::new_signed_with_payer(
+        &[ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, &authority],
+        context.last_blockhash,
+    );
+    context.banks_client.process_transaction(tx).await.unwrap();
+
+    // Then the cooldown time was updated.
+
+    let account = get_account!(context, config.pubkey());
+    let config_account = Config::from_bytes(account.data.as_ref()).unwrap();
+    assert_eq!(config_account.cooldown_time_seconds, 1);
+    assert_eq!(config_account.max_deactivation_basis_points, 500);
+    assert_eq!(config_account.sync_rewards_lamports, 200_000_000);
+}
+
+#[tokio::test]
 async fn fail_update_max_deactivation_basis_points_config_with_invalid_value() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
