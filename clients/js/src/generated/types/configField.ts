@@ -27,11 +27,13 @@ import {
 
 export type ConfigField =
   | { __kind: 'CooldownTimeSeconds'; fields: readonly [bigint] }
-  | { __kind: 'MaxDeactivationBasisPoints'; fields: readonly [number] };
+  | { __kind: 'MaxDeactivationBasisPoints'; fields: readonly [number] }
+  | { __kind: 'SyncRewardsLamports'; fields: readonly [bigint] };
 
 export type ConfigFieldArgs =
   | { __kind: 'CooldownTimeSeconds'; fields: readonly [number | bigint] }
-  | { __kind: 'MaxDeactivationBasisPoints'; fields: readonly [number] };
+  | { __kind: 'MaxDeactivationBasisPoints'; fields: readonly [number] }
+  | { __kind: 'SyncRewardsLamports'; fields: readonly [number | bigint] };
 
 export function getConfigFieldEncoder(): Encoder<ConfigFieldArgs> {
   return getDiscriminatedUnionEncoder([
@@ -42,6 +44,10 @@ export function getConfigFieldEncoder(): Encoder<ConfigFieldArgs> {
     [
       'MaxDeactivationBasisPoints',
       getStructEncoder([['fields', getTupleEncoder([getU16Encoder()])]]),
+    ],
+    [
+      'SyncRewardsLamports',
+      getStructEncoder([['fields', getTupleEncoder([getU64Encoder()])]]),
     ],
   ]);
 }
@@ -55,6 +61,10 @@ export function getConfigFieldDecoder(): Decoder<ConfigField> {
     [
       'MaxDeactivationBasisPoints',
       getStructDecoder([['fields', getTupleDecoder([getU16Decoder()])]]),
+    ],
+    [
+      'SyncRewardsLamports',
+      getStructDecoder([['fields', getTupleDecoder([getU64Decoder()])]]),
     ],
   ]);
 }
@@ -87,6 +97,18 @@ export function configField(
   ConfigFieldArgs,
   '__kind',
   'MaxDeactivationBasisPoints'
+>;
+export function configField(
+  kind: 'SyncRewardsLamports',
+  data: GetDiscriminatedUnionVariantContent<
+    ConfigFieldArgs,
+    '__kind',
+    'SyncRewardsLamports'
+  >['fields']
+): GetDiscriminatedUnionVariant<
+  ConfigFieldArgs,
+  '__kind',
+  'SyncRewardsLamports'
 >;
 export function configField<K extends ConfigFieldArgs['__kind'], Data>(
   kind: K,

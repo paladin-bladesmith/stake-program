@@ -13,4 +13,5 @@ use borsh::BorshSerialize;
 pub enum ConfigField {
     CooldownTimeSeconds(u64),
     MaxDeactivationBasisPoints(u16),
+    SyncRewardsLamports(u64),
 }

@@ -1164,6 +1164,12 @@
             "fields": [
               "u16"
             ]
+          },
+          {
+            "name": "SyncRewardsLamports",
+            "fields": [
+              "u64"
+            ]
           }
         ]
       }

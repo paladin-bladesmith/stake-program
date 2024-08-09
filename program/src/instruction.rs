@@ -696,6 +696,10 @@ impl StakeInstruction {
                         data.push(1);
                         data.extend_from_slice(&value.to_le_bytes());
                     }
+                    ConfigField::SyncRewardsLamports(value) => {
+                        data.push(2);
+                        data.extend_from_slice(&value.to_le_bytes());
+                    }
                 }
                 data
             }
@@ -784,6 +788,11 @@ impl StakeInstruction {
                             rest, 0, 2
                         ]))
                     }
+                    Some((&2, rest)) if rest.len() == 8 => {
+                        ConfigField::SyncRewardsLamports(u64::from_le_bytes(*array_ref![
+                            rest, 0, 8
+                        ]))
+                    }
                     _ => return Err(ProgramError::InvalidInstructionData),
                 };
 
@@ -828,6 +837,8 @@ pub enum ConfigField {
     CooldownTimeSeconds(u64),
     /// Total proportion that can be deactivated at once, in basis points
     MaxDeactivationBasisPoints(u16),
+    /// Lamports amount paid to for syncing a SOL stake account.
+    SyncRewardsLamports(u64),
 }
 
 #[cfg(test)]
