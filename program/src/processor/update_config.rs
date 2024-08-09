@@ -80,6 +80,9 @@ pub fn process_update_config(
 
                 config.max_deactivation_basis_points = points;
             }
+            ConfigField::SyncRewardsLamports(lamports) => {
+                config.sync_rewards_lamports = lamports;
+            }
         }
     } else {
         return err!(StakeError::AuthorityNotSet);
