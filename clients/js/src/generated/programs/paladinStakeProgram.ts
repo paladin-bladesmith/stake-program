@@ -11,7 +11,7 @@ import {
   type ParsedDeactivateStakeInstruction,
   type ParsedDistributeRewardsInstruction,
   type ParsedHarvestHolderRewardsInstruction,
-  type ParsedHarvestStakeRewardsInstruction,
+  type ParsedHarvestValidatorRewardsInstruction,
   type ParsedInactivateStakeInstruction,
   type ParsedInitializeConfigInstruction,
   type ParsedInitializeSolStakerStakeInstruction,
@@ -42,7 +42,7 @@ export enum PaladinStakeProgramInstruction {
   InactivateStake,
   WithdrawInactiveStake,
   HarvestHolderRewards,
-  HarvestStakeRewards,
+  HarvestValidatorRewards,
   Slash,
   SetAuthority,
   UpdateConfig,
@@ -79,7 +79,7 @@ export function identifyPaladinStakeProgramInstruction(
     return PaladinStakeProgramInstruction.HarvestHolderRewards;
   }
   if (containsBytes(data, getU8Encoder().encode(7), 0)) {
-    return PaladinStakeProgramInstruction.HarvestStakeRewards;
+    return PaladinStakeProgramInstruction.HarvestValidatorRewards;
   }
   if (containsBytes(data, getU8Encoder().encode(8), 0)) {
     return PaladinStakeProgramInstruction.Slash;
@@ -132,8 +132,8 @@ export type ParsedPaladinStakeProgramInstruction<
       instructionType: PaladinStakeProgramInstruction.HarvestHolderRewards;
     } & ParsedHarvestHolderRewardsInstruction<TProgram>)
   | ({
-      instructionType: PaladinStakeProgramInstruction.HarvestStakeRewards;
-    } & ParsedHarvestStakeRewardsInstruction<TProgram>)
+      instructionType: PaladinStakeProgramInstruction.HarvestValidatorRewards;
+    } & ParsedHarvestValidatorRewardsInstruction<TProgram>)
   | ({
       instructionType: PaladinStakeProgramInstruction.Slash;
     } & ParsedSlashInstruction<TProgram>)

@@ -154,13 +154,14 @@ pub fn calculate_stake_rewards_per_token(
 
 pub fn calculate_maximum_stake_for_lamports_amount(
     lamports_amount: u64,
-) -> Result<u128, ProgramError> {
+) -> Result<u64, ProgramError> {
     if lamports_amount == 0 {
         Ok(0)
     } else {
         (lamports_amount as u128)
             .checked_mul(STAKE_FACTOR)
             .and_then(|product| product.checked_div(STAKE_SCALING_FACTOR))
+            .and_then(|product| product.try_into().ok())
             .ok_or(ProgramError::ArithmeticOverflow)
     }
 }

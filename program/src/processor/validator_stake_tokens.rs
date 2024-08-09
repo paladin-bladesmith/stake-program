@@ -122,7 +122,7 @@ pub fn process_validator_stake_tokens<'a>(
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
     require!(
-        updated_staked_amount as u128 <= limit,
+        updated_staked_amount <= limit,
         StakeError::TotalStakeAmountExceedsSolLimit,
         "current staked amount ({}) + new amount ({}) exceeds limit ({})",
         stake.delegation.amount,

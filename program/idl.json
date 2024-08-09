@@ -409,7 +409,7 @@
       }
     },
     {
-      "name": "HarvestStakeRewards",
+      "name": "HarvestValidatorRewards",
       "accounts": [
         {
           "name": "config",
@@ -420,11 +420,11 @@
           ]
         },
         {
-          "name": "stake",
+          "name": "validatorStake",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
+            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
           ]
         },
         {
