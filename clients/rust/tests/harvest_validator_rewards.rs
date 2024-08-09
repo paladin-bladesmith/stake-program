@@ -221,8 +221,9 @@ async fn harvest_validator_rewards_after_harvesting() {
     // "manually" set the amount to 50
     stake_account.delegation.amount = 50;
     stake_account.total_staked_lamports_amount = 50;
-    // 0.04 * 1e9
-    stake_account.delegation.last_seen_stake_rewards_per_token = 40_000_000 * 1_000_000_000;
+    // same as the current value on the config
+    stake_account.delegation.last_seen_stake_rewards_per_token =
+        config_account.accumulated_stake_rewards_per_token;
 
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&validator_stake_manager.stake, &account.into());

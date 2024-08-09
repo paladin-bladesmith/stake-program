@@ -145,7 +145,7 @@ pub fn process_sol_staker_stake_tokens<'a>(
     let limit = calculate_maximum_stake_for_lamports_amount(sol_staker_stake.lamports_amount)?;
 
     require!(
-        updated_staked_amount as u128 <= limit,
+        updated_staked_amount <= limit,
         StakeError::TotalStakeAmountExceedsSolLimit,
         "current staked amount ({}) + new amount ({}) exceeds limit ({})",
         sol_staker_stake.delegation.amount,
