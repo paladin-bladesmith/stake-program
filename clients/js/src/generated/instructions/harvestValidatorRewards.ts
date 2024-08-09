@@ -29,10 +29,10 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export type HarvestStakeRewardsInstruction<
+export type HarvestValidatorRewardsInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
-  TAccountStake extends string | IAccountMeta<string> = string,
+  TAccountValidatorStake extends string | IAccountMeta<string> = string,
   TAccountDestination extends string | IAccountMeta<string> = string,
   TAccountStakeAuthority extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
@@ -43,9 +43,9 @@ export type HarvestStakeRewardsInstruction<
       TAccountConfig extends string
         ? WritableAccount<TAccountConfig>
         : TAccountConfig,
-      TAccountStake extends string
-        ? WritableAccount<TAccountStake>
-        : TAccountStake,
+      TAccountValidatorStake extends string
+        ? WritableAccount<TAccountValidatorStake>
+        : TAccountValidatorStake,
       TAccountDestination extends string
         ? WritableAccount<TAccountDestination>
         : TAccountDestination,
@@ -57,63 +57,63 @@ export type HarvestStakeRewardsInstruction<
     ]
   >;
 
-export type HarvestStakeRewardsInstructionData = { discriminator: number };
+export type HarvestValidatorRewardsInstructionData = { discriminator: number };
 
-export type HarvestStakeRewardsInstructionDataArgs = {};
+export type HarvestValidatorRewardsInstructionDataArgs = {};
 
-export function getHarvestStakeRewardsInstructionDataEncoder(): Encoder<HarvestStakeRewardsInstructionDataArgs> {
+export function getHarvestValidatorRewardsInstructionDataEncoder(): Encoder<HarvestValidatorRewardsInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', getU8Encoder()]]),
     (value) => ({ ...value, discriminator: 7 })
   );
 }
 
-export function getHarvestStakeRewardsInstructionDataDecoder(): Decoder<HarvestStakeRewardsInstructionData> {
+export function getHarvestValidatorRewardsInstructionDataDecoder(): Decoder<HarvestValidatorRewardsInstructionData> {
   return getStructDecoder([['discriminator', getU8Decoder()]]);
 }
 
-export function getHarvestStakeRewardsInstructionDataCodec(): Codec<
-  HarvestStakeRewardsInstructionDataArgs,
-  HarvestStakeRewardsInstructionData
+export function getHarvestValidatorRewardsInstructionDataCodec(): Codec<
+  HarvestValidatorRewardsInstructionDataArgs,
+  HarvestValidatorRewardsInstructionData
 > {
   return combineCodec(
-    getHarvestStakeRewardsInstructionDataEncoder(),
-    getHarvestStakeRewardsInstructionDataDecoder()
+    getHarvestValidatorRewardsInstructionDataEncoder(),
+    getHarvestValidatorRewardsInstructionDataDecoder()
   );
 }
 
-export type HarvestStakeRewardsInput<
+export type HarvestValidatorRewardsInput<
   TAccountConfig extends string = string,
-  TAccountStake extends string = string,
+  TAccountValidatorStake extends string = string,
   TAccountDestination extends string = string,
   TAccountStakeAuthority extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
-  /** Validator stake account (pda of `['stake::state::stake', validator, config]`) */
-  stake: Address<TAccountStake>;
+  /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
+  validatorStake: Address<TAccountValidatorStake>;
   /** Destination account for withdrawn lamports */
   destination: Address<TAccountDestination>;
   /** Stake authority */
   stakeAuthority: TransactionSigner<TAccountStakeAuthority>;
 };
 
-export function getHarvestStakeRewardsInstruction<
+export function getHarvestValidatorRewardsInstruction<
   TAccountConfig extends string,
-  TAccountStake extends string,
+  TAccountValidatorStake extends string,
   TAccountDestination extends string,
   TAccountStakeAuthority extends string,
 >(
-  input: HarvestStakeRewardsInput<
+  input: HarvestValidatorRewardsInput<
     TAccountConfig,
-    TAccountStake,
+    TAccountValidatorStake,
     TAccountDestination,
     TAccountStakeAuthority
   >
-): HarvestStakeRewardsInstruction<
+): HarvestValidatorRewardsInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
-  TAccountStake,
+  TAccountValidatorStake,
   TAccountDestination,
   TAccountStakeAuthority
 > {
@@ -123,7 +123,7 @@ export function getHarvestStakeRewardsInstruction<
   // Original accounts.
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
-    stake: { value: input.stake ?? null, isWritable: true },
+    validatorStake: { value: input.validatorStake ?? null, isWritable: true },
     destination: { value: input.destination ?? null, isWritable: true },
     stakeAuthority: { value: input.stakeAuthority ?? null, isWritable: false },
   };
@@ -136,16 +136,16 @@ export function getHarvestStakeRewardsInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.config),
-      getAccountMeta(accounts.stake),
+      getAccountMeta(accounts.validatorStake),
       getAccountMeta(accounts.destination),
       getAccountMeta(accounts.stakeAuthority),
     ],
     programAddress,
-    data: getHarvestStakeRewardsInstructionDataEncoder().encode({}),
-  } as HarvestStakeRewardsInstruction<
+    data: getHarvestValidatorRewardsInstructionDataEncoder().encode({}),
+  } as HarvestValidatorRewardsInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
-    TAccountStake,
+    TAccountValidatorStake,
     TAccountDestination,
     TAccountStakeAuthority
   >;
@@ -153,7 +153,7 @@ export function getHarvestStakeRewardsInstruction<
   return instruction;
 }
 
-export type ParsedHarvestStakeRewardsInstruction<
+export type ParsedHarvestValidatorRewardsInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
@@ -161,24 +161,24 @@ export type ParsedHarvestStakeRewardsInstruction<
   accounts: {
     /** Stake config account */
     config: TAccountMetas[0];
-    /** Validator stake account (pda of `['stake::state::stake', validator, config]`) */
-    stake: TAccountMetas[1];
+    /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
+    validatorStake: TAccountMetas[1];
     /** Destination account for withdrawn lamports */
     destination: TAccountMetas[2];
     /** Stake authority */
     stakeAuthority: TAccountMetas[3];
   };
-  data: HarvestStakeRewardsInstructionData;
+  data: HarvestValidatorRewardsInstructionData;
 };
 
-export function parseHarvestStakeRewardsInstruction<
+export function parseHarvestValidatorRewardsInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedHarvestStakeRewardsInstruction<TProgram, TAccountMetas> {
+): ParsedHarvestValidatorRewardsInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 4) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -193,11 +193,11 @@ export function parseHarvestStakeRewardsInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       config: getNextAccount(),
-      stake: getNextAccount(),
+      validatorStake: getNextAccount(),
       destination: getNextAccount(),
       stakeAuthority: getNextAccount(),
     },
-    data: getHarvestStakeRewardsInstructionDataDecoder().decode(
+    data: getHarvestValidatorRewardsInstructionDataDecoder().decode(
       instruction.data
     ),
   };

@@ -284,7 +284,7 @@ pub enum StakeInstruction {
     )]
     HarvestHolderRewards,
 
-    /// Harvests stake SOL rewards earned by the given stake account.
+    /// Harvests stake SOL rewards earned by the given validator stake account.
     /// 
     /// NOTE: This is very similar to the logic in the rewards program. Since the
     /// staking rewards are held in a separate account, they must be distributed
@@ -298,8 +298,8 @@ pub enum StakeInstruction {
     #[account(
         1,
         writable,
-        name = "stake",
-        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
+        name = "validator_stake",
+        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
     )]
     #[account(
         2,
@@ -313,7 +313,7 @@ pub enum StakeInstruction {
         name = "stake_authority",
         desc = "Stake authority"
     )]
-    HarvestStakeRewards,
+    HarvestValidatorRewards,
 
     /// Slashes a stake account for the given amount.
     /// 
@@ -589,7 +589,7 @@ impl StakeInstruction {
                 data
             }
             StakeInstruction::HarvestHolderRewards => vec![6],
-            StakeInstruction::HarvestStakeRewards => vec![7],
+            StakeInstruction::HarvestValidatorRewards => vec![7],
             StakeInstruction::Slash(amount) => {
                 let mut data = Vec::with_capacity(9);
                 data.push(8);
@@ -676,7 +676,7 @@ impl StakeInstruction {
             // 6 - HarvestHolderRewards
             Some((&6, _)) => Ok(StakeInstruction::HarvestHolderRewards),
             // 7 - HarvestStakeRewards
-            Some((&7, _)) => Ok(StakeInstruction::HarvestStakeRewards),
+            Some((&7, _)) => Ok(StakeInstruction::HarvestValidatorRewards),
             // 8 - Slash: u64 (8)
             Some((&8, rest)) if rest.len() == 8 => {
                 let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
@@ -810,7 +810,7 @@ mod tests {
 
     #[test]
     fn test_pack_unpack_harvest_stake_rewards() {
-        let original = StakeInstruction::HarvestStakeRewards;
+        let original = StakeInstruction::HarvestValidatorRewards;
         let packed = original.pack();
         let unpacked = StakeInstruction::unpack(&packed).unwrap();
         assert_eq!(original, unpacked);
