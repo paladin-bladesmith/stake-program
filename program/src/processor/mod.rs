@@ -349,7 +349,8 @@ pub fn process_harvest_for_delegation(
                 stake_limit
             );
 
-            let excess = (delegation.amount as u128)
+            let excess = delegation
+                .amount
                 .checked_sub(stake_limit)
                 .ok_or(ProgramError::ArithmeticOverflow)?;
 
