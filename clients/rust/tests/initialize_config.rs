@@ -84,6 +84,7 @@ async fn initialize_config_with_mint_and_token() {
         .vault(token.pubkey())
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
+        .sync_rewards_lamports(1_000_000) // 0.001 SOL
         .instruction();
 
     // When we create a config.
@@ -166,6 +167,7 @@ async fn fail_initialize_config_with_wrong_token_authority() {
         .vault(token.pubkey())
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
+        .sync_rewards_lamports(1_000_000) // 0.001 SOL
         .instruction();
 
     // When we try to initialize the config with the wrong token authority.
@@ -253,7 +255,7 @@ async fn fail_initialize_config_with_non_empty_token() {
         &paladin_stake_program_client::ID,
     );
 
-    let intialize_ix = InitializeConfigBuilder::new()
+    let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
         .config_authority(authority_pubkey)
         .slash_authority(authority_pubkey)
@@ -261,12 +263,13 @@ async fn fail_initialize_config_with_non_empty_token() {
         .vault(token.pubkey())
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
+        .sync_rewards_lamports(1_000_000) // 0.001 SOL
         .instruction();
 
     // When we try to initialize the config with a non-empty token account.
 
     let tx = Transaction::new_signed_with_payer(
-        &[create_ix, intialize_ix],
+        &[create_ix, initialize_ix],
         Some(&context.payer.pubkey()),
         &[&context.payer, &config],
         context.last_blockhash,
@@ -335,7 +338,7 @@ async fn fail_initialize_config_without_transfer_hook() {
         &paladin_stake_program_client::ID,
     );
 
-    let intialize_ix = InitializeConfigBuilder::new()
+    let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
         .config_authority(authority_pubkey)
         .slash_authority(authority_pubkey)
@@ -343,12 +346,13 @@ async fn fail_initialize_config_without_transfer_hook() {
         .vault(token.pubkey())
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
+        .sync_rewards_lamports(1_000_000) // 0.001 SOL
         .instruction();
 
     // When we try to initialize the config with the mint without a transfer hook.
 
     let tx = Transaction::new_signed_with_payer(
-        &[create_ix, intialize_ix],
+        &[create_ix, initialize_ix],
         Some(&context.payer.pubkey()),
         &[&context.payer, &config],
         context.last_blockhash,
@@ -413,6 +417,7 @@ async fn fail_initialize_config_with_unitialized_mint() {
         .vault(token.pubkey())
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
+        .sync_rewards_lamports(1_000_000) // 0.001 SOL
         .instruction();
 
     // When we try to initialize the config with an uninitialized mint.
@@ -487,7 +492,7 @@ async fn fail_initialize_config_with_wrong_account_length() {
         &paladin_stake_program_client::ID,
     );
 
-    let intialize_ix = InitializeConfigBuilder::new()
+    let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
         .config_authority(authority_pubkey)
         .slash_authority(authority_pubkey)
@@ -495,12 +500,13 @@ async fn fail_initialize_config_with_wrong_account_length() {
         .vault(token.pubkey())
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
+        .sync_rewards_lamports(1_000_000) // 0.001 SOL
         .instruction();
 
     // When we try to initialize the config with an incorrectly-sized account.
 
     let tx = Transaction::new_signed_with_payer(
-        &[create_ix, intialize_ix],
+        &[create_ix, initialize_ix],
         Some(&context.payer.pubkey()),
         &[&context.payer, &config],
         context.last_blockhash,
@@ -578,6 +584,7 @@ async fn fail_initialize_config_with_initialized_account() {
         .vault(token.pubkey())
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
+        .sync_rewards_lamports(1_000_000) // 0.001 SOL
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -601,6 +608,7 @@ async fn fail_initialize_config_with_initialized_account() {
         .vault(token.pubkey())
         .cooldown_time_seconds(1)
         .max_deactivation_basis_points(500)
+        .sync_rewards_lamports(1_000_000)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -692,7 +700,7 @@ async fn fail_initialize_config_with_token_delegate() {
         &paladin_stake_program_client::ID,
     );
 
-    let intialize_ix = InitializeConfigBuilder::new()
+    let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
         .config_authority(authority_pubkey)
         .slash_authority(authority_pubkey)
@@ -700,12 +708,13 @@ async fn fail_initialize_config_with_token_delegate() {
         .vault(token.pubkey())
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
+        .sync_rewards_lamports(1_000_000) // 0.001 SOL
         .instruction();
 
     // When we try to initialize the config with a delegated token account.
 
     let tx = Transaction::new_signed_with_payer(
-        &[create_ix, intialize_ix],
+        &[create_ix, initialize_ix],
         Some(&context.payer.pubkey()),
         &[&context.payer, &config],
         context.last_blockhash,
@@ -793,7 +802,7 @@ async fn fail_initialize_config_with_token_close_authority() {
         &paladin_stake_program_client::ID,
     );
 
-    let intialize_ix = InitializeConfigBuilder::new()
+    let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
         .config_authority(authority_pubkey)
         .slash_authority(authority_pubkey)
@@ -801,12 +810,13 @@ async fn fail_initialize_config_with_token_close_authority() {
         .vault(token.pubkey())
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
+        .sync_rewards_lamports(1_000_000) // 0.001 SOL
         .instruction();
 
     // When we try to initialize the config with a "closeable" token account.
 
     let tx = Transaction::new_signed_with_payer(
-        &[create_ix, intialize_ix],
+        &[create_ix, initialize_ix],
         Some(&context.payer.pubkey()),
         &[&context.payer, &config],
         context.last_blockhash,
@@ -913,7 +923,7 @@ async fn fail_initialize_config_with_invalid_token_extensions() {
         &paladin_stake_program_client::ID,
     );
 
-    let intialize_ix = InitializeConfigBuilder::new()
+    let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
         .config_authority(authority_pubkey)
         .slash_authority(authority_pubkey)
@@ -921,10 +931,11 @@ async fn fail_initialize_config_with_invalid_token_extensions() {
         .vault(token.pubkey())
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
+        .sync_rewards_lamports(1_000_000) // 0.001 SOL
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
-        &[create_ix, intialize_ix],
+        &[create_ix, initialize_ix],
         Some(&context.payer.pubkey()),
         &[&context.payer, &config],
         context.last_blockhash,
@@ -1000,6 +1011,7 @@ async fn fail_initialize_config_with_invalid_max_deactivation_basis_points() {
         .vault(token.pubkey())
         .cooldown_time_seconds(1)
         .max_deactivation_basis_points(20_000) // <- invalid (200%)
+        .sync_rewards_lamports(1_000_000)
         .instruction();
 
     // When we try to initialize the config with an invalid max_deactivation_basis_points value.
