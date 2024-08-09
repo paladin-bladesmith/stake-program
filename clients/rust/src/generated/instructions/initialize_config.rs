@@ -89,6 +89,7 @@ impl Default for InitializeConfigInstructionData {
 pub struct InitializeConfigInstructionArgs {
     pub cooldown_time_seconds: u64,
     pub max_deactivation_basis_points: u16,
+    pub sync_rewards_lamports: u64,
 }
 
 /// Instruction builder for `InitializeConfig`.
@@ -109,6 +110,7 @@ pub struct InitializeConfigBuilder {
     vault: Option<solana_program::pubkey::Pubkey>,
     cooldown_time_seconds: Option<u64>,
     max_deactivation_basis_points: Option<u16>,
+    sync_rewards_lamports: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -165,6 +167,11 @@ impl InitializeConfigBuilder {
         self.max_deactivation_basis_points = Some(max_deactivation_basis_points);
         self
     }
+    #[inline(always)]
+    pub fn sync_rewards_lamports(&mut self, sync_rewards_lamports: u64) -> &mut Self {
+        self.sync_rewards_lamports = Some(sync_rewards_lamports);
+        self
+    }
     /// Add an aditional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -201,6 +208,10 @@ impl InitializeConfigBuilder {
                 .max_deactivation_basis_points
                 .clone()
                 .expect("max_deactivation_basis_points is not set"),
+            sync_rewards_lamports: self
+                .sync_rewards_lamports
+                .clone()
+                .expect("sync_rewards_lamports is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -369,6 +380,7 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
             vault: None,
             cooldown_time_seconds: None,
             max_deactivation_basis_points: None,
+            sync_rewards_lamports: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -425,6 +437,11 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
         self.instruction.max_deactivation_basis_points = Some(max_deactivation_basis_points);
         self
     }
+    #[inline(always)]
+    pub fn sync_rewards_lamports(&mut self, sync_rewards_lamports: u64) -> &mut Self {
+        self.instruction.sync_rewards_lamports = Some(sync_rewards_lamports);
+        self
+    }
     /// Add an additional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -477,6 +494,11 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
                 .max_deactivation_basis_points
                 .clone()
                 .expect("max_deactivation_basis_points is not set"),
+            sync_rewards_lamports: self
+                .instruction
+                .sync_rewards_lamports
+                .clone()
+                .expect("sync_rewards_lamports is not set"),
         };
         let instruction = InitializeConfigCpi {
             __program: self.instruction.__program,
@@ -515,6 +537,7 @@ struct InitializeConfigCpiBuilderInstruction<'a, 'b> {
     vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     cooldown_time_seconds: Option<u64>,
     max_deactivation_basis_points: Option<u16>,
+    sync_rewards_lamports: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

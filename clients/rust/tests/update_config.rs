@@ -80,6 +80,7 @@ async fn update_cooldown_time_config() {
         .vault(token.pubkey())
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
+        .sync_rewards_lamports(1_000_000) // 0.001 SOL
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -179,6 +180,7 @@ async fn update_max_deactivation_basis_points_config() {
         .vault(token.pubkey())
         .cooldown_time_seconds(1)
         .max_deactivation_basis_points(500) // 5%
+        .sync_rewards_lamports(1_000_000) // 0.001 SOL
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -278,6 +280,7 @@ async fn fail_update_max_deactivation_basis_points_config_with_invalid_value() {
         .vault(token.pubkey())
         .cooldown_time_seconds(1)
         .max_deactivation_basis_points(500) // 5%
+        .sync_rewards_lamports(1_000_000) // 0.001 SOL
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -379,6 +382,7 @@ async fn fail_update_config_with_wrong_authority() {
         .vault(token.pubkey())
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
+        .sync_rewards_lamports(1_000_000) // 0.001 SOL
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -576,6 +580,7 @@ async fn fail_update_config_with_no_authority_set() {
         .vault(token.pubkey())
         .cooldown_time_seconds(1)
         .max_deactivation_basis_points(500)
+        .sync_rewards_lamports(1_000_000)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(

@@ -3,6 +3,7 @@ pub mod sol_staker_stake;
 pub mod validator_stake;
 
 pub use config::*;
+use paladin_sol_stake_view_program_client::GetStakeActivatingAndDeactivatingReturnData;
 pub use sol_staker_stake::*;
 use spl_pod::primitives::PodU128;
 pub use validator_stake::*;
@@ -13,7 +14,7 @@ use solana_program::{
     program_error::ProgramError,
     pubkey::{Pubkey, PubkeyError},
 };
-use std::num::NonZeroU64;
+use std::{mem::size_of, num::NonZeroU64};
 
 /// Scaling factor for rewards per token (1e9).
 const REWARDS_PER_TOKEN_SCALING_FACTOR: u128 = 1_000_000_000;
@@ -27,6 +28,10 @@ pub const STAKE_FACTOR: u128 = 13;
 
 /// Scaling factor for stake amount.
 pub const STAKE_SCALING_FACTOR: u128 = 10;
+
+/// Represents a return data with no delegated values.
+pub const EMPTY_RETURN_DATA: [u8; size_of::<GetStakeActivatingAndDeactivatingReturnData>()] =
+    [0; size_of::<GetStakeActivatingAndDeactivatingReturnData>()];
 
 #[inline(always)]
 pub fn create_vault_pda<'a>(

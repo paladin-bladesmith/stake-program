@@ -11,11 +11,11 @@ use crate::{
     instruction::{
         accounts::{
             DeactivateStakeAccounts, DistributeRewardsAccounts, HarvestHolderRewardsAccounts,
-            HarvestSolStakerRewardsAccounts, HarvestValidatorRewardsAccounts,
-            InactivateStakeAccounts, InitializeConfigAccounts, InitializeSolStakerStakeAccounts,
-            InitializeValidatorStakeAccounts, SetAuthorityAccounts, SolStakerStakeTokensAccounts,
-            SyncSolStakeAccounts, UpdateConfigAccounts, ValidatorStakeTokensAccounts,
-            WithdrawInactiveStakeAccounts,
+            HarvestSolStakerRewardsAccounts, HarvestSyncRewardsAccounts,
+            HarvestValidatorRewardsAccounts, InactivateStakeAccounts, InitializeConfigAccounts,
+            InitializeSolStakerStakeAccounts, InitializeValidatorStakeAccounts,
+            SetAuthorityAccounts, SolStakerStakeTokensAccounts, SyncSolStakeAccounts,
+            UpdateConfigAccounts, ValidatorStakeTokensAccounts, WithdrawInactiveStakeAccounts,
         },
         StakeInstruction,
     },
@@ -37,6 +37,7 @@ mod initialize_sol_staker_stake;
 mod initialize_validator_stake;
 mod set_authority;
 //mod slash;
+mod harvest_sync_rewards;
 mod sol_staker_stake_tokens;
 mod sync_sol_stake;
 mod update_config;
@@ -92,6 +93,7 @@ pub fn process_instruction<'a>(
         StakeInstruction::InitializeConfig {
             cooldown_time_seconds,
             max_deactivation_basis_points,
+            sync_rewards_lamports,
         } => {
             msg!("Instruction: InitializeConfig");
             initialize_config::process_initialize_config(
@@ -99,6 +101,7 @@ pub fn process_instruction<'a>(
                 InitializeConfigAccounts::context(accounts)?,
                 cooldown_time_seconds,
                 max_deactivation_basis_points,
+                sync_rewards_lamports,
             )
         }
         StakeInstruction::InitializeValidatorStake => {
@@ -173,6 +176,13 @@ pub fn process_instruction<'a>(
             harvest_sol_staker_rewards::process_harvest_sol_staker_rewards(
                 program_id,
                 HarvestSolStakerRewardsAccounts::context(accounts)?,
+            )
+        }
+        StakeInstruction::HarvestSyncRewards => {
+            msg!("Instruction: HarvestSyncRewards");
+            harvest_sync_rewards::process_harvest_sync_rewards(
+                program_id,
+                HarvestSyncRewardsAccounts::context(accounts)?,
             )
         }
     }
