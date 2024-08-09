@@ -28,6 +28,12 @@ use solana_sdk::{
     transaction::Transaction,
 };
 
+/// The rounding error tollerance for the rewards per token calculation.
+///
+/// This is necessary since the rewards per token calculation might truncated the result and
+/// the tests are comparing values derived from this, so we need to allow for a small error.
+const REWARD_PER_TOKEN_ROUNDING_ERROR: u128 = 1;
+
 #[tokio::test]
 async fn harvest_sync_rewards() {
     let mut program_test = new_program_test();
@@ -176,18 +182,19 @@ async fn harvest_sync_rewards() {
         last_seen_stake_rewards_per_token,
         calculate_stake_rewards_per_token(1_000_000, 1_300_000_000)
     );
-    // assertion `left == right` failed
-    //    left: 999230770
-    //   right: 999230769
-    /*
-    assert_eq!(
-        config_account
-            .accumulated_stake_rewards_per_token
-            .checked_sub(last_seen_stake_rewards_per_token)
-            .unwrap(),
-        calculate_stake_rewards_per_token(1_299_000_000, 1_300_000_000)
-    );
-    */
+
+    let difference = config_account
+        .accumulated_stake_rewards_per_token
+        .checked_sub(last_seen_stake_rewards_per_token)
+        .and_then(|rewards| {
+            rewards.checked_sub(calculate_stake_rewards_per_token(
+                1_299_000_000,
+                1_300_000_000,
+            ))
+        })
+        .unwrap();
+
+    assert!(difference <= REWARD_PER_TOKEN_ROUNDING_ERROR);
 }
 
 #[tokio::test]
@@ -463,18 +470,19 @@ async fn harvest_sync_rewards_with_closed_sol_stake_account() {
         last_seen_stake_rewards_per_token,
         calculate_stake_rewards_per_token(1_000_000, 1_300_000_000)
     );
-    // assertion `left == right` failed
-    //    left: 999230770
-    //   right: 999230769
-    /*
-    assert_eq!(
-        config_account
-            .accumulated_stake_rewards_per_token
-            .checked_sub(last_seen_stake_rewards_per_token)
-            .unwrap(),
-        calculate_stake_rewards_per_token(1_299_000_000, 1_300_000_000)
-    );
-    */
+
+    let difference = config_account
+        .accumulated_stake_rewards_per_token
+        .checked_sub(last_seen_stake_rewards_per_token)
+        .and_then(|rewards| {
+            rewards.checked_sub(calculate_stake_rewards_per_token(
+                1_299_000_000,
+                1_300_000_000,
+            ))
+        })
+        .unwrap();
+
+    assert!(difference <= REWARD_PER_TOKEN_ROUNDING_ERROR);
 }
 
 #[tokio::test]
