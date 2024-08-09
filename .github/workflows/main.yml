@@ -208,6 +208,8 @@ jobs:
     steps:
       - name: Git checkout
         uses: actions/checkout@v4
+      - name: Purge environment
+        uses: ./.github/actions/purge
       - name: Setup environment
         uses: ./.github/actions/setup
         with:
