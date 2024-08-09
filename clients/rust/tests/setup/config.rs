@@ -29,13 +29,15 @@ impl ConfigManager {
     pub async fn new(context: &mut ProgramTestContext) -> Self {
         // cooldown_time_seconds = 1 second
         // max_deactivation_basis_points = 500 (5%)
-        Self::with_args(context, 1, 500).await
+        // sync_rewards_lamports = 1_000_000 (0.001 SOL)
+        Self::with_args(context, 1, 500, 1_000_000).await
     }
 
     pub async fn with_args(
         context: &mut ProgramTestContext,
         cooldown_time_seconds: u64,
         max_deactivation_basis_points: u16,
+        sync_rewards_lamports: u64,
     ) -> Self {
         let mut manager = Self {
             config: Pubkey::default(),
@@ -101,6 +103,7 @@ impl ConfigManager {
             .vault(manager.vault)
             .cooldown_time_seconds(cooldown_time_seconds)
             .max_deactivation_basis_points(max_deactivation_basis_points)
+            .sync_rewards_lamports(sync_rewards_lamports)
             .instruction();
 
         context.get_new_latest_blockhash().await.unwrap();
@@ -125,18 +128,21 @@ impl ConfigManager {
 pub async fn create_config(context: &mut ProgramTestContext) -> Pubkey {
     // cooldown_time_seconds = 1 second
     // max_deactivation_basis_points = 500 (5%)
-    create_config_with_args(context, 1, 500).await
+    // sync_rewards_lamports = 1_000_000 (0.001 SOL)
+    create_config_with_args(context, 1, 500, 1_000_000).await
 }
 
 pub async fn create_config_with_args(
     context: &mut ProgramTestContext,
     cooldown_time_seconds: u64,
     max_deactivation_basis_points: u16,
+    sync_rewards_lamports: u64,
 ) -> Pubkey {
     let manager = ConfigManager::with_args(
         context,
         cooldown_time_seconds,
         max_deactivation_basis_points,
+        sync_rewards_lamports,
     )
     .await;
     manager.config
