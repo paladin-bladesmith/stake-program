@@ -25,7 +25,6 @@ use solana_sdk::{
     signature::Keypair,
     signer::Signer,
     stake::state::{Authorized, Lockup},
-    system_program,
     transaction::Transaction,
 };
 
@@ -386,7 +385,7 @@ async fn harvest_sync_rewards_with_closed_sol_stake_account() {
         &AccountSharedData::from(Account {
             data: vec![],
             lamports: 0,
-            owner: system_program::ID,
+            owner: solana_sdk::stake::program::ID,
             ..Default::default()
         }),
     );
@@ -511,8 +510,10 @@ async fn harvest_sync_rewards_with_capped_sync_rewards() {
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the total amount delegated
     config_account.token_amount_delegated = 1_300_000_000;
+    // add 200_000_000 (0.2) to the accumulated stake rewards per token to simulate
+    // a previous reward
     config_account.accumulated_stake_rewards_per_token =
-        calculate_stake_rewards_per_token(1_300_000_000, 1_300_000_000);
+        calculate_stake_rewards_per_token(1_300_000_000, 1_300_000_000) + 200_000_000;
 
     account.lamports += 1_300_000_000;
     account.data = config_account.try_to_vec().unwrap();
@@ -526,6 +527,8 @@ async fn harvest_sync_rewards_with_capped_sync_rewards() {
     //   - delegation amount = 1_300_000_000
     //   - lamports amount = 1_000_000_000
     stake_account.delegation.amount = 1_300_000_000;
+    // set the last seen stake rewards per token to 200_000_000
+    stake_account.delegation.last_seen_stake_rewards_per_token = 200_000_000;
     stake_account.lamports_amount = 1_000_000_000;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
