@@ -145,8 +145,9 @@ pub fn process_harvest_sync_rewards(
 
     // Check whether the SOL stake is ouf-of-sync.
 
-    let stake_amount = u64::from(stake_state_data.effective)
-        .checked_add(u64::from(stake_state_data.activating))
+    let stake_amount = u64::from(stake_state_data.activating)
+        .checked_add(stake_state_data.effective.into())
+        .and_then(|amount| amount.checked_sub(u64::from(stake_state_data.deactivating)))
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
     if stake_amount != sol_staker_stake.lamports_amount {
@@ -170,13 +171,14 @@ pub fn process_harvest_sync_rewards(
         // NOTE: steps 2 and 3 only happen when the searcher fee is greater than 0.
 
         // searcher rewards
+        let last_seen_stake_rewards_per_token = u128::from(
+            sol_staker_stake
+                .delegation
+                .last_seen_stake_rewards_per_token,
+        );
         let rewards = calculate_eligible_rewards(
             u128::from(config.accumulated_stake_rewards_per_token),
-            u128::from(
-                sol_staker_stake
-                    .delegation
-                    .last_seen_stake_rewards_per_token,
-            ),
+            last_seen_stake_rewards_per_token,
             sol_staker_stake.delegation.amount,
         )?;
         let searcher_rewards = min(config.sync_rewards_lamports, rewards);
@@ -185,11 +187,13 @@ pub fn process_harvest_sync_rewards(
             // update last seen stake rewards per token
             sol_staker_stake
                 .delegation
-                .last_seen_stake_rewards_per_token = calculate_stake_rewards_per_token(
-                searcher_rewards,
-                sol_staker_stake.delegation.amount,
-            )?
-            .into();
+                .last_seen_stake_rewards_per_token = last_seen_stake_rewards_per_token
+                .checked_add(calculate_stake_rewards_per_token(
+                    searcher_rewards,
+                    sol_staker_stake.delegation.amount,
+                )?)
+                .ok_or(ProgramError::ArithmeticOverflow)?
+                .into();
 
             // transfer searcher rewards
             let updated_config_lamports = ctx
