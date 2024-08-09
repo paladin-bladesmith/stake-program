@@ -296,9 +296,12 @@ pub fn process_harvest_for_delegation(
     let validated_amount = min(delegation.amount, stake_limit as u64);
 
     let accumulated_rewards_per_token = u128::from(config.accumulated_stake_rewards_per_token);
+    let last_seen_stake_rewards_per_token =
+        u128::from(delegation.last_seen_stake_rewards_per_token);
+
     let rewards = calculate_eligible_rewards(
         accumulated_rewards_per_token,
-        u128::from(delegation.last_seen_stake_rewards_per_token),
+        last_seen_stake_rewards_per_token,
         validated_amount,
     )?;
 
@@ -352,7 +355,7 @@ pub fn process_harvest_for_delegation(
 
             let excess_rewards = calculate_eligible_rewards(
                 accumulated_rewards_per_token,
-                u128::from(delegation.last_seen_stake_rewards_per_token),
+                last_seen_stake_rewards_per_token,
                 excess as u64,
             )?;
 
@@ -370,7 +373,7 @@ pub fn process_harvest_for_delegation(
             if rewards_per_token != 0 {
                 // Update the accumulated stake rewards per token on the config to
                 // reflect the addition of the rewards for the exceeding amount.
-                let accumulated = u128::from(config.accumulated_stake_rewards_per_token)
+                let accumulated = accumulated_rewards_per_token
                     .checked_add(rewards_per_token)
                     .ok_or(ProgramError::ArithmeticOverflow)?;
                 config.accumulated_stake_rewards_per_token = accumulated.into();
