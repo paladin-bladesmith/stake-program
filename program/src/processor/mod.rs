@@ -85,7 +85,7 @@ pub fn process_instruction<'a>(
             )
         }
         StakeInstruction::InactivateValidatorStake => {
-            msg!("Instruction: InactivateStake");
+            msg!("Instruction: InactivateValidatorStake");
             inactivate_validator_stake::process_inactivate_validator_stake(
                 program_id,
                 InactivateValidatorStakeAccounts::context(accounts)?,

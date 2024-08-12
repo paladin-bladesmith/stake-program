@@ -161,7 +161,7 @@ pub enum StakeInstruction {
         1,
         writable,
         name = "stake",
-        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
+        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
     )]
     InactivateValidatorStake,
 
@@ -751,7 +751,7 @@ impl StakeInstruction {
 
                 Ok(StakeInstruction::DeactivateStake(amount))
             }
-            // 4 - InactivateStake
+            // 4 - InactivateValidatorStake
             Some((&4, _)) => Ok(StakeInstruction::InactivateValidatorStake),
             // 5 - WithdrawInactiveStake: u64 (8)
             Some((&5, rest)) if rest.len() == 8 => {

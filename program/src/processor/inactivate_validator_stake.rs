@@ -13,7 +13,7 @@ use crate::{
 
 /// Move tokens from deactivating to inactive.
 ///
-/// Reduces the total voting power for the stake account and the total staked
+/// Reduces the total voting power for the validator stake account and the total staked
 /// amount on the system.
 ///
 /// NOTE: This instruction is permissionless, so anybody can finish
