@@ -12,11 +12,11 @@ use crate::{
         accounts::{
             DeactivateStakeAccounts, DistributeRewardsAccounts, HarvestHolderRewardsAccounts,
             HarvestSolStakerRewardsAccounts, HarvestSyncRewardsAccounts,
-            HarvestValidatorRewardsAccounts, InactivateValidatorStakeAccounts,
-            InitializeConfigAccounts, InitializeSolStakerStakeAccounts,
-            InitializeValidatorStakeAccounts, SetAuthorityAccounts, SolStakerStakeTokensAccounts,
-            SyncSolStakeAccounts, UpdateConfigAccounts, ValidatorStakeTokensAccounts,
-            WithdrawInactiveStakeAccounts,
+            HarvestValidatorRewardsAccounts, InactivateSolStakerStakeAccounts,
+            InactivateValidatorStakeAccounts, InitializeConfigAccounts,
+            InitializeSolStakerStakeAccounts, InitializeValidatorStakeAccounts,
+            SetAuthorityAccounts, SolStakerStakeTokensAccounts, SyncSolStakeAccounts,
+            UpdateConfigAccounts, ValidatorStakeTokensAccounts, WithdrawInactiveStakeAccounts,
         },
         StakeInstruction,
     },
@@ -32,6 +32,7 @@ mod distribute_rewards;
 mod harvest_holder_rewards;
 mod harvest_sol_staker_rewards;
 mod harvest_validator_rewards;
+mod inactivate_sol_staker_stake;
 mod inactivate_validator_stake;
 mod initialize_config;
 mod initialize_sol_staker_stake;
@@ -184,6 +185,13 @@ pub fn process_instruction<'a>(
             harvest_sync_rewards::process_harvest_sync_rewards(
                 program_id,
                 HarvestSyncRewardsAccounts::context(accounts)?,
+            )
+        }
+        StakeInstruction::InactivateSolStakerStake => {
+            msg!("Instruction: InactivateSolStakerStake");
+            inactivate_sol_staker_stake::process_inactivate_sol_staker_stake(
+                program_id,
+                InactivateSolStakerStakeAccounts::context(accounts)?,
             )
         }
     }
