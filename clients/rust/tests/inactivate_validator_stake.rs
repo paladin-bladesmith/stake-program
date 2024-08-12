@@ -6,7 +6,7 @@ use borsh::BorshSerialize;
 use paladin_stake_program_client::{
     accounts::{Config, ValidatorStake},
     errors::PaladinStakeProgramError,
-    instructions::InactivateStakeBuilder,
+    instructions::InactivateValidatorStakeBuilder,
     pdas::find_validator_stake_pda,
     NullableU64,
 };
@@ -26,7 +26,7 @@ use solana_sdk::{
 };
 
 #[tokio::test]
-async fn inactivate_stake() {
+async fn inactivate_validator_stake() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -46,7 +46,7 @@ async fn inactivate_stake() {
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config, &account.into());
 
-    // And a stake account (amount = 100).
+    // And a validator stake account (amount = 100).
 
     let validator = Pubkey::new_unique();
     let authority = Keypair::new();
@@ -57,8 +57,8 @@ async fn inactivate_stake() {
     let mut account = get_account!(context, stake_pda);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the stake values
-    stake_account.amount = 100;
-    stake_account.deactivating_amount = 50;
+    stake_account.delegation.amount = 100;
+    stake_account.delegation.deactivating_amount = 50;
 
     let mut timestamp = context
         .banks_client
@@ -67,14 +67,14 @@ async fn inactivate_stake() {
         .unwrap()
         .unix_timestamp as u64;
     timestamp = timestamp.saturating_sub(config_account.cooldown_time_seconds);
-    stake_account.deactivation_timestamp = NullableU64::from(timestamp);
+    stake_account.delegation.deactivation_timestamp = NullableU64::from(timestamp);
     // "manually" update the stake account data
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_pda, &account.into());
 
     // When we move the deactivated amount to inactive (50 tokens).
 
-    let inactivate_ix = InactivateStakeBuilder::new()
+    let inactivate_ix = InactivateValidatorStakeBuilder::new()
         .config(config)
         .stake(stake_pda)
         .instruction();
@@ -92,10 +92,14 @@ async fn inactivate_stake() {
     let account = get_account!(context, stake_pda);
     let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
 
-    assert_eq!(stake_account.amount, 50);
-    assert_eq!(stake_account.deactivating_amount, 0);
-    assert_eq!(stake_account.inactive_amount, 50);
-    assert!(stake_account.deactivation_timestamp.value().is_none());
+    assert_eq!(stake_account.delegation.amount, 50);
+    assert_eq!(stake_account.delegation.deactivating_amount, 0);
+    assert_eq!(stake_account.delegation.inactive_amount, 50);
+    assert!(stake_account
+        .delegation
+        .deactivation_timestamp
+        .value()
+        .is_none());
 
     // And the total delegated on the config was updated.
 
@@ -106,7 +110,7 @@ async fn inactivate_stake() {
 }
 
 #[tokio::test]
-async fn fail_inactivate_stake_with_no_deactivated_amount() {
+async fn fail_inactivate_validator_stake_with_no_deactivated_amount() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -126,7 +130,7 @@ async fn fail_inactivate_stake_with_no_deactivated_amount() {
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config, &account.into());
 
-    // And a stake account (amount = 100).
+    // And a validator stake account (amount = 100).
 
     let validator = Pubkey::new_unique();
     let authority = Keypair::new();
@@ -137,14 +141,14 @@ async fn fail_inactivate_stake_with_no_deactivated_amount() {
     let mut account = get_account!(context, stake_pda);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the stake values
-    stake_account.amount = 100;
+    stake_account.delegation.amount = 100;
     // "manually" update the stake account data
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_pda, &account.into());
 
     // When we try to inactivate the stake without any deactivated amount.
 
-    let inactivate_ix = InactivateStakeBuilder::new()
+    let inactivate_ix = InactivateValidatorStakeBuilder::new()
         .config(config)
         .stake(stake_pda)
         .instruction();
@@ -167,7 +171,7 @@ async fn fail_inactivate_stake_with_no_deactivated_amount() {
 }
 
 #[tokio::test]
-async fn fail_inactivate_stake_with_wrong_config() {
+async fn fail_inactivate_validator_stake_with_wrong_config() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -187,7 +191,7 @@ async fn fail_inactivate_stake_with_wrong_config() {
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config, &account.into());
 
-    // And a stake account (amount = 100).
+    // And a validator stake account (amount = 100).
 
     let validator = Pubkey::new_unique();
     let authority = Keypair::new();
@@ -198,8 +202,8 @@ async fn fail_inactivate_stake_with_wrong_config() {
     let mut account = get_account!(context, stake_pda);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the stake values
-    stake_account.amount = 100;
-    stake_account.deactivating_amount = 50;
+    stake_account.delegation.amount = 100;
+    stake_account.delegation.deactivating_amount = 50;
     // "manually" update the stake account data
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_pda, &account.into());
@@ -210,7 +214,7 @@ async fn fail_inactivate_stake_with_wrong_config() {
 
     // When we try to inactivate the stake with the wrong config account.
 
-    let inactivate_ix = InactivateStakeBuilder::new()
+    let inactivate_ix = InactivateValidatorStakeBuilder::new()
         .config(wrong_config) // <- wrong config
         .stake(stake_pda)
         .instruction();
@@ -233,7 +237,7 @@ async fn fail_inactivate_stake_with_wrong_config() {
 }
 
 #[tokio::test]
-async fn fail_inactivate_stake_with_uninitialized_stake_account() {
+async fn fail_inactivate_validator_stake_with_uninitialized_stake_account() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -247,7 +251,7 @@ async fn fail_inactivate_stake_with_uninitialized_stake_account() {
     let config = create_config(&mut context).await;
     let validator = Pubkey::new_unique();
 
-    // And an uninitialized stake account.
+    // And an uninitialized validator stake account.
 
     let (stake_pda, _) = find_validator_stake_pda(&validator, &config);
 
@@ -263,7 +267,7 @@ async fn fail_inactivate_stake_with_uninitialized_stake_account() {
 
     // When we try to deactivate from an uninitialized stake account.
 
-    let inactivate_ix = InactivateStakeBuilder::new()
+    let inactivate_ix = InactivateValidatorStakeBuilder::new()
         .config(config)
         .stake(stake_pda)
         .instruction();
@@ -286,7 +290,7 @@ async fn fail_inactivate_stake_with_uninitialized_stake_account() {
 }
 
 #[tokio::test]
-async fn fail_inactivate_stake_with_active_cooldown() {
+async fn fail_inactivate_validator_stake_with_active_cooldown() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -299,8 +303,9 @@ async fn fail_inactivate_stake_with_active_cooldown() {
 
     let config = create_config_with_args(
         &mut context,
-        10,  /* cooldown 10 seconds */
-        500, /* basis points 5%     */
+        10,        /* cooldown 10 seconds */
+        500,       /* basis points 5%     */
+        1_000_000, /* sync rewards lamports 0.001 SOL */
     )
     .await;
     // "manually" set the total amount delegated
@@ -311,7 +316,7 @@ async fn fail_inactivate_stake_with_active_cooldown() {
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config, &account.into());
 
-    // And a stake account (amount = 100) with 50 tokens deactivated.
+    // And a validator stake account (amount = 100) with 50 tokens deactivated.
 
     let validator = Pubkey::new_unique();
     let authority = Keypair::new();
@@ -321,8 +326,8 @@ async fn fail_inactivate_stake_with_active_cooldown() {
     let mut account = get_account!(context, stake_pda);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the stake values
-    stake_account.amount = 100;
-    stake_account.deactivating_amount = 50;
+    stake_account.delegation.amount = 100;
+    stake_account.delegation.deactivating_amount = 50;
 
     let timestamp = context
         .banks_client
@@ -330,7 +335,7 @@ async fn fail_inactivate_stake_with_active_cooldown() {
         .await
         .unwrap()
         .unix_timestamp;
-    stake_account.deactivation_timestamp = NullableU64::from(timestamp as u64);
+    stake_account.delegation.deactivation_timestamp = NullableU64::from(timestamp as u64);
     // "manually" update the stake account data
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_pda, &account.into());
@@ -338,7 +343,7 @@ async fn fail_inactivate_stake_with_active_cooldown() {
     // When we try to move the deactivated amount to inactive before the end of
     // the cooldown period.
 
-    let inactivate_ix = InactivateStakeBuilder::new()
+    let inactivate_ix = InactivateValidatorStakeBuilder::new()
         .config(config)
         .stake(stake_pda)
         .instruction();
