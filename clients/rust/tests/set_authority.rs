@@ -3,16 +3,18 @@
 mod setup;
 
 use paladin_stake_program_client::{
-    accounts::{Config, ValidatorStake},
+    accounts::{Config, SolStakerStake, ValidatorStake},
     errors::PaladinStakeProgramError,
-    instructions::{InitializeConfigBuilder, InitializeStakeBuilder, SetAuthorityBuilder},
-    pdas::{find_validator_stake_pda, find_vault_pda},
+    instructions::{InitializeConfigBuilder, SetAuthorityBuilder},
+    pdas::find_vault_pda,
     types::AuthorityType,
 };
 use setup::{
-    config::create_config,
+    config::ConfigManager,
+    setup,
+    sol_staker_stake::SolStakerStakeManager,
     token::{create_mint, create_token_account, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS},
-    vote::create_vote_account,
+    validator_stake::ValidatorStakeManager,
 };
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
@@ -32,79 +34,18 @@ async fn set_config_authority_on_config() {
     .start_with_context()
     .await;
 
-    // Given an empty config account and a mint.
+    // Given config account with an authority.
 
-    let config = Keypair::new();
-    let authority = Keypair::new();
-    let authority_pubkey = authority.pubkey();
-
-    let mint = Keypair::new();
-    create_mint(
-        &mut context,
-        &mint,
-        &authority_pubkey,
-        Some(&authority_pubkey),
-        0,
-        MINT_EXTENSIONS,
-    )
-    .await
-    .unwrap();
-
-    let token = Keypair::new();
-    create_token_account(
-        &mut context,
-        &find_vault_pda(&config.pubkey()).0,
-        &token,
-        &mint.pubkey(),
-        TOKEN_ACCOUNT_EXTENSIONS,
-    )
-    .await
-    .unwrap();
-
-    let create_ix = system_instruction::create_account(
-        &context.payer.pubkey(),
-        &config.pubkey(),
-        context
-            .banks_client
-            .get_rent()
-            .await
-            .unwrap()
-            .minimum_balance(Config::LEN),
-        Config::LEN as u64,
-        &paladin_stake_program_client::ID,
-    );
-
-    let initialize_ix = InitializeConfigBuilder::new()
-        .config(config.pubkey())
-        .config_authority(authority_pubkey)
-        .slash_authority(authority_pubkey)
-        .mint(mint.pubkey())
-        .vault(token.pubkey())
-        .cooldown_time_seconds(1) // 1 second
-        .max_deactivation_basis_points(500) // 5%
-        .instruction();
-
-    // And we initialize a config.
-
-    let tx = Transaction::new_signed_with_payer(
-        &[create_ix, initialize_ix],
-        Some(&context.payer.pubkey()),
-        &[&context.payer, &config],
-        context.last_blockhash,
-    );
-    context.banks_client.process_transaction(tx).await.unwrap();
-
-    let account = get_account!(context, config.pubkey());
-    let config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(config_account.authority, authority_pubkey.into());
+    let config_manager = ConfigManager::new(&mut context).await;
+    let authority = config_manager.authority;
 
     // When we set a new authority on the config.
 
     let new_authority = Keypair::new();
 
     let set_authority_ix = SetAuthorityBuilder::new()
-        .account(config.pubkey())
-        .authority(authority_pubkey)
+        .account(config_manager.config)
+        .authority(authority.pubkey())
         .new_authority(new_authority.pubkey())
         .authority_type(AuthorityType::Config)
         .instruction();
@@ -119,7 +60,7 @@ async fn set_config_authority_on_config() {
 
     // Then the authority is updated.
 
-    let account = get_account!(context, config.pubkey());
+    let account = get_account!(context, config_manager.config);
     let config_account = Config::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(config_account.authority, new_authority.pubkey().into());
 }
@@ -134,79 +75,18 @@ async fn set_slash_authority_on_config() {
     .start_with_context()
     .await;
 
-    // Given an empty config account and a mint.
+    // Given config account with an slash authority.
 
-    let config = Keypair::new();
-    let authority = Keypair::new();
-    let authority_pubkey = authority.pubkey();
-
-    let mint = Keypair::new();
-    create_mint(
-        &mut context,
-        &mint,
-        &authority_pubkey,
-        Some(&authority_pubkey),
-        0,
-        MINT_EXTENSIONS,
-    )
-    .await
-    .unwrap();
-
-    let token = Keypair::new();
-    create_token_account(
-        &mut context,
-        &find_vault_pda(&config.pubkey()).0,
-        &token,
-        &mint.pubkey(),
-        TOKEN_ACCOUNT_EXTENSIONS,
-    )
-    .await
-    .unwrap();
-
-    let create_ix = system_instruction::create_account(
-        &context.payer.pubkey(),
-        &config.pubkey(),
-        context
-            .banks_client
-            .get_rent()
-            .await
-            .unwrap()
-            .minimum_balance(Config::LEN),
-        Config::LEN as u64,
-        &paladin_stake_program_client::ID,
-    );
-
-    let initialize_ix = InitializeConfigBuilder::new()
-        .config(config.pubkey())
-        .config_authority(authority_pubkey)
-        .slash_authority(authority_pubkey)
-        .mint(mint.pubkey())
-        .vault(token.pubkey())
-        .cooldown_time_seconds(1) // 1 second
-        .max_deactivation_basis_points(500) // 5%
-        .instruction();
-
-    // And we initialize a config.
-
-    let tx = Transaction::new_signed_with_payer(
-        &[create_ix, initialize_ix],
-        Some(&context.payer.pubkey()),
-        &[&context.payer, &config],
-        context.last_blockhash,
-    );
-    context.banks_client.process_transaction(tx).await.unwrap();
-
-    let account = get_account!(context, config.pubkey());
-    let config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(config_account.authority, authority_pubkey.into());
+    let config_manager = ConfigManager::new(&mut context).await;
+    let slash_authority = config_manager.authority;
 
     // When we set a new slash authority on the config.
 
     let new_slash_authority = Keypair::new();
 
     let set_authority_ix = SetAuthorityBuilder::new()
-        .account(config.pubkey())
-        .authority(authority_pubkey)
+        .account(config_manager.config)
+        .authority(slash_authority.pubkey())
         .new_authority(new_slash_authority.pubkey())
         .authority_type(AuthorityType::Slash)
         .instruction();
@@ -214,14 +94,14 @@ async fn set_slash_authority_on_config() {
     let tx = Transaction::new_signed_with_payer(
         &[set_authority_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &authority],
+        &[&context.payer, &slash_authority],
         context.last_blockhash,
     );
     context.banks_client.process_transaction(tx).await.unwrap();
 
     // Then the slash authority is updated.
 
-    let account = get_account!(context, config.pubkey());
+    let account = get_account!(context, config_manager.config);
     let config_account = Config::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
         config_account.slash_authority,
@@ -239,71 +119,9 @@ async fn fail_set_config_authority_with_wrong_authority() {
     .start_with_context()
     .await;
 
-    // Given an empty config account and a mint.
+    // Given config account with an authority.
 
-    let config = Keypair::new();
-    let authority = Keypair::new();
-    let authority_pubkey = authority.pubkey();
-
-    let mint = Keypair::new();
-    create_mint(
-        &mut context,
-        &mint,
-        &authority_pubkey,
-        Some(&authority_pubkey),
-        0,
-        MINT_EXTENSIONS,
-    )
-    .await
-    .unwrap();
-
-    let token = Keypair::new();
-    create_token_account(
-        &mut context,
-        &find_vault_pda(&config.pubkey()).0,
-        &token,
-        &mint.pubkey(),
-        TOKEN_ACCOUNT_EXTENSIONS,
-    )
-    .await
-    .unwrap();
-
-    let create_ix = system_instruction::create_account(
-        &context.payer.pubkey(),
-        &config.pubkey(),
-        context
-            .banks_client
-            .get_rent()
-            .await
-            .unwrap()
-            .minimum_balance(Config::LEN),
-        Config::LEN as u64,
-        &paladin_stake_program_client::ID,
-    );
-
-    let initialize_ix = InitializeConfigBuilder::new()
-        .config(config.pubkey())
-        .config_authority(authority_pubkey)
-        .slash_authority(authority_pubkey)
-        .mint(mint.pubkey())
-        .vault(token.pubkey())
-        .cooldown_time_seconds(1) // 1 second
-        .max_deactivation_basis_points(500) // 5%
-        .instruction();
-
-    // And we initialize a config.
-
-    let tx = Transaction::new_signed_with_payer(
-        &[create_ix, initialize_ix],
-        Some(&context.payer.pubkey()),
-        &[&context.payer, &config],
-        context.last_blockhash,
-    );
-    context.banks_client.process_transaction(tx).await.unwrap();
-
-    let account = get_account!(context, config.pubkey());
-    let config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(config_account.authority, authority_pubkey.into());
+    let config_manager = ConfigManager::new(&mut context).await;
 
     // When we try to set a new authority with a wrong authority.
 
@@ -311,7 +129,7 @@ async fn fail_set_config_authority_with_wrong_authority() {
     let new_authority = Keypair::new();
 
     let set_authority_ix = SetAuthorityBuilder::new()
-        .account(config.pubkey())
+        .account(config_manager.config)
         .authority(fake_authority.pubkey())
         .new_authority(new_authority.pubkey())
         .authority_type(AuthorityType::Config)
@@ -344,71 +162,9 @@ async fn fail_set_slash_authority_with_wrong_authority() {
     .start_with_context()
     .await;
 
-    // Given an empty config account and a mint.
+    // Given a config account.
 
-    let config = Keypair::new();
-    let authority = Keypair::new();
-    let authority_pubkey = authority.pubkey();
-
-    let mint = Keypair::new();
-    create_mint(
-        &mut context,
-        &mint,
-        &authority_pubkey,
-        Some(&authority_pubkey),
-        0,
-        MINT_EXTENSIONS,
-    )
-    .await
-    .unwrap();
-
-    let token = Keypair::new();
-    create_token_account(
-        &mut context,
-        &find_vault_pda(&config.pubkey()).0,
-        &token,
-        &mint.pubkey(),
-        TOKEN_ACCOUNT_EXTENSIONS,
-    )
-    .await
-    .unwrap();
-
-    let create_ix = system_instruction::create_account(
-        &context.payer.pubkey(),
-        &config.pubkey(),
-        context
-            .banks_client
-            .get_rent()
-            .await
-            .unwrap()
-            .minimum_balance(Config::LEN),
-        Config::LEN as u64,
-        &paladin_stake_program_client::ID,
-    );
-
-    let initialize_ix = InitializeConfigBuilder::new()
-        .config(config.pubkey())
-        .config_authority(authority_pubkey)
-        .slash_authority(authority_pubkey)
-        .mint(mint.pubkey())
-        .vault(token.pubkey())
-        .cooldown_time_seconds(1) // 1 second
-        .max_deactivation_basis_points(500) // 5%
-        .instruction();
-
-    // And we initialize a config.
-
-    let tx = Transaction::new_signed_with_payer(
-        &[create_ix, initialize_ix],
-        Some(&context.payer.pubkey()),
-        &[&context.payer, &config],
-        context.last_blockhash,
-    );
-    context.banks_client.process_transaction(tx).await.unwrap();
-
-    let account = get_account!(context, config.pubkey());
-    let config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(config_account.authority, authority_pubkey.into());
+    let config_manager = ConfigManager::new(&mut context).await;
 
     // When we try to set a new authority with a wrong authority.
 
@@ -416,7 +172,7 @@ async fn fail_set_slash_authority_with_wrong_authority() {
     let new_authority = Keypair::new();
 
     let set_authority_ix = SetAuthorityBuilder::new()
-        .account(config.pubkey())
+        .account(config_manager.config)
         .authority(fake_authority.pubkey())
         .new_authority(new_authority.pubkey())
         .authority_type(AuthorityType::Slash)
@@ -499,6 +255,7 @@ async fn fail_set_config_authority_when_authority_none() {
         .vault(token.pubkey())
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
+        .sync_rewards_lamports(1_000_000) // 0.001 SOL
         .instruction();
 
     // And we initialize a config.
@@ -603,6 +360,7 @@ async fn fail_set_slash_authority_when_authority_none() {
         .vault(token.pubkey())
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
+        .sync_rewards_lamports(1_000_000) // 0.001 SOL
         .instruction();
 
     // And we initialize a config.
@@ -648,7 +406,7 @@ async fn fail_set_slash_authority_when_authority_none() {
 }
 
 #[tokio::test]
-async fn set_authority_on_stake() {
+async fn set_authority_on_validator_stake() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -657,57 +415,19 @@ async fn set_authority_on_stake() {
     .start_with_context()
     .await;
 
-    // Given a config account and a validator's vote account.
+    // Given a config and validator stake accounts.
 
-    let config = create_config(&mut context).await;
-    let validator = Pubkey::new_unique();
-    let withdraw_authority = Keypair::new();
-    let validator_vote =
-        create_vote_account(&mut context, &validator, &withdraw_authority.pubkey()).await;
-
-    // And we initialize the stake account.
-
-    let (stake_pda, _) = find_validator_stake_pda(&validator_vote, &config);
-
-    let transfer_ix = system_instruction::transfer(
-        &context.payer.pubkey(),
-        &stake_pda,
-        context
-            .banks_client
-            .get_rent()
-            .await
-            .unwrap()
-            .minimum_balance(ValidatorStake::LEN),
-    );
-
-    let initialize_ix = InitializeStakeBuilder::new()
-        .config(config)
-        .stake(stake_pda)
-        .validator_vote(validator_vote)
-        .instruction();
-
-    let tx = Transaction::new_signed_with_payer(
-        &[transfer_ix, initialize_ix],
-        Some(&context.payer.pubkey()),
-        &[&context.payer],
-        context.last_blockhash,
-    );
-    context.banks_client.process_transaction(tx).await.unwrap();
-
-    let account = get_account!(context, stake_pda);
-    let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(
-        stake_account.delegation.authority,
-        withdraw_authority.pubkey()
-    );
+    let config_manager = ConfigManager::new(&mut context).await;
+    let validator_stake_manager =
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // When we set a new authority on the stake account.
 
     let new_authority = Pubkey::new_unique();
 
     let set_authority_ix = SetAuthorityBuilder::new()
-        .account(stake_pda)
-        .authority(withdraw_authority.pubkey())
+        .account(validator_stake_manager.stake)
+        .authority(validator_stake_manager.authority.pubkey())
         .new_authority(new_authority)
         .authority_type(AuthorityType::Stake)
         .instruction();
@@ -715,20 +435,20 @@ async fn set_authority_on_stake() {
     let tx = Transaction::new_signed_with_payer(
         &[set_authority_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &withdraw_authority],
+        &[&context.payer, &validator_stake_manager.authority],
         context.last_blockhash,
     );
     context.banks_client.process_transaction(tx).await.unwrap();
 
     // Then the stake authority is updated.
 
-    let account = get_account!(context, stake_pda);
+    let account = get_account!(context, validator_stake_manager.stake);
     let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(stake_account.delegation.authority, new_authority);
 }
 
 #[tokio::test]
-async fn fail_set_authority_on_stake_with_invalid_authority() {
+async fn fail_set_authority_on_validator_stake_with_invalid_authority() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -737,49 +457,11 @@ async fn fail_set_authority_on_stake_with_invalid_authority() {
     .start_with_context()
     .await;
 
-    // Given a config account and a validator's vote account.
+    // Given a config and validator stake accounts.
 
-    let config = create_config(&mut context).await;
-    let validator = Pubkey::new_unique();
-    let withdraw_authority = Keypair::new();
-    let validator_vote =
-        create_vote_account(&mut context, &validator, &withdraw_authority.pubkey()).await;
-
-    // And we initialize the stake account.
-
-    let (stake_pda, _) = find_validator_stake_pda(&validator_vote, &config);
-
-    let transfer_ix = system_instruction::transfer(
-        &context.payer.pubkey(),
-        &stake_pda,
-        context
-            .banks_client
-            .get_rent()
-            .await
-            .unwrap()
-            .minimum_balance(ValidatorStake::LEN),
-    );
-
-    let initialize_ix = InitializeStakeBuilder::new()
-        .config(config)
-        .stake(stake_pda)
-        .validator_vote(validator_vote)
-        .instruction();
-
-    let tx = Transaction::new_signed_with_payer(
-        &[transfer_ix, initialize_ix],
-        Some(&context.payer.pubkey()),
-        &[&context.payer],
-        context.last_blockhash,
-    );
-    context.banks_client.process_transaction(tx).await.unwrap();
-
-    let account = get_account!(context, stake_pda);
-    let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(
-        stake_account.delegation.authority,
-        withdraw_authority.pubkey()
-    );
+    let config_manager = ConfigManager::new(&mut context).await;
+    let validator_stake_manager =
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // When we try to set a new authority on the stake account with an invalid authority.
 
@@ -787,7 +469,98 @@ async fn fail_set_authority_on_stake_with_invalid_authority() {
     let new_authority = Pubkey::new_unique();
 
     let set_authority_ix = SetAuthorityBuilder::new()
-        .account(stake_pda)
+        .account(validator_stake_manager.stake)
+        .authority(fake_authority.pubkey())
+        .new_authority(new_authority)
+        .authority_type(AuthorityType::Stake)
+        .instruction();
+
+    let tx = Transaction::new_signed_with_payer(
+        &[set_authority_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, &fake_authority],
+        context.last_blockhash,
+    );
+    let err = context
+        .banks_client
+        .process_transaction(tx)
+        .await
+        .unwrap_err();
+
+    // Then we expect an error.
+
+    assert_custom_error!(err, PaladinStakeProgramError::InvalidAuthority);
+}
+
+#[tokio::test]
+async fn set_authority_on_sol_staker_stake() {
+    let mut context = setup().await;
+
+    // Given a config, validator stake and SOL staker stake accounts.
+
+    let config_manager = ConfigManager::new(&mut context).await;
+    let validator_stake_manager =
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
+    let sol_staker_stake_manager = SolStakerStakeManager::new(
+        &mut context,
+        &config_manager.config,
+        &validator_stake_manager.stake,
+        &validator_stake_manager.vote,
+        1_000_000_000,
+    )
+    .await;
+
+    // When we set a new authority on the stake account.
+
+    let new_authority = Pubkey::new_unique();
+
+    let set_authority_ix = SetAuthorityBuilder::new()
+        .account(sol_staker_stake_manager.stake)
+        .authority(sol_staker_stake_manager.authority.pubkey())
+        .new_authority(new_authority)
+        .authority_type(AuthorityType::Stake)
+        .instruction();
+
+    let tx = Transaction::new_signed_with_payer(
+        &[set_authority_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, &sol_staker_stake_manager.authority],
+        context.last_blockhash,
+    );
+    context.banks_client.process_transaction(tx).await.unwrap();
+
+    // Then the stake authority is updated.
+
+    let account = get_account!(context, sol_staker_stake_manager.stake);
+    let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
+    assert_eq!(stake_account.delegation.authority, new_authority);
+}
+
+#[tokio::test]
+async fn fail_set_authority_on_sol_staker_stake_with_invalid_authority() {
+    let mut context = setup().await;
+
+    // Given a config, validator stake and SOL staker stake accounts.
+
+    let config_manager = ConfigManager::new(&mut context).await;
+    let validator_stake_manager =
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
+    let sol_staker_stake_manager = SolStakerStakeManager::new(
+        &mut context,
+        &config_manager.config,
+        &validator_stake_manager.stake,
+        &validator_stake_manager.vote,
+        1_000_000_000,
+    )
+    .await;
+
+    // When we try to set a new authority on the stake account with an invalid authority.
+
+    let fake_authority = Keypair::new();
+    let new_authority = Pubkey::new_unique();
+
+    let set_authority_ix = SetAuthorityBuilder::new()
+        .account(sol_staker_stake_manager.stake)
         .authority(fake_authority.pubkey())
         .new_authority(new_authority)
         .authority_type(AuthorityType::Stake)
