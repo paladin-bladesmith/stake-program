@@ -5,7 +5,7 @@ use solana_program::{
 
 use crate::{
     error::StakeError,
-    instruction::accounts::{Context, InactivateStakeAccounts},
+    instruction::accounts::{Context, InactivateValidatorStakeAccounts},
     processor::unpack_delegation_mut,
     require,
     state::Config,
@@ -21,9 +21,9 @@ use crate::{
 ///
 /// 0. `[w]` Stake config account
 /// 1. `[w]` Validator stake account
-pub fn process_inactivate_stake(
+pub fn process_inactivate_validator_stake(
     program_id: &Pubkey,
-    ctx: Context<InactivateStakeAccounts>,
+    ctx: Context<InactivateValidatorStakeAccounts>,
 ) -> ProgramResult {
     // Account validation.
 
@@ -47,22 +47,22 @@ pub fn process_inactivate_stake(
         "config",
     );
 
-    // stake
+    // validator stake
     // - owner must be the stake program
     // - must be initialized
     // - must have the correct derivation
 
     require!(
-        ctx.accounts.stake.owner == program_id,
+        ctx.accounts.validator_stake.owner == program_id,
         ProgramError::InvalidAccountOwner,
-        "stake"
+        "validator stake"
     );
 
-    let stake_data = &mut ctx.accounts.stake.try_borrow_mut_data()?;
+    let stake_data = &mut ctx.accounts.validator_stake.try_borrow_mut_data()?;
     // checks that the stake account is initialized and has the correct derivation
     let delegation = unpack_delegation_mut(
         stake_data,
-        ctx.accounts.stake.key,
+        ctx.accounts.validator_stake.key,
         ctx.accounts.config.key,
         program_id,
     )?;
