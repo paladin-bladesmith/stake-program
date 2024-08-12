@@ -86,12 +86,12 @@ pub fn process_inactivate_sol_staker_stake(
     // - must have the correct derivation
 
     require!(
-        ctx.accounts.stake.owner == program_id,
+        ctx.accounts.validator_stake.owner == program_id,
         ProgramError::InvalidAccountOwner,
         "validator stake"
     );
 
-    let data = &mut ctx.accounts.stake.try_borrow_mut_data()?;
+    let data = &mut ctx.accounts.validator_stake.try_borrow_mut_data()?;
     let validator_stake = unpack_initialized_mut::<ValidatorStake>(data)?;
 
     let (derivation, _) = find_validator_stake_pda(
