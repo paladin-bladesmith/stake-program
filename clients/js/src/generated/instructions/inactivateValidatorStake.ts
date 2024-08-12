@@ -26,10 +26,10 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export type InactivateStakeInstruction<
+export type InactivateValidatorStakeInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
-  TAccountStake extends string | IAccountMeta<string> = string,
+  TAccountValidatorStake extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -38,57 +38,57 @@ export type InactivateStakeInstruction<
       TAccountConfig extends string
         ? WritableAccount<TAccountConfig>
         : TAccountConfig,
-      TAccountStake extends string
-        ? WritableAccount<TAccountStake>
-        : TAccountStake,
+      TAccountValidatorStake extends string
+        ? WritableAccount<TAccountValidatorStake>
+        : TAccountValidatorStake,
       ...TRemainingAccounts,
     ]
   >;
 
-export type InactivateStakeInstructionData = { discriminator: number };
+export type InactivateValidatorStakeInstructionData = { discriminator: number };
 
-export type InactivateStakeInstructionDataArgs = {};
+export type InactivateValidatorStakeInstructionDataArgs = {};
 
-export function getInactivateStakeInstructionDataEncoder(): Encoder<InactivateStakeInstructionDataArgs> {
+export function getInactivateValidatorStakeInstructionDataEncoder(): Encoder<InactivateValidatorStakeInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', getU8Encoder()]]),
     (value) => ({ ...value, discriminator: 4 })
   );
 }
 
-export function getInactivateStakeInstructionDataDecoder(): Decoder<InactivateStakeInstructionData> {
+export function getInactivateValidatorStakeInstructionDataDecoder(): Decoder<InactivateValidatorStakeInstructionData> {
   return getStructDecoder([['discriminator', getU8Decoder()]]);
 }
 
-export function getInactivateStakeInstructionDataCodec(): Codec<
-  InactivateStakeInstructionDataArgs,
-  InactivateStakeInstructionData
+export function getInactivateValidatorStakeInstructionDataCodec(): Codec<
+  InactivateValidatorStakeInstructionDataArgs,
+  InactivateValidatorStakeInstructionData
 > {
   return combineCodec(
-    getInactivateStakeInstructionDataEncoder(),
-    getInactivateStakeInstructionDataDecoder()
+    getInactivateValidatorStakeInstructionDataEncoder(),
+    getInactivateValidatorStakeInstructionDataDecoder()
   );
 }
 
-export type InactivateStakeInput<
+export type InactivateValidatorStakeInput<
   TAccountConfig extends string = string,
-  TAccountStake extends string = string,
+  TAccountValidatorStake extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
   /** Validator stake account (pda of `['stake::state::stake', validator, config]`) */
-  stake: Address<TAccountStake>;
+  validatorStake: Address<TAccountValidatorStake>;
 };
 
-export function getInactivateStakeInstruction<
+export function getInactivateValidatorStakeInstruction<
   TAccountConfig extends string,
-  TAccountStake extends string,
+  TAccountValidatorStake extends string,
 >(
-  input: InactivateStakeInput<TAccountConfig, TAccountStake>
-): InactivateStakeInstruction<
+  input: InactivateValidatorStakeInput<TAccountConfig, TAccountValidatorStake>
+): InactivateValidatorStakeInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
-  TAccountStake
+  TAccountValidatorStake
 > {
   // Program address.
   const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
@@ -96,7 +96,7 @@ export function getInactivateStakeInstruction<
   // Original accounts.
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
-    stake: { value: input.stake ?? null, isWritable: true },
+    validatorStake: { value: input.validatorStake ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -105,19 +105,22 @@ export function getInactivateStakeInstruction<
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
-    accounts: [getAccountMeta(accounts.config), getAccountMeta(accounts.stake)],
+    accounts: [
+      getAccountMeta(accounts.config),
+      getAccountMeta(accounts.validatorStake),
+    ],
     programAddress,
-    data: getInactivateStakeInstructionDataEncoder().encode({}),
-  } as InactivateStakeInstruction<
+    data: getInactivateValidatorStakeInstructionDataEncoder().encode({}),
+  } as InactivateValidatorStakeInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
-    TAccountStake
+    TAccountValidatorStake
   >;
 
   return instruction;
 }
 
-export type ParsedInactivateStakeInstruction<
+export type ParsedInactivateValidatorStakeInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
@@ -126,19 +129,19 @@ export type ParsedInactivateStakeInstruction<
     /** Stake config account */
     config: TAccountMetas[0];
     /** Validator stake account (pda of `['stake::state::stake', validator, config]`) */
-    stake: TAccountMetas[1];
+    validatorStake: TAccountMetas[1];
   };
-  data: InactivateStakeInstructionData;
+  data: InactivateValidatorStakeInstructionData;
 };
 
-export function parseInactivateStakeInstruction<
+export function parseInactivateValidatorStakeInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedInactivateStakeInstruction<TProgram, TAccountMetas> {
+): ParsedInactivateValidatorStakeInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 2) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -153,8 +156,10 @@ export function parseInactivateStakeInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       config: getNextAccount(),
-      stake: getNextAccount(),
+      validatorStake: getNextAccount(),
     },
-    data: getInactivateStakeInstructionDataDecoder().decode(instruction.data),
+    data: getInactivateValidatorStakeInstructionDataDecoder().decode(
+      instruction.data
+    ),
   };
 }
