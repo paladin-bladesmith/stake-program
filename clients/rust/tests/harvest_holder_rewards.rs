@@ -980,13 +980,13 @@ async fn sol_staker_stake_harvest_holder_rewards() {
 
     // When we harvest the holder rewards for the SOL staker stake account.
     //
-    // We are expecting the rewards to be 2 SOL.
+    // We are expecting the rewards to be 1.6 SOL.
     //
     // Calculation:
     //   - total staked: 100
     //   - holder rewards: 4 SOL
     //   - rewards per token: 4_000_000_000 / 100 = 40_000_000 (0.04 SOL)
-    //   - rewards for 40 staked: 40_000_000 * 40 = 1_600_000_000 (2 SOL)
+    //   - rewards for 40 staked: 40_000_000 * 40 = 1_600_000_000 (1.6 SOL)
 
     let destination = Pubkey::new_unique();
 
