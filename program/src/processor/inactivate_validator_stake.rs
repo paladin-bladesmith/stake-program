@@ -6,9 +6,9 @@ use solana_program::{
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, InactivateValidatorStakeAccounts},
-    processor::unpack_delegation_mut,
+    processor::unpack_initialized_mut,
     require,
-    state::Config,
+    state::{find_validator_stake_pda, Config, ValidatorStake},
 };
 
 /// Move tokens from deactivating to inactive.
@@ -47,25 +47,34 @@ pub fn process_inactivate_validator_stake(
         "config",
     );
 
-    // validator stake
+    // stake
     // - owner must be the stake program
+    // - must be a ValidatorStake account
     // - must be initialized
     // - must have the correct derivation
 
     require!(
-        ctx.accounts.validator_stake.owner == program_id,
+        ctx.accounts.stake.owner == program_id,
         ProgramError::InvalidAccountOwner,
-        "validator stake"
+        "stake"
     );
 
-    let stake_data = &mut ctx.accounts.validator_stake.try_borrow_mut_data()?;
-    // checks that the stake account is initialized and has the correct derivation
-    let delegation = unpack_delegation_mut(
-        stake_data,
-        ctx.accounts.validator_stake.key,
+    let stake_data = &mut ctx.accounts.stake.try_borrow_mut_data()?;
+    let validator_stake = unpack_initialized_mut::<ValidatorStake>(stake_data)?;
+
+    let (derivation, _) = find_validator_stake_pda(
+        &validator_stake.delegation.validator_vote,
         ctx.accounts.config.key,
         program_id,
-    )?;
+    );
+
+    require!(
+        ctx.accounts.stake.key == &derivation,
+        ProgramError::InvalidSeeds,
+        "stake",
+    );
+
+    let delegation = &mut validator_stake.delegation;
 
     // Inactivates the stake if elegible.
 

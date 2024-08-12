@@ -229,7 +229,7 @@
           ]
         },
         {
-          "name": "validatorStake",
+          "name": "stake",
           "isMut": true,
           "isSigner": false,
           "docs": [

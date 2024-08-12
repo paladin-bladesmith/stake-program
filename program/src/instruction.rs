@@ -160,7 +160,7 @@ pub enum StakeInstruction {
     #[account(
         1,
         writable,
-        name = "validator_stake",
+        name = "stake",
         desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
     )]
     InactivateValidatorStake,

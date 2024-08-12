@@ -29,7 +29,7 @@ import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 export type InactivateValidatorStakeInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
-  TAccountValidatorStake extends string | IAccountMeta<string> = string,
+  TAccountStake extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -38,9 +38,9 @@ export type InactivateValidatorStakeInstruction<
       TAccountConfig extends string
         ? WritableAccount<TAccountConfig>
         : TAccountConfig,
-      TAccountValidatorStake extends string
-        ? WritableAccount<TAccountValidatorStake>
-        : TAccountValidatorStake,
+      TAccountStake extends string
+        ? WritableAccount<TAccountStake>
+        : TAccountStake,
       ...TRemainingAccounts,
     ]
   >;
@@ -72,23 +72,23 @@ export function getInactivateValidatorStakeInstructionDataCodec(): Codec<
 
 export type InactivateValidatorStakeInput<
   TAccountConfig extends string = string,
-  TAccountValidatorStake extends string = string,
+  TAccountStake extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
   /** Validator stake account (pda of `['stake::state::stake', validator, config]`) */
-  validatorStake: Address<TAccountValidatorStake>;
+  stake: Address<TAccountStake>;
 };
 
 export function getInactivateValidatorStakeInstruction<
   TAccountConfig extends string,
-  TAccountValidatorStake extends string,
+  TAccountStake extends string,
 >(
-  input: InactivateValidatorStakeInput<TAccountConfig, TAccountValidatorStake>
+  input: InactivateValidatorStakeInput<TAccountConfig, TAccountStake>
 ): InactivateValidatorStakeInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
-  TAccountValidatorStake
+  TAccountStake
 > {
   // Program address.
   const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
@@ -96,7 +96,7 @@ export function getInactivateValidatorStakeInstruction<
   // Original accounts.
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
-    validatorStake: { value: input.validatorStake ?? null, isWritable: true },
+    stake: { value: input.stake ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -105,16 +105,13 @@ export function getInactivateValidatorStakeInstruction<
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
-    accounts: [
-      getAccountMeta(accounts.config),
-      getAccountMeta(accounts.validatorStake),
-    ],
+    accounts: [getAccountMeta(accounts.config), getAccountMeta(accounts.stake)],
     programAddress,
     data: getInactivateValidatorStakeInstructionDataEncoder().encode({}),
   } as InactivateValidatorStakeInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
-    TAccountValidatorStake
+    TAccountStake
   >;
 
   return instruction;
@@ -129,7 +126,7 @@ export type ParsedInactivateValidatorStakeInstruction<
     /** Stake config account */
     config: TAccountMetas[0];
     /** Validator stake account (pda of `['stake::state::stake', validator, config]`) */
-    validatorStake: TAccountMetas[1];
+    stake: TAccountMetas[1];
   };
   data: InactivateValidatorStakeInstructionData;
 };
@@ -156,7 +153,7 @@ export function parseInactivateValidatorStakeInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       config: getNextAccount(),
-      validatorStake: getNextAccount(),
+      stake: getNextAccount(),
     },
     data: getInactivateValidatorStakeInstructionDataDecoder().decode(
       instruction.data
