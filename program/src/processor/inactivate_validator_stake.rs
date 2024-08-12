@@ -5,15 +5,15 @@ use solana_program::{
 
 use crate::{
     error::StakeError,
-    instruction::accounts::{Context, InactivateStakeAccounts},
-    processor::unpack_delegation_mut,
+    instruction::accounts::{Context, InactivateValidatorStakeAccounts},
+    processor::unpack_initialized_mut,
     require,
-    state::Config,
+    state::{find_validator_stake_pda, Config, ValidatorStake},
 };
 
 /// Move tokens from deactivating to inactive.
 ///
-/// Reduces the total voting power for the stake account and the total staked
+/// Reduces the total voting power for the validator stake account and the total staked
 /// amount on the system.
 ///
 /// NOTE: This instruction is permissionless, so anybody can finish
@@ -21,9 +21,9 @@ use crate::{
 ///
 /// 0. `[w]` Stake config account
 /// 1. `[w]` Validator stake account
-pub fn process_inactivate_stake(
+pub fn process_inactivate_validator_stake(
     program_id: &Pubkey,
-    ctx: Context<InactivateStakeAccounts>,
+    ctx: Context<InactivateValidatorStakeAccounts>,
 ) -> ProgramResult {
     // Account validation.
 
@@ -49,6 +49,7 @@ pub fn process_inactivate_stake(
 
     // stake
     // - owner must be the stake program
+    // - must be a ValidatorStake account
     // - must be initialized
     // - must have the correct derivation
 
@@ -59,13 +60,21 @@ pub fn process_inactivate_stake(
     );
 
     let stake_data = &mut ctx.accounts.stake.try_borrow_mut_data()?;
-    // checks that the stake account is initialized and has the correct derivation
-    let delegation = unpack_delegation_mut(
-        stake_data,
-        ctx.accounts.stake.key,
+    let validator_stake = unpack_initialized_mut::<ValidatorStake>(stake_data)?;
+
+    let (derivation, _) = find_validator_stake_pda(
+        &validator_stake.delegation.validator_vote,
         ctx.accounts.config.key,
         program_id,
-    )?;
+    );
+
+    require!(
+        ctx.accounts.stake.key == &derivation,
+        ProgramError::InvalidSeeds,
+        "stake",
+    );
+
+    let delegation = &mut validator_stake.delegation;
 
     // Inactivates the stake if elegible.
 

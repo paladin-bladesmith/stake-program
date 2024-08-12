@@ -218,7 +218,7 @@
       }
     },
     {
-      "name": "InactivateStake",
+      "name": "InactivateValidatorStake",
       "accounts": [
         {
           "name": "config",
@@ -233,7 +233,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
+            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
           ]
         }
       ],

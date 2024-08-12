@@ -146,7 +146,7 @@ pub enum StakeInstruction {
 
     /// Move tokens from deactivating to inactive.
     /// 
-    /// Reduces the total voting power for the stake account and the total staked
+    /// Reduces the total voting power for the validator stake account and the total staked
     /// amount on the system.
     /// 
     /// NOTE: This instruction is permissionless, so anybody can finish
@@ -161,9 +161,9 @@ pub enum StakeInstruction {
         1,
         writable,
         name = "stake",
-        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
+        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
     )]
-    InactivateStake,
+    InactivateValidatorStake,
 
     /// Withdraw inactive staked tokens from the vault.
     /// 
@@ -659,7 +659,7 @@ impl StakeInstruction {
                 data.extend_from_slice(&amount.to_le_bytes());
                 data
             }
-            StakeInstruction::InactivateStake => vec![4],
+            StakeInstruction::InactivateValidatorStake => vec![4],
             StakeInstruction::WithdrawInactiveStake(amount) => {
                 let mut data = Vec::with_capacity(9);
                 data.push(5);
@@ -751,8 +751,8 @@ impl StakeInstruction {
 
                 Ok(StakeInstruction::DeactivateStake(amount))
             }
-            // 4 - InactivateStake
-            Some((&4, _)) => Ok(StakeInstruction::InactivateStake),
+            // 4 - InactivateValidatorStake
+            Some((&4, _)) => Ok(StakeInstruction::InactivateValidatorStake),
             // 5 - WithdrawInactiveStake: u64 (8)
             Some((&5, rest)) if rest.len() == 8 => {
                 let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
@@ -883,7 +883,7 @@ mod tests {
 
     #[test]
     fn test_pack_unpack_inactivate_stake() {
-        let original = StakeInstruction::InactivateStake;
+        let original = StakeInstruction::InactivateValidatorStake;
         let packed = original.pack();
         let unpacked = StakeInstruction::unpack(&packed).unwrap();
         assert_eq!(original, unpacked);
