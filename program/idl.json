@@ -982,6 +982,85 @@
         "type": "u8",
         "value": 17
       }
+    },
+    {
+      "name": "SlashSolStakerStake",
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Stake config account"
+          ]
+        },
+        {
+          "name": "stake",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+          ]
+        },
+        {
+          "name": "validatorStake",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+          ]
+        },
+        {
+          "name": "slashAuthority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "Config slash authority"
+          ]
+        },
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Vault token account"
+          ]
+        },
+        {
+          "name": "mint",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Stake Token Mint"
+          ]
+        },
+        {
+          "name": "vaultAuthority",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Vault authority (pda of `['token-owner', config]`)"
+          ]
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Token program"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": "u64"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 18
+      }
     }
   ],
   "accounts": [

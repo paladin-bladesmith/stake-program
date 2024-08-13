@@ -146,7 +146,18 @@ kinobi.update(
       },
     },
     {
-      // Slash
+      // SlashSolStakerStake
+      select: "[instructionNode]slashSolStakerStake.[instructionArgumentNode]args",
+      transform: (node) => {
+        k.assertIsNode(node, "instructionArgumentNode");
+        return {
+          ...node,
+          name: "amount",
+        };
+      },
+    },
+    {
+      // SlashValidatorStake
       select: "[instructionNode]slashValidatorStake.[instructionArgumentNode]args",
       transform: (node) => {
         k.assertIsNode(node, "instructionArgumentNode");
