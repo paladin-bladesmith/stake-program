@@ -32,7 +32,7 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export type SlashInstruction<
+export type SlashValidatorStakeInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountStake extends string | IAccountMeta<string> = string,
@@ -74,11 +74,16 @@ export type SlashInstruction<
     ]
   >;
 
-export type SlashInstructionData = { discriminator: number; amount: bigint };
+export type SlashValidatorStakeInstructionData = {
+  discriminator: number;
+  amount: bigint;
+};
 
-export type SlashInstructionDataArgs = { amount: number | bigint };
+export type SlashValidatorStakeInstructionDataArgs = {
+  amount: number | bigint;
+};
 
-export function getSlashInstructionDataEncoder(): Encoder<SlashInstructionDataArgs> {
+export function getSlashValidatorStakeInstructionDataEncoder(): Encoder<SlashValidatorStakeInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
@@ -88,24 +93,24 @@ export function getSlashInstructionDataEncoder(): Encoder<SlashInstructionDataAr
   );
 }
 
-export function getSlashInstructionDataDecoder(): Decoder<SlashInstructionData> {
+export function getSlashValidatorStakeInstructionDataDecoder(): Decoder<SlashValidatorStakeInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
     ['amount', getU64Decoder()],
   ]);
 }
 
-export function getSlashInstructionDataCodec(): Codec<
-  SlashInstructionDataArgs,
-  SlashInstructionData
+export function getSlashValidatorStakeInstructionDataCodec(): Codec<
+  SlashValidatorStakeInstructionDataArgs,
+  SlashValidatorStakeInstructionData
 > {
   return combineCodec(
-    getSlashInstructionDataEncoder(),
-    getSlashInstructionDataDecoder()
+    getSlashValidatorStakeInstructionDataEncoder(),
+    getSlashValidatorStakeInstructionDataDecoder()
   );
 }
 
-export type SlashInput<
+export type SlashValidatorStakeInput<
   TAccountConfig extends string = string,
   TAccountStake extends string = string,
   TAccountSlashAuthority extends string = string,
@@ -116,7 +121,7 @@ export type SlashInput<
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
-  /** Validator stake account (pda of `['stake::state::stake', validator, config]`) */
+  /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
   stake: Address<TAccountStake>;
   /** Config slash authority */
   slashAuthority: TransactionSigner<TAccountSlashAuthority>;
@@ -128,10 +133,10 @@ export type SlashInput<
   vaultAuthority: Address<TAccountVaultAuthority>;
   /** Token program */
   tokenProgram?: Address<TAccountTokenProgram>;
-  amount: SlashInstructionDataArgs['amount'];
+  amount: SlashValidatorStakeInstructionDataArgs['amount'];
 };
 
-export function getSlashInstruction<
+export function getSlashValidatorStakeInstruction<
   TAccountConfig extends string,
   TAccountStake extends string,
   TAccountSlashAuthority extends string,
@@ -140,7 +145,7 @@ export function getSlashInstruction<
   TAccountVaultAuthority extends string,
   TAccountTokenProgram extends string,
 >(
-  input: SlashInput<
+  input: SlashValidatorStakeInput<
     TAccountConfig,
     TAccountStake,
     TAccountSlashAuthority,
@@ -149,7 +154,7 @@ export function getSlashInstruction<
     TAccountVaultAuthority,
     TAccountTokenProgram
   >
-): SlashInstruction<
+): SlashValidatorStakeInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountStake,
@@ -198,10 +203,10 @@ export function getSlashInstruction<
       getAccountMeta(accounts.tokenProgram),
     ],
     programAddress,
-    data: getSlashInstructionDataEncoder().encode(
-      args as SlashInstructionDataArgs
+    data: getSlashValidatorStakeInstructionDataEncoder().encode(
+      args as SlashValidatorStakeInstructionDataArgs
     ),
-  } as SlashInstruction<
+  } as SlashValidatorStakeInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountStake,
@@ -215,7 +220,7 @@ export function getSlashInstruction<
   return instruction;
 }
 
-export type ParsedSlashInstruction<
+export type ParsedSlashValidatorStakeInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
@@ -223,7 +228,7 @@ export type ParsedSlashInstruction<
   accounts: {
     /** Stake config account */
     config: TAccountMetas[0];
-    /** Validator stake account (pda of `['stake::state::stake', validator, config]`) */
+    /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
     stake: TAccountMetas[1];
     /** Config slash authority */
     slashAuthority: TAccountMetas[2];
@@ -236,17 +241,17 @@ export type ParsedSlashInstruction<
     /** Token program */
     tokenProgram: TAccountMetas[6];
   };
-  data: SlashInstructionData;
+  data: SlashValidatorStakeInstructionData;
 };
 
-export function parseSlashInstruction<
+export function parseSlashValidatorStakeInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedSlashInstruction<TProgram, TAccountMetas> {
+): ParsedSlashValidatorStakeInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 7) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -268,6 +273,8 @@ export function parseSlashInstruction<
       vaultAuthority: getNextAccount(),
       tokenProgram: getNextAccount(),
     },
-    data: getSlashInstructionDataDecoder().decode(instruction.data),
+    data: getSlashValidatorStakeInstructionDataDecoder().decode(
+      instruction.data
+    ),
   };
 }

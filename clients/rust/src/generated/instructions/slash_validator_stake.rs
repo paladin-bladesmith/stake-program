@@ -9,10 +9,10 @@ use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 
 /// Accounts.
-pub struct Slash {
+pub struct SlashValidatorStake {
     /// Stake config account
     pub config: solana_program::pubkey::Pubkey,
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
     pub stake: solana_program::pubkey::Pubkey,
     /// Config slash authority
     pub slash_authority: solana_program::pubkey::Pubkey,
@@ -26,17 +26,17 @@ pub struct Slash {
     pub token_program: solana_program::pubkey::Pubkey,
 }
 
-impl Slash {
+impl SlashValidatorStake {
     pub fn instruction(
         &self,
-        args: SlashInstructionArgs,
+        args: SlashValidatorStakeInstructionArgs,
     ) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(args, &[])
     }
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        args: SlashInstructionArgs,
+        args: SlashValidatorStakeInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
@@ -66,7 +66,9 @@ impl Slash {
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = SlashInstructionData::new().try_to_vec().unwrap();
+        let mut data = SlashValidatorStakeInstructionData::new()
+            .try_to_vec()
+            .unwrap();
         let mut args = args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -79,17 +81,17 @@ impl Slash {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct SlashInstructionData {
+pub struct SlashValidatorStakeInstructionData {
     discriminator: u8,
 }
 
-impl SlashInstructionData {
+impl SlashValidatorStakeInstructionData {
     pub fn new() -> Self {
         Self { discriminator: 8 }
     }
 }
 
-impl Default for SlashInstructionData {
+impl Default for SlashValidatorStakeInstructionData {
     fn default() -> Self {
         Self::new()
     }
@@ -97,11 +99,11 @@ impl Default for SlashInstructionData {
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct SlashInstructionArgs {
+pub struct SlashValidatorStakeInstructionArgs {
     pub amount: u64,
 }
 
-/// Instruction builder for `Slash`.
+/// Instruction builder for `SlashValidatorStake`.
 ///
 /// ### Accounts:
 ///
@@ -113,7 +115,7 @@ pub struct SlashInstructionArgs {
 ///   5. `[]` vault_authority
 ///   6. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
 #[derive(Clone, Debug, Default)]
-pub struct SlashBuilder {
+pub struct SlashValidatorStakeBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
     stake: Option<solana_program::pubkey::Pubkey>,
     slash_authority: Option<solana_program::pubkey::Pubkey>,
@@ -125,7 +127,7 @@ pub struct SlashBuilder {
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl SlashBuilder {
+impl SlashValidatorStakeBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -135,7 +137,7 @@ impl SlashBuilder {
         self.config = Some(config);
         self
     }
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
     #[inline(always)]
     pub fn stake(&mut self, stake: solana_program::pubkey::Pubkey) -> &mut Self {
         self.stake = Some(stake);
@@ -203,7 +205,7 @@ impl SlashBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = Slash {
+        let accounts = SlashValidatorStake {
             config: self.config.expect("config is not set"),
             stake: self.stake.expect("stake is not set"),
             slash_authority: self.slash_authority.expect("slash_authority is not set"),
@@ -214,7 +216,7 @@ impl SlashBuilder {
                 "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
             )),
         };
-        let args = SlashInstructionArgs {
+        let args = SlashValidatorStakeInstructionArgs {
             amount: self.amount.clone().expect("amount is not set"),
         };
 
@@ -222,11 +224,11 @@ impl SlashBuilder {
     }
 }
 
-/// `slash` CPI accounts.
-pub struct SlashCpiAccounts<'a, 'b> {
+/// `slash_validator_stake` CPI accounts.
+pub struct SlashValidatorStakeCpiAccounts<'a, 'b> {
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
     pub stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Config slash authority
     pub slash_authority: &'b solana_program::account_info::AccountInfo<'a>,
@@ -240,13 +242,13 @@ pub struct SlashCpiAccounts<'a, 'b> {
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `slash` CPI instruction.
-pub struct SlashCpi<'a, 'b> {
+/// `slash_validator_stake` CPI instruction.
+pub struct SlashValidatorStakeCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
     pub stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Config slash authority
     pub slash_authority: &'b solana_program::account_info::AccountInfo<'a>,
@@ -259,14 +261,14 @@ pub struct SlashCpi<'a, 'b> {
     /// Token program
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
-    pub __args: SlashInstructionArgs,
+    pub __args: SlashValidatorStakeInstructionArgs,
 }
 
-impl<'a, 'b> SlashCpi<'a, 'b> {
+impl<'a, 'b> SlashValidatorStakeCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: SlashCpiAccounts<'a, 'b>,
-        args: SlashInstructionArgs,
+        accounts: SlashValidatorStakeCpiAccounts<'a, 'b>,
+        args: SlashValidatorStakeInstructionArgs,
     ) -> Self {
         Self {
             __program: program,
@@ -349,7 +351,9 @@ impl<'a, 'b> SlashCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = SlashInstructionData::new().try_to_vec().unwrap();
+        let mut data = SlashValidatorStakeInstructionData::new()
+            .try_to_vec()
+            .unwrap();
         let mut args = self.__args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -379,7 +383,7 @@ impl<'a, 'b> SlashCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `Slash` via CPI.
+/// Instruction builder for `SlashValidatorStake` via CPI.
 ///
 /// ### Accounts:
 ///
@@ -391,13 +395,13 @@ impl<'a, 'b> SlashCpi<'a, 'b> {
 ///   5. `[]` vault_authority
 ///   6. `[]` token_program
 #[derive(Clone, Debug)]
-pub struct SlashCpiBuilder<'a, 'b> {
-    instruction: Box<SlashCpiBuilderInstruction<'a, 'b>>,
+pub struct SlashValidatorStakeCpiBuilder<'a, 'b> {
+    instruction: Box<SlashValidatorStakeCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> SlashCpiBuilder<'a, 'b> {
+impl<'a, 'b> SlashValidatorStakeCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(SlashCpiBuilderInstruction {
+        let instruction = Box::new(SlashValidatorStakeCpiBuilderInstruction {
             __program: program,
             config: None,
             stake: None,
@@ -420,7 +424,7 @@ impl<'a, 'b> SlashCpiBuilder<'a, 'b> {
         self.instruction.config = Some(config);
         self
     }
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
     #[inline(always)]
     pub fn stake(&mut self, stake: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.stake = Some(stake);
@@ -511,10 +515,10 @@ impl<'a, 'b> SlashCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let args = SlashInstructionArgs {
+        let args = SlashValidatorStakeInstructionArgs {
             amount: self.instruction.amount.clone().expect("amount is not set"),
         };
-        let instruction = SlashCpi {
+        let instruction = SlashValidatorStakeCpi {
             __program: self.instruction.__program,
 
             config: self.instruction.config.expect("config is not set"),
@@ -549,7 +553,7 @@ impl<'a, 'b> SlashCpiBuilder<'a, 'b> {
 }
 
 #[derive(Clone, Debug)]
-struct SlashCpiBuilderInstruction<'a, 'b> {
+struct SlashValidatorStakeCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
