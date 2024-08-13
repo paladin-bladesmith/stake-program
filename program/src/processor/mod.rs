@@ -435,7 +435,7 @@ struct SlashArgs<'a, 'b> {
 }
 
 /// Processes the slash for a stake delegation.
-fn process_slash_for_delegation(args: SlashArgs) -> ProgramResult {
+fn process_slash_for_delegation(args: SlashArgs) -> Result<u64, ProgramError> {
     let SlashArgs {
         config,
         delegation,
@@ -541,5 +541,5 @@ fn process_slash_for_delegation(args: SlashArgs) -> ProgramResult {
         )?;
     }
 
-    Ok(())
+    Ok(active_stake_to_slash)
 }

@@ -172,7 +172,7 @@ pub fn process_slash_sol_staker_stake(
     // This will burn the given amount of tokens from the vault account, and
     // update the stake delegation on the stake and config accounts.
 
-    process_slash_for_delegation(SlashArgs {
+    let slashed_amount = process_slash_for_delegation(SlashArgs {
         config,
         delegation: &mut stake.delegation,
         mint_info: ctx.accounts.mint,
@@ -183,11 +183,11 @@ pub fn process_slash_sol_staker_stake(
         signer_seeds: &signer_seeds,
     })?;
 
-    // Decreases the stake amount on the corresponding validator stake account.
+    // Decreases the slashed amount on the corresponding validator stake account.
 
     validator_stake.total_staked_token_amount = validator_stake
         .total_staked_token_amount
-        .checked_sub(amount)
+        .checked_sub(slashed_amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
     Ok(())
