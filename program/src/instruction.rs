@@ -655,6 +655,60 @@ pub enum StakeInstruction {
         desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
     )]
     InactivateSolStakerStake,
+
+    /// Slashes a validator stake account for the given amount.
+    /// 
+    /// Burns the given amount of tokens from the vault account, and reduces the
+    /// amount in the stake account.
+    /// 
+    /// Instruction data: amount of tokens to slash.
+    #[account(
+        0,
+        writable,
+        name = "config",
+        desc = "Stake config account"
+    )]
+    #[account(
+        1,
+        writable,
+        name = "stake",
+        desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+    )]
+    #[account(
+        2,
+        writable,
+        name = "validator_stake",
+        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+    )]
+    #[account(
+        3,
+        signer,
+        name = "slash_authority",
+        desc = "Config slash authority"
+    )]
+    #[account(
+        4,
+        writable,
+        name = "vault",
+        desc = "Vault token account"
+    )]
+    #[account(
+        5,
+        writable,
+        name = "mint",
+        desc = "Stake Token Mint"
+    )]
+    #[account(
+        6,
+        name = "vault_authority",
+        desc = "Vault authority (pda of `['token-owner', config]`)"
+    )]
+    #[account(
+        7,
+        name = "token_program",
+        desc = "Token program"
+    )]
+    SlashSolStakerStake(u64),
 }
 
 impl StakeInstruction {
@@ -747,6 +801,12 @@ impl StakeInstruction {
             StakeInstruction::HarvestSolStakerRewards => vec![15],
             StakeInstruction::HarvestSyncRewards => vec![16],
             StakeInstruction::InactivateSolStakerStake => vec![17],
+            StakeInstruction::SlashSolStakerStake(amount) => {
+                let mut data = Vec::with_capacity(9);
+                data.push(18);
+                data.extend_from_slice(&amount.to_le_bytes());
+                data
+            }
         }
     }
 
@@ -848,6 +908,12 @@ impl StakeInstruction {
             Some((&16, _)) => Ok(StakeInstruction::HarvestSyncRewards),
             // 17 - InactivateSolStakerStake
             Some((&17, _)) => Ok(StakeInstruction::InactivateSolStakerStake),
+            // 18 - SlashSolStakerStake: u64 (8)
+            Some((&18, rest)) if rest.len() == 8 => {
+                let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
+
+                Ok(StakeInstruction::SlashSolStakerStake(amount))
+            }
             _ => Err(ProgramError::InvalidInstructionData),
         }
     }
