@@ -13,7 +13,8 @@ use spl_token_2022::{
 use crate::{
     err,
     error::StakeError,
-    instruction::accounts::{Context, SlashAccounts},
+    instruction::accounts::{Context, SlashValidatorStakeAccounts},
+    processor::unpack_initialized_mut,
     require,
     state::{
         create_vault_pda, find_validator_stake_pda, get_vault_pda_signer_seeds, Config,
@@ -21,13 +22,13 @@ use crate::{
     },
 };
 
-/// Slashes a stake account for the given amount
+/// Slashes a validator stake account for the given amount
 ///
 /// Burns the given amount of tokens from the vault account, and reduces the
 /// amount in the stake account.
 ///
 /// 0. `[w]` Config account
-/// 1. `[w]` Stake account
+/// 1. `[w]` Validator stake account
 /// 2. `[s]` Slash authority
 /// 3. `[w]` Vault token account
 /// 4. `[]` Stake Token Mint
@@ -35,9 +36,9 @@ use crate::{
 /// 6. `[]` SPL Token program
 ///
 /// Instruction data: amount of tokens to slash
-pub fn process_slash(
+pub fn process_slash_validator_stake(
     program_id: &Pubkey,
-    ctx: Context<SlashAccounts>,
+    ctx: Context<SlashValidatorStakeAccounts>,
     amount: u64,
 ) -> ProgramResult {
     // Account validation.
@@ -64,6 +65,7 @@ pub fn process_slash(
 
     // stake
     // - owner must be the stake program
+    // - must be a ValidatorStake account
     // - must be initialized
     // - derivation must match (validates the config account)
 
@@ -74,17 +76,13 @@ pub fn process_slash(
     );
 
     let mut stake_data = ctx.accounts.stake.try_borrow_mut_data()?;
-    let stake = bytemuck::try_from_bytes_mut::<ValidatorStake>(&mut stake_data)
-        .map_err(|_error| ProgramError::InvalidAccountData)?;
+    let stake = unpack_initialized_mut::<ValidatorStake>(&mut stake_data)?;
 
-    require!(
-        stake.is_initialized(),
-        ProgramError::UninitializedAccount,
-        "stake",
+    let (derivation, _) = find_validator_stake_pda(
+        &stake.delegation.validator_vote,
+        ctx.accounts.config.key,
+        program_id,
     );
-
-    let (derivation, _) =
-        find_validator_stake_pda(&stake.validator_vote, ctx.accounts.config.key, program_id);
 
     require!(
         ctx.accounts.stake.key == &derivation,
@@ -169,20 +167,21 @@ pub fn process_slash(
     );
 
     // slashes active stake
-    let active_stake_to_slash = min(amount, stake.amount);
-    stake.amount = stake
+    let active_stake_to_slash = min(amount, stake.delegation.amount);
+    stake.delegation.amount = stake
+        .delegation
         .amount
         .checked_sub(active_stake_to_slash)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
-    if stake.deactivating_amount > stake.amount {
+    if stake.delegation.deactivating_amount > stake.delegation.amount {
         // adjust the deactivating amount if it's greater than the "active" stake
         // after slashing
-        stake.deactivating_amount = stake.amount;
+        stake.delegation.deactivating_amount = stake.delegation.amount;
         // clear the deactivation timestamp if there in no deactivating
         // amount left
-        if stake.deactivating_amount == 0 {
-            stake.deactivation_timestamp = None;
+        if stake.delegation.deactivating_amount == 0 {
+            stake.delegation.deactivation_timestamp = None;
         }
     }
 

@@ -15,8 +15,9 @@ use crate::{
             HarvestValidatorRewardsAccounts, InactivateSolStakerStakeAccounts,
             InactivateValidatorStakeAccounts, InitializeConfigAccounts,
             InitializeSolStakerStakeAccounts, InitializeValidatorStakeAccounts,
-            SetAuthorityAccounts, SolStakerStakeTokensAccounts, SyncSolStakeAccounts,
-            UpdateConfigAccounts, ValidatorStakeTokensAccounts, WithdrawInactiveStakeAccounts,
+            SetAuthorityAccounts, SlashValidatorStakeAccounts, SolStakerStakeTokensAccounts,
+            SyncSolStakeAccounts, UpdateConfigAccounts, ValidatorStakeTokensAccounts,
+            WithdrawInactiveStakeAccounts,
         },
         StakeInstruction,
     },
@@ -31,6 +32,7 @@ mod deactivate_stake;
 mod distribute_rewards;
 mod harvest_holder_rewards;
 mod harvest_sol_staker_rewards;
+mod harvest_sync_rewards;
 mod harvest_validator_rewards;
 mod inactivate_sol_staker_stake;
 mod inactivate_validator_stake;
@@ -38,8 +40,7 @@ mod initialize_config;
 mod initialize_sol_staker_stake;
 mod initialize_validator_stake;
 mod set_authority;
-//mod slash;
-mod harvest_sync_rewards;
+mod slash_validator_stake;
 mod sol_staker_stake_tokens;
 mod sync_sol_stake;
 mod update_config;
@@ -121,11 +122,13 @@ pub fn process_instruction<'a>(
                 authority,
             )
         }
-        StakeInstruction::Slash(_amount) => {
-            msg!("Instruction: Slash");
-            // Note: needs to be refactored
-            //slash::process_slash(program_id, SlashAccounts::context(accounts)?, amount)
-            todo!();
+        StakeInstruction::SlashValidatorStake(amount) => {
+            msg!("Instruction: SlashValidatorStake");
+            slash_validator_stake::process_slash_validator_stake(
+                program_id,
+                SlashValidatorStakeAccounts::context(accounts)?,
+                amount,
+            )
         }
         StakeInstruction::ValidatorStakeTokens(amount) => {
             msg!("Instruction: ValidatorStakeTokens");

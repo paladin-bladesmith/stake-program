@@ -6,7 +6,7 @@ use borsh::BorshSerialize;
 use paladin_stake_program_client::{
     accounts::{Config, ValidatorStake},
     errors::PaladinStakeProgramError,
-    instructions::SlashBuilder,
+    instructions::SlashValidatorStakeBuilder,
     pdas::{find_validator_stake_pda, find_vault_pda},
     NullableU64,
 };
@@ -27,7 +27,7 @@ use solana_sdk::{
 use spl_token_2022::extension::StateWithExtensions;
 
 #[tokio::test]
-async fn slash() {
+async fn slash_validator_stake() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -61,19 +61,19 @@ async fn slash() {
     .await
     .unwrap();
 
-    // And we set 50 tokens to the stake account.
+    // And we set 50 tokens to the validator stake account.
 
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
-    stake_account.amount = 50;
+    stake_account.delegation.amount = 50;
 
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
 
     // When we slash 50 tokens.
 
-    let slash_ix = SlashBuilder::new()
+    let slash_ix = SlashValidatorStakeBuilder::new()
         .config(config_manager.config)
         .stake(stake_manager.stake)
         .slash_authority(config_manager.authority.pubkey())
@@ -105,15 +105,15 @@ async fn slash() {
     let config = Config::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(config.token_amount_delegated, 50);
 
-    // And the slashed stake account has no tokens.
+    // And the slashed validator stake account has no tokens.
 
     let account = get_account!(context, stake_manager.stake);
     let stake = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake.amount, 0);
+    assert_eq!(stake.delegation.amount, 0);
 }
 
 #[tokio::test]
-async fn fail_slash_with_zero_amount() {
+async fn fail_slash_validator_stake_with_zero_amount() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -147,19 +147,19 @@ async fn fail_slash_with_zero_amount() {
     .await
     .unwrap();
 
-    // And we set 50 tokens to the stake account.
+    // And we set 50 tokens to the validator stake account.
 
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
-    stake_account.amount = 50;
+    stake_account.delegation.amount = 50;
 
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
 
     // When we try to slash 0 tokens.
 
-    let slash_ix = SlashBuilder::new()
+    let slash_ix = SlashValidatorStakeBuilder::new()
         .config(config_manager.config)
         .stake(stake_manager.stake)
         .slash_authority(config_manager.authority.pubkey())
@@ -188,7 +188,7 @@ async fn fail_slash_with_zero_amount() {
 }
 
 #[tokio::test]
-async fn slash_with_no_staked_amount() {
+async fn slash_validator_stake_with_no_staked_amount() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -223,9 +223,9 @@ async fn slash_with_no_staked_amount() {
     .await
     .unwrap();
 
-    // When we slash 50 tokens from the stake account without staked tokens.
+    // When we slash 50 tokens from the validator stake account without staked tokens.
 
-    let slash_ix = SlashBuilder::new()
+    let slash_ix = SlashValidatorStakeBuilder::new()
         .config(config_manager.config)
         .stake(stake_manager.stake)
         .slash_authority(config_manager.authority.pubkey())
@@ -253,7 +253,7 @@ async fn slash_with_no_staked_amount() {
 }
 
 #[tokio::test]
-async fn fail_slash_with_invalid_slash_authority() {
+async fn fail_slash_validator_stake_with_invalid_slash_authority() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -287,12 +287,12 @@ async fn fail_slash_with_invalid_slash_authority() {
     .await
     .unwrap();
 
-    // And we set 50 tokens to the stake account.
+    // And we set 50 tokens to the validator stake account.
 
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
-    stake_account.amount = 50;
+    stake_account.delegation.amount = 50;
 
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
@@ -301,7 +301,7 @@ async fn fail_slash_with_invalid_slash_authority() {
 
     let fake_authority = Keypair::new();
 
-    let slash_ix = SlashBuilder::new()
+    let slash_ix = SlashValidatorStakeBuilder::new()
         .config(config_manager.config)
         .stake(stake_manager.stake)
         .slash_authority(fake_authority.pubkey())
@@ -330,7 +330,7 @@ async fn fail_slash_with_invalid_slash_authority() {
 }
 
 #[tokio::test]
-async fn fail_slash_with_incorrect_vault_account() {
+async fn fail_slash_validator_stake_with_incorrect_vault_account() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -364,12 +364,12 @@ async fn fail_slash_with_incorrect_vault_account() {
     .await
     .unwrap();
 
-    // And we set 50 tokens to the stake account.
+    // And we set 50 tokens to the validator stake account.
 
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
-    stake_account.amount = 50;
+    stake_account.delegation.amount = 50;
 
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
@@ -400,7 +400,7 @@ async fn fail_slash_with_incorrect_vault_account() {
 
     // When we try to slash with the "fake" vault account.
 
-    let slash_ix = SlashBuilder::new()
+    let slash_ix = SlashValidatorStakeBuilder::new()
         .config(config_manager.config)
         .stake(stake_manager.stake)
         .slash_authority(config_manager.authority.pubkey())
@@ -429,7 +429,7 @@ async fn fail_slash_with_incorrect_vault_account() {
 }
 
 #[tokio::test]
-async fn fail_slash_with_uninitialized_stake_account() {
+async fn fail_slash_validator_stake_with_uninitialized_stake_account() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -462,7 +462,7 @@ async fn fail_slash_with_uninitialized_stake_account() {
     .await
     .unwrap();
 
-    // And an uninitialized stake account.
+    // And an uninitialized validator stake account.
 
     let validator_vote = Pubkey::new_unique();
     let (stake, _) = find_validator_stake_pda(&validator_vote, &config_manager.config);
@@ -479,7 +479,7 @@ async fn fail_slash_with_uninitialized_stake_account() {
 
     // When we try to slash with an uninitialized stake account.
 
-    let slash_ix = SlashBuilder::new()
+    let slash_ix = SlashValidatorStakeBuilder::new()
         .config(config_manager.config)
         .stake(stake)
         .slash_authority(config_manager.authority.pubkey())
@@ -508,7 +508,7 @@ async fn fail_slash_with_uninitialized_stake_account() {
 }
 
 #[tokio::test]
-async fn fail_slash_with_uninitialized_config_account() {
+async fn fail_slash_validator_stake_with_uninitialized_config_account() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -542,12 +542,12 @@ async fn fail_slash_with_uninitialized_config_account() {
     .await
     .unwrap();
 
-    // And we set 50 tokens to the stake account.
+    // And we set 50 tokens to the validator stake account.
 
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
-    stake_account.amount = 50;
+    stake_account.delegation.amount = 50;
 
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
@@ -566,7 +566,7 @@ async fn fail_slash_with_uninitialized_config_account() {
 
     // When we try to slash with an uninitialized config account.
 
-    let slash_ix = SlashBuilder::new()
+    let slash_ix = SlashValidatorStakeBuilder::new()
         .config(config_manager.config)
         .stake(stake_manager.stake)
         .slash_authority(config_manager.authority.pubkey())
@@ -595,7 +595,7 @@ async fn fail_slash_with_uninitialized_config_account() {
 }
 
 #[tokio::test]
-async fn fail_slash_with_wrong_config_account() {
+async fn fail_slash_validator_stake_with_wrong_config_account() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -629,12 +629,12 @@ async fn fail_slash_with_wrong_config_account() {
     .await
     .unwrap();
 
-    // And we set 100 tokens to the stake account.
+    // And we set 100 tokens to the validator stake account.
 
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
-    stake_account.amount = 50;
+    stake_account.delegation.amount = 50;
 
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
@@ -645,7 +645,7 @@ async fn fail_slash_with_wrong_config_account() {
 
     // When we try to slash with the wrong config account.
 
-    let slash_ix = SlashBuilder::new()
+    let slash_ix = SlashValidatorStakeBuilder::new()
         .config(another_config_manager.config)
         .stake(stake_manager.stake)
         .slash_authority(another_config_manager.authority.pubkey())
@@ -674,7 +674,7 @@ async fn fail_slash_with_wrong_config_account() {
 }
 
 #[tokio::test]
-async fn fail_slash_with_insufficient_total_amount_delegated() {
+async fn fail_slash_validator_stake_with_insufficient_total_amount_delegated() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -708,19 +708,19 @@ async fn fail_slash_with_insufficient_total_amount_delegated() {
     .await
     .unwrap();
 
-    // And we set 100 tokens to the stake account.
+    // And we set 100 tokens to the validator stake account.
 
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 100
-    stake_account.amount = 100;
+    stake_account.delegation.amount = 100;
 
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
 
     // When we try to slash 100 tokens from the stake account.
 
-    let slash_ix = SlashBuilder::new()
+    let slash_ix = SlashValidatorStakeBuilder::new()
         .config(config_manager.config)
         .stake(stake_manager.stake)
         .slash_authority(config_manager.authority.pubkey())
@@ -749,7 +749,7 @@ async fn fail_slash_with_insufficient_total_amount_delegated() {
 }
 
 #[tokio::test]
-async fn slash_updating_deactivating_amount() {
+async fn slash_validator_stake_updating_deactivating_amount() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -783,30 +783,30 @@ async fn slash_updating_deactivating_amount() {
     .await
     .unwrap();
 
-    // And we set 100 tokens to the stake account (50 staked, 25 inactive and
+    // And we set 100 tokens to the validator stake account (50 staked, 25 inactive and
     // 25 deactivating).
 
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 75, inactive amount to 25 and
     // deactivating amount to 25
-    stake_account.amount = 75;
-    stake_account.inactive_amount = 25;
-    stake_account.deactivating_amount = 25;
+    stake_account.delegation.amount = 75;
+    stake_account.delegation.inactive_amount = 25;
+    stake_account.delegation.deactivating_amount = 25;
     let timestamp = context
         .banks_client
         .get_sysvar::<Clock>()
         .await
         .unwrap()
         .unix_timestamp;
-    stake_account.deactivation_timestamp = NullableU64::from(timestamp as u64);
+    stake_account.delegation.deactivation_timestamp = NullableU64::from(timestamp as u64);
 
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
 
     // When we slash 75 tokens from the stake account.
 
-    let slash_ix = SlashBuilder::new()
+    let slash_ix = SlashValidatorStakeBuilder::new()
         .config(config_manager.config)
         .stake(stake_manager.stake)
         .slash_authority(config_manager.authority.pubkey())
@@ -842,14 +842,14 @@ async fn slash_updating_deactivating_amount() {
 
     let account = get_account!(context, stake_manager.stake);
     let stake = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake.amount, 0);
-    assert_eq!(stake.deactivating_amount, 0);
-    assert!(stake.deactivation_timestamp.value().is_none());
-    assert_eq!(stake.inactive_amount, 25);
+    assert_eq!(stake.delegation.amount, 0);
+    assert_eq!(stake.delegation.deactivating_amount, 0);
+    assert!(stake.delegation.deactivation_timestamp.value().is_none());
+    assert_eq!(stake.delegation.inactive_amount, 25);
 }
 
 #[tokio::test]
-async fn slash_with_insufficient_stake_amount() {
+async fn slash_validator_stake_with_insufficient_stake_amount() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -858,12 +858,12 @@ async fn slash_with_insufficient_stake_amount() {
     .start_with_context()
     .await;
 
-    // Given a config and stake accounts.
+    // Given a config and validator stake accounts.
 
     let config_manager = ConfigManager::new(&mut context).await;
     let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
-    // And we set 100 tokens to the vault account.
+    // And we set 1000 tokens to the vault account.
 
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
@@ -888,15 +888,15 @@ async fn slash_with_insufficient_stake_amount() {
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 500, inactive amount to 100
-    stake_account.amount = 500;
-    stake_account.inactive_amount = 100;
+    stake_account.delegation.amount = 500;
+    stake_account.delegation.inactive_amount = 100;
 
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
 
-    // When we try to slash 100 tokens from the stake account.
+    // When we try to slash 600 tokens from the stake account.
 
-    let slash_ix = SlashBuilder::new()
+    let slash_ix = SlashValidatorStakeBuilder::new()
         .config(config_manager.config)
         .stake(stake_manager.stake)
         .slash_authority(config_manager.authority.pubkey())
@@ -922,7 +922,7 @@ async fn slash_with_insufficient_stake_amount() {
         StateWithExtensions::<spl_token_2022::state::Account>::unpack(&account.data).unwrap();
     assert_eq!(vault.base.amount, 500);
 
-    // And the config account has 500 tokens delegated.
+    // And the config account has 400 tokens delegated.
 
     let account = get_account!(context, config_manager.config);
     let config = Config::from_bytes(account.data.as_ref()).unwrap();
@@ -932,7 +932,7 @@ async fn slash_with_insufficient_stake_amount() {
 
     let account = get_account!(context, stake_manager.stake);
     let stake = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake.amount, 0);
-    assert_eq!(stake.deactivating_amount, 0);
-    assert_eq!(stake.inactive_amount, 100);
+    assert_eq!(stake.delegation.amount, 0);
+    assert_eq!(stake.delegation.deactivating_amount, 0);
+    assert_eq!(stake.delegation.inactive_amount, 100);
 }

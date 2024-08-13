@@ -147,7 +147,7 @@ kinobi.update(
     },
     {
       // Slash
-      select: "[instructionNode]slash.[instructionArgumentNode]args",
+      select: "[instructionNode]slashValidatorStake.[instructionArgumentNode]args",
       transform: (node) => {
         k.assertIsNode(node, "instructionArgumentNode");
         return {
