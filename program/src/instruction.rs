@@ -628,6 +628,33 @@ pub enum StakeInstruction {
         desc = "Paladin SOL Stake View program"
     )]
     HarvestSyncRewards,
+
+    /// Move tokens from deactivating to inactive.
+    /// 
+    /// Reduces the total voting power for the SOL staker stake account and the total staked
+    /// amount on the correspondent validator stake and config accounts.
+    /// 
+    /// NOTE: This instruction is permissionless, so anybody can finish
+    /// deactivating someone's tokens, preparing them to be withdrawn.
+    #[account(
+        0,
+        writable,
+        name = "config",
+        desc = "Stake config account"
+    )]
+    #[account(
+        1,
+        writable,
+        name = "stake",
+        desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+    )]
+    #[account(
+        2,
+        writable,
+        name = "validator_stake",
+        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+    )]
+    InactivateSolStakerStake,
 }
 
 impl StakeInstruction {
@@ -719,6 +746,7 @@ impl StakeInstruction {
             StakeInstruction::SyncSolStake => vec![14],
             StakeInstruction::HarvestSolStakerRewards => vec![15],
             StakeInstruction::HarvestSyncRewards => vec![16],
+            StakeInstruction::InactivateSolStakerStake => vec![17],
         }
     }
 
@@ -816,7 +844,10 @@ impl StakeInstruction {
             Some((&14, _)) => Ok(StakeInstruction::SyncSolStake),
             // 15 - HarvestSolStakerRewards
             Some((&15, _)) => Ok(StakeInstruction::HarvestSolStakerRewards),
+            // 16 - HarvestSyncRewards
             Some((&16, _)) => Ok(StakeInstruction::HarvestSyncRewards),
+            // 17 - InactivateSolStakerStake
+            Some((&17, _)) => Ok(StakeInstruction::InactivateSolStakerStake),
             _ => Err(ProgramError::InvalidInstructionData),
         }
     }

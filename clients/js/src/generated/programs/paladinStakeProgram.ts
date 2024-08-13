@@ -14,6 +14,7 @@ import {
   type ParsedHarvestSolStakerRewardsInstruction,
   type ParsedHarvestSyncRewardsInstruction,
   type ParsedHarvestValidatorRewardsInstruction,
+  type ParsedInactivateSolStakerStakeInstruction,
   type ParsedInactivateValidatorStakeInstruction,
   type ParsedInitializeConfigInstruction,
   type ParsedInitializeSolStakerStakeInstruction,
@@ -54,6 +55,7 @@ export enum PaladinStakeProgramInstruction {
   SyncSolStake,
   HarvestSolStakerRewards,
   HarvestSyncRewards,
+  InactivateSolStakerStake,
 }
 
 export function identifyPaladinStakeProgramInstruction(
@@ -111,6 +113,9 @@ export function identifyPaladinStakeProgramInstruction(
   }
   if (containsBytes(data, getU8Encoder().encode(16), 0)) {
     return PaladinStakeProgramInstruction.HarvestSyncRewards;
+  }
+  if (containsBytes(data, getU8Encoder().encode(17), 0)) {
+    return PaladinStakeProgramInstruction.InactivateSolStakerStake;
   }
   throw new Error(
     'The provided instruction could not be identified as a paladinStakeProgram instruction.'
@@ -170,4 +175,7 @@ export type ParsedPaladinStakeProgramInstruction<
     } & ParsedHarvestSolStakerRewardsInstruction<TProgram>)
   | ({
       instructionType: PaladinStakeProgramInstruction.HarvestSyncRewards;
-    } & ParsedHarvestSyncRewardsInstruction<TProgram>);
+    } & ParsedHarvestSyncRewardsInstruction<TProgram>)
+  | ({
+      instructionType: PaladinStakeProgramInstruction.InactivateSolStakerStake;
+    } & ParsedInactivateSolStakerStakeInstruction<TProgram>);
