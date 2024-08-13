@@ -316,7 +316,7 @@ pub enum StakeInstruction {
     )]
     HarvestValidatorRewards,
 
-    /// Slashes a stake account for the given amount.
+    /// Slashes a validator stake account for the given amount.
     /// 
     /// Burns the given amount of tokens from the vault account, and reduces the
     /// amount in the stake account.
@@ -332,7 +332,7 @@ pub enum StakeInstruction {
         1,
         writable,
         name = "stake",
-        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
+        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
     )]
     #[account(
         2,
@@ -362,7 +362,7 @@ pub enum StakeInstruction {
         name = "token_program",
         desc = "Token program"
     )]
-    Slash(u64),
+    SlashValidatorStake(u64),
 
     /// Sets new authority on a config or stake account.
     #[account(
@@ -695,7 +695,7 @@ impl StakeInstruction {
             }
             StakeInstruction::HarvestHolderRewards => vec![6],
             StakeInstruction::HarvestValidatorRewards => vec![7],
-            StakeInstruction::Slash(amount) => {
+            StakeInstruction::SlashValidatorStake(amount) => {
                 let mut data = Vec::with_capacity(9);
                 data.push(8);
                 data.extend_from_slice(&amount.to_le_bytes());
@@ -791,11 +791,11 @@ impl StakeInstruction {
             Some((&6, _)) => Ok(StakeInstruction::HarvestHolderRewards),
             // 7 - HarvestStakeRewards
             Some((&7, _)) => Ok(StakeInstruction::HarvestValidatorRewards),
-            // 8 - Slash: u64 (8)
+            // 8 - SlashValidatorStake: u64 (8)
             Some((&8, rest)) if rest.len() == 8 => {
                 let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
 
-                Ok(StakeInstruction::Slash(amount))
+                Ok(StakeInstruction::SlashValidatorStake(amount))
             }
             // 9 - SetAuthority: AuthorityType (u8))
             Some((&9, rest)) if rest.len() == 1 => {
@@ -945,8 +945,8 @@ mod tests {
     }
 
     #[test]
-    fn test_pack_unpack_slash() {
-        let original = StakeInstruction::Slash(100);
+    fn test_pack_unpack_slash_validator_stake() {
+        let original = StakeInstruction::SlashValidatorStake(100);
         let packed = original.pack();
         let unpacked = StakeInstruction::unpack(&packed).unwrap();
         assert_eq!(original, unpacked);
