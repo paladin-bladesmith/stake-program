@@ -1,20 +1,11 @@
-use std::cmp::min;
-
-use solana_program::{
-    entrypoint::ProgramResult, msg, program::invoke_signed, program_error::ProgramError,
-    pubkey::Pubkey,
-};
-use spl_token_2022::{
-    extension::PodStateWithExtensions,
-    instruction::burn_checked,
-    pod::{PodAccount, PodMint},
-};
+use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey};
+use spl_token_2022::{extension::PodStateWithExtensions, pod::PodAccount};
 
 use crate::{
     err,
     error::StakeError,
     instruction::accounts::{Context, SlashValidatorStakeAccounts},
-    processor::unpack_initialized_mut,
+    processor::{process_slash_for_delegation, unpack_initialized_mut, SlashArgs},
     require,
     state::{
         create_vault_pda, find_validator_stake_pda, get_vault_pda_signer_seeds, Config,
@@ -148,101 +139,20 @@ pub fn process_slash_validator_stake(
         "mint"
     );
 
-    // Update the stake amount on both stake and config accounts:
-    //
-    //   1. the amount slashed is taken from the stake amount (this includes
-    //      the amount that is currently staked + deactivating);
-    //
-    //   2. if not enough, the remaining is ignored and the stake account is
-    //      left with 0 amount;
-    //
-    //   3. if the stake account has deactivating tokens, make sure that the
-    //      deactivating amount is at least the same as the stake amount (it might
-    //      need to be reduced due to slashing).
+    drop(vault_data);
 
-    require!(
-        amount > 0,
-        StakeError::InvalidAmount,
-        "amount must be greater than 0"
-    );
+    // Process the slash for the stake delegation.
 
-    // slashes active stake
-    let active_stake_to_slash = min(amount, stake.delegation.amount);
-    stake.delegation.amount = stake
-        .delegation
-        .amount
-        .checked_sub(active_stake_to_slash)
-        .ok_or(ProgramError::ArithmeticOverflow)?;
-
-    if stake.delegation.deactivating_amount > stake.delegation.amount {
-        // adjust the deactivating amount if it's greater than the "active" stake
-        // after slashing
-        stake.delegation.deactivating_amount = stake.delegation.amount;
-        // clear the deactivation timestamp if there in no deactivating
-        // amount left
-        if stake.delegation.deactivating_amount == 0 {
-            stake.delegation.deactivation_timestamp = None;
-        }
-    }
-
-    // Update the token amount delegated on the config account.
-    //
-    // The instruction will fail if the amount to slash is greater than the
-    // total amount delegated (it should never happen).
-    require!(
-        config.token_amount_delegated >= active_stake_to_slash,
-        StakeError::InvalidSlashAmount,
-        "slash amount greater than total amount delegated ({} required, {} delegated)",
-        active_stake_to_slash,
-        config.token_amount_delegated
-    );
-
-    config.token_amount_delegated = config
-        .token_amount_delegated
-        .checked_sub(active_stake_to_slash)
-        .ok_or(ProgramError::ArithmeticOverflow)?;
-
-    if amount > active_stake_to_slash {
-        // The amount to slash was greater than the amount available on the
-        // stake account.
-        msg!(
-            "Slash amount greater than available tokens on stake account ({} required, {} available)",
-            amount,
-            active_stake_to_slash,
-        );
-    }
-
-    // Burn the tokens from the vault account (if there are tokens to slash).
-
-    if active_stake_to_slash > 0 {
-        let mint_data = ctx.accounts.mint.try_borrow_data()?;
-        let mint = PodStateWithExtensions::<PodMint>::unpack(&mint_data)?;
-        let decimals = mint.base.decimals;
-
-        drop(mint_data);
-        drop(vault_data);
-
-        let burn_ix = burn_checked(
-            ctx.accounts.token_program.key,
-            ctx.accounts.vault.key,
-            ctx.accounts.mint.key,
-            ctx.accounts.vault_authority.key,
-            &[],
-            active_stake_to_slash,
-            decimals,
-        )?;
-
-        invoke_signed(
-            &burn_ix,
-            &[
-                ctx.accounts.token_program.clone(),
-                ctx.accounts.vault.clone(),
-                ctx.accounts.mint.clone(),
-                ctx.accounts.vault_authority.clone(),
-            ],
-            &[&signer_seeds],
-        )?;
-    }
+    process_slash_for_delegation(SlashArgs {
+        config,
+        delegation: &mut stake.delegation,
+        mint_info: ctx.accounts.mint,
+        vault_info: ctx.accounts.vault,
+        vault_authority_info: ctx.accounts.vault_authority,
+        token_program_info: ctx.accounts.token_program,
+        amount,
+        signer_seeds: &signer_seeds,
+    })?;
 
     Ok(())
 }
