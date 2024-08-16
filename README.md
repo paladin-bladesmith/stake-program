@@ -6,9 +6,24 @@
 
 The Paladin Stake program manages the delegation of tokens to a particular validator of the system. This allows stakers to earn additional shares of rewards proportional to their share of staked tokens and to participate on governance.
 
-# Architecture
+## Overview
+
+A `Config` account essentailly represents the staking system and it is the first account that needs to be created. Once a `Config` account is created, `ValidatorStake` accounts can be added to the system. A `ValidatorStake` represents a validator of the network (`VoteState` account). Anybody can create the stake account for a validator. For new accounts, the authority is initialized to the validator vote account's withdraw authority.
+
+After `ValidatorStake` accounts are added to the system, `SolStakerStake` accounts can be created. These accounts represent individual SOL stakers (`StakeState` accounts). Similarly to `ValidatorStake`, anybody can create the stake account for a SOL staker. For new accounts, the authority is initialized to the stake state account's withdrawer. When stake is added to a `SolStakerStake`, it will update the total amount of staked tokens both on the correspodent `ValidatorStake` and `Config`. Therefore each `ValidatorStake` tracks the amount of staked tokens that its individual stakers are currently staking, while the `Config` tracks the total of staked tokens on the system. The system also keeps track of the SOL amount staked on the network to determine the share of the rewards and enforce that the proportion of tokens and SOL staked are within the expected limits.
+
+Staking rewards are paid directly to the program via the `DistributeRewards` instruction while holder rewards are accumulated on the Stake program's `vault` token account. For both cases, the program offer instructions for stakers to harvest their rewards.
+
+> [!IMPORTANT]
+> There can be only one SOL staker stake account per stake state and config account, since the stake state is part of the SOL staker stake account seeds.
+
+## 🗂️ Accounts
 
 The program makes use of three types of accounts to track staked amounts and manage parameters of the system.
+
+<details>
+
+<summary>List of accounts</summary>
 
 ### `Config`
 
@@ -36,13 +51,71 @@ The `SolStakerStake` accounts hold the delegation information of individual SOL 
 
 The maximum amount of tokens that a SOL staker is allowed to stake is currently proportional to the amount of SOL staked, given by `1.3 * SOL amount staked`.
 
-# Overview
+</details>
 
-A `Config` account essentailly represents the staking system and it is the first account that needs to be created. Once a `Config` account is created, `ValidatorStake` accounts can be added to the system. A `ValidatorStake` represents a validator of the network (`VoteState` account). Anybody can create the stake account for a validator. For new accounts, the authority is initialized to the validator vote account's withdraw authority.
+## 📋 Instructions
 
-After `ValidatorStake` accounts are added to the system, `SolStakerStake` accounts can be created. These accounts represent individual SOL stakers (`StakeState` accounts). Similarly to `ValidatorStake`, anybody can create the stake account for a SOL staker. For new accounts, the authority is initialized to the stake state account's withdrawer. When stake is added to a `SolStakerStake`, it will update the total amount of staked tokens both on the correspodent `ValidatorStake` and `Config`. Therefore each `ValidatorStake` tracks the amount of staked tokens that its individual stakers are currently staking, while the `Config` tracks the total of staked tokens on the system. The system also keeps track of the SOL amount staked on the network to determine the share of the rewards and enforce that the proportion of tokens and SOL staked are within the expected limits.
+<details>
 
-Staking rewards are paid directly to the program via the `DistributeRewards` instruction while holder rewards are accumulated on the Stake program's `vault` token account. For both cases, the program offer instructions for stakers to harvest their rewards.
+<summary>List of instructions</summary>
 
-> [!IMPORTANT]
-> There can be only one SOL staker stake account per stake state and config account, since the stake state is part of the SOL staker stake account seeds.
+### `InitializeConfig`
+
+Creates stake `Config` account which controls staking parameters. This is the first instruction required to set up the staking system. In addition to the staking configuration, the instruction expects the `mint` and `vault` accounts. The `mint` determines the type of tokens to be staked while the `vault` is the escrow token account to hold the staked tokens.
+
+### `InitializeValidatorStake`
+
+Initializes `ValidatorStake` account data for a validator. This instruction can be used multiple times to add validators to the stake system. Validators are uniquely identified by their `VoteState`, i.e., there is only one `ValidatorStake` account for each (`VoteState`, `Config`) pair.
+
+The `ValidatorStake` serves two purposes on the staking system: (1) it allows individual staker (`SolStakerStake` account) to stake tokens on the system; and (2) it allows validators to stake tokens on the system. Each validator tracks the SOL amount staked on the network of its stakers, which in turn determines the amount of tokens that a validator and its stakers are allows to stake.
+
+> [!NOTE]
+>  Anybody can create the stake account for a validator. For new accounts, the authority is initialized to the validator vote account's withdraw authority.
+
+### `InitializeSolStakerStake`
+
+Initializes `SolStakerStake` account data for a SOL staker. This instruction can be used multiple times to add a new staker to the stake system. Stakers are uniquely identified by their `StakeState`, i.e., there is only one `SolStakerStake` account for each (`StakeState`, `Config`) pair.
+
+The `SolStakerStake` serves the purpose of managing the stake amount of an individual staker, tracking the SOL amount staked on the network to determine the allowed limit of tokens staked.
+
+> [!NOTE]
+> Anybody can create the stake account for a SOL staker. For new accounts, the authority is initialized to the stake state account's withdrawer.
+
+### `ValidatorStakeTokens`
+
+Stakes tokens with the given config. This instruction is used by validator stake accounts. The total amount of staked tokens is currently limited to the `1.3 * current amount of SOL` staked to the validator.
+
+### `SolStakerStakeTokens`
+
+Stakes tokens with the given config. This instruction is used by SOL staker stake accounts. The total amount of staked tokens is limited to the 1.3 * current amount of SOL staked by the SOL staker.
+
+### `DeactivateStake`
+
+Deactivate staked tokens for a stake delegation, either `ValidatorStake` or `SolStakerStake`. Only one deactivation may be in-flight at once, so if this is called with an active deactivation, it will succeed, but reset the amount and timestamp.
+
+### `DistributeRewards`
+
+Moves SOL rewards to the `Config` and updates the stake rewards total. This intruction is increment the staking rewards on the system.
+
+### `HarvestHolderRewards`
+
+Harvests holder SOL rewards earned by the given stake account. This instruction support claiming rewards for both `ValidatorStake` and `SolStakerStake` accounts.
+
+### `HarvestSolStakerRewards`
+
+Harvests stake SOL rewards earned by the given SOL staker stake account.
+
+### `HarvestSyncRewards`
+
+Harvest the rewards from syncing the SOL stake balance with a validator and SOL staker stake accounts.
+
+The staking system requires the SOL staked amount to be up to date with the `StakeState` network delegation amount. This instruction is used to sync their amounts, rewarding the address that executes the instrution a reward.
+
+> [!NOTE]
+> This is a permissionless instruction, anybody can sync the balance of a SOL stake account. Rewards are only paid when the balances are out-of-sync.
+
+### `HarvestValidatorRewards`
+
+Harvests stake SOL rewards earned by the given validator stake account.
+
+</details>
