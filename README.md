@@ -4,7 +4,7 @@
 <a href="https://www.npmjs.com/package/@paladin/stake"><img src="https://img.shields.io/npm/v/%40paladin%2Fstake?logo=npm&color=377CC0" /></a>
 <a href="https://crates.io/crates/paladin-stake"><img src="https://img.shields.io/crates/v/paladin-stake?logo=rust" /></a>
 
-The Paladin Stake program manages the delegation of tokens to a particular validator of the system. This allows stakers to earn additional shares of rewards proportional to their share of staked tokens and to participate on governance.
+The Paladin Stake program manages the delegation of tokens to a particular validator of the system. This allows stakers to earn additional shares of rewards proportional to their share of staked tokens and to participate in governance.
 
 ## Overview
 
@@ -15,15 +15,15 @@ After `ValidatorStake` accounts are added to the system, `SolStakerStake` accoun
 Staking rewards are paid directly to the program via the `DistributeRewards` instruction while holder rewards are accumulated on the Stake program's `vault` token account. For both cases, the program offer instructions for stakers to harvest their rewards.
 
 > [!IMPORTANT]
-> There can be only one SOL staker stake account per stake state and config account, since the stake state is part of the SOL staker stake account seeds.
+> There can be only one SOL staker stake account per stake state and config account, since the stake state is part of the SOL staker stake account seeds. Similarly, there can be only one validator stake account since since the vote state is part of the validator stake account seeds.
 
 ## 🗂️ Accounts
 
 The program makes use of three types of accounts to track staked amounts and manage parameters of the system.
 
-<details>
-
-<summary>List of accounts</summary>
+- [`Config`](#config)
+- [`SolStakerStake`](#solstakerstake)
+- [`ValidatorStake`](#validatorstake)
 
 ### `Config`
 
@@ -39,38 +39,66 @@ Each `Config` account is associated with a particular mint account, determined b
 > [!NOTE]
 > While staked tokens are escrowed by the `Config` account, they still accrue holder rewards in addition to the staking. There are specific instructions on the program that allows holders to claim both their "holder" and "staking" rewards.
 
+### `SolStakerStake`
+
+The `SolStakerStake` accounts hold the delegation information of individual SOL stakers. The delegation holds the amount of staked tokens as well as their SOL stake state.
+
+The maximum amount of tokens that a SOL staker is allowed to stake is currently proportional to the amount of SOL staked, given by `1.3 * SOL amount staked`.
+
+
 ### `ValidatorStake`
 
 The `ValidatorStake` accounts hold the delegation information for the tokens staked by a validator. It also tracks the total amount of SOL and tokens staked by its stakers.
 
 The total amount of SOL staked on a validator is used to determine that maximum amount of tokens that the validator is allowed to stake &mdash; currently the limit is given by `1.3 * SOL amount staked`.
 
-### `SolStakerStake`
-
-The `SolStakerStake` accounts hold the delegation information of individual SOL stakers. The delegation holds the information of staked tokens as well as their SOL stake state.
-
-The maximum amount of tokens that a SOL staker is allowed to stake is currently proportional to the amount of SOL staked, given by `1.3 * SOL amount staked`.
-
-</details>
-
 ## 📋 Instructions
 
-<details>
+- [`DeactivateStake`](#deactivatestake)
+- [`DistributeRewards`](#distributerewards)
+- [`InactivateSolStakerStake`](#inactivatesolstakerstake)
+- [`InactivateValidatorStake`](#inactivatevalidatorstake)
+- [`InitializeConfig`](#initializeconfig)
+- [`InitializeSolStakerStake`](#initializesolstakerstake)
+- [`InitializeValidatorStake`](#initializevalidatorstake)
+- [`HarvestHolderRewards`](#harvestholderrewards)
+- [`HarvestSolStakerRewards`](#harvestsolstakerrewards)
+- [`HarvestSyncRewards`](#harvestsyncrewards)
+- [`HarvestValidatorRewards`](#harvestvalidatorrewards)
+- [`SetAuthority`](#setauthority)
+- [`SlashSolStakerStake`](#slashsolstakerstake)
+- [`SlashValidatorStake`](#slashvalidatorstake)
+- [`SolStakerStakeTokens`](#solstakerstaketokens)
+- [`SyncSolStake`](#syncsolstake)
+- [`UpdateConfig`](#updateconfig)
+- [`ValidatorStakeTokens`](#validatorstaketokens)
+- [`WithdrawInactiveStake`](#withdrawinactivestake)
 
-<summary>List of instructions</summary>
+### `DeactivateStake`
+
+Deactivate staked tokens for a stake delegation, either `ValidatorStake` or `SolStakerStake`. Only one deactivation may be in-flight at once, so if this is called with an active deactivation, it will succeed, but reset the amount and timestamp.
+
+### `DistributeRewards`
+
+Moves SOL rewards to the `Config` and updates the stake rewards total. This intruction increments the staking rewards on the system.
+
+### `InactivateSolStakerStake`
+
+Move tokens from deactivating to inactive. This effectively reduces the total voting power for the SOL staker stake account, the total staked amount on the corresponding validator stake and config accounts. This instruction is used prior to withdraw staked tokens.
+
+> [!NOTE]
+> This instruction is permissionless, so anybody can finish deactivating someone's tokens, preparing them to be withdrawn.
+
+### `InactivateValidatorStake`
+
+Move tokens from deactivating to inactive. Reduces the total voting power for the validator stake account and the total staked amount on the system. This instruction is used prior to withdraw staked tokens.
+
+> [!NOTE]
+> This instruction is permissionless, so anybody can finish deactivating validator's tokens, preparing them to be withdrawn.
 
 ### `InitializeConfig`
 
 Creates stake `Config` account which controls staking parameters. This is the first instruction required to set up the staking system. In addition to the staking configuration, the instruction expects the `mint` and `vault` accounts. The `mint` determines the type of tokens to be staked while the `vault` is the escrow token account to hold the staked tokens.
-
-### `InitializeValidatorStake`
-
-Initializes `ValidatorStake` account data for a validator. This instruction can be used multiple times to add validators to the stake system. Validators are uniquely identified by their `VoteState`, i.e., there is only one `ValidatorStake` account for each (`VoteState`, `Config`) pair.
-
-The `ValidatorStake` serves two purposes on the staking system: (1) it allows individual staker (`SolStakerStake` account) to stake tokens on the system; and (2) it allows validators to stake tokens on the system. Each validator tracks the SOL amount staked on the network of its stakers, which in turn determines the amount of tokens that a validator and its stakers are allows to stake.
-
-> [!NOTE]
->  Anybody can create the stake account for a validator. For new accounts, the authority is initialized to the validator vote account's withdraw authority.
 
 ### `InitializeSolStakerStake`
 
@@ -81,21 +109,14 @@ The `SolStakerStake` serves the purpose of managing the stake amount of an indiv
 > [!NOTE]
 > Anybody can create the stake account for a SOL staker. For new accounts, the authority is initialized to the stake state account's withdrawer.
 
-### `ValidatorStakeTokens`
+### `InitializeValidatorStake`
 
-Stakes tokens with the given config. This instruction is used by validator stake accounts. The total amount of staked tokens is currently limited to the `1.3 * current amount of SOL` staked to the validator.
+Initializes `ValidatorStake` account data for a validator. This instruction can be used multiple times to add validators to the stake system. Validators are uniquely identified by their `VoteState`, i.e., there is only one `ValidatorStake` account for each (`VoteState`, `Config`) pair.
 
-### `SolStakerStakeTokens`
+The `ValidatorStake` serves two purposes on the staking system: (1) it allows individual staker (`SolStakerStake` account) to stake tokens on the system; and (2) it allows validators to stake tokens on the system. Each validator tracks the SOL amount staked on the network of its stakers, which in turn determines the amount of tokens that a validator and its stakers are allows to stake.
 
-Stakes tokens with the given config. This instruction is used by SOL staker stake accounts. The total amount of staked tokens is limited to the 1.3 * current amount of SOL staked by the SOL staker.
-
-### `DeactivateStake`
-
-Deactivate staked tokens for a stake delegation, either `ValidatorStake` or `SolStakerStake`. Only one deactivation may be in-flight at once, so if this is called with an active deactivation, it will succeed, but reset the amount and timestamp.
-
-### `DistributeRewards`
-
-Moves SOL rewards to the `Config` and updates the stake rewards total. This intruction is increment the staking rewards on the system.
+> [!NOTE]
+>  Anybody can create the stake account for a validator. For new accounts, the authority is initialized to the validator vote account's withdraw authority.
 
 ### `HarvestHolderRewards`
 
@@ -118,4 +139,37 @@ The staking system requires the SOL staked amount to be up to date with the `Sta
 
 Harvests stake SOL rewards earned by the given validator stake account.
 
-</details>
+### `SetAuthority`
+
+Sets new authority on a config or stake account.
+
+### `SlashSolStakerStake`
+
+Slashes a `SolStakerStake` account for the given amount. Burns the given amount of tokens from the vault account, and reduces the amount in the stake account. This instruction is executed by the `Config`'s slash authority, usually determined by a governance proposal.
+
+### `SlashValidatorStake`
+
+Slashes a `ValidatorStake` account for the given amount. Burns the given amount of tokens from the vault account, and reduces the amount in the stake account. This instruction is executed by the `Config`'s slash authority, usually determined by a governance proposal.
+
+### `SolStakerStakeTokens`
+
+Stakes tokens with the given config. This instruction is used by SOL staker stake accounts. The total amount of staked tokens is limited to the `1.3 * current amount of SOL` staked by the SOL staker.
+
+### `SyncSolStake`
+
+Sync the SOL stake balance with a validator and SOL staker stake accounts.
+
+> [!NOTE]
+> This is a permissionless instruction. Anybody can sync the balance of a SOL stake account.
+
+### `UpdateConfig`
+
+Updates configuration parameters of the stake system.
+
+### `ValidatorStakeTokens`
+
+Stakes tokens with the given config. This instruction is used by validator stake accounts. The total amount of staked tokens is currently limited to the `1.3 * current amount of SOL` staked to the validator.
+
+### `WithdrawInactiveStake`
+
+Withdraw inactive staked tokens from the vault. After a deactivation has gone through the cooldown period and been "inactivated", the authority may move the tokens out of the vault. This instruction support both `ValidatorStake` and `SolStakerStake` accounts.
