@@ -125,7 +125,7 @@ export type HarvestHolderRewardsInput<
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
-  /** Validator stake account (pda of `['stake::state::stake', validator, config]`) */
+  /** Validator or SOL staker stake account */
   stake: Address<TAccountStake>;
   /** Vault token account */
   vault: Address<TAccountVault>;
@@ -254,7 +254,7 @@ export type ParsedHarvestHolderRewardsInstruction<
   accounts: {
     /** Stake config account */
     config: TAccountMetas[0];
-    /** Validator stake account (pda of `['stake::state::stake', validator, config]`) */
+    /** Validator or SOL staker stake account */
     stake: TAccountMetas[1];
     /** Vault token account */
     vault: TAccountMetas[2];

@@ -12,7 +12,7 @@ use borsh::BorshSerialize;
 pub struct DeactivateStake {
     /// Stake config account
     pub config: solana_program::pubkey::Pubkey,
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator or SOL staker stake account
     pub stake: solana_program::pubkey::Pubkey,
     /// Authority on validator stake account
     pub stake_authority: solana_program::pubkey::Pubkey,
@@ -105,7 +105,7 @@ impl DeactivateStakeBuilder {
         self.config = Some(config);
         self
     }
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator or SOL staker stake account
     #[inline(always)]
     pub fn stake(&mut self, stake: solana_program::pubkey::Pubkey) -> &mut Self {
         self.stake = Some(stake);
@@ -162,7 +162,7 @@ impl DeactivateStakeBuilder {
 pub struct DeactivateStakeCpiAccounts<'a, 'b> {
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator or SOL staker stake account
     pub stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Authority on validator stake account
     pub stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
@@ -174,7 +174,7 @@ pub struct DeactivateStakeCpi<'a, 'b> {
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator or SOL staker stake account
     pub stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Authority on validator stake account
     pub stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
@@ -308,7 +308,7 @@ impl<'a, 'b> DeactivateStakeCpiBuilder<'a, 'b> {
         self.instruction.config = Some(config);
         self
     }
-    /// Validator stake account (pda of `['stake::state::stake', validator, config]`)
+    /// Validator or SOL staker stake account
     #[inline(always)]
     pub fn stake(&mut self, stake: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.stake = Some(stake);
