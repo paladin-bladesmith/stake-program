@@ -8,14 +8,14 @@ The Paladin Stake program manages the delegation of tokens to a particular valid
 
 ## Overview
 
-A `Config` account essentailly represents the staking system and it is the first account that needs to be created. Once a `Config` account is created, `ValidatorStake` accounts can be added to the system. A `ValidatorStake` represents a validator of the network (`VoteState` account). Anybody can create the stake account for a validator. For new accounts, the authority is initialized to the validator vote account's withdraw authority.
+A `Config` account essentially represents the staking system and it is the first account that needs to be created. Once a `Config` account is created, `ValidatorStake` accounts can be added to the system. A `ValidatorStake` represents a validator of the network (coupled to a `VoteState` account in the native Solana vote program). Anybody can create the stake account for a validator. For new accounts, the authority is initialized to the validator vote account's withdraw authority.
 
-After `ValidatorStake` accounts are added to the system, `SolStakerStake` accounts can be created. These accounts represent individual SOL stakers (`StakeState` accounts). Similarly to `ValidatorStake`, anybody can create the stake account for a SOL staker. For new accounts, the authority is initialized to the stake state account's withdrawer. When stake is added to a `SolStakerStake`, it will update the total amount of staked tokens both on the correspodent `ValidatorStake` and `Config`. Therefore each `ValidatorStake` tracks the amount of staked tokens that its individual stakers are currently staking, while the `Config` tracks the total of staked tokens on the system. The system also keeps track of the SOL amount staked on the network to determine the share of the rewards and enforce that the proportion of tokens and SOL staked are within the expected limits.
+After `ValidatorStake` accounts are added to the system, `SolStakerStake` accounts can be created. These accounts represent individual SOL stakers (coupled to `StakeState` accounts in the native Solana stake program). Similarly to `ValidatorStake`, anybody can create the stake account for a SOL staker. For new accounts, the authority is initialized to the SOL stake account's withdrawer. When stake is added to a `SolStakerStake`, it will update the total amount of staked tokens both on the corresponding `ValidatorStake` and `Config`. Therefore each `ValidatorStake` tracks the amount of staked tokens that its individual stakers are currently staking, while the `Config` tracks the total of staked tokens on the system. The system also keeps track of the SOL amount staked on the network to determine the share of the rewards and enforce that the proportion of tokens and SOL staked are within the expected limits.
 
 Staking rewards are paid directly to the program via the `DistributeRewards` instruction while holder rewards are accumulated on the Stake program's `vault` token account. For both cases, the program offer instructions for stakers to harvest their rewards.
 
 > [!IMPORTANT]
-> There can be only one SOL staker stake account per stake state and config account, since the stake state is part of the SOL staker stake account seeds. Similarly, there can be only one validator stake account since since the vote state is part of the validator stake account seeds.
+> There can be only one SOL staker stake account per SOL stake account and config account, since the SOL stake account is part of the SOL staker stake account seeds. Similarly, there can be only one validator stake account since the vote account is part of the validator stake account seeds.
 
 ## 🗂️ Accounts
 
@@ -76,7 +76,7 @@ The total amount of SOL staked on a validator is used to determine that maximum 
 
 ### `DeactivateStake`
 
-Deactivate staked tokens for a stake delegation, either `ValidatorStake` or `SolStakerStake`. Only one deactivation may be in-flight at once, so if this is called with an active deactivation, it will succeed, but reset the amount and timestamp.
+Deactivate staked tokens for a stake delegation, either `ValidatorStake` or `SolStakerStake`. Only one deactivation may be in-flight at once, so if this is called with an active deactivation, it will succeed, but reset the amount and timestamp. An active deactivation can be cancelled by executing this instruction with a `0` (zero) amount.
 
 ### `DistributeRewards`
 
@@ -113,31 +113,31 @@ The `SolStakerStake` serves the purpose of managing the stake amount of an indiv
 
 Initializes `ValidatorStake` account data for a validator. This instruction can be used multiple times to add validators to the stake system. Validators are uniquely identified by their `VoteState`, i.e., there is only one `ValidatorStake` account for each (`VoteState`, `Config`) pair.
 
-The `ValidatorStake` serves two purposes on the staking system: (1) it allows individual staker (`SolStakerStake` account) to stake tokens on the system; and (2) it allows validators to stake tokens on the system. Each validator tracks the SOL amount staked on the network of its stakers, which in turn determines the amount of tokens that a validator and its stakers are allows to stake.
+The `ValidatorStake` serves two purposes on the staking system: (1) it allows individual staker (`SolStakerStake` account) to stake tokens on the system; and (2) it allows validators to stake tokens on the system. Each validator tracks the SOL amount staked on the network of its stakers, which in turn determines the amount of tokens that a validator and its stakers are allowed to stake.
 
 > [!NOTE]
 >  Anybody can create the stake account for a validator. For new accounts, the authority is initialized to the validator vote account's withdraw authority.
 
 ### `HarvestHolderRewards`
 
-Harvests holder SOL rewards earned by the given stake account. This instruction support claiming rewards for both `ValidatorStake` and `SolStakerStake` accounts.
+Harvests holder SOL rewards earned by the given stake account. This instruction supports claiming rewards for both `ValidatorStake` and `SolStakerStake` accounts.
 
 ### `HarvestSolStakerRewards`
 
-Harvests stake SOL rewards earned by the given SOL staker stake account.
+Harvests staker SOL rewards earned by the given SOL staker stake account.
 
 ### `HarvestSyncRewards`
 
 Harvest the rewards from syncing the SOL stake balance with a validator and SOL staker stake accounts.
 
-The staking system requires the SOL staked amount to be up to date with the `StakeState` network delegation amount. This instruction is used to sync their amounts, rewarding the address that executes the instrution a reward.
+The staking system requires the SOL staked amount to be up to date with the `StakeState` network delegation amount. This instruction is used to sync their amounts, rewarding the address that executes the instrution.
 
 > [!NOTE]
 > This is a permissionless instruction, anybody can sync the balance of a SOL stake account. Rewards are only paid when the balances are out-of-sync.
 
 ### `HarvestValidatorRewards`
 
-Harvests stake SOL rewards earned by the given validator stake account.
+Harvests staker SOL rewards earned by the given validator stake account.
 
 ### `SetAuthority`
 
