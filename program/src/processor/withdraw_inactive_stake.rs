@@ -12,21 +12,22 @@ use crate::{
     state::{create_vault_pda, get_vault_pda_signer_seeds, Config},
 };
 
-/// Withdraw inactive staked tokens from the vault
+/// Withdraw inactive staked tokens from the vault.
 ///
 /// After a deactivation has gone through the cooldown period and been
 /// "inactivated", the authority may move the tokens out of the vault.
 ///
 /// 0. `[w]` Config account
-/// 1. `[w]` Stake account
+/// 1. `[w]` Validator or SOL staker stake account
 /// 2. `[w]` Vault token account
-/// 3. `[w]` Destination token account
-/// 4. `[s]` Stake authority
-/// 5. `[]` Vault authority, PDA with seeds `['token-owner', stake_config]`
-/// 6. `[]` SPL Token program
-/// 7.. Extra required accounts for transfer hook
+/// 3. `[ ]` Stake Token Mint
+/// 4. `[w]` Destination token account
+/// 5. `[s]` Stake authority
+/// 6. `[ ]` Vault authority, PDA with seeds `['token-owner', stake_config]`
+/// 7. `[ ]` Token program
+/// 8.. Extra required accounts for transfer hook
 ///
-/// Instruction data: amount of tokens to move
+/// Instruction data: amount of tokens to move.
 pub fn process_withdraw_inactive_stake<'a>(
     program_id: &Pubkey,
     ctx: Context<'a, WithdrawInactiveStakeAccounts<'a>>,

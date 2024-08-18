@@ -9,13 +9,13 @@ use crate::{
     state::{calculate_stake_rewards_per_token, Config},
 };
 
-/// Moves SOL rewards to the config and updates the stake rewards total
+/// Moves SOL rewards to the config and updates the stake rewards total.
 ///
 /// Accounts expected by this instruction:
 ///
 /// 0. `[w,s]` Reward payer
 /// 1. `[w]` Config account
-/// 2. `[]` System Program
+/// 2. `[ ]` System Program
 pub fn process_distribute_rewards(
     program_id: &Pubkey,
     ctx: Context<DistributeRewardsAccounts>,

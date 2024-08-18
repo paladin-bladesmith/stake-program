@@ -27,14 +27,14 @@ const EMPTY_RETURN_DATA: [u8; size_of::<GetStakeActivatingAndDeactivatingReturnD
 ///
 /// NOTE: Anybody can sync the balance of a SOL stake account.
 ///
-/// 0. `[]` Stake config account
+/// 0. `[ ]` Stake config account
 /// 1. `[w]` SOL staker stake account
 ///     * PDA seeds: ['stake::state::sol_staker_stake', SOL stake, config]
 /// 2. `[w]` Validator stake account
 ///     * PDA seeds: ['stake::state::validator_stake', validator, config]
-/// 3. `[]` SOL stake account
-/// 4. `[]` Stake history sysvar
-/// 5. `[]` Paladin SOL Stake View program
+/// 3. `[ ]` SOL stake account
+/// 4. `[ ]` Stake history sysvar
+/// 5. `[ ]` Paladin SOL Stake View program
 #[allow(clippy::useless_conversion)]
 pub fn process_sync_sol_stake(
     program_id: &Pubkey,

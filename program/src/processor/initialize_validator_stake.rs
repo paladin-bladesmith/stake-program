@@ -18,11 +18,11 @@ use crate::{
 /// accounts, the authority is initialized to the validator vote account's
 /// withdraw authority.
 ///
-/// 0. `[]` Stake config account
+/// 0. `[ ]` Stake config account
 /// 1. `[w]` Validator stake account
 ///     * PDA seeds: ['stake::state::validator_stake', validator, config]
-/// 2. `[]` Validator vote account
-/// 3. `[]` System program
+/// 2. `[ ]` Validator vote account
+/// 3. `[ ]` System program
 pub fn process_initialize_validator_stake(
     program_id: &Pubkey,
     ctx: Context<InitializeValidatorStakeAccounts>,

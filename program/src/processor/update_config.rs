@@ -15,8 +15,8 @@ use crate::{
 ///
 /// ### Accounts:
 ///
-///   0. `[w]` config
-///   1. `[s]` config_authority
+///   0. `[w]` Stake config account
+///   1. `[s]` Stake config authority
 pub fn process_update_config(
     program_id: &Pubkey,
     ctx: Context<UpdateConfigAccounts>,

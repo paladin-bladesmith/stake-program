@@ -17,7 +17,7 @@ use crate::{
 /// amount on the system.
 ///
 /// NOTE: This instruction is permissionless, so anybody can finish
-/// deactivating someone's tokens, preparing them to be withdrawn.
+/// deactivating validator's tokens, preparing them to be withdrawn.
 ///
 /// 0. `[w]` Stake config account
 /// 1. `[w]` Validator stake account
