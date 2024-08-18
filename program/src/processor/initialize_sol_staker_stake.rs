@@ -30,15 +30,15 @@ use crate::{
 /// NOTE: Anybody can create the stake account for a SOL staker. For new
 /// accounts, the authority is initialized to the stake state account's withdrawer.
 ///
-/// 0. `[]` Stake config account
+/// 0. `[ ]` Stake config account
 /// 1. `[w]` SOL staker stake account
 ///     * PDA seeds: ['stake::state::sol_staker_stake', SOL stake, config]
 /// 2. `[w]` Validator stake account
 ///     * PDA seeds: ['stake::state::validator_stake', validator, config]
-/// 3. `[]` SOL stake account
-/// 4. `[]` Stake history sysvar
-/// 5. `[]` System program
-/// 6. `[]` Paladin SOL Stake View program
+/// 3. `[ ]` SOL stake account
+/// 4. `[ ]` Stake history sysvar
+/// 5. `[ ]` System program
+/// 6. `[ ]` Paladin SOL Stake View program
 #[allow(clippy::useless_conversion)]
 pub fn process_initialize_sol_staker_stake(
     program_id: &Pubkey,

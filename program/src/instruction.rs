@@ -118,7 +118,7 @@ pub enum StakeInstruction {
     )]
     ValidatorStakeTokens(u64),
 
-    /// Deactivate staked tokens for the validator.
+    /// Deactivate staked tokens for a stake delegation.
     /// 
     /// Only one deactivation may be in-flight at once, so if this is called
     /// with an active deactivation, it will succeed, but reset the amount and
@@ -134,7 +134,7 @@ pub enum StakeInstruction {
         1,
         writable,
         name = "stake",
-        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
+        desc = "Validator or SOL staker stake account"
     )]
     #[account(
         2,
@@ -181,7 +181,7 @@ pub enum StakeInstruction {
         1,
         writable,
         name = "stake",
-        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
+        desc = "Validator or SOL staker stake account"
     )]
     #[account(
         2,
@@ -237,7 +237,7 @@ pub enum StakeInstruction {
         1,
         writable,
         name = "stake",
-        desc = "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
+        desc = "Validator or SOL staker stake account"
     )]
     #[account(
         2,
@@ -369,7 +369,7 @@ pub enum StakeInstruction {
         0,
         writable,
         name = "account",
-        desc = "Config or Stake config account"
+        desc = "Config or Stake account"
     )]
     #[account(
         1,

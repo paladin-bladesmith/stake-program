@@ -29,10 +29,10 @@ use crate::{
 ///     * PDA seeds: ['stake::state::sol_staker_stake', SOL stake, config]
 /// 2. `[w]` Validator stake account
 ///     * PDA seeds: ['stake::state::validator_stake', validator, config]
-/// 3. `[]` SOL stake account
+/// 3. `[ ]` SOL stake account
 /// 4. `[w]` Destination account
-/// 5. `[]` Stake history sysvar
-/// 6. `[]` Paladin SOL Stake View program
+/// 5. `[ ]` Stake history sysvar
+/// 6. `[ ]` Paladin SOL Stake View program
 #[allow(clippy::useless_conversion)]
 pub fn process_harvest_sync_rewards(
     program_id: &Pubkey,

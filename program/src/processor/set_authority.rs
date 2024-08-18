@@ -12,13 +12,13 @@ use crate::{
     state::Config,
 };
 
-/// Sets new authority on a config or stake account
+/// Sets new authority on a config or stake account.
 ///
 /// ### Accounts:
 ///
-///   0. `[w]` config or stake account
-///   1. `[s]` current authority
-///   2. `[]` new authority
+///   0. `[w]` Config or Stake account
+///   1. `[s]` Current authority on the account
+///   2. `[ ]` Authority to set
 pub fn process_set_authority(
     program_id: &Pubkey,
     ctx: Context<SetAuthorityAccounts>,

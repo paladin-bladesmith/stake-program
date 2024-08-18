@@ -31,7 +31,7 @@ use crate::{
 /// 6. `[ ]` Token program
 /// 7.. Extra accounts required for the transfer hook
 ///
-/// Instruction data: amount of tokens to stake, as a little-endian u64
+/// Instruction data: amount of tokens to stake, as a little-endian `u64`.
 pub fn process_validator_stake_tokens<'a>(
     program_id: &Pubkey,
     ctx: Context<'a, ValidatorStakeTokensAccounts<'a>>,

@@ -11,7 +11,7 @@ use borsh::BorshSerialize;
 
 /// Accounts.
 pub struct SetAuthority {
-    /// Config or Stake config account
+    /// Config or Stake account
     pub account: solana_program::pubkey::Pubkey,
     /// Current authority on the account
     pub authority: solana_program::pubkey::Pubkey,
@@ -101,7 +101,7 @@ impl SetAuthorityBuilder {
     pub fn new() -> Self {
         Self::default()
     }
-    /// Config or Stake config account
+    /// Config or Stake account
     #[inline(always)]
     pub fn account(&mut self, account: solana_program::pubkey::Pubkey) -> &mut Self {
         self.account = Some(account);
@@ -162,7 +162,7 @@ impl SetAuthorityBuilder {
 
 /// `set_authority` CPI accounts.
 pub struct SetAuthorityCpiAccounts<'a, 'b> {
-    /// Config or Stake config account
+    /// Config or Stake account
     pub account: &'b solana_program::account_info::AccountInfo<'a>,
     /// Current authority on the account
     pub authority: &'b solana_program::account_info::AccountInfo<'a>,
@@ -174,7 +174,7 @@ pub struct SetAuthorityCpiAccounts<'a, 'b> {
 pub struct SetAuthorityCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Config or Stake config account
+    /// Config or Stake account
     pub account: &'b solana_program::account_info::AccountInfo<'a>,
     /// Current authority on the account
     pub authority: &'b solana_program::account_info::AccountInfo<'a>,
@@ -301,7 +301,7 @@ impl<'a, 'b> SetAuthorityCpiBuilder<'a, 'b> {
         });
         Self { instruction }
     }
-    /// Config or Stake config account
+    /// Config or Stake account
     #[inline(always)]
     pub fn account(
         &mut self,

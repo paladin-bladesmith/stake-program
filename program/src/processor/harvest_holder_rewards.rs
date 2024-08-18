@@ -27,16 +27,16 @@ use crate::{
 /// the token vault account. For ease of use, be sure to call the
 /// `HarvestRewards` on the vault account before this.
 ///
-/// 0. `[]` Config account
-/// 1. `[w]` Stake account
+/// 0. `[ ]` Config account
+/// 1. `[w]` Validator or SOL staker stake account
 /// 2. `[w]` Vault token account
-/// 3. `[]` Holder rewards account for vault token account
+/// 3. `[ ]` Holder rewards account for vault token account
 /// 4. `[w]` Destination account for withdrawn lamports
 /// 5. `[s]` Stake authority
-/// 6. `[]` Vault authority, PDA with seeds `['token-owner', stake_config]`
-/// 7. `[]` Stake token mint
-/// 8. `[]` SPL Token program
-/// 9. `[]` System program
+/// 6. `[w]` Vault authority, PDA with seeds `['token-owner', config]`
+/// 7. `[ ]` Stake token mint
+/// 8. `[ ]` Token program
+/// 9. `[ ]` System program
 pub fn process_harvest_holder_rewards(
     program_id: &Pubkey,
     ctx: Context<HarvestHolderRewardsAccounts>,

@@ -13,7 +13,7 @@ use crate::{
     },
 };
 
-/// Slashes a validator stake account for the given amount
+/// Slashes a validator stake account for the given amount.
 ///
 /// Burns the given amount of tokens from the vault account, and reduces the
 /// amount in the stake account.
@@ -22,11 +22,11 @@ use crate::{
 /// 1. `[w]` Validator stake account
 /// 2. `[s]` Slash authority
 /// 3. `[w]` Vault token account
-/// 4. `[]` Stake Token Mint
-/// 5. `[]` Vault authority, PDA with seeds `['token-owner', stake_config]`
-/// 6. `[]` SPL Token program
+/// 4. `[w]` Stake Token Mint
+/// 5. `[ ]` Vault authority, PDA with seeds `['token-owner', stake_config]`
+/// 6. `[ ]` Token program
 ///
-/// Instruction data: amount of tokens to slash
+/// Instruction data: amount of tokens to slash.
 pub fn process_slash_validator_stake(
     program_id: &Pubkey,
     ctx: Context<SlashValidatorStakeAccounts>,

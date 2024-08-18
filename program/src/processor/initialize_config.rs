@@ -25,11 +25,11 @@ const VALID_VAULT_TOKEN_EXTENSIONS: &[ExtensionType] = &[
 ///
 /// ### Accounts:
 ///
-///   0. `[w]` config
-///   1. `[]` slash_authority
-///   2. `[]` config_authority
-///   3. `[]` mint
-///   4. `[]` vault
+///   0. `[w]` Stake config account
+///   1. `[ ]` Slash authority
+///   2. `[ ]` Config authority
+///   3. `[ ]` Stake token mint
+///   4. `[ ]` Stake vault token account
 pub fn process_initialize_config(
     program_id: &Pubkey,
     ctx: Context<InitializeConfigAccounts>,

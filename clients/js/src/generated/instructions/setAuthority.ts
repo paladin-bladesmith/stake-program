@@ -101,7 +101,7 @@ export type SetAuthorityInput<
   TAccountAuthority extends string = string,
   TAccountNewAuthority extends string = string,
 > = {
-  /** Config or Stake config account */
+  /** Config or Stake account */
   account: Address<TAccountAccount>;
   /** Current authority on the account */
   authority: TransactionSigner<TAccountAuthority>;
@@ -170,7 +170,7 @@ export type ParsedSetAuthorityInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    /** Config or Stake config account */
+    /** Config or Stake account */
     account: TAccountMetas[0];
     /** Current authority on the account */
     authority: TAccountMetas[1];

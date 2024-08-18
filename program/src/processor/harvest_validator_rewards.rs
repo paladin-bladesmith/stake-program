@@ -8,7 +8,7 @@ use crate::{
     state::{find_validator_stake_pda, Config, ValidatorStake},
 };
 
-/// Harvests stake SOL rewards earned by the given stake account.
+/// Harvests stake SOL rewards earned by the given validator stake account.
 ///
 /// NOTE: This is very similar to the logic in the rewards program. Since the
 /// staking rewards are held in a separate account, they must be distributed

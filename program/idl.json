@@ -194,7 +194,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
+            "Validator or SOL staker stake account"
           ]
         },
         {
@@ -259,7 +259,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
+            "Validator or SOL staker stake account"
           ]
         },
         {
@@ -338,7 +338,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake::state::stake', validator, config]`)"
+            "Validator or SOL staker stake account"
           ]
         },
         {
@@ -533,7 +533,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Config or Stake config account"
+            "Config or Stake account"
           ]
         },
         {

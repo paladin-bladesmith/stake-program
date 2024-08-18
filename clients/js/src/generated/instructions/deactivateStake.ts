@@ -97,7 +97,7 @@ export type DeactivateStakeInput<
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
-  /** Validator stake account (pda of `['stake::state::stake', validator, config]`) */
+  /** Validator or SOL staker stake account */
   stake: Address<TAccountStake>;
   /** Authority on validator stake account */
   stakeAuthority: TransactionSigner<TAccountStakeAuthority>;
@@ -166,7 +166,7 @@ export type ParsedDeactivateStakeInstruction<
   accounts: {
     /** Stake config account */
     config: TAccountMetas[0];
-    /** Validator stake account (pda of `['stake::state::stake', validator, config]`) */
+    /** Validator or SOL staker stake account */
     stake: TAccountMetas[1];
     /** Authority on validator stake account */
     stakeAuthority: TAccountMetas[2];
