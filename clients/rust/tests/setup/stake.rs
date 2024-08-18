@@ -20,6 +20,8 @@ pub async fn create_stake_account(
     let rent = context.banks_client.get_rent().await.unwrap();
     let lamports = rent.minimum_balance(std::mem::size_of::<StakeStateV2>()) + stake_amount;
 
+    context.get_new_latest_blockhash().await.unwrap();
+
     let transaction = Transaction::new_signed_with_payer(
         &create_account(
             &context.payer.pubkey(),
@@ -34,7 +36,7 @@ pub async fn create_stake_account(
     );
     context
         .banks_client
-        .process_transaction(transaction)
+        .process_transaction_with_metadata(transaction)
         .await
         .unwrap();
 
