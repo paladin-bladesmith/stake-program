@@ -188,11 +188,10 @@ pub fn process_harvest_sync_rewards(
             sol_staker_stake
                 .delegation
                 .last_seen_stake_rewards_per_token = last_seen_stake_rewards_per_token
-                .checked_add(calculate_stake_rewards_per_token(
+                .wrapping_add(calculate_stake_rewards_per_token(
                     searcher_rewards,
                     sol_staker_stake.delegation.amount,
                 )?)
-                .ok_or(ProgramError::ArithmeticOverflow)?
                 .into();
 
             // transfer searcher rewards

@@ -124,9 +124,8 @@ pub fn calculate_eligible_rewards(
     //   (current_accumulated_rewards_per_token
     //     - last_accumulated_rewards_per_token)
     //   * token_account_balance
-    let marginal_rate = current_accumulated_rewards_per_token
-        .checked_sub(last_accumulated_rewards_per_token)
-        .ok_or(ProgramError::ArithmeticOverflow)?;
+    let marginal_rate =
+        current_accumulated_rewards_per_token.wrapping_sub(last_accumulated_rewards_per_token);
 
     if marginal_rate == 0 {
         Ok(0)
