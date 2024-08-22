@@ -25,9 +25,9 @@ fn calculate_stake_rewards_per_token(rewards: u64, stake_amount: u64) -> u128 {
     } else {
         // Calculation: rewards / stake_amount
         //
-        // Scaled by 1e9 to store 9 decimal places of precision.
+        // Scaled by 1e18 to store 18 decimal places of precision.
         (rewards as u128)
-            .checked_mul(1_000_000_000)
+            .checked_mul(1_000_000_000_000_000_000)
             .and_then(|product| product.checked_div(stake_amount as u128))
             .unwrap()
     }
@@ -117,7 +117,7 @@ async fn harvest_validator_rewards() {
     let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
         stake_account.delegation.last_seen_stake_rewards_per_token,
-        200_000_000 // 0.2 * 1e9
+        200_000_000_000_000_000 // 0.2 * 1e18
     );
 }
 
@@ -212,7 +212,7 @@ async fn harvest_validator_rewards_after_harvesting() {
     // 2 SOL rewards.
     //
     // We simulate that the rewards were already harvested by setting the value of
-    // last_seen_stake_rewards_per_token to the expected rewards_per_token value (0.04 * 1e9).
+    // last_seen_stake_rewards_per_token to the expected rewards_per_token value (0.04 * 1e18).
 
     let validator_stake_manager = ValidatorStakeManager::new(&mut context, &config).await;
 
@@ -567,7 +567,7 @@ async fn harvest_validator_rewards_with_excess_rewards() {
     //   [config account]
     //   - total staked: 26_000_000_000
     //   - stake rewards: 13_000_000_000
-    //   - rewards per token: 13_000_000_000 / 26_000_000_000 = 0.5 SOL
+    //   - rewards per token: 13_000_000_000_000_000_000 / 26_000_000_000 = 0.5 SOL
     //
     //   [harvest]
     //   - rewards for 6_500_000_000 staked, since this is the stake limit:
@@ -611,7 +611,7 @@ async fn harvest_validator_rewards_with_excess_rewards() {
     let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
         stake_account.delegation.last_seen_stake_rewards_per_token,
-        750_000_000
+        750_000_000_000_000_000
     );
 
     // And the config account has the remaining rewards plus the excess rewards.
@@ -620,7 +620,7 @@ async fn harvest_validator_rewards_with_excess_rewards() {
     let config_account = Config::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
         config_account.accumulated_stake_rewards_per_token,
-        750_000_000
+        750_000_000_000_000_000
     );
     assert_eq!(
         account.lamports,

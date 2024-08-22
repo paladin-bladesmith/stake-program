@@ -90,7 +90,8 @@ async fn validator_stake_harvest_holder_rewards() {
     let mut account = get_account!(context, holder_rewards);
     let mut holder_rewards_account = HolderRewards::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set last accumulated rewards per token to 40_000_000 (0.04 SOL)
-    holder_rewards_account.last_accumulated_rewards_per_token = 40_000_000 * 1_000_000_000;
+    holder_rewards_account.last_accumulated_rewards_per_token =
+        40_000_000 * 1_000_000_000_000_000_000;
 
     account.data = holder_rewards_account.try_to_vec().unwrap();
     context.set_account(&holder_rewards, &account.into());
@@ -102,8 +103,8 @@ async fn validator_stake_harvest_holder_rewards() {
     // Calculation:
     //   - total staked: 100
     //   - holder rewards: 4 SOL
-    //   - rewards per token: 4_000_000_000 / 100 = 40_000_000 (0.04 SOL)
-    //   - rewards for 50 staked: 40_000_000 * 50 = 2_000_000_000 (2 SOL)
+    //   - rewards per token: 4_000_000_000_000_000_000 / 100 = 40_000_000_000_000_000 (0.04 SOL)
+    //   - rewards for 50 staked: 40_000_000_000_000_000 * 50 = 2_000_000_000_000_000_000 (2 SOL)
 
     let destination = Pubkey::new_unique();
 
@@ -146,7 +147,7 @@ async fn validator_stake_harvest_holder_rewards() {
     let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
         stake_account.delegation.last_seen_holder_rewards_per_token,
-        40_000_000 * 1_000_000_000
+        40_000_000 * 1_000_000_000_000_000_000
     );
 
     // And the vault authority did not keep any lamports (the account should not exist).
@@ -215,8 +216,9 @@ async fn validator_stake_harvest_holder_rewards_with_no_rewards_available() {
 
     let mut account = get_account!(context, holder_rewards);
     let mut holder_rewards_account = HolderRewards::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set last accumulated rewards per token to 40_000_000 (0.04 SOL)
-    holder_rewards_account.last_accumulated_rewards_per_token = 40_000_000 * 1_000_000_000;
+    // "manually" set last accumulated rewards per token to 40_000_000_000_000_000 (0.04 SOL)
+    holder_rewards_account.last_accumulated_rewards_per_token =
+        40_000_000 * 1_000_000_000_000_000_000;
 
     account.data = holder_rewards_account.try_to_vec().unwrap();
     context.set_account(&holder_rewards, &account.into());
@@ -328,8 +330,9 @@ async fn validator_stake_harvest_holder_rewards_after_harvesting() {
 
     let mut account = get_account!(context, holder_rewards);
     let mut holder_rewards_account = HolderRewards::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set last accumulated rewards per token to 40_000_000 (0.04 SOL)
-    holder_rewards_account.last_accumulated_rewards_per_token = 40_000_000 * 1_000_000_000;
+    // "manually" set last accumulated rewards per token to 40_000_000_000_000_000 (0.04 SOL)
+    holder_rewards_account.last_accumulated_rewards_per_token =
+        40_000_000 * 1_000_000_000_000_000_000;
 
     account.data = holder_rewards_account.try_to_vec().unwrap();
     context.set_account(&holder_rewards, &account.into());
@@ -408,7 +411,7 @@ async fn validator_stake_harvest_holder_rewards_after_harvesting() {
     let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
         stake_account.delegation.last_seen_holder_rewards_per_token,
-        40_000_000 * 1_000_000_000
+        40_000_000 * 1_000_000_000_000_000_000
     );
 }
 
@@ -474,8 +477,9 @@ async fn validator_stake_fail_harvest_holder_rewards_with_wrong_authority() {
 
     let mut account = get_account!(context, holder_rewards);
     let mut holder_rewards_account = HolderRewards::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set last accumulated rewards per token to 40_000_000 (0.04 SOL)
-    holder_rewards_account.last_accumulated_rewards_per_token = 40_000_000 * 1_000_000_000;
+    // "manually" set last accumulated rewards per token to 40_000_000_000_000_000 (0.04 SOL)
+    holder_rewards_account.last_accumulated_rewards_per_token =
+        40_000_000 * 1_000_000_000_000_000_000;
 
     account.data = holder_rewards_account.try_to_vec().unwrap();
     context.set_account(&holder_rewards, &account.into());
@@ -754,8 +758,9 @@ async fn fail_harvest_holder_rewards_with_wrong_config() {
 
     let mut account = get_account!(context, holder_rewards);
     let mut holder_rewards_account = HolderRewards::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set last accumulated rewards per token to 40_000_000 (0.04 SOL)
-    holder_rewards_account.last_accumulated_rewards_per_token = 40_000_000 * 1_000_000_000;
+    // "manually" set last accumulated rewards per token to 40_000_000_000_000_000 (0.04 SOL)
+    holder_rewards_account.last_accumulated_rewards_per_token =
+        40_000_000 * 1_000_000_000_000_000_000;
 
     account.data = holder_rewards_account.try_to_vec().unwrap();
     context.set_account(&holder_rewards, &account.into());
@@ -859,8 +864,9 @@ async fn fail_harvest_holder_rewards_with_invalid_destination() {
 
     let mut account = get_account!(context, holder_rewards);
     let mut holder_rewards_account = HolderRewards::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set last accumulated rewards per token to 40_000_000 (0.04 SOL)
-    holder_rewards_account.last_accumulated_rewards_per_token = 40_000_000 * 1_000_000_000;
+    // "manually" set last accumulated rewards per token to 40_000_000_000_000_000 (0.04 SOL)
+    holder_rewards_account.last_accumulated_rewards_per_token =
+        40_000_000 * 1_000_000_000_000_000_000;
 
     account.data = holder_rewards_account.try_to_vec().unwrap();
     context.set_account(&holder_rewards, &account.into());
@@ -972,8 +978,9 @@ async fn sol_staker_stake_harvest_holder_rewards() {
 
     let mut account = get_account!(context, holder_rewards);
     let mut holder_rewards_account = HolderRewards::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set last accumulated rewards per token to 40_000_000 (0.04 SOL)
-    holder_rewards_account.last_accumulated_rewards_per_token = 40_000_000 * 1_000_000_000;
+    // "manually" set last accumulated rewards per token to 40_000_000_000_000_000 (0.04 SOL)
+    holder_rewards_account.last_accumulated_rewards_per_token =
+        40_000_000 * 1_000_000_000_000_000_000;
 
     account.data = holder_rewards_account.try_to_vec().unwrap();
     context.set_account(&holder_rewards, &account.into());
@@ -985,8 +992,8 @@ async fn sol_staker_stake_harvest_holder_rewards() {
     // Calculation:
     //   - total staked: 100
     //   - holder rewards: 4 SOL
-    //   - rewards per token: 4_000_000_000 / 100 = 40_000_000 (0.04 SOL)
-    //   - rewards for 40 staked: 40_000_000 * 40 = 1_600_000_000 (1.6 SOL)
+    //   - rewards per token: 4_000_000_000_000_000_000 / 100 = 40_000_000_000_000_000 (0.04 SOL)
+    //   - rewards for 40 staked: 40_000_000_000_000_000 * 40 = 1_600_000_000_000_000_000 (1.6 SOL)
 
     let destination = Pubkey::new_unique();
 
@@ -1029,7 +1036,7 @@ async fn sol_staker_stake_harvest_holder_rewards() {
     let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
         stake_account.delegation.last_seen_holder_rewards_per_token,
-        40_000_000 * 1_000_000_000
+        40_000_000 * 1_000_000_000_000_000_000
     );
 
     // And the vault authority did not keep any lamports (the account should not exist).
@@ -1100,8 +1107,9 @@ async fn sol_staker_stake_harvest_holder_rewards_with_no_rewards_available() {
 
     let mut account = get_account!(context, holder_rewards);
     let mut holder_rewards_account = HolderRewards::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set last accumulated rewards per token to 40_000_000 (0.04 SOL)
-    holder_rewards_account.last_accumulated_rewards_per_token = 40_000_000 * 1_000_000_000;
+    // "manually" set last accumulated rewards per token to 40_000_000_000_000_000 (0.04 SOL)
+    holder_rewards_account.last_accumulated_rewards_per_token =
+        40_000_000 * 1_000_000_000_000_000_000;
 
     account.data = holder_rewards_account.try_to_vec().unwrap();
     context.set_account(&holder_rewards, &account.into());
@@ -1223,8 +1231,9 @@ async fn sol_staker_stake_harvest_holder_rewards_after_harvesting() {
 
     let mut account = get_account!(context, holder_rewards);
     let mut holder_rewards_account = HolderRewards::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set last accumulated rewards per token to 40_000_000 (0.04 SOL)
-    holder_rewards_account.last_accumulated_rewards_per_token = 40_000_000 * 1_000_000_000;
+    // "manually" set last accumulated rewards per token to 40_000_000_000_000_000 (0.04 SOL)
+    holder_rewards_account.last_accumulated_rewards_per_token =
+        40_000_000 * 1_000_000_000_000_000_000;
 
     account.data = holder_rewards_account.try_to_vec().unwrap();
     context.set_account(&holder_rewards, &account.into());
@@ -1303,7 +1312,7 @@ async fn sol_staker_stake_harvest_holder_rewards_after_harvesting() {
     let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
         stake_account.delegation.last_seen_holder_rewards_per_token,
-        40_000_000 * 1_000_000_000
+        40_000_000 * 1_000_000_000_000_000_000
     );
 }
 
@@ -1379,8 +1388,9 @@ async fn sol_staker_stake_fail_harvest_holder_rewards_with_wrong_authority() {
 
     let mut account = get_account!(context, holder_rewards);
     let mut holder_rewards_account = HolderRewards::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set last accumulated rewards per token to 40_000_000 (0.04 SOL)
-    holder_rewards_account.last_accumulated_rewards_per_token = 40_000_000 * 1_000_000_000;
+    // "manually" set last accumulated rewards per token to 40_000_000_000_000_000 (0.04 SOL)
+    holder_rewards_account.last_accumulated_rewards_per_token =
+        40_000_000 * 1_000_000_000_000_000_000;
 
     account.data = holder_rewards_account.try_to_vec().unwrap();
     context.set_account(&holder_rewards, &account.into());
