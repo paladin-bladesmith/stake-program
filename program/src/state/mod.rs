@@ -205,3 +205,108 @@ pub struct Delegation {
     /// stakers to withdraw rewards on their own schedule.
     pub last_seen_stake_rewards_per_token: PodU128,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const BENCH_TOKEN_SUPPLY: u64 = 1_000_000_000 * 1_000_000_000; // 1 billion with 9 decimals
+
+    #[test]
+    fn minimum_stake_rewards_per_token() {
+        // 1 SOL (arithmetic minimum)
+        let minimum_reward = 1_000_000_000;
+        let result = calculate_stake_rewards_per_token(minimum_reward, BENCH_TOKEN_SUPPLY).unwrap();
+        assert_ne!(result, 0);
+
+        // Anything below the minimum should return zero.
+        let result =
+            calculate_stake_rewards_per_token(minimum_reward - 1, BENCH_TOKEN_SUPPLY).unwrap();
+        assert_eq!(result, 0);
+    }
+
+    #[test]
+    fn maximum_stake_rewards_per_token() {
+        // u64::MAX (not really practical, but shows that we're ok)
+        let maximum_reward = u64::MAX;
+        let _ = calculate_stake_rewards_per_token(maximum_reward, BENCH_TOKEN_SUPPLY).unwrap();
+    }
+
+    #[test]
+    fn minimum_eligible_rewards() {
+        // 1 / 1e9 lamports per token
+        let minimum_marginal_rewards_per_token = 1;
+        let result = calculate_eligible_rewards(
+            minimum_marginal_rewards_per_token,
+            0,
+            BENCH_TOKEN_SUPPLY, // 100% of the supply.
+        )
+        .unwrap();
+        assert_ne!(result, 0);
+
+        // Anything below the minimum should return zero.
+        let result = calculate_eligible_rewards(
+            minimum_marginal_rewards_per_token - 1,
+            0,
+            BENCH_TOKEN_SUPPLY, // 100% of the supply.
+        )
+        .unwrap();
+        assert_eq!(result, 0);
+    }
+
+    #[test]
+    fn minimum_eligible_rewards_with_one_token() {
+        // 1 / 1e9 lamports per token
+        let minimum_marginal_rewards_per_token = 1;
+        let result = calculate_eligible_rewards(
+            minimum_marginal_rewards_per_token,
+            0,
+            BENCH_TOKEN_SUPPLY / 1_000_000_000, // 1 with 9 decimals.
+        )
+        .unwrap();
+        assert_ne!(result, 0);
+
+        // Anything below the minimum should return zero.
+        let result = calculate_eligible_rewards(
+            minimum_marginal_rewards_per_token - 1,
+            0,
+            BENCH_TOKEN_SUPPLY / 1_000_000_000, // 1 with 9 decimals.
+        )
+        .unwrap();
+        assert_eq!(result, 0);
+    }
+
+    #[test]
+    fn minimum_eligible_rewards_with_smallest_fractional_token() {
+        // 1 lamport per token
+        let minimum_marginal_rewards_per_token = 1_000_000_000;
+        let result = calculate_eligible_rewards(
+            minimum_marginal_rewards_per_token,
+            0,
+            BENCH_TOKEN_SUPPLY / 1_000_000_000_000_000_000, // .000_000_001 with 9 decimals.
+        )
+        .unwrap();
+        assert_ne!(result, 0);
+
+        // Anything below the minimum should return zero.
+        let result = calculate_eligible_rewards(
+            minimum_marginal_rewards_per_token - 1,
+            0,
+            BENCH_TOKEN_SUPPLY / 1_000_000_000_000_000_000, // .000_000_001 with 9 decimals.
+        )
+        .unwrap();
+        assert_eq!(result, 0);
+    }
+
+    #[test]
+    fn maximum_eligible_rewards() {
+        // 1 lamport per token (not really practical, but shows that we're ok)
+        let maximum_marginal_rewards_per_token = REWARDS_PER_TOKEN_SCALING_FACTOR;
+        let _ = calculate_eligible_rewards(
+            maximum_marginal_rewards_per_token,
+            0,
+            BENCH_TOKEN_SUPPLY, // 100% of the supply.
+        )
+        .unwrap();
+    }
+}
