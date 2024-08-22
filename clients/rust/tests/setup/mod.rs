@@ -15,8 +15,8 @@ pub mod token;
 pub mod validator_stake;
 pub mod vote;
 
-/// Scaling factor for rewards per token (1e9).
-pub const REWARDS_PER_TOKEN_SCALING_FACTOR: u128 = 1_000_000_000;
+/// Scaling factor for rewards per token (1e18).
+pub const REWARDS_PER_TOKEN_SCALING_FACTOR: u128 = 1_000_000_000_000_000_000;
 
 pub fn new_program_test() -> ProgramTest {
     let mut program_test = ProgramTest::new(
@@ -141,9 +141,9 @@ pub fn calculate_stake_rewards_per_token(rewards: u64, stake_amount: u64) -> u12
     } else {
         // Calculation: rewards / stake_amount
         //
-        // Scaled by 1e9 to store 9 decimal places of precision.
+        // Scaled by 1e18 to store 18 decimal places of precision.
         (rewards as u128)
-            .checked_mul(1_000_000_000)
+            .checked_mul(1_000_000_000_000_000_000)
             .and_then(|product| product.checked_div(stake_amount as u128))
             .unwrap()
     }

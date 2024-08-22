@@ -66,7 +66,7 @@ async fn distribute_rewards() {
     assert_eq!(
         config_account.accumulated_stake_rewards_per_token,
         1_000_000_000u128
-            // accumulated rewards are stored with a 1e9 scaling factor
+            // accumulated rewards are stored with a 1e18 scaling factor
             .checked_mul(REWARDS_PER_TOKEN_SCALING_FACTOR)
             .unwrap()
     );

@@ -117,7 +117,7 @@ async fn harvest_sol_staker_rewards() {
     let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
         stake_account.delegation.last_seen_stake_rewards_per_token,
-        200_000_000 // 0.2 * 1e9
+        200_000_000_000_000_000 // 0.2 * 1e18
     );
 }
 
@@ -371,7 +371,7 @@ async fn harvest_sol_staker_rewards_with_excess_rewards() {
     //   [config account]
     //   - total staked: 26_000_000_000
     //   - stake rewards: 13_000_000_000
-    //   - rewards per token: 13_000_000_000 / 26_000_000_000 = 0.5 SOL
+    //   - rewards per token: 13_000_000_000_000_000_000 / 26_000_000_000 = 0.5 SOL
     //
     //   [harvest]
     //   - rewards for 6_500_000_000 staked, since this is the stake limit:
@@ -416,7 +416,7 @@ async fn harvest_sol_staker_rewards_with_excess_rewards() {
     let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
         stake_account.delegation.last_seen_stake_rewards_per_token,
-        750_000_000
+        750_000_000_000_000_000
     );
 
     // And the config account has the remaining rewards plus the excess rewards.
@@ -425,7 +425,7 @@ async fn harvest_sol_staker_rewards_with_excess_rewards() {
     let config_account = Config::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
         config_account.accumulated_stake_rewards_per_token,
-        750_000_000
+        750_000_000_000_000_000
     );
     assert_eq!(
         account.lamports,

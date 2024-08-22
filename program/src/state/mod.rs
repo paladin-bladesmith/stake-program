@@ -16,8 +16,8 @@ use solana_program::{
 };
 use std::{mem::size_of, num::NonZeroU64};
 
-/// Scaling factor for rewards per token (1e9).
-const REWARDS_PER_TOKEN_SCALING_FACTOR: u128 = 1_000_000_000;
+/// Scaling factor for rewards per token (1e18).
+const REWARDS_PER_TOKEN_SCALING_FACTOR: u128 = 1_000_000_000_000_000_000;
 
 /// Defined the maximum value for basis points (100%).
 pub const MAX_BASIS_POINTS: u128 = 10_000;
@@ -131,7 +131,7 @@ pub fn calculate_eligible_rewards(
     if marginal_rate == 0 {
         Ok(0)
     } else {
-        // Scaled by 1e9 to store 9 decimal places of precision.
+        // Scaled by 1e18 to store 18 decimal places of precision.
         marginal_rate
             .checked_mul(token_account_balance as u128)
             .and_then(|product| product.checked_div(REWARDS_PER_TOKEN_SCALING_FACTOR))
@@ -149,7 +149,7 @@ pub fn calculate_stake_rewards_per_token(
     } else {
         // Calculation: rewards / stake_amount
         //
-        // Scaled by 1e9 to store 9 decimal places of precision.
+        // Scaled by 1e18 to store 18 decimal places of precision.
         (rewards as u128)
             .checked_mul(REWARDS_PER_TOKEN_SCALING_FACTOR)
             .and_then(|product| product.checked_div(stake_amount as u128))
@@ -214,8 +214,8 @@ mod tests {
 
     #[test]
     fn minimum_stake_rewards_per_token() {
-        // 1 SOL (arithmetic minimum)
-        let minimum_reward = 1_000_000_000;
+        // 1 lamport (arithmetic minimum)
+        let minimum_reward = 1;
         let result = calculate_stake_rewards_per_token(minimum_reward, BENCH_TOKEN_SUPPLY).unwrap();
         assert_ne!(result, 0);
 
@@ -234,7 +234,7 @@ mod tests {
 
     #[test]
     fn minimum_eligible_rewards() {
-        // 1 / 1e9 lamports per token
+        // 1 / 1e18 lamports per token
         let minimum_marginal_rewards_per_token = 1;
         let result = calculate_eligible_rewards(
             minimum_marginal_rewards_per_token,
@@ -257,7 +257,7 @@ mod tests {
     #[test]
     fn minimum_eligible_rewards_with_one_token() {
         // 1 / 1e9 lamports per token
-        let minimum_marginal_rewards_per_token = 1;
+        let minimum_marginal_rewards_per_token = 1_000_000_000;
         let result = calculate_eligible_rewards(
             minimum_marginal_rewards_per_token,
             0,
@@ -279,7 +279,7 @@ mod tests {
     #[test]
     fn minimum_eligible_rewards_with_smallest_fractional_token() {
         // 1 lamport per token
-        let minimum_marginal_rewards_per_token = 1_000_000_000;
+        let minimum_marginal_rewards_per_token = 1_000_000_000_000_000_000;
         let result = calculate_eligible_rewards(
             minimum_marginal_rewards_per_token,
             0,

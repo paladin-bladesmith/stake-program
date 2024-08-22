@@ -39,8 +39,8 @@ pub struct Config {
 
     /// The current stake rewards per token exchange rate.
     ///
-    /// Stored as a `u128`, which includes a scaling factor of `1e9` to
-    /// represent the exchange rate with 9 decimal places of precision.
+    /// Stored as a `u128`, which includes a scaling factor of `1e18` to
+    /// represent the exchange rate with 18 decimal places of precision.
     pub accumulated_stake_rewards_per_token: PodU128,
 
     /// The maximum proportion that can be deactivated at once, given as basis
