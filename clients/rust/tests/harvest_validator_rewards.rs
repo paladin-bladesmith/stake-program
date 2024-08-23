@@ -122,6 +122,99 @@ async fn harvest_validator_rewards() {
 }
 
 #[tokio::test]
+async fn harvest_validator_rewards_wrapped() {
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
+
+    // Given a config account with 26 lamports rewards and 130 staked amount.
+
+    let config = create_config(&mut context).await;
+
+    let mut account = get_account!(context, config);
+    let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
+    // "manually" set the total amount delegated
+    config_account.token_amount_delegated = 130;
+    // Set the config account's current rewards per token, simulating a
+    // scenario where the rate has wrapped around `u128::MAX`.
+    // If the holder's last seen rate is `u128::MAX`, the calculation should
+    // still work with wrapped math.
+    config_account.accumulated_stake_rewards_per_token = calculate_stake_rewards_per_token(26, 130);
+
+    account.lamports += 26;
+    account.data = config_account.try_to_vec().unwrap();
+    context.set_account(&config, &account.into());
+
+    // And a validator stake account wiht a 65 staked amount.
+
+    let validator_stake_manager = ValidatorStakeManager::new(&mut context, &config).await;
+
+    let mut account = get_account!(context, validator_stake_manager.stake);
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
+    // "manually" set the staked amount to 65, SOL stake amount to 50
+    // (stake maximum limit is 1.3 * 50 = 65)
+    stake_account.delegation.amount = 65;
+    stake_account.total_staked_lamports_amount = 50;
+    // Set the stake account's last seen rate to `u128::MAX`.
+    stake_account.delegation.last_seen_stake_rewards_per_token = u128::MAX;
+    account.data = stake_account.try_to_vec().unwrap();
+    context.set_account(&validator_stake_manager.stake, &account.into());
+
+    // When we harvest the stake rewards.
+    //
+    // We are expecting the rewards to be 13 lamports.
+    //
+    // Calculation:
+    //   - total staked: 130
+    //   - stake rewards: 26 lamports
+    //   - rewards per token: 26 / 130 = 0.2
+    //   - validator stake amount: 65 (limit 1.3 * 50 = 65)
+    //   - rewards for 65 staked: 0.2 * 65 = 13 lamports
+
+    let destination = Pubkey::new_unique();
+    context.set_account(
+        &destination,
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
+    let harvest_stake_rewards_ix = HarvestValidatorRewardsBuilder::new()
+        .config(config)
+        .validator_stake(validator_stake_manager.stake)
+        .stake_authority(validator_stake_manager.authority.pubkey())
+        .destination(destination)
+        .instruction();
+
+    let tx = Transaction::new_signed_with_payer(
+        &[harvest_stake_rewards_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, &validator_stake_manager.authority],
+        context.last_blockhash,
+    );
+    context.banks_client.process_transaction(tx).await.unwrap();
+
+    // Then the destination account has the rewards.
+
+    let account = get_account!(context, destination);
+    assert_eq!(account.lamports, 100_000_000 + 13); // rent + rewards
+
+    // And the stake account has the updated last seen stake rewards per token.
+    let account = get_account!(context, validator_stake_manager.stake);
+    let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
+    assert_eq!(
+        stake_account.delegation.last_seen_stake_rewards_per_token,
+        200_000_000_000_000_000 // 0.2 * 1e18
+    );
+}
+
+#[tokio::test]
 async fn harvest_validator_rewards_with_no_rewards_available() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
