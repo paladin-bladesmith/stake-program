@@ -408,9 +408,7 @@ pub fn process_harvest_for_delegation(
             if rewards_per_token != 0 {
                 // Update the accumulated stake rewards per token on the config to
                 // reflect the addition of the rewards for the exceeding amount.
-                let accumulated = accumulated_rewards_per_token
-                    .checked_add(rewards_per_token)
-                    .ok_or(ProgramError::ArithmeticOverflow)?;
+                let accumulated = accumulated_rewards_per_token.wrapping_add(rewards_per_token);
                 config.accumulated_stake_rewards_per_token = accumulated.into();
             }
         }
