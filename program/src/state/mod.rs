@@ -321,7 +321,7 @@ mod tests {
             BENCH_TOKEN_SUPPLY,
         )
         .unwrap();
-        assert_ne!(result, 1_000_000_000_000_000_000);
+        assert_eq!(result, 2_000_000_000_000_000_001);
 
         // Try it again at the very edge. Result should be one.
         let current_accumulated_rewards_per_token = 0;

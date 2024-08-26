@@ -356,13 +356,9 @@ async fn harvest_sync_rewards_wrapped() {
         .accumulated_stake_rewards_per_token
         .checked_sub(last_seen_stake_rewards_per_token)
         .and_then(|rewards| {
-            rewards.checked_sub(calculate_stake_rewards_per_token(
-                1_299_000_000,
-                1_300_000_000,
-            ))
+            rewards.checked_sub(calculate_stake_rewards_per_token(1_299_000_000, 1_300_000_000) + 1)
         })
-        .unwrap()
-        - 1;
+        .unwrap();
 
     assert!(difference <= REWARD_PER_TOKEN_ROUNDING_ERROR);
 }
