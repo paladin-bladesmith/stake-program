@@ -73,6 +73,67 @@ async fn distribute_rewards() {
 }
 
 #[tokio::test]
+async fn distribute_rewards_wrapped() {
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
+
+    // Given a config account.
+
+    let config = create_config(&mut context).await;
+    // "manually" set the total amount delegated and max reward.
+    let account = get_account!(context, config);
+    let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
+    config_account.token_amount_delegated = 5; // <- 5 tokens
+    config_account.accumulated_stake_rewards_per_token = u128::MAX; // Maximum rate.
+
+    let updated_config = Account {
+        lamports: account.lamports,
+        data: config_account.try_to_vec().unwrap(),
+        owner: account.owner,
+        executable: account.executable,
+        rent_epoch: account.rent_epoch,
+    };
+    context.set_account(&config, &updated_config.into());
+
+    // When we distribute rewards.
+
+    let distribute_rewards_ix = DistributeRewardsBuilder::new()
+        .config(config)
+        .payer(context.payer.pubkey())
+        .amount(5_000_000_000)
+        .instruction();
+
+    let tx = Transaction::new_signed_with_payer(
+        &[distribute_rewards_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer],
+        context.last_blockhash,
+    );
+    context.banks_client.process_transaction(tx).await.unwrap();
+
+    // Then the config account should have the accumulated stake rewards per
+    // token updated with wrapped math.
+
+    let account = get_account!(context, config);
+    let account_data = account.data.as_ref();
+    let config_account = Config::from_bytes(account_data).unwrap();
+
+    assert_eq!(
+        config_account.accumulated_stake_rewards_per_token,
+        1_000_000_000u128
+            // accumulated rewards are stored with a 1e18 scaling factor
+            .checked_mul(REWARDS_PER_TOKEN_SCALING_FACTOR)
+            .and_then(|p| p.checked_sub(1))
+            .unwrap()
+    );
+}
+
+#[tokio::test]
 async fn distribute_rewards_with_no_staked_tokens() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",

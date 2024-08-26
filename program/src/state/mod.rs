@@ -124,9 +124,8 @@ pub fn calculate_eligible_rewards(
     //   (current_accumulated_rewards_per_token
     //     - last_accumulated_rewards_per_token)
     //   * token_account_balance
-    let marginal_rate = current_accumulated_rewards_per_token
-        .checked_sub(last_accumulated_rewards_per_token)
-        .ok_or(ProgramError::ArithmeticOverflow)?;
+    let marginal_rate =
+        current_accumulated_rewards_per_token.wrapping_sub(last_accumulated_rewards_per_token);
 
     if marginal_rate == 0 {
         Ok(0)
@@ -308,5 +307,31 @@ mod tests {
             BENCH_TOKEN_SUPPLY, // 100% of the supply.
         )
         .unwrap();
+    }
+
+    #[test]
+    fn wrapping_eligible_rewards() {
+        // Set up current to be less than rate, simulating a scenario where the
+        // current reward has wrapped around `u128::MAX`.
+        let current_accumulated_rewards_per_token = 1_000_000_000_000_000_000;
+        let last_accumulated_rewards_per_token = u128::MAX - 1_000_000_000_000_000_000;
+        let result = calculate_eligible_rewards(
+            current_accumulated_rewards_per_token,
+            last_accumulated_rewards_per_token,
+            BENCH_TOKEN_SUPPLY,
+        )
+        .unwrap();
+        assert_eq!(result, 2_000_000_000_000_000_001);
+
+        // Try it again at the very edge. Result should be one.
+        let current_accumulated_rewards_per_token = 0;
+        let last_accumulated_rewards_per_token = u128::MAX;
+        let result = calculate_eligible_rewards(
+            current_accumulated_rewards_per_token,
+            last_accumulated_rewards_per_token,
+            BENCH_TOKEN_SUPPLY,
+        )
+        .unwrap();
+        assert_eq!(result, 1);
     }
 }
