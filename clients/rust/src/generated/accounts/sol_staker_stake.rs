@@ -21,10 +21,15 @@ pub struct SolStakerStake {
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
     pub sol_stake: Pubkey,
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
+    )]
+    pub staker: Pubkey,
 }
 
 impl SolStakerStake {
-    pub const LEN: usize = 176;
+    pub const LEN: usize = 208;
 
     #[inline(always)]
     pub fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {
