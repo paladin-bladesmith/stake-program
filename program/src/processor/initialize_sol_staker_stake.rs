@@ -86,12 +86,16 @@ pub fn process_initialize_sol_staker_stake(
         bytemuck::try_from_bytes::<GetStakeActivatingAndDeactivatingReturnData>(&return_data)
             .map_err(|_error| ProgramError::InvalidAccountData)?;
 
-    let (withdrawer, validator_vote) =
+    let (withdrawer, staker, validator_vote) =
         if let Some(delegated_vote) = stake_state_data.delegated_vote.get() {
             (
                 // we should always have a withdrawer if the stake is delegated
                 stake_state_data
                     .withdrawer
+                    .get()
+                    .ok_or(ProgramError::InvalidAccountData)?,
+                stake_state_data
+                    .staker
                     .get()
                     .ok_or(ProgramError::InvalidAccountData)?,
                 delegated_vote,
@@ -179,7 +183,12 @@ pub fn process_initialize_sol_staker_stake(
     let mut data = ctx.accounts.sol_staker_stake.try_borrow_mut_data()?;
     let stake = bytemuck::from_bytes_mut::<SolStakerStake>(&mut data);
 
-    *stake = SolStakerStake::new(withdrawer, *ctx.accounts.sol_stake.key, validator_vote);
+    *stake = SolStakerStake::new(
+        withdrawer,
+        *ctx.accounts.sol_stake.key,
+        staker,
+        validator_vote,
+    );
     stake.lamports_amount = u64::from(stake_state_data.activating)
         .checked_add(stake_state_data.effective.into())
         .ok_or(ProgramError::ArithmeticOverflow)?;

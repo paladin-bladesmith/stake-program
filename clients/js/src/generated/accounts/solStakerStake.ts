@@ -46,6 +46,7 @@ export type SolStakerStake = {
   delegation: Delegation;
   lamportsAmount: bigint;
   solStake: Address;
+  staker: Address;
 };
 
 export type SolStakerStakeArgs = {
@@ -53,6 +54,7 @@ export type SolStakerStakeArgs = {
   delegation: DelegationArgs;
   lamportsAmount: number | bigint;
   solStake: Address;
+  staker: Address;
 };
 
 export function getSolStakerStakeEncoder(): Encoder<SolStakerStakeArgs> {
@@ -61,6 +63,7 @@ export function getSolStakerStakeEncoder(): Encoder<SolStakerStakeArgs> {
     ['delegation', getDelegationEncoder()],
     ['lamportsAmount', getU64Encoder()],
     ['solStake', getAddressEncoder()],
+    ['staker', getAddressEncoder()],
   ]);
 }
 
@@ -70,6 +73,7 @@ export function getSolStakerStakeDecoder(): Decoder<SolStakerStake> {
     ['delegation', getDelegationDecoder()],
     ['lamportsAmount', getU64Decoder()],
     ['solStake', getAddressDecoder()],
+    ['staker', getAddressDecoder()],
   ]);
 }
 
@@ -142,5 +146,5 @@ export async function fetchAllMaybeSolStakerStake(
 }
 
 export function getSolStakerStakeSize(): number {
-  return 176;
+  return 208;
 }

@@ -1159,6 +1159,10 @@
           {
             "name": "solStake",
             "type": "publicKey"
+          },
+          {
+            "name": "staker",
+            "type": "publicKey"
           }
         ]
       }

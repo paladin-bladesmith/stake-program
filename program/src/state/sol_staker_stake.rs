@@ -38,6 +38,9 @@ pub struct SolStakerStake {
     /// The `voter_pubkey` on the `StakeState` account must be equal to the `validator_vote`
     /// on the `delegation` struct.
     pub sol_stake: Pubkey,
+
+    /// The address of the staker.
+    pub staker: Pubkey,
 }
 
 impl SolStakerStake {
@@ -51,7 +54,12 @@ impl SolStakerStake {
     }
 
     /// Creates a new `SolStakerStake`.
-    pub fn new(authority: Pubkey, stake_state: Pubkey, validator_vote: Pubkey) -> Self {
+    pub fn new(
+        authority: Pubkey,
+        stake_state: Pubkey,
+        staker: Pubkey,
+        validator_vote: Pubkey,
+    ) -> Self {
         Self {
             discriminator: SolStakerStake::SPL_DISCRIMINATOR.into(),
             delegation: Delegation {
@@ -66,6 +74,7 @@ impl SolStakerStake {
             },
             lamports_amount: u64::default(),
             sol_stake: stake_state,
+            staker,
         }
     }
 }
