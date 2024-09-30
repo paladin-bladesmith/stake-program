@@ -5,4 +5,4 @@ pub mod instruction;
 pub mod processor;
 pub mod state;
 
-solana_program::declare_id!("PStake1111111111111111111111111111111111111");
+solana_program::declare_id!("GQurxHCYQCNfYR37nHNb6ZiLWg3jpbh2fWv2RpzwGqRK");

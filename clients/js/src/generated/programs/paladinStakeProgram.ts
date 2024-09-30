@@ -30,7 +30,7 @@ import {
 } from '../instructions';
 
 export const PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS =
-  'PStake1111111111111111111111111111111111111' as Address<'PStake1111111111111111111111111111111111111'>;
+  'GQurxHCYQCNfYR37nHNb6ZiLWg3jpbh2fWv2RpzwGqRK' as Address<'GQurxHCYQCNfYR37nHNb6ZiLWg3jpbh2fWv2RpzwGqRK'>;
 
 export enum PaladinStakeProgramAccount {
   Config,
@@ -128,7 +128,7 @@ export function identifyPaladinStakeProgramInstruction(
 }
 
 export type ParsedPaladinStakeProgramInstruction<
-  TProgram extends string = 'PStake1111111111111111111111111111111111111',
+  TProgram extends string = 'GQurxHCYQCNfYR37nHNb6ZiLWg3jpbh2fWv2RpzwGqRK',
 > =
   | ({
       instructionType: PaladinStakeProgramInstruction.InitializeConfig;
