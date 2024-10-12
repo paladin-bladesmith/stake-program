@@ -110,38 +110,33 @@ pub fn process_validator_stake_tokens<'a>(
     let mint = PodStateWithExtensions::<PodMint>::unpack(&mint_data)?;
     let decimals = mint.base.decimals;
 
-    // Update the config and stake account data.
-
+    // Compute the new total & effective stakes.
     require!(amount > 0, StakeError::InvalidAmount);
-
-    let limit = calculate_maximum_stake_for_lamports_amount(stake.total_staked_lamports_amount)?;
-    let updated_staked_amount = stake
+    let validator_total = stake
         .delegation
         .amount
         .checked_add(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
+    let validator_limit =
+        calculate_maximum_stake_for_lamports_amount(stake.total_staked_lamports_amount)?;
+    let validator_effective = std::cmp::max(validator_total, validator_limit);
+    let effective_delta = stake
+        .delegation
+        .effective_amount
+        .checked_sub(validator_effective)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
 
-    require!(
-        updated_staked_amount <= limit,
-        StakeError::TotalStakeAmountExceedsSolLimit,
-        "current staked amount ({}) + new amount ({}) exceeds limit ({})",
-        stake.delegation.amount,
-        amount,
-        limit
-    );
-
-    stake.delegation.amount = updated_staked_amount;
-
-    config.token_amount_delegated = config
-        .token_amount_delegated
-        .checked_add(amount)
+    // Update states.
+    stake.delegation.amount = validator_total;
+    stake.delegation.effective_amount = validator_effective;
+    config.token_amount_effective = config
+        .token_amount_effective
+        .checked_add(effective_delta)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
     // Transfer the tokens to the vault (stakes them).
-
     drop(mint_data);
     drop(vault_data);
-
     spl_token_2022::onchain::invoke_transfer_checked(
         &spl_token_2022::ID,
         ctx.accounts.source_token_account.clone(),
