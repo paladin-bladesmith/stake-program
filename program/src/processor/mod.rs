@@ -228,6 +228,16 @@ macro_rules! require {
     };
 }
 
+#[inline]
+pub fn unpack_initialized<T: Pod + IsInitialized>(data: &[u8]) -> Result<&T, ProgramError> {
+    let account =
+        bytemuck::try_from_bytes::<T>(data).map_err(|_error| ProgramError::InvalidAccountData)?;
+
+    require!(account.is_initialized(), ProgramError::UninitializedAccount);
+
+    Ok(account)
+}
+
 /// Unpacks an initialized account from the given data and
 /// returns a mutable reference to it.
 #[inline]
@@ -325,7 +335,7 @@ pub(crate) fn harvest(
     // Withdraw the lamports from the config account.
     let rent_exempt_minimum = Rent::get()?.minimum_balance(config_info.data_len());
     let config_lamports = config_info
-        .lamports()
+        .try_borrow_lamports()?
         .checked_sub(total_reward)
         .ok_or(ProgramError::ArithmeticOverflow)?;
     assert!(config_lamports >= rent_exempt_minimum);
@@ -335,10 +345,11 @@ pub(crate) fn harvest(
     let keeper_reward = match keeper {
         Some(keeper) => {
             let keeper_reward = std::cmp::min(total_reward, config.sync_rewards_lamports);
-            **keeper.try_borrow_mut_lamports()? = keeper
+            let keeper_lamports = keeper
                 .try_borrow_lamports()?
                 .checked_add(keeper_reward)
                 .ok_or(ProgramError::ArithmeticOverflow)?;
+            **keeper.try_borrow_mut_lamports()? = keeper_lamports;
 
             keeper_reward
         }
@@ -349,10 +360,11 @@ pub(crate) fn harvest(
     let delegator_reward = total_reward
         .checked_sub(keeper_reward)
         .ok_or(ProgramError::ArithmeticOverflow)?;
-    **recipient.try_borrow_mut_lamports()? = recipient
-        .lamports()
+    let recipient_lamports = recipient
+        .try_borrow_lamports()?
         .checked_add(delegator_reward)
         .ok_or(ProgramError::ArithmeticOverflow)?;
+    **recipient.try_borrow_mut_lamports()? = recipient_lamports;
 
     Ok(())
 }

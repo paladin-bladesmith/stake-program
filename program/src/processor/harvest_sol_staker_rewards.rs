@@ -3,7 +3,7 @@ use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pub
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, HarvestSolStakerRewardsAccounts},
-    processor::{harvest, unpack_initialized_mut},
+    processor::{harvest, unpack_initialized, unpack_initialized_mut},
     require,
     state::{find_sol_staker_stake_pda, Config, SolStakerStake},
 };
@@ -16,8 +16,7 @@ use crate::{
 ///
 /// 0. `[w]` Config account
 /// 1. `[w]` SOL staker stake account
-/// 2. `[w]` Destination account
-/// 3. `[s]` Stake authority
+/// 3. `[w]` Stake authority
 pub fn process_harvest_sol_staker_rewards(
     program_id: &Pubkey,
     ctx: Context<HarvestSolStakerRewardsAccounts>,
@@ -34,8 +33,8 @@ pub fn process_harvest_sol_staker_rewards(
         "config"
     );
 
-    let mut config_data = ctx.accounts.config.try_borrow_mut_data()?;
-    let config = unpack_initialized_mut::<Config>(&mut config_data)?;
+    let config_data = ctx.accounts.config.try_borrow_data()?;
+    let config = unpack_initialized::<Config>(&config_data)?;
 
     // sol staker stake
     // - owner must be the stake program
@@ -64,15 +63,7 @@ pub fn process_harvest_sol_staker_rewards(
     );
 
     // stake authority
-    // - must be a signer
     // - must match the authority on the stake account
-
-    require!(
-        ctx.accounts.stake_authority.is_signer,
-        ProgramError::MissingRequiredSignature,
-        "stake authority",
-    );
-
     require!(
         ctx.accounts.stake_authority.key == &sol_stake_stake.delegation.authority,
         StakeError::InvalidAuthority,
@@ -83,7 +74,7 @@ pub fn process_harvest_sol_staker_rewards(
     harvest(
         (config, ctx.accounts.config),
         &mut sol_stake_stake.delegation,
-        ctx.accounts.destination,
+        ctx.accounts.stake_authority,
         None,
     )?;
 

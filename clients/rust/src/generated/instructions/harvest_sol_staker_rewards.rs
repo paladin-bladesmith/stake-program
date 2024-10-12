@@ -14,8 +14,6 @@ pub struct HarvestSolStakerRewards {
     pub config: solana_program::pubkey::Pubkey,
     /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
     pub sol_staker_stake: solana_program::pubkey::Pubkey,
-    /// Destination account for withdrawn lamports
-    pub destination: solana_program::pubkey::Pubkey,
     /// Stake authority
     pub stake_authority: solana_program::pubkey::Pubkey,
 }
@@ -29,7 +27,7 @@ impl HarvestSolStakerRewards {
         &self,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.config,
             false,
@@ -39,12 +37,8 @@ impl HarvestSolStakerRewards {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.destination,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.stake_authority,
-            true,
+            false,
         ));
         accounts.extend_from_slice(remaining_accounts);
         let data = HarvestSolStakerRewardsInstructionData::new()
@@ -82,13 +76,11 @@ impl Default for HarvestSolStakerRewardsInstructionData {
 ///
 ///   0. `[writable]` config
 ///   1. `[writable]` sol_staker_stake
-///   2. `[writable]` destination
-///   3. `[signer]` stake_authority
+///   2. `[writable]` stake_authority
 #[derive(Clone, Debug, Default)]
 pub struct HarvestSolStakerRewardsBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
     sol_staker_stake: Option<solana_program::pubkey::Pubkey>,
-    destination: Option<solana_program::pubkey::Pubkey>,
     stake_authority: Option<solana_program::pubkey::Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
@@ -110,12 +102,6 @@ impl HarvestSolStakerRewardsBuilder {
         sol_staker_stake: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
         self.sol_staker_stake = Some(sol_staker_stake);
-        self
-    }
-    /// Destination account for withdrawn lamports
-    #[inline(always)]
-    pub fn destination(&mut self, destination: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.destination = Some(destination);
         self
     }
     /// Stake authority
@@ -150,7 +136,6 @@ impl HarvestSolStakerRewardsBuilder {
         let accounts = HarvestSolStakerRewards {
             config: self.config.expect("config is not set"),
             sol_staker_stake: self.sol_staker_stake.expect("sol_staker_stake is not set"),
-            destination: self.destination.expect("destination is not set"),
             stake_authority: self.stake_authority.expect("stake_authority is not set"),
         };
 
@@ -164,8 +149,6 @@ pub struct HarvestSolStakerRewardsCpiAccounts<'a, 'b> {
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
     /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
     pub sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Destination account for withdrawn lamports
-    pub destination: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake authority
     pub stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
 }
@@ -178,8 +161,6 @@ pub struct HarvestSolStakerRewardsCpi<'a, 'b> {
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
     /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
     pub sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Destination account for withdrawn lamports
-    pub destination: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake authority
     pub stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
 }
@@ -193,7 +174,6 @@ impl<'a, 'b> HarvestSolStakerRewardsCpi<'a, 'b> {
             __program: program,
             config: accounts.config,
             sol_staker_stake: accounts.sol_staker_stake,
-            destination: accounts.destination,
             stake_authority: accounts.stake_authority,
         }
     }
@@ -230,7 +210,7 @@ impl<'a, 'b> HarvestSolStakerRewardsCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.config.key,
             false,
@@ -240,12 +220,8 @@ impl<'a, 'b> HarvestSolStakerRewardsCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.destination.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.stake_authority.key,
-            true,
+            false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
@@ -263,11 +239,10 @@ impl<'a, 'b> HarvestSolStakerRewardsCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(4 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(3 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.config.clone());
         account_infos.push(self.sol_staker_stake.clone());
-        account_infos.push(self.destination.clone());
         account_infos.push(self.stake_authority.clone());
         remaining_accounts
             .iter()
@@ -287,8 +262,7 @@ impl<'a, 'b> HarvestSolStakerRewardsCpi<'a, 'b> {
 ///
 ///   0. `[writable]` config
 ///   1. `[writable]` sol_staker_stake
-///   2. `[writable]` destination
-///   3. `[signer]` stake_authority
+///   2. `[writable]` stake_authority
 #[derive(Clone, Debug)]
 pub struct HarvestSolStakerRewardsCpiBuilder<'a, 'b> {
     instruction: Box<HarvestSolStakerRewardsCpiBuilderInstruction<'a, 'b>>,
@@ -300,7 +274,6 @@ impl<'a, 'b> HarvestSolStakerRewardsCpiBuilder<'a, 'b> {
             __program: program,
             config: None,
             sol_staker_stake: None,
-            destination: None,
             stake_authority: None,
             __remaining_accounts: Vec::new(),
         });
@@ -322,15 +295,6 @@ impl<'a, 'b> HarvestSolStakerRewardsCpiBuilder<'a, 'b> {
         sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.sol_staker_stake = Some(sol_staker_stake);
-        self
-    }
-    /// Destination account for withdrawn lamports
-    #[inline(always)]
-    pub fn destination(
-        &mut self,
-        destination: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.destination = Some(destination);
         self
     }
     /// Stake authority
@@ -393,11 +357,6 @@ impl<'a, 'b> HarvestSolStakerRewardsCpiBuilder<'a, 'b> {
                 .sol_staker_stake
                 .expect("sol_staker_stake is not set"),
 
-            destination: self
-                .instruction
-                .destination
-                .expect("destination is not set"),
-
             stake_authority: self
                 .instruction
                 .stake_authority
@@ -415,7 +374,6 @@ struct HarvestSolStakerRewardsCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     sol_staker_stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     stake_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(

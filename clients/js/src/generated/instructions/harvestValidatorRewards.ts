@@ -33,7 +33,6 @@ export type HarvestValidatorRewardsInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountValidatorStake extends string | IAccountMeta<string> = string,
-  TAccountDestination extends string | IAccountMeta<string> = string,
   TAccountStakeAuthority extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
@@ -46,9 +45,6 @@ export type HarvestValidatorRewardsInstruction<
       TAccountValidatorStake extends string
         ? WritableAccount<TAccountValidatorStake>
         : TAccountValidatorStake,
-      TAccountDestination extends string
-        ? WritableAccount<TAccountDestination>
-        : TAccountDestination,
       TAccountStakeAuthority extends string
         ? ReadonlySignerAccount<TAccountStakeAuthority> &
             IAccountSignerMeta<TAccountStakeAuthority>
@@ -85,15 +81,12 @@ export function getHarvestValidatorRewardsInstructionDataCodec(): Codec<
 export type HarvestValidatorRewardsInput<
   TAccountConfig extends string = string,
   TAccountValidatorStake extends string = string,
-  TAccountDestination extends string = string,
   TAccountStakeAuthority extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
   /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
   validatorStake: Address<TAccountValidatorStake>;
-  /** Destination account for withdrawn lamports */
-  destination: Address<TAccountDestination>;
   /** Stake authority */
   stakeAuthority: TransactionSigner<TAccountStakeAuthority>;
 };
@@ -101,20 +94,17 @@ export type HarvestValidatorRewardsInput<
 export function getHarvestValidatorRewardsInstruction<
   TAccountConfig extends string,
   TAccountValidatorStake extends string,
-  TAccountDestination extends string,
   TAccountStakeAuthority extends string,
 >(
   input: HarvestValidatorRewardsInput<
     TAccountConfig,
     TAccountValidatorStake,
-    TAccountDestination,
     TAccountStakeAuthority
   >
 ): HarvestValidatorRewardsInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountValidatorStake,
-  TAccountDestination,
   TAccountStakeAuthority
 > {
   // Program address.
@@ -124,7 +114,6 @@ export function getHarvestValidatorRewardsInstruction<
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
     validatorStake: { value: input.validatorStake ?? null, isWritable: true },
-    destination: { value: input.destination ?? null, isWritable: true },
     stakeAuthority: { value: input.stakeAuthority ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -137,7 +126,6 @@ export function getHarvestValidatorRewardsInstruction<
     accounts: [
       getAccountMeta(accounts.config),
       getAccountMeta(accounts.validatorStake),
-      getAccountMeta(accounts.destination),
       getAccountMeta(accounts.stakeAuthority),
     ],
     programAddress,
@@ -146,7 +134,6 @@ export function getHarvestValidatorRewardsInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountValidatorStake,
-    TAccountDestination,
     TAccountStakeAuthority
   >;
 
@@ -163,10 +150,8 @@ export type ParsedHarvestValidatorRewardsInstruction<
     config: TAccountMetas[0];
     /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
     validatorStake: TAccountMetas[1];
-    /** Destination account for withdrawn lamports */
-    destination: TAccountMetas[2];
     /** Stake authority */
-    stakeAuthority: TAccountMetas[3];
+    stakeAuthority: TAccountMetas[2];
   };
   data: HarvestValidatorRewardsInstructionData;
 };
@@ -179,7 +164,7 @@ export function parseHarvestValidatorRewardsInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedHarvestValidatorRewardsInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 4) {
+  if (instruction.accounts.length < 3) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -194,7 +179,6 @@ export function parseHarvestValidatorRewardsInstruction<
     accounts: {
       config: getNextAccount(),
       validatorStake: getNextAccount(),
-      destination: getNextAccount(),
       stakeAuthority: getNextAccount(),
     },
     data: getHarvestValidatorRewardsInstructionDataDecoder().decode(

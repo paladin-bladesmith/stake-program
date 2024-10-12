@@ -18,12 +18,9 @@ import {
   type Decoder,
   type Encoder,
   type IAccountMeta,
-  type IAccountSignerMeta,
   type IInstruction,
   type IInstructionWithAccounts,
   type IInstructionWithData,
-  type ReadonlySignerAccount,
-  type TransactionSigner,
   type WritableAccount,
 } from '@solana/web3.js';
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
@@ -33,7 +30,6 @@ export type HarvestSolStakerRewardsInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountSolStakerStake extends string | IAccountMeta<string> = string,
-  TAccountDestination extends string | IAccountMeta<string> = string,
   TAccountStakeAuthority extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
@@ -46,12 +42,8 @@ export type HarvestSolStakerRewardsInstruction<
       TAccountSolStakerStake extends string
         ? WritableAccount<TAccountSolStakerStake>
         : TAccountSolStakerStake,
-      TAccountDestination extends string
-        ? WritableAccount<TAccountDestination>
-        : TAccountDestination,
       TAccountStakeAuthority extends string
-        ? ReadonlySignerAccount<TAccountStakeAuthority> &
-            IAccountSignerMeta<TAccountStakeAuthority>
+        ? WritableAccount<TAccountStakeAuthority>
         : TAccountStakeAuthority,
       ...TRemainingAccounts,
     ]
@@ -85,36 +77,30 @@ export function getHarvestSolStakerRewardsInstructionDataCodec(): Codec<
 export type HarvestSolStakerRewardsInput<
   TAccountConfig extends string = string,
   TAccountSolStakerStake extends string = string,
-  TAccountDestination extends string = string,
   TAccountStakeAuthority extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
   /** SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`) */
   solStakerStake: Address<TAccountSolStakerStake>;
-  /** Destination account for withdrawn lamports */
-  destination: Address<TAccountDestination>;
   /** Stake authority */
-  stakeAuthority: TransactionSigner<TAccountStakeAuthority>;
+  stakeAuthority: Address<TAccountStakeAuthority>;
 };
 
 export function getHarvestSolStakerRewardsInstruction<
   TAccountConfig extends string,
   TAccountSolStakerStake extends string,
-  TAccountDestination extends string,
   TAccountStakeAuthority extends string,
 >(
   input: HarvestSolStakerRewardsInput<
     TAccountConfig,
     TAccountSolStakerStake,
-    TAccountDestination,
     TAccountStakeAuthority
   >
 ): HarvestSolStakerRewardsInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountSolStakerStake,
-  TAccountDestination,
   TAccountStakeAuthority
 > {
   // Program address.
@@ -124,8 +110,7 @@ export function getHarvestSolStakerRewardsInstruction<
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
     solStakerStake: { value: input.solStakerStake ?? null, isWritable: true },
-    destination: { value: input.destination ?? null, isWritable: true },
-    stakeAuthority: { value: input.stakeAuthority ?? null, isWritable: false },
+    stakeAuthority: { value: input.stakeAuthority ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -137,7 +122,6 @@ export function getHarvestSolStakerRewardsInstruction<
     accounts: [
       getAccountMeta(accounts.config),
       getAccountMeta(accounts.solStakerStake),
-      getAccountMeta(accounts.destination),
       getAccountMeta(accounts.stakeAuthority),
     ],
     programAddress,
@@ -146,7 +130,6 @@ export function getHarvestSolStakerRewardsInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountSolStakerStake,
-    TAccountDestination,
     TAccountStakeAuthority
   >;
 
@@ -163,10 +146,8 @@ export type ParsedHarvestSolStakerRewardsInstruction<
     config: TAccountMetas[0];
     /** SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`) */
     solStakerStake: TAccountMetas[1];
-    /** Destination account for withdrawn lamports */
-    destination: TAccountMetas[2];
     /** Stake authority */
-    stakeAuthority: TAccountMetas[3];
+    stakeAuthority: TAccountMetas[2];
   };
   data: HarvestSolStakerRewardsInstructionData;
 };
@@ -179,7 +160,7 @@ export function parseHarvestSolStakerRewardsInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedHarvestSolStakerRewardsInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 4) {
+  if (instruction.accounts.length < 3) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -194,7 +175,6 @@ export function parseHarvestSolStakerRewardsInstruction<
     accounts: {
       config: getNextAccount(),
       solStakerStake: getNextAccount(),
-      destination: getNextAccount(),
       stakeAuthority: getNextAccount(),
     },
     data: getHarvestSolStakerRewardsInstructionDataDecoder().decode(

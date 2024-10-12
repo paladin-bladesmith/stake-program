@@ -304,12 +304,6 @@ pub enum StakeInstruction {
     )]
     #[account(
         2,
-        writable,
-        name = "destination",
-        desc = "Destination account for withdrawn lamports"
-    )]
-    #[account(
-        3,
         signer,
         name = "stake_authority",
         desc = "Stake authority"
@@ -568,12 +562,6 @@ pub enum StakeInstruction {
     #[account(
         2,
         writable,
-        name = "destination",
-        desc = "Destination account for withdrawn lamports"
-    )]
-    #[account(
-        3,
-        signer,
         name = "stake_authority",
         desc = "Stake authority"
     )]

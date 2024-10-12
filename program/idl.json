@@ -432,14 +432,6 @@
           ]
         },
         {
-          "name": "destination",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Destination account for withdrawn lamports"
-          ]
-        },
-        {
           "name": "stakeAuthority",
           "isMut": false,
           "isSigner": true,
@@ -853,17 +845,9 @@
           ]
         },
         {
-          "name": "destination",
+          "name": "stakeAuthority",
           "isMut": true,
           "isSigner": false,
-          "docs": [
-            "Destination account for withdrawn lamports"
-          ]
-        },
-        {
-          "name": "stakeAuthority",
-          "isMut": false,
-          "isSigner": true,
           "docs": [
             "Stake authority"
           ]
