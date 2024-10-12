@@ -126,7 +126,7 @@ async fn sol_staker_stake_tokens() {
 
     let account = get_account!(context, config_manager.config);
     let config = Config::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(config.token_amount_delegated, 6_500_000_000);
+    assert_eq!(config.token_amount_effective, 6_500_000_000);
 }
 
 #[tokio::test]
@@ -479,7 +479,6 @@ async fn fail_sol_staker_stake_tokens_with_uninitialized_stake_account() {
     let mut stake_ix = SolStakerStakeTokensBuilder::new()
         .config(config_manager.config)
         .sol_staker_stake(sol_staker_staker_manager.stake)
-        .validator_stake(validator_stake_manager.stake)
         .source_token_account(rewards_manager.token_account)
         .token_account_authority(rewards_manager.owner.pubkey())
         .mint(config_manager.mint)
@@ -518,7 +517,7 @@ async fn fail_sol_staker_stake_tokens_with_uninitialized_stake_account() {
 }
 
 #[tokio::test]
-async fn fail_sol_staker_stake_tokens_with_insufficient_staked_sol() {
+async fn sol_staker_stake_tokens_with_insufficient_staked_sol_reduces_effective() {
     let mut context = setup().await;
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
@@ -602,16 +601,16 @@ async fn fail_sol_staker_stake_tokens_with_insufficient_staked_sol() {
         &[&context.payer, &rewards_manager.owner],
         context.last_blockhash,
     );
-    let err = context
-        .banks_client
-        .process_transaction(tx)
-        .await
-        .unwrap_err();
+    context.banks_client.process_transaction(tx).await.unwrap();
 
-    // Then we expect an error.
+    // Assert - The staker's effective stake is less than the total stake.
+    let staker_stake = get_account!(context, sol_staker_staker_manager.stake);
+    let staker_stake = SolStakerStake::from_bytes(&staker_stake.data).unwrap();
+    assert_eq!(staker_stake.delegation.amount, 6_500_000_001);
+    assert_eq!(staker_stake.delegation.effective_amount, 6_500_000_000);
 
-    assert_custom_error!(
-        err,
-        PaladinStakeProgramError::TotalStakeAmountExceedsSolLimit
-    );
+    // Assert - The global effective stake is less than the total stake.
+    let config = get_account!(context, config_manager.config);
+    let config = Config::from_bytes(&config.data).unwrap();
+    assert_eq!(config.token_amount_effective, 6_500_000_000);
 }
