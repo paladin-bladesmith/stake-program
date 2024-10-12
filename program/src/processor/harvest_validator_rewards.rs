@@ -3,7 +3,7 @@ use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pub
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, HarvestValidatorRewardsAccounts},
-    processor::{process_harvest_for_delegation, unpack_initialized_mut},
+    processor::{harvest, unpack_initialized_mut},
     require,
     state::{find_validator_stake_pda, Config, ValidatorStake},
 };
@@ -87,11 +87,12 @@ pub fn process_harvest_validator_rewards(
     );
 
     // Process the harvest.
-
-    process_harvest_for_delegation(
-        config,
+    harvest(
+        (config, ctx.accounts.config),
         &mut validator_stake.delegation,
-        ctx.accounts.config,
         ctx.accounts.destination,
-    )
+        None,
+    )?;
+
+    Ok(())
 }

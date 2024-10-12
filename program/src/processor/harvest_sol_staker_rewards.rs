@@ -3,7 +3,7 @@ use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pub
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, HarvestSolStakerRewardsAccounts},
-    processor::{process_harvest_for_delegation, unpack_initialized_mut},
+    processor::{harvest, unpack_initialized_mut},
     require,
     state::{find_sol_staker_stake_pda, Config, SolStakerStake},
 };
@@ -80,11 +80,12 @@ pub fn process_harvest_sol_staker_rewards(
     );
 
     // Process the harvest.
-
-    process_harvest_for_delegation(
-        config,
+    harvest(
+        (config, ctx.accounts.config),
         &mut sol_stake_stake.delegation,
-        ctx.accounts.config,
         ctx.accounts.destination,
-    )
+        None,
+    )?;
+
+    Ok(())
 }

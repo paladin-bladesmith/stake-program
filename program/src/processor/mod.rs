@@ -302,75 +302,59 @@ pub fn unpack_delegation_mut_uncheked(
     Ok(delegation)
 }
 
-/// Processes the harvest for a stake delegation.
-///
-/// This function will calculate the rewards for the delegation, either `ValidatorStake` or
-/// `SolStakerStake` and transfer the elegible rewards. It will check whether the stake amount
-/// exceeds the maximum stake limit and distribute the rewards back to the stakers if the stake
-/// amount exceeds the limit.
-pub fn process_harvest_for_delegation(
-    config: &mut Config,
+pub(crate) fn harvest(
+    (config, config_info): (&Config, &AccountInfo),
     delegation: &mut Delegation,
-    config_info: &AccountInfo,
-    destination_info: &AccountInfo,
+    recipient: &AccountInfo,
+    keeper: Option<&AccountInfo>,
 ) -> ProgramResult {
-    // Determine the stake rewards.
-    //
-    // The rewards are caped using the minimum of the token amount staked and the
-    // token amount limit calculated from the SOL amount staked. This is to prevent getting
-    // rewards from exceeding token amount based on the SOL amount staked.
-    //
-    // Any excess rewards are distributes back to stakers and the SOL staker forfeits
-    // the rewards for the exceeding amount.
-
+    // Compute the delegation's accrued rewards.
     let accumulated_rewards_per_token = u128::from(config.accumulated_stake_rewards_per_token);
     let last_seen_stake_rewards_per_token =
         u128::from(delegation.last_seen_stake_rewards_per_token);
     let effective_amount = delegation.effective_amount;
-
-    let rewards = calculate_eligible_rewards(
+    let total_reward = calculate_eligible_rewards(
         accumulated_rewards_per_token,
         last_seen_stake_rewards_per_token,
         effective_amount,
     )?;
 
-    // Transfer the rewards to the destination account.
+    // Update the last seen amount.
+    delegation.last_seen_stake_rewards_per_token = config.accumulated_stake_rewards_per_token;
 
-    if rewards == 0 {
-        msg!("No rewards to harvest");
-        Ok(())
-    } else {
-        // If the config does not have enough lamports to cover the rewards, only
-        // harvest the available lamports. This should never happen, but the check
-        // is a failsafe.
-        let rewards = {
-            let rent = Rent::get()?;
-            let rent_exempt_lamports = rent.minimum_balance(Config::LEN);
+    // Withdraw the lamports from the config account.
+    let rent_exempt_minimum = Rent::get()?.minimum_balance(config_info.data_len());
+    let config_lamports = config_info
+        .lamports()
+        .checked_sub(total_reward)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
+    assert!(config_lamports >= rent_exempt_minimum);
+    **config_info.try_borrow_mut_lamports()? = config_lamports;
 
-            std::cmp::min(
-                rewards,
-                config_info.lamports().saturating_sub(rent_exempt_lamports),
-            )
-        };
+    // Pay the keeper first, if one is set.
+    let keeper_reward = match keeper {
+        Some(keeper) => {
+            let keeper_reward = std::cmp::min(total_reward, config.sync_rewards_lamports);
+            **keeper.try_borrow_mut_lamports()? = keeper
+                .try_borrow_lamports()?
+                .checked_add(keeper_reward)
+                .ok_or(ProgramError::ArithmeticOverflow)?;
 
-        // Move the amount from the config to the destination account.
-        let updated_config_lamports = config_info
-            .lamports()
-            .checked_sub(rewards)
-            .ok_or(ProgramError::ArithmeticOverflow)?;
-        let updated_destination_lamports = destination_info
-            .lamports()
-            .checked_add(rewards)
-            .ok_or(ProgramError::ArithmeticOverflow)?;
+            keeper_reward
+        }
+        None => 0,
+    };
 
-        **config_info.try_borrow_mut_lamports()? = updated_config_lamports;
-        **destination_info.try_borrow_mut_lamports()? = updated_destination_lamports;
+    // Pay the delegator.
+    let delegator_reward = total_reward
+        .checked_sub(keeper_reward)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
+    **recipient.try_borrow_mut_lamports()? = recipient
+        .lamports()
+        .checked_add(delegator_reward)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
 
-        // Update the last seen stake rewards.
-        delegation.last_seen_stake_rewards_per_token = config.accumulated_stake_rewards_per_token;
-
-        Ok(())
-    }
+    Ok(())
 }
 
 /// Arguments to process the slash of a stake delegation.

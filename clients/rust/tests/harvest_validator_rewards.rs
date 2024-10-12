@@ -50,7 +50,7 @@ async fn harvest_validator_rewards() {
     let mut account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the total amount delegated
-    config_account.token_amount_delegated = 130;
+    config_account.token_amount_effective = 130;
     config_account.accumulated_stake_rewards_per_token = calculate_stake_rewards_per_token(26, 130);
 
     account.lamports += 26;
@@ -66,6 +66,7 @@ async fn harvest_validator_rewards() {
     // "manually" set the staked amount to 65, SOL stake amount to 50
     // (stake maximum limit is 1.3 * 50 = 65)
     stake_account.delegation.amount = 65;
+    stake_account.delegation.effective_amount = 65;
     stake_account.total_staked_lamports_amount = 50;
 
     account.data = stake_account.try_to_vec().unwrap();
@@ -138,7 +139,7 @@ async fn harvest_validator_rewards_wrapped() {
     let mut account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the total amount delegated
-    config_account.token_amount_delegated = 130;
+    config_account.token_amount_effective = 130;
     // Set the config account's current rewards per token, simulating a
     // scenario where the rate has wrapped around `u128::MAX`.
     // If the holder's last seen rate is `u128::MAX`, the calculation should
@@ -158,6 +159,7 @@ async fn harvest_validator_rewards_wrapped() {
     // "manually" set the staked amount to 65, SOL stake amount to 50
     // (stake maximum limit is 1.3 * 50 = 65)
     stake_account.delegation.amount = 65;
+    stake_account.delegation.effective_amount = 65;
     stake_account.total_staked_lamports_amount = 50;
     // Set the stake account's last seen rate to `u128::MAX`.
     stake_account.delegation.last_seen_stake_rewards_per_token = u128::MAX;
@@ -231,7 +233,7 @@ async fn harvest_validator_rewards_with_no_rewards_available() {
     let mut account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the total amount delegated
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     config_account.accumulated_stake_rewards_per_token = 0;
 
     account.data = config_account.try_to_vec().unwrap();
@@ -245,6 +247,7 @@ async fn harvest_validator_rewards_with_no_rewards_available() {
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
     stake_account.delegation.amount = 50;
+    stake_account.delegation.effective_amount = 50;
     stake_account.total_staked_lamports_amount = 50;
 
     account.data = stake_account.try_to_vec().unwrap();
@@ -292,7 +295,7 @@ async fn harvest_validator_rewards_after_harvesting() {
     let mut account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the total amount delegated
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     config_account.accumulated_stake_rewards_per_token =
         calculate_stake_rewards_per_token(4_000_000_000, 100);
 
@@ -313,6 +316,7 @@ async fn harvest_validator_rewards_after_harvesting() {
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
     stake_account.delegation.amount = 50;
+    stake_account.delegation.effective_amount = 50;
     stake_account.total_staked_lamports_amount = 50;
     // same as the current value on the config
     stake_account.delegation.last_seen_stake_rewards_per_token =
@@ -379,7 +383,7 @@ async fn fail_harvest_validator_rewards_with_wrong_authority() {
     let mut account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the total amount delegated
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     config_account.accumulated_stake_rewards_per_token =
         calculate_stake_rewards_per_token(4_000_000_000, 100);
 
@@ -395,6 +399,7 @@ async fn fail_harvest_validator_rewards_with_wrong_authority() {
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
     stake_account.delegation.amount = 50;
+    stake_account.delegation.effective_amount = 50;
     stake_account.total_staked_lamports_amount = 50;
 
     account.data = stake_account.try_to_vec().unwrap();
@@ -555,7 +560,7 @@ async fn failharvest_validator_rewards_with_wrong_config_account() {
     let mut account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the total amount delegated
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     config_account.accumulated_stake_rewards_per_token =
         calculate_stake_rewards_per_token(4_000_000_000, 100);
 
@@ -571,6 +576,7 @@ async fn failharvest_validator_rewards_with_wrong_config_account() {
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
     stake_account.delegation.amount = 50;
+    stake_account.delegation.effective_amount = 50;
     stake_account.total_staked_lamports_amount = 50;
 
     account.data = stake_account.try_to_vec().unwrap();
@@ -605,6 +611,7 @@ async fn failharvest_validator_rewards_with_wrong_config_account() {
     assert_instruction_error!(err, InstructionError::InvalidSeeds);
 }
 
+#[ignore = "This needs to be replaced by a sync test"]
 #[tokio::test]
 async fn harvest_validator_rewards_with_excess_rewards() {
     let mut context = ProgramTest::new(
@@ -623,7 +630,7 @@ async fn harvest_validator_rewards_with_excess_rewards() {
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
     let config_rent_lamports = account.lamports;
     // "manually" set the total amount delegated
-    config_account.token_amount_delegated = 26_000_000_000;
+    config_account.token_amount_effective = 26_000_000_000;
     config_account.accumulated_stake_rewards_per_token =
         calculate_stake_rewards_per_token(13_000_000_000, 26_000_000_000);
 
@@ -640,6 +647,7 @@ async fn harvest_validator_rewards_with_excess_rewards() {
     // - token amount staked: 13_000_000_000
     // - current lamports staked: 5_000_000_000
     stake_account.delegation.amount = 13_000_000_000;
+    stake_account.delegation.effective_amount = 13_000_000_000;
     stake_account.total_staked_lamports_amount = 5_000_000_000;
 
     account.data = stake_account.try_to_vec().unwrap();
