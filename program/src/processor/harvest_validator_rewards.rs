@@ -91,7 +91,6 @@ pub fn process_harvest_validator_rewards(
     process_harvest_for_delegation(
         config,
         &mut validator_stake.delegation,
-        validator_stake.total_staked_lamports_amount,
         ctx.accounts.config,
         ctx.accounts.destination,
     )

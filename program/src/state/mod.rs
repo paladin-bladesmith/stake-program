@@ -180,6 +180,9 @@ pub struct Delegation {
     /// Amount of staked tokens currently active.
     pub amount: u64,
 
+    /// Amount of staked tokens (but capped at 1.3 PAL per SOL).
+    pub effective_amount: u64,
+
     /// Timestamp for when deactivation began. Used to judge if a given stake
     /// is inactive.
     pub deactivation_timestamp: Option<NonZeroU64>,

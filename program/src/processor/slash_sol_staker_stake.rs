@@ -8,8 +8,8 @@ use crate::{
     processor::{process_slash_for_delegation, unpack_initialized_mut, SlashArgs},
     require,
     state::{
-        create_vault_pda, find_sol_staker_stake_pda, find_validator_stake_pda,
-        get_vault_pda_signer_seeds, Config, SolStakerStake, ValidatorStake,
+        create_vault_pda, find_sol_staker_stake_pda, get_vault_pda_signer_seeds, Config,
+        SolStakerStake,
     },
 };
 
@@ -20,12 +20,11 @@ use crate::{
 ///
 /// 0. `[w]` Config account
 /// 1. `[w]` SOL staker stake account
-/// 2. `[w]` Validator stake account
-/// 3. `[s]` Slash authority
-/// 4. `[w]` Vault token account
-/// 5. `[w]` Stake Token Mint
-/// 6. `[ ]` Vault authority, PDA with seeds `['token-owner', stake_config]`
-/// 7. `[ ]` SPL Token program
+/// 2. `[s]` Slash authority
+/// 3. `[w]` Vault token account
+/// 4. `[w]` Stake Token Mint
+/// 5. `[ ]` Vault authority, PDA with seeds `['token-owner', stake_config]`
+/// 6. `[ ]` SPL Token program
 ///
 /// Instruction data: amount of tokens to slash.
 pub fn process_slash_sol_staker_stake(
@@ -77,34 +76,6 @@ pub fn process_slash_sol_staker_stake(
         ctx.accounts.stake.key == &derivation,
         ProgramError::InvalidSeeds,
         "stake",
-    );
-
-    // validator stake
-    // - owner must be the stake program
-    // - must be a ValidatorStake account
-    // - must be initialized
-    // - derivation must match (validates the config account)
-
-    require!(
-        ctx.accounts.validator_stake.owner == program_id,
-        ProgramError::InvalidAccountOwner,
-        "validator stake"
-    );
-
-    let mut stake_data = ctx.accounts.validator_stake.try_borrow_mut_data()?;
-    let validator_stake = unpack_initialized_mut::<ValidatorStake>(&mut stake_data)?;
-
-    let (derivation, _) = find_validator_stake_pda(
-        // validates the sol staker stake <-> validator stake relationship
-        &stake.delegation.validator_vote,
-        ctx.accounts.config.key,
-        program_id,
-    );
-
-    require!(
-        ctx.accounts.validator_stake.key == &derivation,
-        ProgramError::InvalidSeeds,
-        "validator stake",
     );
 
     // slash authority
@@ -172,7 +143,7 @@ pub fn process_slash_sol_staker_stake(
     // This will burn the given amount of tokens from the vault account, and
     // update the stake delegation on the stake and config accounts.
 
-    let slashed_amount = process_slash_for_delegation(SlashArgs {
+    process_slash_for_delegation(SlashArgs {
         config,
         delegation: &mut stake.delegation,
         mint_info: ctx.accounts.mint,
@@ -182,13 +153,6 @@ pub fn process_slash_sol_staker_stake(
         amount,
         signer_seeds: &signer_seeds,
     })?;
-
-    // Decreases the slashed amount on the corresponding validator stake account.
-
-    validator_stake.total_staked_token_amount = validator_stake
-        .total_staked_token_amount
-        .checked_sub(slashed_amount)
-        .ok_or(ProgramError::ArithmeticOverflow)?;
 
     Ok(())
 }

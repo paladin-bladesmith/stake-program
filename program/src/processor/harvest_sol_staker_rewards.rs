@@ -84,7 +84,6 @@ pub fn process_harvest_sol_staker_rewards(
     process_harvest_for_delegation(
         config,
         &mut sol_stake_stake.delegation,
-        sol_stake_stake.lamports_amount,
         ctx.accounts.config,
         ctx.accounts.destination,
     )

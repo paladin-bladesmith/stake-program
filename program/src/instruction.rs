@@ -43,7 +43,7 @@ pub enum StakeInstruction {
     },
 
     /// Initializes stake account data for a validator.
-    /// 
+    ///
     /// NOTE: Anybody can create the stake account for a validator. For new
     /// accounts, the authority is initialized to the validator vote account's
     /// withdraw authority.
@@ -71,10 +71,10 @@ pub enum StakeInstruction {
     InitializeValidatorStake,
 
     /// Stakes tokens with the given config.
-    /// 
+    ///
     /// NOTE: This instruction is used by validator stake accounts. The total amount of staked
     /// tokens is limited to the 1.3 * current amount of SOL staked to the validator.
-    /// 
+    ///
     /// Instruction data: amount of tokens to stake, as a little-endian `u64`.
     #[account(
         0,
@@ -119,11 +119,11 @@ pub enum StakeInstruction {
     ValidatorStakeTokens(u64),
 
     /// Deactivate staked tokens for a stake delegation.
-    /// 
+    ///
     /// Only one deactivation may be in-flight at once, so if this is called
     /// with an active deactivation, it will succeed, but reset the amount and
     /// timestamp.
-    /// 
+    ///
     /// Instruction data: amount of tokens to deactivate, as a little-endian `u64`.
     #[account(
         0,
@@ -145,10 +145,10 @@ pub enum StakeInstruction {
     DeactivateStake(u64),
 
     /// Move tokens from deactivating to inactive.
-    /// 
+    ///
     /// Reduces the total voting power for the validator stake account and the total staked
     /// amount on the system.
-    /// 
+    ///
     /// NOTE: This instruction is permissionless, so anybody can finish
     /// deactivating someone's tokens, preparing them to be withdrawn.
     #[account(
@@ -166,10 +166,10 @@ pub enum StakeInstruction {
     InactivateValidatorStake,
 
     /// Withdraw inactive staked tokens from the vault.
-    /// 
+    ///
     /// After a deactivation has gone through the cooldown period and been
     /// "inactivated", the authority may move the tokens out of the vault.
-    /// 
+    ///
     /// Instruction data: amount of tokens to move.
     #[account(
         0,
@@ -211,7 +211,7 @@ pub enum StakeInstruction {
         name = "vault_authority",
         desc = "Vault authority (pda of `['token-owner', config]`)"
     )]
-    
+
     #[account(
         7,
         name = "token_program",
@@ -220,7 +220,7 @@ pub enum StakeInstruction {
     WithdrawInactiveStake(u64),
 
     /// Harvests holder SOL rewards earned by the given stake account.
-    /// 
+    ///
     /// NOTE: This mostly replicates the logic in the rewards program. Since the
     /// staked tokens are all held by this program, stakers need a way to access
     /// their portion of holder rewards.
@@ -253,7 +253,7 @@ pub enum StakeInstruction {
     #[account(
         4,
         writable,
-        name = "destination", 
+        name = "destination",
         desc = "Destination account for withdrawn lamports"
     )]
     #[account(
@@ -286,7 +286,7 @@ pub enum StakeInstruction {
     HarvestHolderRewards,
 
     /// Harvests stake SOL rewards earned by the given validator stake account.
-    /// 
+    ///
     /// NOTE: This is very similar to the logic in the rewards program. Since the
     /// staking rewards are held in a separate account, they must be distributed
     /// based on the proportion of total stake.
@@ -317,10 +317,10 @@ pub enum StakeInstruction {
     HarvestValidatorRewards,
 
     /// Slashes a validator stake account for the given amount.
-    /// 
+    ///
     /// Burns the given amount of tokens from the vault account, and reduces the
     /// amount in the stake account.
-    /// 
+    ///
     /// Instruction data: amount of tokens to slash.
     #[account(
         0,
@@ -464,10 +464,10 @@ pub enum StakeInstruction {
     InitializeSolStakerStake,
 
     /// Stakes tokens with the given config.
-    /// 
+    ///
     /// NOTE: This instruction is used by SOL staker stake accounts. The total amount of staked
     /// tokens is limited to the 1.3 * current amount of SOL staked by the SOL staker.
-    /// 
+    ///
     /// Instruction data: amount of tokens to stake, as a little-endian `u64`.
     #[account(
         0,
@@ -484,34 +484,28 @@ pub enum StakeInstruction {
     #[account(
         2,
         writable,
-        name = "validator_stake",
-        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
-    )]
-    #[account(
-        3,
-        writable,
         name = "source_token_account",
         desc = "Token account"
     )]
     #[account(
-        4,
+        3,
         signer,
         name = "token_account_authority",
         desc = "Owner or delegate of the token account"
     )]
     #[account(
-        5,
+        4,
         name = "mint",
         desc = "Stake Token Mint"
     )]
     #[account(
-        6,
+        5,
         writable,
         name = "vault",
         desc = "Stake token Vault"
     )]
     #[account(
-        7,
+        6,
         name = "token_program",
         desc = "Token program"
     )]
@@ -555,7 +549,7 @@ pub enum StakeInstruction {
     SyncSolStake,
 
     /// Harvests stake SOL rewards earned by the given sol staker stake account.
-    /// 
+    ///
     /// NOTE: This is very similar to the logic in the rewards program. Since the
     /// staking rewards are held in a separate account, they must be distributed
     /// based on the proportion of total stake.
@@ -630,10 +624,10 @@ pub enum StakeInstruction {
     HarvestSyncRewards,
 
     /// Move tokens from deactivating to inactive.
-    /// 
+    ///
     /// Reduces the total voting power for the SOL staker stake account and the total staked
     /// amount on the correspondent validator stake and config accounts.
-    /// 
+    ///
     /// NOTE: This instruction is permissionless, so anybody can finish
     /// deactivating someone's tokens, preparing them to be withdrawn.
     #[account(
@@ -657,10 +651,10 @@ pub enum StakeInstruction {
     InactivateSolStakerStake,
 
     /// Slashes a validator stake account for the given amount.
-    /// 
+    ///
     /// Burns the given amount of tokens from the vault account, and reduces the
     /// amount in the stake account.
-    /// 
+    ///
     /// Instruction data: amount of tokens to slash.
     #[account(
         0,
