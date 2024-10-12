@@ -6,7 +6,7 @@ readme = "./README.md"
 license-file = "../LICENSE"
 
 [package.metadata.solana]
-program-id = "PStake1111111111111111111111111111111111111"
+program-id = "GQurxHCYQCNfYR37nHNb6ZiLWg3jpbh2fWv2RpzwGqRK"
 program-dependencies = []
 account-dependencies = []
 

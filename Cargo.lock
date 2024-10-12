@@ -244,7 +244,7 @@ dependencies = [
  "borsh 0.10.4",
  "bytemuck",
  "getrandom 0.2.15",
- "solana-program 1.18.25",
+ "solana-program 1.18.26",
  "thiserror",
 ]
 
@@ -930,9 +930,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.1.28"
+version = "1.1.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e80e3b6a3ab07840e1cae9b0666a63970dc28e8ed5ffbcdacbfc760c281bfc1"
+checksum = "b16803a61b81d9eabb7eae2588776c4c1e584b738ede45fdbb4c972cec1e9945"
 dependencies = [
  "jobserver",
  "libc",
@@ -2155,9 +2155,9 @@ dependencies = [
 
 [[package]]
 name = "js-sys"
-version = "0.3.71"
+version = "0.3.72"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0cb94a0ffd3f3ee755c20f7d8752f45cac88605a4dcf808abcff72873296ec7b"
+checksum = "6a88f1bda2bd75b0452a14784937d796722fdebfe50df998aeb3f0b7603019a9"
 dependencies = [
  "wasm-bindgen",
 ]
@@ -2687,7 +2687,7 @@ checksum = "e2355d85b9a3786f481747ced0e0ff2ba35213a1f9bd406ed906554d7af805a1"
 [[package]]
 name = "paladin-rewards-program-client"
 version = "0.0.1"
-source = "git+https://github.com/paladin-bladesmith/rewards-program.git#c64d738af5e066d4e7817c4bfda6441ab74760a5"
+source = "git+https://github.com/paladin-bladesmith/rewards-program.git#9e16d075540741edaadadc0e04fb5f3876b8ed42"
 dependencies = [
  "borsh 0.10.4",
  "num-derive 0.3.3",
@@ -2699,7 +2699,7 @@ dependencies = [
 [[package]]
 name = "paladin-sol-stake-view-program-client"
 version = "0.0.0"
-source = "git+https://github.com/paladin-bladesmith/sol-stake-view-program.git#792c01c961be4eb4492f774bb5bd693b30699444"
+source = "git+https://github.com/paladin-bladesmith/sol-stake-view-program.git#39ac43bc52180e33dbface3d3ca1545d5e493977"
 dependencies = [
  "borsh 0.10.4",
  "bytemuck",
@@ -4186,9 +4186,9 @@ dependencies = [
 
 [[package]]
 name = "solana-frozen-abi"
-version = "1.18.25"
+version = "1.18.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "45478bad85abd8cc291775463e15bc1031fdbf973d48e2568e8defee3d842a3a"
+checksum = "03ab2c30c15311b511c0d1151e4ab6bc9a3e080a37e7c6e7c2d96f5784cf9434"
 dependencies = [
  "block-buffer 0.10.4",
  "bs58 0.4.0",
@@ -4211,9 +4211,9 @@ dependencies = [
 
 [[package]]
 name = "solana-frozen-abi-macro"
-version = "1.18.25"
+version = "1.18.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5cb05f9051446226cd26ea17f6fbe5e28e922ad6a846166db7fb17865090fcb"
+checksum = "c142f779c3633ac83c84d04ff06c70e1f558c876f13358bed77ba629c7417932"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4352,9 +4352,9 @@ dependencies = [
 
 [[package]]
 name = "solana-program"
-version = "1.18.25"
+version = "1.18.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a52f4c424433a18b57ae88a35b677c548879a9c4ca1e27e108d1597ff12b95ac"
+checksum = "c10f4588cefd716b24a1a40dd32c278e43a560ab8ce4de6b5805c9d113afdfa1"
 dependencies = [
  "ark-bn254",
  "ark-ec",
@@ -4398,7 +4398,7 @@ dependencies = [
  "sha3 0.10.8",
  "solana-frozen-abi",
  "solana-frozen-abi-macro",
- "solana-sdk-macro 1.18.25",
+ "solana-sdk-macro 1.18.26",
  "thiserror",
  "tiny-bip39",
  "wasm-bindgen",
@@ -4787,9 +4787,9 @@ dependencies = [
 
 [[package]]
 name = "solana-sdk-macro"
-version = "1.18.25"
+version = "1.18.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9ed90de8086a0e114ab63454a9d066e0f08eb2c9c8aea149ff60e8a492f165fc"
+checksum = "1b75d0f193a27719257af19144fdaebec0415d1c9e9226ae4bd29b791be5e9bd"
 dependencies = [
  "bs58 0.4.0",
  "proc-macro2",
@@ -6143,9 +6143,9 @@ checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
 
 [[package]]
 name = "wasm-bindgen"
-version = "0.2.94"
+version = "0.2.95"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef073ced962d62984fb38a36e5fdc1a2b23c9e0e1fa0689bb97afa4202ef6887"
+checksum = "128d1e363af62632b8eb57219c8fd7877144af57558fb2ef0368d0087bddeb2e"
 dependencies = [
  "cfg-if",
  "once_cell",
@@ -6154,9 +6154,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-backend"
-version = "0.2.94"
+version = "0.2.95"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4bfab14ef75323f4eb75fa52ee0a3fb59611977fd3240da19b2cf36ff85030e"
+checksum = "cb6dd4d3ca0ddffd1dd1c9c04f94b868c37ff5fac97c30b97cff2d74fce3a358"
 dependencies = [
  "bumpalo",
  "log",
@@ -6169,9 +6169,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-futures"
-version = "0.4.44"
+version = "0.4.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "65471f79c1022ffa5291d33520cbbb53b7687b01c2f8e83b57d102eed7ed479d"
+checksum = "cc7ec4f8827a71586374db3e87abdb5a2bb3a15afed140221307c3ec06b1f63b"
 dependencies = [
  "cfg-if",
  "js-sys",
@@ -6181,9 +6181,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-macro"
-version = "0.2.94"
+version = "0.2.95"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7bec9830f60924d9ceb3ef99d55c155be8afa76954edffbb5936ff4509474e7"
+checksum = "e79384be7f8f5a9dd5d7167216f022090cf1f9ec128e6e6a482a2cb5c5422c56"
 dependencies = [
  "quote",
  "wasm-bindgen-macro-support",
@@ -6191,9 +6191,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-macro-support"
-version = "0.2.94"
+version = "0.2.95"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c74f6e152a76a2ad448e223b0fc0b6b5747649c3d769cc6bf45737bf97d0ed6"
+checksum = "26c6ab57572f7a24a4985830b120de1594465e5d500f24afe89e16b4e833ef68"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -6204,15 +6204,15 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-shared"
-version = "0.2.94"
+version = "0.2.95"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a42f6c679374623f295a8623adfe63d9284091245c3504bde47c17a3ce2777d9"
+checksum = "65fc09f10666a9f147042251e0dda9c18f166ff7de300607007e96bdebc1068d"
 
 [[package]]
 name = "web-sys"
-version = "0.3.71"
+version = "0.3.72"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44188d185b5bdcae1052d08bcbcf9091a5524038d4572cc4f4f2bb9d5554ddd9"
+checksum = "f6488b90108c040df0fe62fa815cbdee25124641df01814dd7282749234c6112"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
