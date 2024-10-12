@@ -103,11 +103,8 @@ pub fn process_sol_staker_stake_tokens<'a>(
     let mint = PodStateWithExtensions::<PodMint>::unpack(&mint_data)?;
     let decimals = mint.base.decimals;
 
-    // Update the config and stake account data.
-
-    require!(amount > 0, StakeError::InvalidAmount);
-
     // Compute staker total & effective stakes.
+    require!(amount > 0, StakeError::InvalidAmount);
     let staker_total = sol_staker_stake
         .delegation
         .amount
@@ -115,7 +112,7 @@ pub fn process_sol_staker_stake_tokens<'a>(
         .ok_or(ProgramError::ArithmeticOverflow)?;
     let staker_limit =
         calculate_maximum_stake_for_lamports_amount(sol_staker_stake.lamports_amount)?;
-    let staker_effective = std::cmp::max(staker_total, staker_limit);
+    let staker_effective = std::cmp::min(staker_total, staker_limit);
     let effective_delta = staker_effective
         .checked_sub(sol_staker_stake.delegation.effective_amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;

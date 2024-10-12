@@ -642,12 +642,6 @@ pub enum StakeInstruction {
         name = "stake",
         desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
     )]
-    #[account(
-        2,
-        writable,
-        name = "validator_stake",
-        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
-    )]
     InactivateSolStakerStake,
 
     /// Slashes a validator stake account for the given amount.

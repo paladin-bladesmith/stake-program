@@ -94,14 +94,6 @@ pub fn process_inactivate_validator_stake(
 
         msg!("Inactivating {} token(s)", delegation.deactivating_amount);
 
-        // TODO:
-        //
-        // 1. Deactivating amount is set to 0.
-        // 2. Deactivation timestamp is reset.
-        // 3. Effective amount is updated.
-        // 4. Inactive amount is updated.
-        // 5. Global effective amount is updated.
-
         // Compute the new stake values.
         let validator_total = delegation
             .amount
