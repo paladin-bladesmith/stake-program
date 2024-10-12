@@ -37,6 +37,9 @@ pub struct ValidatorStake {
 
     /// Total amount of SOL (lamports) staked on the validator.
     pub total_staked_lamports_amount: u64,
+
+    /// The effective staked token amount (capped at 1.3 PAL / SOL).
+    pub effective_staked_token_amount: u64,
 }
 
 impl ValidatorStake {
@@ -65,6 +68,7 @@ impl ValidatorStake {
             },
             total_staked_token_amount: u64::default(),
             total_staked_lamports_amount: u64::default(),
+            effective_staked_token_amount: u64::default(),
         }
     }
 }

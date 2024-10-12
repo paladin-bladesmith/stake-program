@@ -16,10 +16,11 @@ pub struct ValidatorStake {
     pub delegation: Delegation,
     pub total_staked_token_amount: u64,
     pub total_staked_lamports_amount: u64,
+    pub effective_staked_token_amount: u64,
 }
 
 impl ValidatorStake {
-    pub const LEN: usize = 152;
+    pub const LEN: usize = 160;
 
     #[inline(always)]
     pub fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {

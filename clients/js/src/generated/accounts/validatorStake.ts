@@ -44,6 +44,7 @@ export type ValidatorStake = {
   delegation: Delegation;
   totalStakedTokenAmount: bigint;
   totalStakedLamportsAmount: bigint;
+  effectiveStakedTokenAmount: bigint;
 };
 
 export type ValidatorStakeArgs = {
@@ -51,6 +52,7 @@ export type ValidatorStakeArgs = {
   delegation: DelegationArgs;
   totalStakedTokenAmount: number | bigint;
   totalStakedLamportsAmount: number | bigint;
+  effectiveStakedTokenAmount: number | bigint;
 };
 
 export function getValidatorStakeEncoder(): Encoder<ValidatorStakeArgs> {
@@ -59,6 +61,7 @@ export function getValidatorStakeEncoder(): Encoder<ValidatorStakeArgs> {
     ['delegation', getDelegationEncoder()],
     ['totalStakedTokenAmount', getU64Encoder()],
     ['totalStakedLamportsAmount', getU64Encoder()],
+    ['effectiveStakedTokenAmount', getU64Encoder()],
   ]);
 }
 
@@ -68,6 +71,7 @@ export function getValidatorStakeDecoder(): Decoder<ValidatorStake> {
     ['delegation', getDelegationDecoder()],
     ['totalStakedTokenAmount', getU64Decoder()],
     ['totalStakedLamportsAmount', getU64Decoder()],
+    ['effectiveStakedTokenAmount', getU64Decoder()],
   ]);
 }
 

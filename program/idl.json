@@ -1190,6 +1190,10 @@
           {
             "name": "totalStakedLamportsAmount",
             "type": "u64"
+          },
+          {
+            "name": "effectiveStakedTokenAmount",
+            "type": "u64"
           }
         ]
       }
