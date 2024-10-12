@@ -30,7 +30,6 @@ export type InactivateSolStakerStakeInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountStake extends string | IAccountMeta<string> = string,
-  TAccountValidatorStake extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -42,9 +41,6 @@ export type InactivateSolStakerStakeInstruction<
       TAccountStake extends string
         ? WritableAccount<TAccountStake>
         : TAccountStake,
-      TAccountValidatorStake extends string
-        ? WritableAccount<TAccountValidatorStake>
-        : TAccountValidatorStake,
       ...TRemainingAccounts,
     ]
   >;
@@ -77,31 +73,22 @@ export function getInactivateSolStakerStakeInstructionDataCodec(): Codec<
 export type InactivateSolStakerStakeInput<
   TAccountConfig extends string = string,
   TAccountStake extends string = string,
-  TAccountValidatorStake extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
   /** SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`) */
   stake: Address<TAccountStake>;
-  /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
-  validatorStake: Address<TAccountValidatorStake>;
 };
 
 export function getInactivateSolStakerStakeInstruction<
   TAccountConfig extends string,
   TAccountStake extends string,
-  TAccountValidatorStake extends string,
 >(
-  input: InactivateSolStakerStakeInput<
-    TAccountConfig,
-    TAccountStake,
-    TAccountValidatorStake
-  >
+  input: InactivateSolStakerStakeInput<TAccountConfig, TAccountStake>
 ): InactivateSolStakerStakeInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
-  TAccountStake,
-  TAccountValidatorStake
+  TAccountStake
 > {
   // Program address.
   const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
@@ -110,7 +97,6 @@ export function getInactivateSolStakerStakeInstruction<
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
     stake: { value: input.stake ?? null, isWritable: true },
-    validatorStake: { value: input.validatorStake ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -119,18 +105,13 @@ export function getInactivateSolStakerStakeInstruction<
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
-    accounts: [
-      getAccountMeta(accounts.config),
-      getAccountMeta(accounts.stake),
-      getAccountMeta(accounts.validatorStake),
-    ],
+    accounts: [getAccountMeta(accounts.config), getAccountMeta(accounts.stake)],
     programAddress,
     data: getInactivateSolStakerStakeInstructionDataEncoder().encode({}),
   } as InactivateSolStakerStakeInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
-    TAccountStake,
-    TAccountValidatorStake
+    TAccountStake
   >;
 
   return instruction;
@@ -146,8 +127,6 @@ export type ParsedInactivateSolStakerStakeInstruction<
     config: TAccountMetas[0];
     /** SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`) */
     stake: TAccountMetas[1];
-    /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
-    validatorStake: TAccountMetas[2];
   };
   data: InactivateSolStakerStakeInstructionData;
 };
@@ -160,7 +139,7 @@ export function parseInactivateSolStakerStakeInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedInactivateSolStakerStakeInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 3) {
+  if (instruction.accounts.length < 2) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -175,7 +154,6 @@ export function parseInactivateSolStakerStakeInstruction<
     accounts: {
       config: getNextAccount(),
       stake: getNextAccount(),
-      validatorStake: getNextAccount(),
     },
     data: getInactivateSolStakerStakeInstructionDataDecoder().decode(
       instruction.data

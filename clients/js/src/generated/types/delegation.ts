@@ -30,6 +30,7 @@ import {
 
 export type Delegation = {
   amount: bigint;
+  effectiveAmount: bigint;
   deactivationTimestamp: NullableU64;
   deactivatingAmount: bigint;
   inactiveAmount: bigint;
@@ -41,6 +42,7 @@ export type Delegation = {
 
 export type DelegationArgs = {
   amount: number | bigint;
+  effectiveAmount: number | bigint;
   deactivationTimestamp: NullableU64Args;
   deactivatingAmount: number | bigint;
   inactiveAmount: number | bigint;
@@ -53,6 +55,7 @@ export type DelegationArgs = {
 export function getDelegationEncoder(): Encoder<DelegationArgs> {
   return getStructEncoder([
     ['amount', getU64Encoder()],
+    ['effectiveAmount', getU64Encoder()],
     ['deactivationTimestamp', getNullableU64Encoder()],
     ['deactivatingAmount', getU64Encoder()],
     ['inactiveAmount', getU64Encoder()],
@@ -66,6 +69,7 @@ export function getDelegationEncoder(): Encoder<DelegationArgs> {
 export function getDelegationDecoder(): Decoder<Delegation> {
   return getStructDecoder([
     ['amount', getU64Decoder()],
+    ['effectiveAmount', getU64Decoder()],
     ['deactivationTimestamp', getNullableU64Decoder()],
     ['deactivatingAmount', getU64Decoder()],
     ['inactiveAmount', getU64Decoder()],

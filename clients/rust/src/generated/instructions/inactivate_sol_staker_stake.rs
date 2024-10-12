@@ -14,8 +14,6 @@ pub struct InactivateSolStakerStake {
     pub config: solana_program::pubkey::Pubkey,
     /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
     pub stake: solana_program::pubkey::Pubkey,
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
-    pub validator_stake: solana_program::pubkey::Pubkey,
 }
 
 impl InactivateSolStakerStake {
@@ -27,17 +25,13 @@ impl InactivateSolStakerStake {
         &self,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.config,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.stake, false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            self.validator_stake,
-            false,
         ));
         accounts.extend_from_slice(remaining_accounts);
         let data = InactivateSolStakerStakeInstructionData::new()
@@ -75,12 +69,10 @@ impl Default for InactivateSolStakerStakeInstructionData {
 ///
 ///   0. `[writable]` config
 ///   1. `[writable]` stake
-///   2. `[writable]` validator_stake
 #[derive(Clone, Debug, Default)]
 pub struct InactivateSolStakerStakeBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
     stake: Option<solana_program::pubkey::Pubkey>,
-    validator_stake: Option<solana_program::pubkey::Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -98,15 +90,6 @@ impl InactivateSolStakerStakeBuilder {
     #[inline(always)]
     pub fn stake(&mut self, stake: solana_program::pubkey::Pubkey) -> &mut Self {
         self.stake = Some(stake);
-        self
-    }
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
-    #[inline(always)]
-    pub fn validator_stake(
-        &mut self,
-        validator_stake: solana_program::pubkey::Pubkey,
-    ) -> &mut Self {
-        self.validator_stake = Some(validator_stake);
         self
     }
     /// Add an aditional account to the instruction.
@@ -132,7 +115,6 @@ impl InactivateSolStakerStakeBuilder {
         let accounts = InactivateSolStakerStake {
             config: self.config.expect("config is not set"),
             stake: self.stake.expect("stake is not set"),
-            validator_stake: self.validator_stake.expect("validator_stake is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)
@@ -145,8 +127,6 @@ pub struct InactivateSolStakerStakeCpiAccounts<'a, 'b> {
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
     /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
     pub stake: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
-    pub validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `inactivate_sol_staker_stake` CPI instruction.
@@ -157,8 +137,6 @@ pub struct InactivateSolStakerStakeCpi<'a, 'b> {
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
     /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
     pub stake: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
-    pub validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 impl<'a, 'b> InactivateSolStakerStakeCpi<'a, 'b> {
@@ -170,7 +148,6 @@ impl<'a, 'b> InactivateSolStakerStakeCpi<'a, 'b> {
             __program: program,
             config: accounts.config,
             stake: accounts.stake,
-            validator_stake: accounts.validator_stake,
         }
     }
     #[inline(always)]
@@ -206,17 +183,13 @@ impl<'a, 'b> InactivateSolStakerStakeCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.config.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.stake.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.validator_stake.key,
             false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
@@ -235,11 +208,10 @@ impl<'a, 'b> InactivateSolStakerStakeCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(3 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(2 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.config.clone());
         account_infos.push(self.stake.clone());
-        account_infos.push(self.validator_stake.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -258,7 +230,6 @@ impl<'a, 'b> InactivateSolStakerStakeCpi<'a, 'b> {
 ///
 ///   0. `[writable]` config
 ///   1. `[writable]` stake
-///   2. `[writable]` validator_stake
 #[derive(Clone, Debug)]
 pub struct InactivateSolStakerStakeCpiBuilder<'a, 'b> {
     instruction: Box<InactivateSolStakerStakeCpiBuilderInstruction<'a, 'b>>,
@@ -270,7 +241,6 @@ impl<'a, 'b> InactivateSolStakerStakeCpiBuilder<'a, 'b> {
             __program: program,
             config: None,
             stake: None,
-            validator_stake: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -288,15 +258,6 @@ impl<'a, 'b> InactivateSolStakerStakeCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn stake(&mut self, stake: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.stake = Some(stake);
-        self
-    }
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
-    #[inline(always)]
-    pub fn validator_stake(
-        &mut self,
-        validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.validator_stake = Some(validator_stake);
         self
     }
     /// Add an additional account to the instruction.
@@ -346,11 +307,6 @@ impl<'a, 'b> InactivateSolStakerStakeCpiBuilder<'a, 'b> {
             config: self.instruction.config.expect("config is not set"),
 
             stake: self.instruction.stake.expect("stake is not set"),
-
-            validator_stake: self
-                .instruction
-                .validator_stake
-                .expect("validator_stake is not set"),
         };
         instruction.invoke_signed_with_remaining_accounts(
             signers_seeds,
@@ -364,7 +320,6 @@ struct InactivateSolStakerStakeCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    validator_stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

@@ -724,14 +724,6 @@
           ]
         },
         {
-          "name": "validatorStake",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
-          ]
-        },
-        {
           "name": "sourceTokenAccount",
           "isMut": true,
           "isSigner": false,
@@ -967,14 +959,6 @@
           "docs": [
             "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
           ]
-        },
-        {
-          "name": "validatorStake",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
-          ]
         }
       ],
       "args": [],
@@ -1099,7 +1083,7 @@
             "type": "u64"
           },
           {
-            "name": "tokenAmountDelegated",
+            "name": "tokenAmountEffective",
             "type": "u64"
           },
           {
@@ -1184,15 +1168,7 @@
             }
           },
           {
-            "name": "totalStakedTokenAmount",
-            "type": "u64"
-          },
-          {
             "name": "totalStakedLamportsAmount",
-            "type": "u64"
-          },
-          {
-            "name": "effectiveStakedTokenAmount",
             "type": "u64"
           }
         ]
@@ -1207,6 +1183,10 @@
         "fields": [
           {
             "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "effectiveAmount",
             "type": "u64"
           },
           {

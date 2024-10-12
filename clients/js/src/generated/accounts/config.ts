@@ -51,7 +51,7 @@ export type Config = {
   slashAuthority: NullableAddress;
   vault: Address;
   cooldownTimeSeconds: bigint;
-  tokenAmountDelegated: bigint;
+  tokenAmountEffective: bigint;
   syncRewardsLamports: bigint;
   accumulatedStakeRewardsPerToken: bigint;
   maxDeactivationBasisPoints: number;
@@ -65,7 +65,7 @@ export type ConfigArgs = {
   slashAuthority: NullableAddressArgs;
   vault: Address;
   cooldownTimeSeconds: number | bigint;
-  tokenAmountDelegated: number | bigint;
+  tokenAmountEffective: number | bigint;
   syncRewardsLamports: number | bigint;
   accumulatedStakeRewardsPerToken: number | bigint;
   maxDeactivationBasisPoints: number;
@@ -80,7 +80,7 @@ export function getConfigEncoder(): Encoder<ConfigArgs> {
     ['slashAuthority', getNullableAddressEncoder()],
     ['vault', getAddressEncoder()],
     ['cooldownTimeSeconds', getU64Encoder()],
-    ['tokenAmountDelegated', getU64Encoder()],
+    ['tokenAmountEffective', getU64Encoder()],
     ['syncRewardsLamports', getU64Encoder()],
     ['accumulatedStakeRewardsPerToken', getU128Encoder()],
     ['maxDeactivationBasisPoints', getU16Encoder()],
@@ -96,7 +96,7 @@ export function getConfigDecoder(): Decoder<Config> {
     ['slashAuthority', getNullableAddressDecoder()],
     ['vault', getAddressDecoder()],
     ['cooldownTimeSeconds', getU64Decoder()],
-    ['tokenAmountDelegated', getU64Decoder()],
+    ['tokenAmountEffective', getU64Decoder()],
     ['syncRewardsLamports', getU64Decoder()],
     ['accumulatedStakeRewardsPerToken', getU128Decoder()],
     ['maxDeactivationBasisPoints', getU16Decoder()],
