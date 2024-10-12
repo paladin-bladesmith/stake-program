@@ -86,7 +86,6 @@ async fn inactivate_sol_staker_stake() {
     let inactivate_ix = InactivateSolStakerStakeBuilder::new()
         .config(config)
         .stake(sol_staker_stake_manager.stake)
-        .validator_stake(validator_stake_manager.stake)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -175,7 +174,6 @@ async fn fail_inactivate_sol_staker_stake_with_no_deactivated_amount() {
     let inactivate_ix = InactivateSolStakerStakeBuilder::new()
         .config(config)
         .stake(sol_staker_stake_manager.stake)
-        .validator_stake(validator_stake_manager.stake)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -259,7 +257,6 @@ async fn fail_inactivate_sol_staker_stake_with_wrong_config() {
     let inactivate_ix = InactivateSolStakerStakeBuilder::new()
         .config(wrong_config) // <- wrong config
         .stake(sol_staker_stake_manager.stake)
-        .validator_stake(validator_stake_manager.stake)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -307,7 +304,6 @@ async fn fail_inactivate_sol_stake_stake_with_uninitialized_stake_account() {
     let inactivate_ix = InactivateSolStakerStakeBuilder::new()
         .config(config)
         .stake(sol_staker_stake_pda)
-        .validator_stake(validator_stake_manager.stake)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -393,7 +389,6 @@ async fn fail_inactivate_sol_staker_stake_with_active_cooldown() {
     let inactivate_ix = InactivateSolStakerStakeBuilder::new()
         .config(config)
         .stake(sol_staker_stake_manager.stake)
-        .validator_stake(validator_stake_manager.stake)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -480,7 +475,6 @@ async fn fail_inactivate_sol_staker_stake_with_wrong_validator_stake() {
     let inactivate_ix = InactivateSolStakerStakeBuilder::new()
         .config(config)
         .stake(sol_staker_stake_manager.stake)
-        .validator_stake(wrong_validator_stake) // <- wrong validator stake
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
