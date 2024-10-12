@@ -120,10 +120,8 @@ pub fn process_validator_stake_tokens<'a>(
     let validator_limit =
         calculate_maximum_stake_for_lamports_amount(stake.total_staked_lamports_amount)?;
     let validator_effective = std::cmp::max(validator_total, validator_limit);
-    let effective_delta = stake
-        .delegation
-        .effective_amount
-        .checked_sub(validator_effective)
+    let effective_delta = validator_effective
+        .checked_sub(stake.delegation.effective_amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
     // Update states.

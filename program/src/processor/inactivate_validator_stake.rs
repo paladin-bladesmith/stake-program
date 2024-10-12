@@ -8,7 +8,10 @@ use crate::{
     instruction::accounts::{Context, InactivateValidatorStakeAccounts},
     processor::unpack_initialized_mut,
     require,
-    state::{find_validator_stake_pda, Config, ValidatorStake},
+    state::{
+        calculate_maximum_stake_for_lamports_amount, find_validator_stake_pda, Config,
+        ValidatorStake,
+    },
 };
 
 /// Move tokens from deactivating to inactive.
@@ -60,10 +63,10 @@ pub fn process_inactivate_validator_stake(
     );
 
     let stake_data = &mut ctx.accounts.stake.try_borrow_mut_data()?;
-    let validator_stake = unpack_initialized_mut::<ValidatorStake>(stake_data)?;
+    let stake = unpack_initialized_mut::<ValidatorStake>(stake_data)?;
 
     let (derivation, _) = find_validator_stake_pda(
-        &validator_stake.delegation.validator_vote,
+        &stake.delegation.validator_vote,
         ctx.accounts.config.key,
         program_id,
     );
@@ -74,7 +77,7 @@ pub fn process_inactivate_validator_stake(
         "stake",
     );
 
-    let delegation = &mut validator_stake.delegation;
+    let delegation = &mut stake.delegation;
 
     // Inactivates the stake if elegible.
 
@@ -91,28 +94,41 @@ pub fn process_inactivate_validator_stake(
 
         msg!("Inactivating {} token(s)", delegation.deactivating_amount);
 
-        // moves deactivating amount to inactive
-        delegation.amount = delegation
+        // TODO:
+        //
+        // 1. Deactivating amount is set to 0.
+        // 2. Deactivation timestamp is reset.
+        // 3. Effective amount is updated.
+        // 4. Inactive amount is updated.
+        // 5. Global effective amount is updated.
+
+        // Compute the new stake values.
+        let validator_total = delegation
             .amount
             .checked_sub(delegation.deactivating_amount)
             .ok_or(ProgramError::ArithmeticOverflow)?;
-
-        delegation.inactive_amount = delegation
+        let validator_inactive = delegation
             .inactive_amount
-            .checked_add(delegation.deactivating_amount)
+            .checked_add(delegation.inactive_amount)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
+        let validator_limit =
+            calculate_maximum_stake_for_lamports_amount(stake.total_staked_lamports_amount)?;
+        let validator_effective = std::cmp::max(validator_total, validator_limit);
+        let effective_delta = delegation
+            .effective_amount
+            .checked_sub(validator_effective)
             .ok_or(ProgramError::ArithmeticOverflow)?;
 
-        // Update the config and stake account data.
-
-        config.token_amount_delegated = config
-            .token_amount_delegated
-            .checked_sub(delegation.deactivating_amount)
-            .ok_or(ProgramError::ArithmeticOverflow)?;
-
-        // Clears the deactivation.
-
+        // Update the state values.
+        delegation.amount = validator_total;
+        delegation.effective_amount = validator_effective;
         delegation.deactivating_amount = 0;
         delegation.deactivation_timestamp = None;
+        delegation.inactive_amount = validator_inactive;
+        config.token_amount_effective = config
+            .token_amount_effective
+            .checked_sub(effective_delta)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
 
         Ok(())
     } else {
