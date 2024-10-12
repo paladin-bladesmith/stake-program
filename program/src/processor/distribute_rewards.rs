@@ -62,10 +62,8 @@ pub fn process_distribute_rewards(
     );
 
     // Calculates the rewards per token
-
     let rewards_per_token =
-        calculate_stake_rewards_per_token(amount, config.token_amount_delegated)?;
-
+        calculate_stake_rewards_per_token(amount, config.token_amount_effective)?;
     if rewards_per_token != 0 {
         // updates the accumulated stake rewards per token
         let accumulated =
@@ -74,9 +72,7 @@ pub fn process_distribute_rewards(
     }
 
     // Transfers the rewards to the config account.
-
     drop(config_data);
-
     invoke(
         &system_instruction::transfer(ctx.accounts.payer.key, ctx.accounts.config.key, amount),
         &[ctx.accounts.payer.clone(), ctx.accounts.config.clone()],

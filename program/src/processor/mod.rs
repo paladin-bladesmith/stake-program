@@ -1,5 +1,3 @@
-use std::cmp::min;
-
 use bytemuck::Pod;
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, msg, program::invoke_signed,
@@ -25,8 +23,9 @@ use crate::{
         StakeInstruction,
     },
     state::{
-        calculate_eligible_rewards, find_sol_staker_stake_pda, find_validator_stake_pda, Config,
-        Delegation, SolStakerStake, ValidatorStake,
+        calculate_eligible_rewards, calculate_maximum_stake_for_lamports_amount,
+        find_sol_staker_stake_pda, find_validator_stake_pda, Config, Delegation, SolStakerStake,
+        ValidatorStake,
     },
 };
 
@@ -378,6 +377,7 @@ pub fn process_harvest_for_delegation(
 struct SlashArgs<'a, 'b> {
     config: &'b mut Config,
     delegation: &'b mut Delegation,
+    lamports_stake: u64,
     mint_info: &'b AccountInfo<'a>,
     vault_info: &'b AccountInfo<'a>,
     vault_authority_info: &'b AccountInfo<'a>,
@@ -387,10 +387,11 @@ struct SlashArgs<'a, 'b> {
 }
 
 /// Processes the slash for a stake delegation.
-fn process_slash_for_delegation(args: SlashArgs) -> Result<u64, ProgramError> {
+fn process_slash_for_delegation(args: SlashArgs) -> ProgramResult {
     let SlashArgs {
         config,
         delegation,
+        lamports_stake,
         mint_info,
         vault_info,
         vault_authority_info,
@@ -417,54 +418,42 @@ fn process_slash_for_delegation(args: SlashArgs) -> Result<u64, ProgramError> {
         "amount must be greater than 0"
     );
 
-    // slashes active stake
-    let active_stake_to_slash = min(amount, delegation.amount);
-    delegation.amount = delegation
-        .amount
-        .checked_sub(active_stake_to_slash)
-        .ok_or(ProgramError::ArithmeticOverflow)?;
-
-    if delegation.deactivating_amount > delegation.amount {
-        // adjust the deactivating amount if it's greater than the "active" stake
-        // after slashing
-        delegation.deactivating_amount = delegation.amount;
-        // clear the deactivation timestamp if there in no deactivating
-        // amount left
-        if delegation.deactivating_amount == 0 {
-            delegation.deactivation_timestamp = None;
-        }
-    }
-
-    // Update the token amount delegated on the config account.
+    // TODO:
     //
-    // The instruction will fail if the amount to slash is greater than the
-    // total amount delegated (it should never happen).
-    require!(
-        config.token_amount_delegated >= active_stake_to_slash,
-        StakeError::InvalidSlashAmount,
-        "slash amount greater than total amount delegated ({} required, {} delegated)",
-        active_stake_to_slash,
-        config.token_amount_delegated
-    );
+    // - Cap slash at `delegation.amount`.
+    // - Perform the slash.
+    // - Adjust deactivating amount as necessary.
+    // - Update all stake values & global effective stake.
 
-    config.token_amount_delegated = config
-        .token_amount_delegated
-        .checked_sub(active_stake_to_slash)
+    // Compute actual slash & new stake numbers.
+    let actual_slash = std::cmp::min(amount, delegation.amount);
+    let total = delegation
+        .amount
+        .checked_sub(actual_slash)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
+    let limit = calculate_maximum_stake_for_lamports_amount(lamports_stake)?;
+    let effective = std::cmp::min(total, limit);
+    let effective_delta = delegation
+        .effective_amount
+        .checked_sub(effective)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
-    if amount > active_stake_to_slash {
-        // The amount to slash was greater than the amount available on the
-        // stake account.
-        msg!(
-            "Slash amount greater than available tokens on stake account ({} required, {} available)",
-            amount,
-            active_stake_to_slash,
-        );
+    // Update stake amounts.
+    delegation.amount = total;
+    delegation.effective_amount = effective;
+    config.token_amount_effective = config
+        .token_amount_effective
+        .checked_sub(effective_delta)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
+
+    // Check if we need to downwards adjust deactivating amount.
+    if delegation.deactivating_amount > delegation.amount {
+        delegation.deactivating_amount = delegation.amount;
+        // TODO: Do we need to set deactivation timestamp to none?
     }
 
     // Burn the tokens from the vault account (if there are tokens to slash).
-
-    if active_stake_to_slash > 0 {
+    if actual_slash > 0 {
         let mint_data = mint_info.try_borrow_data()?;
         let mint = PodStateWithExtensions::<PodMint>::unpack(&mint_data)?;
         let decimals = mint.base.decimals;
@@ -477,7 +466,7 @@ fn process_slash_for_delegation(args: SlashArgs) -> Result<u64, ProgramError> {
             mint_info.key,
             vault_authority_info.key,
             &[],
-            active_stake_to_slash,
+            actual_slash,
             decimals,
         )?;
 
@@ -493,5 +482,5 @@ fn process_slash_for_delegation(args: SlashArgs) -> Result<u64, ProgramError> {
         )?;
     }
 
-    Ok(active_stake_to_slash)
+    Ok(())
 }

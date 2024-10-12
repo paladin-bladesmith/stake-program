@@ -146,6 +146,7 @@ pub fn process_slash_validator_stake(
     process_slash_for_delegation(SlashArgs {
         config,
         delegation: &mut stake.delegation,
+        lamports_stake: stake.total_staked_lamports_amount,
         mint_info: ctx.accounts.mint,
         vault_info: ctx.accounts.vault,
         vault_authority_info: ctx.accounts.vault_authority,

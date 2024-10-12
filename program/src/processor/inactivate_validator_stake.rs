@@ -101,11 +101,11 @@ pub fn process_inactivate_validator_stake(
             .ok_or(ProgramError::ArithmeticOverflow)?;
         let validator_inactive = delegation
             .inactive_amount
-            .checked_add(delegation.inactive_amount)
+            .checked_add(delegation.deactivating_amount)
             .ok_or(ProgramError::ArithmeticOverflow)?;
         let validator_limit =
             calculate_maximum_stake_for_lamports_amount(stake.total_staked_lamports_amount)?;
-        let validator_effective = std::cmp::max(validator_total, validator_limit);
+        let validator_effective = std::cmp::min(validator_total, validator_limit);
         let effective_delta = delegation
             .effective_amount
             .checked_sub(validator_effective)
