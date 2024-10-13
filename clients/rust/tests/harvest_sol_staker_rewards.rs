@@ -122,7 +122,6 @@ async fn harvest_sol_staker_rewards() {
     );
 }
 
-/*
 #[tokio::test]
 async fn harvest_sol_staker_rewards_wrapped() {
     let mut context = setup().await;
@@ -134,14 +133,14 @@ async fn harvest_sol_staker_rewards_wrapped() {
     let mut account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the total amount delegated
-    config_account.token_amount_effective = 130;
+    config_account.token_amount_effective = 130 * SWAD;
     // Set the config account's current rewards per token, simulating a
     // scenario where the rate has wrapped around `u128::MAX`.
     // If the holder's last seen rate is `u128::MAX`, the calculation should
     // still work with wrapped math.
     config_account.accumulated_stake_rewards_per_token = calculate_stake_rewards_per_token(26, 130);
 
-    account.lamports += 26;
+    account.lamports += 26 * SWAD;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config, &account.into());
 
@@ -153,7 +152,7 @@ async fn harvest_sol_staker_rewards_wrapped() {
         &config,
         &validator_stake_manager.stake,
         &validator_stake_manager.vote,
-        1_000_000_000,
+        50 * SWAD,
     )
     .await;
 
@@ -161,7 +160,7 @@ async fn harvest_sol_staker_rewards_wrapped() {
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the staked values:
     //   - total staked lamports = 50
-    stake_account.total_staked_lamports_amount = 50;
+    stake_account.total_staked_lamports_amount = 50 * SWAD;
     // Set the stake account's last seen rate to `u128::MAX`.
     stake_account.delegation.last_seen_stake_rewards_per_token = u128::MAX;
     account.data = stake_account.try_to_vec().unwrap();
@@ -172,9 +171,9 @@ async fn harvest_sol_staker_rewards_wrapped() {
     // "manually" set the staked values:
     //   - delegation amount = 65
     //   - lamports amount = 50
-    stake_account.delegation.amount = 65;
-    stake_account.delegation.effective_amount = 65;
-    stake_account.lamports_amount = 50;
+    stake_account.delegation.amount = 65 * SWAD;
+    stake_account.delegation.effective_amount = 65 * SWAD;
+    stake_account.lamports_amount = 50 * SWAD;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
 
@@ -203,6 +202,10 @@ async fn harvest_sol_staker_rewards_wrapped() {
         .config(config)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .native_stake(sol_staker_stake_manager.sol_stake)
+        .validator_stake(validator_stake_manager.stake)
+        .validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -214,7 +217,7 @@ async fn harvest_sol_staker_rewards_wrapped() {
     context.banks_client.process_transaction(tx).await.unwrap();
 
     let account = get_account!(context, sol_staker_stake_manager.authority.pubkey());
-    assert_eq!(account.lamports, 100_000_000 + 13); // rent + rewards
+    assert_eq!(account.lamports, 100_000_000 + 13 * SWAD); // rent + rewards
 
     // And the stake account has the updated last seen stake rewards per token.
     let account = get_account!(context, sol_staker_stake_manager.stake);
@@ -236,7 +239,7 @@ async fn harvest_sol_staker_rewards_with_no_rewards_available() {
     let mut account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the total amount delegated
-    config_account.token_amount_effective = 130;
+    config_account.token_amount_effective = 130 * SWAD;
     config_account.accumulated_stake_rewards_per_token = 0;
 
     let expected_config_lamports = account.lamports;
@@ -252,7 +255,7 @@ async fn harvest_sol_staker_rewards_with_no_rewards_available() {
         &config,
         &validator_stake_manager.stake,
         &validator_stake_manager.vote,
-        1_000_000_000,
+        50 * SWAD,
     )
     .await;
 
@@ -261,7 +264,7 @@ async fn harvest_sol_staker_rewards_with_no_rewards_available() {
     // "manually" set the staked values:
     //   - total staked token = 65
     //   - total staked lamports = 50
-    stake_account.total_staked_lamports_amount = 50;
+    stake_account.total_staked_lamports_amount = 50 * SWAD;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&validator_stake_manager.stake, &account.into());
 
@@ -270,9 +273,9 @@ async fn harvest_sol_staker_rewards_with_no_rewards_available() {
     // "manually" set the staked values:
     //   - delegation amount = 65
     //   - lamports amount = 50
-    stake_account.delegation.amount = 65;
-    stake_account.delegation.effective_amount = 65;
-    stake_account.lamports_amount = 50;
+    stake_account.delegation.amount = 65 * SWAD;
+    stake_account.delegation.effective_amount = 65 * SWAD;
+    stake_account.lamports_amount = 50 * SWAD;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
 
@@ -290,6 +293,10 @@ async fn harvest_sol_staker_rewards_with_no_rewards_available() {
         .config(config)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .native_stake(sol_staker_stake_manager.sol_stake)
+        .validator_stake(validator_stake_manager.stake)
+        .validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -319,10 +326,10 @@ async fn harvest_sol_staker_rewards_after_harvesting() {
     let mut account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the total amount delegated
-    config_account.token_amount_effective = 130;
+    config_account.token_amount_effective = 130 * SWAD;
     config_account.accumulated_stake_rewards_per_token = calculate_stake_rewards_per_token(26, 130);
 
-    account.lamports += 26;
+    account.lamports += 26 * SWAD;
     let expected_config_lamports = account.lamports;
 
     account.data = config_account.try_to_vec().unwrap();
@@ -336,7 +343,7 @@ async fn harvest_sol_staker_rewards_after_harvesting() {
         &config,
         &validator_stake_manager.stake,
         &validator_stake_manager.vote,
-        1_000_000_000,
+        50 * SWAD,
     )
     .await;
 
@@ -345,7 +352,7 @@ async fn harvest_sol_staker_rewards_after_harvesting() {
     // "manually" set the staked values:
     //   - total staked token = 65
     //   - total staked lamports = 50
-    stake_account.total_staked_lamports_amount = 50;
+    stake_account.total_staked_lamports_amount = 50 * SWAD;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&validator_stake_manager.stake, &account.into());
 
@@ -355,9 +362,9 @@ async fn harvest_sol_staker_rewards_after_harvesting() {
     //   - delegation amount = 65
     //   - lamports amount = 50
     //   - last seen stake rewards per token = config.accumulated_stake_rewards_per_token
-    stake_account.delegation.amount = 65;
-    stake_account.delegation.effective_amount = 65;
-    stake_account.lamports_amount = 50;
+    stake_account.delegation.amount = 65 * SWAD;
+    stake_account.delegation.effective_amount = 65 * SWAD;
+    stake_account.lamports_amount = 50 * SWAD;
     stake_account.delegation.last_seen_stake_rewards_per_token =
         config_account.accumulated_stake_rewards_per_token;
     account.data = stake_account.try_to_vec().unwrap();
@@ -382,6 +389,10 @@ async fn harvest_sol_staker_rewards_after_harvesting() {
         .config(config)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .native_stake(sol_staker_stake_manager.sol_stake)
+        .validator_stake(validator_stake_manager.stake)
+        .validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -499,6 +510,10 @@ async fn harvest_sol_staker_rewards_with_excess_rewards() {
         .config(config)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .native_stake(sol_staker_stake_manager.sol_stake)
+        .validator_stake(validator_stake_manager.stake)
+        .validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
         &[harvest_stake_rewards_ix],
@@ -546,10 +561,10 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_authority() {
     let mut account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the total amount delegated
-    config_account.token_amount_effective = 130;
+    config_account.token_amount_effective = 130 * SWAD;
     config_account.accumulated_stake_rewards_per_token = calculate_stake_rewards_per_token(26, 130);
 
-    account.lamports += 26;
+    account.lamports += 26 * SWAD;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config, &account.into());
 
@@ -561,7 +576,7 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_authority() {
         &config,
         &validator_stake_manager.stake,
         &validator_stake_manager.vote,
-        1_000_000_000,
+        50 * SWAD,
     )
     .await;
 
@@ -570,7 +585,7 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_authority() {
     // "manually" set the staked values:
     //   - total staked token = 65
     //   - total staked lamports = 50
-    stake_account.total_staked_lamports_amount = 50;
+    stake_account.total_staked_lamports_amount = 50 * SWAD;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&validator_stake_manager.stake, &account.into());
 
@@ -579,9 +594,9 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_authority() {
     // "manually" set the staked values:
     //   - delegation amount = 65
     //   - lamports amount = 50
-    stake_account.delegation.amount = 65;
-    stake_account.delegation.effective_amount = 65;
-    stake_account.lamports_amount = 50;
+    stake_account.delegation.amount = 65 * SWAD;
+    stake_account.delegation.effective_amount = 65 * SWAD;
+    stake_account.lamports_amount = 50 * SWAD;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
 
@@ -592,6 +607,10 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_authority() {
         .config(config)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .stake_authority(fake_authority) // <- wrong authority
+        .native_stake(sol_staker_stake_manager.sol_stake)
+        .validator_stake(validator_stake_manager.stake)
+        .validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -621,10 +640,10 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_config_account() {
     let mut account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the total amount delegated
-    config_account.token_amount_effective = 130;
+    config_account.token_amount_effective = 130 * SWAD;
     config_account.accumulated_stake_rewards_per_token = calculate_stake_rewards_per_token(26, 130);
 
-    account.lamports += 26;
+    account.lamports += 26 * SWAD;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config, &account.into());
 
@@ -636,7 +655,7 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_config_account() {
         &config,
         &validator_stake_manager.stake,
         &validator_stake_manager.vote,
-        1_000_000_000,
+        50 * SWAD,
     )
     .await;
 
@@ -645,7 +664,7 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_config_account() {
     // "manually" set the staked values:
     //   - total staked token = 65
     //   - total staked lamports = 50
-    stake_account.total_staked_lamports_amount = 50;
+    stake_account.total_staked_lamports_amount = 50 * SWAD;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&validator_stake_manager.stake, &account.into());
 
@@ -654,9 +673,9 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_config_account() {
     // "manually" set the staked values:
     //   - delegation amount = 65
     //   - lamports amount = 50
-    stake_account.delegation.amount = 65;
-    stake_account.delegation.effective_amount = 65;
-    stake_account.lamports_amount = 50;
+    stake_account.delegation.amount = 65 * SWAD;
+    stake_account.delegation.effective_amount = 65 * SWAD;
+    stake_account.lamports_amount = 50 * SWAD;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
 
@@ -678,6 +697,10 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_config_account() {
         .config(another_config)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .native_stake(sol_staker_stake_manager.sol_stake)
+        .validator_stake(validator_stake_manager.stake)
+        .validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
         &[harvest_stake_rewards_ix],
@@ -706,10 +729,10 @@ async fn fail_harvest_sol_staker_rewards_with_uninitialized_stake_account() {
     let mut account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the total amount delegated
-    config_account.token_amount_effective = 130;
+    config_account.token_amount_effective = 130 * SWAD;
     config_account.accumulated_stake_rewards_per_token = calculate_stake_rewards_per_token(26, 130);
 
-    account.lamports += 26;
+    account.lamports += 26 * SWAD;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config, &account.into());
 
@@ -721,7 +744,7 @@ async fn fail_harvest_sol_staker_rewards_with_uninitialized_stake_account() {
     // "manually" set the staked values:
     //   - total staked token = 65
     //   - total staked lamports = 50
-    stake_account.total_staked_lamports_amount = 50;
+    stake_account.total_staked_lamports_amount = 50 * SWAD;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&validator_stake_manager.stake, &account.into());
 
@@ -730,7 +753,7 @@ async fn fail_harvest_sol_staker_rewards_with_uninitialized_stake_account() {
         &config,
         &validator_stake_manager.stake,
         &validator_stake_manager.vote,
-        1_000_000_000,
+        50 * SWAD,
     )
     .await;
 
@@ -759,6 +782,10 @@ async fn fail_harvest_sol_staker_rewards_with_uninitialized_stake_account() {
         .config(config)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .native_stake(sol_staker_stake_manager.sol_stake)
+        .validator_stake(validator_stake_manager.stake)
+        .validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
         &[harvest_stake_rewards_ix],
@@ -775,4 +802,3 @@ async fn fail_harvest_sol_staker_rewards_with_uninitialized_stake_account() {
     // Then we expect an error.
     assert_instruction_error!(err, InstructionError::UninitializedAccount);
 }
-*/
