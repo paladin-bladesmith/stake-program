@@ -21,6 +21,7 @@ import {
   type IInstruction,
   type IInstructionWithAccounts,
   type IInstructionWithData,
+  type ReadonlyAccount,
   type WritableAccount,
 } from '@solana/web3.js';
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
@@ -31,6 +32,15 @@ export type HarvestSolStakerRewardsInstruction<
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountSolStakerStake extends string | IAccountMeta<string> = string,
   TAccountStakeAuthority extends string | IAccountMeta<string> = string,
+  TAccountNativeStake extends string | IAccountMeta<string> = string,
+  TAccountValidatorStake extends string | IAccountMeta<string> = string,
+  TAccountValidatorStakeAuthority extends
+    | string
+    | IAccountMeta<string> = string,
+  TAccountSysvarStakeHistory extends
+    | string
+    | IAccountMeta<string> = 'SysvarStakeHistory1111111111111111111111111',
+  TAccountSolStakeViewProgram extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -45,6 +55,21 @@ export type HarvestSolStakerRewardsInstruction<
       TAccountStakeAuthority extends string
         ? WritableAccount<TAccountStakeAuthority>
         : TAccountStakeAuthority,
+      TAccountNativeStake extends string
+        ? ReadonlyAccount<TAccountNativeStake>
+        : TAccountNativeStake,
+      TAccountValidatorStake extends string
+        ? ReadonlyAccount<TAccountValidatorStake>
+        : TAccountValidatorStake,
+      TAccountValidatorStakeAuthority extends string
+        ? ReadonlyAccount<TAccountValidatorStakeAuthority>
+        : TAccountValidatorStakeAuthority,
+      TAccountSysvarStakeHistory extends string
+        ? ReadonlyAccount<TAccountSysvarStakeHistory>
+        : TAccountSysvarStakeHistory,
+      TAccountSolStakeViewProgram extends string
+        ? ReadonlyAccount<TAccountSolStakeViewProgram>
+        : TAccountSolStakeViewProgram,
       ...TRemainingAccounts,
     ]
   >;
@@ -78,6 +103,11 @@ export type HarvestSolStakerRewardsInput<
   TAccountConfig extends string = string,
   TAccountSolStakerStake extends string = string,
   TAccountStakeAuthority extends string = string,
+  TAccountNativeStake extends string = string,
+  TAccountValidatorStake extends string = string,
+  TAccountValidatorStakeAuthority extends string = string,
+  TAccountSysvarStakeHistory extends string = string,
+  TAccountSolStakeViewProgram extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
@@ -85,23 +115,48 @@ export type HarvestSolStakerRewardsInput<
   solStakerStake: Address<TAccountSolStakerStake>;
   /** Stake authority */
   stakeAuthority: Address<TAccountStakeAuthority>;
+  /** Native stake account */
+  nativeStake: Address<TAccountNativeStake>;
+  /** Validator stake account */
+  validatorStake: Address<TAccountValidatorStake>;
+  /** Validator stake authority */
+  validatorStakeAuthority: Address<TAccountValidatorStakeAuthority>;
+  /** Stake history sysvar */
+  sysvarStakeHistory?: Address<TAccountSysvarStakeHistory>;
+  /** Sol stake view program */
+  solStakeViewProgram: Address<TAccountSolStakeViewProgram>;
 };
 
 export function getHarvestSolStakerRewardsInstruction<
   TAccountConfig extends string,
   TAccountSolStakerStake extends string,
   TAccountStakeAuthority extends string,
+  TAccountNativeStake extends string,
+  TAccountValidatorStake extends string,
+  TAccountValidatorStakeAuthority extends string,
+  TAccountSysvarStakeHistory extends string,
+  TAccountSolStakeViewProgram extends string,
 >(
   input: HarvestSolStakerRewardsInput<
     TAccountConfig,
     TAccountSolStakerStake,
-    TAccountStakeAuthority
+    TAccountStakeAuthority,
+    TAccountNativeStake,
+    TAccountValidatorStake,
+    TAccountValidatorStakeAuthority,
+    TAccountSysvarStakeHistory,
+    TAccountSolStakeViewProgram
   >
 ): HarvestSolStakerRewardsInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountSolStakerStake,
-  TAccountStakeAuthority
+  TAccountStakeAuthority,
+  TAccountNativeStake,
+  TAccountValidatorStake,
+  TAccountValidatorStakeAuthority,
+  TAccountSysvarStakeHistory,
+  TAccountSolStakeViewProgram
 > {
   // Program address.
   const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
@@ -111,11 +166,31 @@ export function getHarvestSolStakerRewardsInstruction<
     config: { value: input.config ?? null, isWritable: true },
     solStakerStake: { value: input.solStakerStake ?? null, isWritable: true },
     stakeAuthority: { value: input.stakeAuthority ?? null, isWritable: true },
+    nativeStake: { value: input.nativeStake ?? null, isWritable: false },
+    validatorStake: { value: input.validatorStake ?? null, isWritable: false },
+    validatorStakeAuthority: {
+      value: input.validatorStakeAuthority ?? null,
+      isWritable: false,
+    },
+    sysvarStakeHistory: {
+      value: input.sysvarStakeHistory ?? null,
+      isWritable: false,
+    },
+    solStakeViewProgram: {
+      value: input.solStakeViewProgram ?? null,
+      isWritable: false,
+    },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
     ResolvedAccount
   >;
+
+  // Resolve default values.
+  if (!accounts.sysvarStakeHistory.value) {
+    accounts.sysvarStakeHistory.value =
+      'SysvarStakeHistory1111111111111111111111111' as Address<'SysvarStakeHistory1111111111111111111111111'>;
+  }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -123,6 +198,11 @@ export function getHarvestSolStakerRewardsInstruction<
       getAccountMeta(accounts.config),
       getAccountMeta(accounts.solStakerStake),
       getAccountMeta(accounts.stakeAuthority),
+      getAccountMeta(accounts.nativeStake),
+      getAccountMeta(accounts.validatorStake),
+      getAccountMeta(accounts.validatorStakeAuthority),
+      getAccountMeta(accounts.sysvarStakeHistory),
+      getAccountMeta(accounts.solStakeViewProgram),
     ],
     programAddress,
     data: getHarvestSolStakerRewardsInstructionDataEncoder().encode({}),
@@ -130,7 +210,12 @@ export function getHarvestSolStakerRewardsInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountSolStakerStake,
-    TAccountStakeAuthority
+    TAccountStakeAuthority,
+    TAccountNativeStake,
+    TAccountValidatorStake,
+    TAccountValidatorStakeAuthority,
+    TAccountSysvarStakeHistory,
+    TAccountSolStakeViewProgram
   >;
 
   return instruction;
@@ -148,6 +233,16 @@ export type ParsedHarvestSolStakerRewardsInstruction<
     solStakerStake: TAccountMetas[1];
     /** Stake authority */
     stakeAuthority: TAccountMetas[2];
+    /** Native stake account */
+    nativeStake: TAccountMetas[3];
+    /** Validator stake account */
+    validatorStake: TAccountMetas[4];
+    /** Validator stake authority */
+    validatorStakeAuthority: TAccountMetas[5];
+    /** Stake history sysvar */
+    sysvarStakeHistory: TAccountMetas[6];
+    /** Sol stake view program */
+    solStakeViewProgram: TAccountMetas[7];
   };
   data: HarvestSolStakerRewardsInstructionData;
 };
@@ -160,7 +255,7 @@ export function parseHarvestSolStakerRewardsInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedHarvestSolStakerRewardsInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 3) {
+  if (instruction.accounts.length < 8) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -176,6 +271,11 @@ export function parseHarvestSolStakerRewardsInstruction<
       config: getNextAccount(),
       solStakerStake: getNextAccount(),
       stakeAuthority: getNextAccount(),
+      nativeStake: getNextAccount(),
+      validatorStake: getNextAccount(),
+      validatorStakeAuthority: getNextAccount(),
+      sysvarStakeHistory: getNextAccount(),
+      solStakeViewProgram: getNextAccount(),
     },
     data: getHarvestSolStakerRewardsInstructionDataDecoder().decode(
       instruction.data

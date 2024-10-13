@@ -851,6 +851,46 @@
           "docs": [
             "Stake authority"
           ]
+        },
+        {
+          "name": "nativeStake",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Native stake account"
+          ]
+        },
+        {
+          "name": "validatorStake",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Validator stake account"
+          ]
+        },
+        {
+          "name": "validatorStakeAuthority",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Validator stake authority"
+          ]
+        },
+        {
+          "name": "sysvarStakeHistory",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Stake history sysvar"
+          ]
+        },
+        {
+          "name": "solStakeViewProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Sol stake view program"
+          ]
         }
       ],
       "args": [],

@@ -565,6 +565,31 @@ pub enum StakeInstruction {
         name = "stake_authority",
         desc = "Stake authority"
     )]
+    #[account(
+        3,
+        name = "native_stake",
+        desc = "Native stake account"
+    )]
+    #[account(
+        4,
+        name = "validator_stake",
+        desc = "Validator stake account"
+    )]
+    #[account(
+        5,
+        name = "validator_stake_authority",
+        desc = "Validator stake authority"
+    )]
+    #[account(
+        6,
+        name = "sysvar_stake_history",
+        desc = "Stake history sysvar"
+    )]
+    #[account(
+        7,
+        name = "sol_stake_view_program",
+        desc = "Sol stake view program"
+    )]
     HarvestSolStakerRewards,
 
     /// Harvest rewards for syncing the SOL stake balance with a validator and SOL staker stake accounts.

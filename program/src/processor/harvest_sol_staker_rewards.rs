@@ -1,4 +1,11 @@
-use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey};
+use paladin_sol_stake_view_program_client::{
+    instructions::GetStakeActivatingAndDeactivatingCpiBuilder,
+    GetStakeActivatingAndDeactivatingReturnData,
+};
+use solana_program::{
+    entrypoint::ProgramResult, program::get_return_data, program_error::ProgramError,
+    pubkey::Pubkey,
+};
 
 use crate::{
     error::StakeError,
@@ -15,8 +22,13 @@ use crate::{
 /// based on the proportion of total stake.
 ///
 /// 0. `[w]` Config account
-/// 1. `[w]` SOL staker stake account
-/// 3. `[w]` Stake authority
+/// 1. `[w]` Staker PAL stake account
+/// 2. `[w]` Staker authority
+/// 3. `[ ]` Staker native stake account
+/// 4. `[w]` Validator stake account
+/// 5. `[w]` Validator stake authority
+/// 6. `[ ]` Stake history sysvar
+/// 7. `[ ]` Paladin SOL stake view program
 pub fn process_harvest_sol_staker_rewards(
     program_id: &Pubkey,
     ctx: Context<HarvestSolStakerRewardsAccounts>,
@@ -48,10 +60,10 @@ pub fn process_harvest_sol_staker_rewards(
     );
 
     let mut stake_data = ctx.accounts.sol_staker_stake.try_borrow_mut_data()?;
-    let sol_stake_stake = unpack_initialized_mut::<SolStakerStake>(&mut stake_data)?;
+    let sol_staker_stake = unpack_initialized_mut::<SolStakerStake>(&mut stake_data)?;
 
     let (derivation, _) = find_sol_staker_stake_pda(
-        &sol_stake_stake.sol_stake,
+        &sol_staker_stake.sol_stake,
         ctx.accounts.config.key,
         program_id,
     );
@@ -65,15 +77,61 @@ pub fn process_harvest_sol_staker_rewards(
     // stake authority
     // - must match the authority on the stake account
     require!(
-        ctx.accounts.stake_authority.key == &sol_stake_stake.delegation.authority,
+        ctx.accounts.stake_authority.key == &sol_staker_stake.delegation.authority,
         StakeError::InvalidAuthority,
         "stake authority",
     );
 
+    // Native stake.
+    // - Must match the PAL staker specified stake account.
+    require!(
+        ctx.accounts.native_stake.key == &sol_staker_stake.sol_stake,
+        StakeError::IncorrectSolStakeAccount,
+        "sol stake"
+    );
+
+    // Sol stake view program.
+    // - Must match the expected program ID.
+    require!(
+        ctx.accounts.sol_stake_view_program.key == &paladin_sol_stake_view_program_client::ID,
+        ProgramError::IncorrectProgramId,
+        "invalid sol stake view program"
+    );
+
+    // Compute the latest native stake for this staker.
+    GetStakeActivatingAndDeactivatingCpiBuilder::new(ctx.accounts.sol_stake_view_program)
+        .stake(ctx.accounts.native_stake)
+        .stake_history(ctx.accounts.sysvar_stake_history)
+        .invoke()?;
+    let (_, return_data) = get_return_data().ok_or(ProgramError::InvalidAccountData)?;
+    let stake_state_data =
+        bytemuck::try_from_bytes::<GetStakeActivatingAndDeactivatingReturnData>(&return_data)
+            .map_err(|_error| ProgramError::InvalidAccountData)?;
+    let delegated_vote = stake_state_data.delegated_vote.get();
+    solana_program::msg!("{:?}", delegated_vote);
+    solana_program::msg!("{:?}", sol_staker_stake.delegation.validator_vote);
+    let delegate_changed = delegated_vote != Some(sol_staker_stake.delegation.validator_vote);
+    let stake_amount = match delegate_changed {
+        // TODO: We zero their effective PAL, but how do they re-activate it?
+        true => panic!("Delegation changed"),
+        false => u64::from(stake_state_data.activating)
+            .checked_add(stake_state_data.effective.into())
+            .and_then(|amount| amount.checked_sub(u64::from(stake_state_data.deactivating)))
+            .ok_or(ProgramError::ArithmeticOverflow)?,
+    };
+
+    // If there is a difference, perform necessary steps to sync the accounts (and pay a sync bounty).
+    if stake_amount != sol_staker_stake.lamports_amount {
+        todo!(
+            "Sync native stake; left={stake_amount}; right={}",
+            sol_staker_stake.lamports_amount
+        );
+    }
+
     // Process the harvest.
     harvest(
         (config, ctx.accounts.config),
-        &mut sol_stake_stake.delegation,
+        &mut sol_staker_stake.delegation,
         ctx.accounts.stake_authority,
         None,
     )?;
