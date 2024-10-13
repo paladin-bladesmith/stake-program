@@ -304,7 +304,7 @@ pub enum StakeInstruction {
     )]
     #[account(
         2,
-        signer,
+        writable,
         name = "stake_authority",
         desc = "Stake authority"
     )]

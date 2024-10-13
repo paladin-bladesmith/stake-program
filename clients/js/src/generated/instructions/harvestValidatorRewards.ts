@@ -18,12 +18,9 @@ import {
   type Decoder,
   type Encoder,
   type IAccountMeta,
-  type IAccountSignerMeta,
   type IInstruction,
   type IInstructionWithAccounts,
   type IInstructionWithData,
-  type ReadonlySignerAccount,
-  type TransactionSigner,
   type WritableAccount,
 } from '@solana/web3.js';
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
@@ -46,8 +43,7 @@ export type HarvestValidatorRewardsInstruction<
         ? WritableAccount<TAccountValidatorStake>
         : TAccountValidatorStake,
       TAccountStakeAuthority extends string
-        ? ReadonlySignerAccount<TAccountStakeAuthority> &
-            IAccountSignerMeta<TAccountStakeAuthority>
+        ? WritableAccount<TAccountStakeAuthority>
         : TAccountStakeAuthority,
       ...TRemainingAccounts,
     ]
@@ -88,7 +84,7 @@ export type HarvestValidatorRewardsInput<
   /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
   validatorStake: Address<TAccountValidatorStake>;
   /** Stake authority */
-  stakeAuthority: TransactionSigner<TAccountStakeAuthority>;
+  stakeAuthority: Address<TAccountStakeAuthority>;
 };
 
 export function getHarvestValidatorRewardsInstruction<
@@ -114,7 +110,7 @@ export function getHarvestValidatorRewardsInstruction<
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
     validatorStake: { value: input.validatorStake ?? null, isWritable: true },
-    stakeAuthority: { value: input.stakeAuthority ?? null, isWritable: false },
+    stakeAuthority: { value: input.stakeAuthority ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,

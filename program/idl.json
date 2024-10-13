@@ -433,8 +433,8 @@
         },
         {
           "name": "stakeAuthority",
-          "isMut": false,
-          "isSigner": true,
+          "isMut": true,
+          "isSigner": false,
           "docs": [
             "Stake authority"
           ]

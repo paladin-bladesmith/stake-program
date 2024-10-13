@@ -36,9 +36,9 @@ impl HarvestValidatorRewards {
             self.validator_stake,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             self.stake_authority,
-            true,
+            false,
         ));
         accounts.extend_from_slice(remaining_accounts);
         let data = HarvestValidatorRewardsInstructionData::new()
@@ -76,7 +76,7 @@ impl Default for HarvestValidatorRewardsInstructionData {
 ///
 ///   0. `[writable]` config
 ///   1. `[writable]` validator_stake
-///   2. `[signer]` stake_authority
+///   2. `[writable]` stake_authority
 #[derive(Clone, Debug, Default)]
 pub struct HarvestValidatorRewardsBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
@@ -219,9 +219,9 @@ impl<'a, 'b> HarvestValidatorRewardsCpi<'a, 'b> {
             *self.validator_stake.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             *self.stake_authority.key,
-            true,
+            false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
@@ -262,7 +262,7 @@ impl<'a, 'b> HarvestValidatorRewardsCpi<'a, 'b> {
 ///
 ///   0. `[writable]` config
 ///   1. `[writable]` validator_stake
-///   2. `[signer]` stake_authority
+///   2. `[writable]` stake_authority
 #[derive(Clone, Debug)]
 pub struct HarvestValidatorRewardsCpiBuilder<'a, 'b> {
     instruction: Box<HarvestValidatorRewardsCpiBuilderInstruction<'a, 'b>>,

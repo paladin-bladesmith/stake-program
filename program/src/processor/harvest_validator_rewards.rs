@@ -3,7 +3,7 @@ use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pub
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, HarvestValidatorRewardsAccounts},
-    processor::{harvest, unpack_initialized_mut},
+    processor::{harvest, unpack_initialized, unpack_initialized_mut},
     require,
     state::{find_validator_stake_pda, Config, ValidatorStake},
 };
@@ -33,9 +33,8 @@ pub fn process_harvest_validator_rewards(
         "config"
     );
 
-    let mut config_data = ctx.accounts.config.try_borrow_mut_data()?;
-    let config = bytemuck::try_from_bytes_mut::<Config>(&mut config_data)
-        .map_err(|_error| ProgramError::InvalidAccountData)?;
+    let config_data = ctx.accounts.config.try_borrow_data()?;
+    let config = unpack_initialized::<Config>(&config_data)?;
 
     require!(
         config.is_initialized(),

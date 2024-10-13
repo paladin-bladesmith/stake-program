@@ -83,9 +83,9 @@ async fn harvest_validator_rewards() {
     //   - validator stake amount: 65 (limit 1.3 * 50 = 65)
     //   - rewards for 65 staked: 0.2 * 65 = 13 lamports
 
-    let destination = Pubkey::new_unique();
+    // Cover the authority account's rent.
     context.set_account(
-        &destination,
+        &validator_stake_manager.authority.pubkey(),
         &AccountSharedData::from(Account {
             // amount to cover the account rent
             lamports: 100_000_000,
@@ -97,20 +97,18 @@ async fn harvest_validator_rewards() {
         .config(config)
         .validator_stake(validator_stake_manager.stake)
         .stake_authority(validator_stake_manager.authority.pubkey())
-        .destination(destination)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
         &[harvest_stake_rewards_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &validator_stake_manager.authority],
+        &[&context.payer],
         context.last_blockhash,
     );
     context.banks_client.process_transaction(tx).await.unwrap();
 
-    // Then the destination account has the rewards.
-
-    let account = get_account!(context, destination);
+    // Then the authority account has the rewards.
+    let account = get_account!(context, validator_stake_manager.authority.pubkey());
     assert_eq!(account.lamports, 100_000_000 + 13); // rent + rewards
 
     // And the stake account has the updated last seen stake rewards per token.
@@ -177,9 +175,9 @@ async fn harvest_validator_rewards_wrapped() {
     //   - validator stake amount: 65 (limit 1.3 * 50 = 65)
     //   - rewards for 65 staked: 0.2 * 65 = 13 lamports
 
-    let destination = Pubkey::new_unique();
+    // Make the authority account rent exempt.
     context.set_account(
-        &destination,
+        &validator_stake_manager.authority.pubkey(),
         &AccountSharedData::from(Account {
             // amount to cover the account rent
             lamports: 100_000_000,
@@ -191,20 +189,18 @@ async fn harvest_validator_rewards_wrapped() {
         .config(config)
         .validator_stake(validator_stake_manager.stake)
         .stake_authority(validator_stake_manager.authority.pubkey())
-        .destination(destination)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
         &[harvest_stake_rewards_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &validator_stake_manager.authority],
+        &[&context.payer],
         context.last_blockhash,
     );
     context.banks_client.process_transaction(tx).await.unwrap();
 
-    // Then the destination account has the rewards.
-
-    let account = get_account!(context, destination);
+    // Then the authority account has the rewards.
+    let account = get_account!(context, validator_stake_manager.authority.pubkey());
     assert_eq!(account.lamports, 100_000_000 + 13); // rent + rewards
 
     // And the stake account has the updated last seen stake rewards per token.
@@ -253,29 +249,38 @@ async fn harvest_validator_rewards_with_no_rewards_available() {
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&validator_stake_manager.stake, &account.into());
 
-    // When we harvest the stake rewards with no rewards available.
-
-    let destination = Pubkey::new_unique();
+    // Make the authority account rent exempt.
+    context.set_account(
+        &validator_stake_manager.authority.pubkey(),
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
 
     let harvest_stake_rewards_ix = HarvestValidatorRewardsBuilder::new()
         .config(config)
         .validator_stake(validator_stake_manager.stake)
         .stake_authority(validator_stake_manager.authority.pubkey())
-        .destination(destination)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
         &[harvest_stake_rewards_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &validator_stake_manager.authority],
+        &[&context.payer],
         context.last_blockhash,
     );
     context.banks_client.process_transaction(tx).await.unwrap();
 
-    // Then the transaction succeeds but the destination account has no rewards.
-
-    let account = context.banks_client.get_account(destination).await.unwrap();
-    assert!(account.is_none());
+    // Then the transaction succeeds but the authority account has no rewards.
+    let account = context
+        .banks_client
+        .get_account(validator_stake_manager.authority.pubkey())
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(account.lamports, 100_000_000);
 }
 
 #[tokio::test]
@@ -329,27 +334,38 @@ async fn harvest_validator_rewards_after_harvesting() {
     //
     // We are expecting the rewards to be 0 SOL.
 
-    let destination = Pubkey::new_unique();
+    // Make the authority account rent exempt.
+    context.set_account(
+        &validator_stake_manager.authority.pubkey(),
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
 
     let harvest_stake_rewards_ix = HarvestValidatorRewardsBuilder::new()
         .config(config)
         .validator_stake(validator_stake_manager.stake)
         .stake_authority(validator_stake_manager.authority.pubkey())
-        .destination(destination)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
         &[harvest_stake_rewards_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &validator_stake_manager.authority],
+        &[&context.payer],
         context.last_blockhash,
     );
     context.banks_client.process_transaction(tx).await.unwrap();
 
-    // Then the destination account has no rewards.
-
-    let account = context.banks_client.get_account(destination).await.unwrap();
-    assert!(account.is_none());
+    // Then the authority account has no rewards.
+    let account = context
+        .banks_client
+        .get_account(validator_stake_manager.authority.pubkey())
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(account.lamports, 100_000_000);
 
     // And the config account still has 2 SOL of rewards.
 
@@ -408,19 +424,17 @@ async fn fail_harvest_validator_rewards_with_wrong_authority() {
     // When we try to harvest the stake rewards with the wrong authority.
 
     let fake_authority = Keypair::new();
-    let destination = Pubkey::new_unique();
 
     let harvest_stake_rewards_ix = HarvestValidatorRewardsBuilder::new()
         .config(config)
         .validator_stake(validator_stake_manager.stake)
         .stake_authority(fake_authority.pubkey())
-        .destination(destination)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
         &[harvest_stake_rewards_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &fake_authority],
+        &[&context.payer],
         context.last_blockhash,
     );
     let err = context
@@ -430,7 +444,6 @@ async fn fail_harvest_validator_rewards_with_wrong_authority() {
         .unwrap_err();
 
     // Then we expect an error.
-
     assert_custom_error!(err, PaladinStakeProgramError::InvalidAuthority);
 }
 
@@ -461,21 +474,27 @@ async fn fail_harvest_validator_rewards_with_uninitialized_config_account() {
         }),
     );
 
+    // Make the authority account rent exempt.
+    context.set_account(
+        &validator_stake_manager.authority.pubkey(),
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
     // When we try to harvest stake rewards from an uninitialized config account.
-
-    let destination = Pubkey::new_unique();
-
     let harvest_stake_rewards_ix = HarvestValidatorRewardsBuilder::new()
         .config(config)
         .validator_stake(validator_stake_manager.stake)
         .stake_authority(validator_stake_manager.authority.pubkey())
-        .destination(destination)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
         &[harvest_stake_rewards_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &validator_stake_manager.authority],
+        &[&context.payer],
         context.last_blockhash,
     );
     let err = context
@@ -485,7 +504,6 @@ async fn fail_harvest_validator_rewards_with_uninitialized_config_account() {
         .unwrap_err();
 
     // Then we expect an error.
-
     assert_instruction_error!(err, InstructionError::UninitializedAccount);
 }
 
@@ -514,22 +532,28 @@ async fn fail_harvest_validator_rewards_with_uninitialized_stake_account() {
         }),
     );
 
-    // When we try to harvest stake rewards from an uninitialized stake account.
-
-    let destination = Pubkey::new_unique();
+    // Make the authority account rent exempt.
     let authority = Keypair::new();
+    context.set_account(
+        &authority.pubkey(),
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
 
+    // When we try to harvest stake rewards from an uninitialized stake account.
     let harvest_stake_rewards_ix = HarvestValidatorRewardsBuilder::new()
         .config(config)
         .validator_stake(stake_pda)
         .stake_authority(authority.pubkey())
-        .destination(destination)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
         &[harvest_stake_rewards_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &authority],
+        &[&context.payer],
         context.last_blockhash,
     );
     let err = context
@@ -539,7 +563,6 @@ async fn fail_harvest_validator_rewards_with_uninitialized_stake_account() {
         .unwrap_err();
 
     // Then we expect an error.
-
     assert_instruction_error!(err, InstructionError::UninitializedAccount);
 }
 
@@ -585,19 +608,16 @@ async fn failharvest_validator_rewards_with_wrong_config_account() {
     // When we try to harvest the stake rewards with the wrong config account.
 
     let wrong_config = create_config(&mut context).await;
-    let destination = Pubkey::new_unique();
-
     let harvest_stake_rewards_ix = HarvestValidatorRewardsBuilder::new()
         .config(wrong_config)
         .validator_stake(validator_stake_manager.stake)
         .stake_authority(validator_stake_manager.authority.pubkey())
-        .destination(destination)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
         &[harvest_stake_rewards_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &validator_stake_manager.authority],
+        &[&context.payer],
         context.last_blockhash,
     );
     let err = context
@@ -607,7 +627,6 @@ async fn failharvest_validator_rewards_with_wrong_config_account() {
         .unwrap_err();
 
     // Then we expect an error.
-
     assert_instruction_error!(err, InstructionError::InvalidSeeds);
 }
 
@@ -684,13 +703,11 @@ async fn harvest_validator_rewards_with_excess_rewards() {
     //     3_250_000_000 / 13_000_000_000 = 0.25 SOL
     //
     //   - the final accumulated stake rewards per token: 750_000_000 (0.5 + 0.25 SOL)
-    let destination = Pubkey::new_unique();
 
     let harvest_stake_rewards_ix = HarvestValidatorRewardsBuilder::new()
         .config(config)
         .validator_stake(validator_stake_manager.stake)
         .stake_authority(validator_stake_manager.authority.pubkey())
-        .destination(destination)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -701,9 +718,8 @@ async fn harvest_validator_rewards_with_excess_rewards() {
     );
     context.banks_client.process_transaction(tx).await.unwrap();
 
-    // Then the destination account has the corrent amount of rewards.
-
-    let account = get_account!(context, destination);
+    // Then the authority account has the corrent amount of rewards.
+    let account = get_account!(context, validator_stake_manager.authority.pubkey());
     assert_eq!(account.lamports, 3_250_000_000);
 
     // And the stake account has the updated last seen stake rewards per token.

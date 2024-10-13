@@ -363,7 +363,7 @@ async fn harvest_sol_staker_rewards_after_harvesting() {
     // The "first" harvest is sumulated by setting the last seen stake rewards per token to the
     // config accumulated stake rewards per token.
 
-    // Set the starting authority balance.
+    // Make the authority account rent exempt.
     context.set_account(
         &sol_staker_stake_manager.authority.pubkey(),
         &AccountSharedData::from(Account {
