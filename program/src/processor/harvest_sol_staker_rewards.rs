@@ -142,7 +142,7 @@ pub fn process_harvest_sol_staker_rewards(
     let delegate_changed = delegated_vote != Some(sol_staker_stake.delegation.validator_vote);
     let stake_amount = match delegate_changed {
         // TODO: We zero their effective PAL, but how do they re-activate it?
-        true => todo!("Handle delegation change"),
+        true => 0,
         false => u64::from(stake_state_data.activating)
             .checked_add(stake_state_data.effective.into())
             .and_then(|amount| amount.checked_sub(u64::from(stake_state_data.deactivating)))

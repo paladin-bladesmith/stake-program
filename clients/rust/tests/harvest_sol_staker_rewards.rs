@@ -13,7 +13,7 @@ use setup::{
     config::{create_config, ConfigManager},
     new_program_test, setup,
     sol_staker_stake::SolStakerStakeManager,
-    stake::deactivate_stake_account,
+    stake::{create_stake_account, deactivate_stake_account, delegate_stake_account},
     validator_stake::ValidatorStakeManager,
     vote::add_vote_account,
     SWAD,
@@ -23,9 +23,16 @@ use solana_sdk::{
     account::{Account, AccountSharedData},
     instruction::InstructionError,
     pubkey::Pubkey,
-    signature::Signer,
+    signature::{Keypair, Signer},
+    stake::state::{Authorized, Lockup},
     transaction::Transaction,
 };
+
+/// The rounding error tollerance for the rewards per token calculation.
+///
+/// This is necessary since the rewards per token calculation might truncated the result and
+/// the tests are comparing values derived from this, so we need to allow for a small error.
+const REWARD_PER_TOKEN_ROUNDING_ERROR: u128 = 1;
 
 #[tokio::test]
 async fn harvest_sol_staker_rewards() {
@@ -903,10 +910,992 @@ async fn harvest_sol_stake_when_deactivating() {
     // Then the SOL amounts are correctly synced (0 SOL staked).
     let account = get_account!(context, sol_staker_stake_manager.stake);
     let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
+    assert_eq!(stake_account.lamports_amount, 0);
+
+    let account = get_account!(context, validator_stake_manager.stake);
+    let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
+    assert_eq!(validator_stake_account.total_staked_lamports_amount, 0);
+}
+
+#[tokio::test]
+async fn harvest_sol_stake_when_inactive() {
+    let mut program_test = new_program_test();
+    let vote = add_vote_account(
+        &mut program_test,
+        &Pubkey::new_unique(),
+        &Pubkey::new_unique(),
+    );
+    let mut context = program_test.start_with_context().await;
+    let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
+    context.warp_to_slot(slot).unwrap();
+
+    // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
+
+    let config_manager = ConfigManager::new(&mut context).await;
+    let validator_stake_manager =
+        ValidatorStakeManager::new_with_vote(&mut context, &config_manager.config, vote).await;
+    let sol_staker_stake_manager = SolStakerStakeManager::new(
+        &mut context,
+        &config_manager.config,
+        &validator_stake_manager.stake,
+        &validator_stake_manager.vote,
+        5_000_000_000, // 5 SOL staked
+    )
+    .await;
+
+    // And the SOL staker stake and validator stake accounts are correctly synced.
+
+    let account = get_account!(context, sol_staker_stake_manager.stake);
+    let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
+
+    assert_eq!(stake_account.lamports_amount, 5_000_000_000);
+
+    let account = get_account!(context, validator_stake_manager.stake);
+    let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
+    assert_eq!(
+        validator_stake_account.total_staked_lamports_amount,
+        5_000_000_000
+    );
+
+    // And we deactivate the stake and wait for the deactivation to take effect.
+    let slot = slot + context.genesis_config().epoch_schedule.slots_per_epoch;
+    context.warp_to_slot(slot).unwrap();
+
+    deactivate_stake_account(
+        &mut context,
+        &stake_account.sol_stake,
+        &sol_staker_stake_manager.authority,
+    )
+    .await;
+
+    let slot = slot + context.genesis_config().epoch_schedule.slots_per_epoch;
+    context.warp_to_slot(slot).unwrap();
+
+    // Ensure the authority is rent exempt.
+    context.set_account(
+        &sol_staker_stake_manager.authority.pubkey(),
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
+    // Setup the keeper account.
+    let keeper = Pubkey::new_unique();
+    context.set_account(
+        &keeper,
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
+    // When we sync the SOL stake after deactivating the SOL stake.
+    let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
+        .config(config_manager.config)
+        .sol_staker_stake(sol_staker_stake_manager.stake)
+        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .native_stake(sol_staker_stake_manager.sol_stake)
+        .validator_stake(validator_stake_manager.stake)
+        .validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
+        .keeper_recipient(Some(keeper))
+        .instruction();
+    let tx = Transaction::new_signed_with_payer(
+        &[harvest_stake_rewards_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer],
+        context.last_blockhash,
+    );
+    context.banks_client.process_transaction(tx).await.unwrap();
+
+    // Then the SOL amounts are correctly synced (0 SOL staked).
+
+    let account = get_account!(context, sol_staker_stake_manager.stake);
+    let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
 
     assert_eq!(stake_account.lamports_amount, 0);
 
     let account = get_account!(context, validator_stake_manager.stake);
     let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(validator_stake_account.total_staked_lamports_amount, 0);
+}
+
+#[tokio::test]
+async fn sync_sol_stake_when_effective() {
+    let mut program_test = new_program_test();
+    let vote = add_vote_account(
+        &mut program_test,
+        &Pubkey::new_unique(),
+        &Pubkey::new_unique(),
+    );
+    let mut context = program_test.start_with_context().await;
+    let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
+    context.warp_to_slot(slot).unwrap();
+
+    // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
+
+    let config_manager = ConfigManager::new(&mut context).await;
+    let validator_stake_manager =
+        ValidatorStakeManager::new_with_vote(&mut context, &config_manager.config, vote).await;
+    let sol_staker_stake_manager = SolStakerStakeManager::new(
+        &mut context,
+        &config_manager.config,
+        &validator_stake_manager.stake,
+        &validator_stake_manager.vote,
+        5_000_000_000, // 5 SOL staked
+    )
+    .await;
+
+    // And the SOL staker stake and validator stake accounts are correctly synced.
+
+    let account = get_account!(context, sol_staker_stake_manager.stake);
+    let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
+
+    assert_eq!(stake_account.lamports_amount, 5_000_000_000);
+
+    let account = get_account!(context, validator_stake_manager.stake);
+    let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
+    assert_eq!(
+        validator_stake_account.total_staked_lamports_amount,
+        5_000_000_000
+    );
+
+    // And we wait until the stake is effective.
+
+    let slot = slot + context.genesis_config().epoch_schedule.slots_per_epoch;
+    context.warp_to_slot(slot).unwrap();
+
+    // Ensure the authority is rent exempt.
+    context.set_account(
+        &sol_staker_stake_manager.authority.pubkey(),
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
+    // Setup the keeper account.
+    let keeper = Pubkey::new_unique();
+    context.set_account(
+        &keeper,
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
+    let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
+        .config(config_manager.config)
+        .sol_staker_stake(sol_staker_stake_manager.stake)
+        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .native_stake(sol_staker_stake_manager.sol_stake)
+        .validator_stake(validator_stake_manager.stake)
+        .validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
+        .keeper_recipient(Some(keeper))
+        .instruction();
+    let tx = Transaction::new_signed_with_payer(
+        &[harvest_stake_rewards_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer],
+        context.last_blockhash,
+    );
+    context.banks_client.process_transaction(tx).await.unwrap();
+
+    // Then the SOL amounts are correctly synced (5 SOL staked).
+
+    let account = get_account!(context, sol_staker_stake_manager.stake);
+    let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
+
+    assert_eq!(stake_account.lamports_amount, 5_000_000_000);
+
+    let account = get_account!(context, validator_stake_manager.stake);
+    let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
+    assert_eq!(
+        validator_stake_account.total_staked_lamports_amount,
+        5_000_000_000
+    );
+}
+
+#[tokio::test]
+async fn sync_sol_stake_when_activating() {
+    let mut context = setup().await;
+
+    // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
+    let config_manager = ConfigManager::new(&mut context).await;
+    let validator_stake_manager =
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
+    let sol_staker_stake_manager = SolStakerStakeManager::new(
+        &mut context,
+        &config_manager.config,
+        &validator_stake_manager.stake,
+        &validator_stake_manager.vote,
+        5_000_000_000, // 5 SOL staked
+    )
+    .await;
+
+    // Ensure the authority is rent exempt.
+    context.set_account(
+        &sol_staker_stake_manager.authority.pubkey(),
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
+    // Setup the keeper account.
+    let keeper = Pubkey::new_unique();
+    context.set_account(
+        &keeper,
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
+    let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
+        .config(config_manager.config)
+        .sol_staker_stake(sol_staker_stake_manager.stake)
+        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .native_stake(sol_staker_stake_manager.sol_stake)
+        .validator_stake(validator_stake_manager.stake)
+        .validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
+        .keeper_recipient(Some(keeper))
+        .instruction();
+    let tx = Transaction::new_signed_with_payer(
+        &[harvest_stake_rewards_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer],
+        context.last_blockhash,
+    );
+    context.banks_client.process_transaction(tx).await.unwrap();
+
+    // Then the SOL amounts are correctly synced (5 SOL staked).
+
+    let account = get_account!(context, sol_staker_stake_manager.stake);
+    let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
+
+    assert_eq!(stake_account.lamports_amount, 5_000_000_000);
+
+    let account = get_account!(context, validator_stake_manager.stake);
+    let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
+    assert_eq!(
+        validator_stake_account.total_staked_lamports_amount,
+        5_000_000_000
+    );
+}
+
+#[tokio::test]
+async fn fail_sync_sol_stake_with_wrong_config_account() {
+    let mut context = setup().await;
+
+    // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
+    let config_manager = ConfigManager::new(&mut context).await;
+    let validator_stake_manager =
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
+    let sol_staker_stake_manager = SolStakerStakeManager::new(
+        &mut context,
+        &config_manager.config,
+        &validator_stake_manager.stake,
+        &validator_stake_manager.vote,
+        5_000_000_000, // 5 SOL staked
+    )
+    .await;
+
+    // And we create another config account.
+    let another_config = ConfigManager::new(&mut context).await;
+
+    // Ensure the authority is rent exempt.
+    context.set_account(
+        &sol_staker_stake_manager.authority.pubkey(),
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
+    // Setup the keeper account.
+    let keeper = Pubkey::new_unique();
+    context.set_account(
+        &keeper,
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
+    // When we try to sync the SOL stake with the wrong config account.
+    let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
+        .config(another_config.config)
+        .sol_staker_stake(sol_staker_stake_manager.stake)
+        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .native_stake(sol_staker_stake_manager.sol_stake)
+        .validator_stake(validator_stake_manager.stake)
+        .validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
+        .keeper_recipient(Some(keeper))
+        .instruction();
+    let tx = Transaction::new_signed_with_payer(
+        &[harvest_stake_rewards_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer],
+        context.last_blockhash,
+    );
+    let err = context
+        .banks_client
+        .process_transaction(tx)
+        .await
+        .unwrap_err();
+
+    // Then we expect an error.
+    assert_instruction_error!(err, InstructionError::InvalidSeeds);
+}
+
+#[tokio::test]
+async fn fail_sync_sol_stake_with_wrong_sol_stake_account() {
+    let mut context = setup().await;
+
+    // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
+    let config_manager = ConfigManager::new(&mut context).await;
+    let validator_stake_manager =
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
+    let sol_staker_stake_manager = SolStakerStakeManager::new(
+        &mut context,
+        &config_manager.config,
+        &validator_stake_manager.stake,
+        &validator_stake_manager.vote,
+        5_000_000_000, // 5 SOL staked
+    )
+    .await;
+
+    // And we create another SOL stake account.
+
+    let another_sol_stake = Keypair::new();
+    create_stake_account(
+        &mut context,
+        &another_sol_stake,
+        &Authorized::auto(&Pubkey::new_unique()),
+        &Lockup::default(),
+        0,
+    )
+    .await;
+
+    // Ensure the authority is rent exempt.
+    context.set_account(
+        &sol_staker_stake_manager.authority.pubkey(),
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
+    // Setup the keeper account.
+    let keeper = Pubkey::new_unique();
+    context.set_account(
+        &keeper,
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
+    // When we try to sync the SOL stake with the wrong config account.
+    let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
+        .config(config_manager.config)
+        .sol_staker_stake(sol_staker_stake_manager.stake)
+        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .native_stake(another_sol_stake.pubkey())
+        .validator_stake(validator_stake_manager.stake)
+        .validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
+        .keeper_recipient(Some(keeper))
+        .instruction();
+    let tx = Transaction::new_signed_with_payer(
+        &[harvest_stake_rewards_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer],
+        context.last_blockhash,
+    );
+    let err = context
+        .banks_client
+        .process_transaction(tx)
+        .await
+        .unwrap_err();
+
+    // Then we expect an error.
+    assert_custom_error!(err, PaladinStakeProgramError::IncorrectSolStakeAccount);
+}
+
+#[tokio::test]
+async fn fail_sync_sol_stake_with_wrong_validator_stake() {
+    let mut context = setup().await;
+
+    // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
+    let config_manager = ConfigManager::new(&mut context).await;
+    let validator_stake_manager =
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
+    let sol_staker_stake_manager = SolStakerStakeManager::new(
+        &mut context,
+        &config_manager.config,
+        &validator_stake_manager.stake,
+        &validator_stake_manager.vote,
+        5_000_000_000, // 5 SOL staked
+    )
+    .await;
+
+    // And we another validator stake account.
+    let another_validator_stake = ValidatorStakeManager::new(&mut context, &config_manager.config)
+        .await
+        .stake;
+
+    // Ensure the authority is rent exempt.
+    context.set_account(
+        &sol_staker_stake_manager.authority.pubkey(),
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
+    // Setup the keeper account.
+    let keeper = Pubkey::new_unique();
+    context.set_account(
+        &keeper,
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
+    // When we try to sync with the wrong validator stake account.
+    let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
+        .config(config_manager.config)
+        .sol_staker_stake(sol_staker_stake_manager.stake)
+        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .native_stake(sol_staker_stake_manager.sol_stake)
+        .validator_stake(another_validator_stake)
+        .validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
+        .keeper_recipient(Some(keeper))
+        .instruction();
+    let tx = Transaction::new_signed_with_payer(
+        &[harvest_stake_rewards_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer],
+        context.last_blockhash,
+    );
+    let err = context
+        .banks_client
+        .process_transaction(tx)
+        .await
+        .unwrap_err();
+
+    // Then we expect an error.
+    assert_instruction_error!(err, InstructionError::InvalidSeeds);
+}
+
+#[tokio::test]
+async fn fail_sync_sol_stake_with_uninitialized_config() {
+    let mut context = setup().await;
+
+    // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
+    let config_manager = ConfigManager::new(&mut context).await;
+    let validator_stake_manager =
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
+    let sol_staker_stake_manager = SolStakerStakeManager::new(
+        &mut context,
+        &config_manager.config,
+        &validator_stake_manager.stake,
+        &validator_stake_manager.vote,
+        5_000_000_000, // 5 SOL staked
+    )
+    .await;
+
+    // And we uninitialize the config account.
+    context.set_account(
+        &config_manager.config,
+        &AccountSharedData::from(Account {
+            lamports: 100_000_000,
+            data: vec![5; Config::LEN],
+            owner: paladin_stake_program_client::ID,
+            ..Default::default()
+        }),
+    );
+
+    // Ensure the authority is rent exempt.
+    context.set_account(
+        &sol_staker_stake_manager.authority.pubkey(),
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
+    // Setup the keeper account.
+    let keeper = Pubkey::new_unique();
+    context.set_account(
+        &keeper,
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
+    // When we try to sync with a unitialized config account.
+    let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
+        .config(config_manager.config)
+        .sol_staker_stake(sol_staker_stake_manager.stake)
+        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .native_stake(sol_staker_stake_manager.sol_stake)
+        .validator_stake(validator_stake_manager.stake)
+        .validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
+        .keeper_recipient(Some(keeper))
+        .instruction();
+    let tx = Transaction::new_signed_with_payer(
+        &[harvest_stake_rewards_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer],
+        context.last_blockhash,
+    );
+    let err = context
+        .banks_client
+        .process_transaction(tx)
+        .await
+        .unwrap_err();
+
+    // Then we expect an error.
+    assert_instruction_error!(err, InstructionError::UninitializedAccount);
+}
+
+#[tokio::test]
+async fn fail_sync_sol_stake_with_uninitialized_validator_stake() {
+    let mut context = setup().await;
+
+    // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
+    let config_manager = ConfigManager::new(&mut context).await;
+    let validator_stake_manager =
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
+    let sol_staker_stake_manager = SolStakerStakeManager::new(
+        &mut context,
+        &config_manager.config,
+        &validator_stake_manager.stake,
+        &validator_stake_manager.vote,
+        5_000_000_000, // 5 SOL staked
+    )
+    .await;
+
+    // And we uninitialize the validator stake account.
+    context.set_account(
+        &validator_stake_manager.stake,
+        &AccountSharedData::from(Account {
+            lamports: 100_000_000,
+            data: vec![5; ValidatorStake::LEN],
+            owner: paladin_stake_program_client::ID,
+            ..Default::default()
+        }),
+    );
+
+    // Ensure the authority is rent exempt.
+    context.set_account(
+        &sol_staker_stake_manager.authority.pubkey(),
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
+    // Setup the keeper account.
+    let keeper = Pubkey::new_unique();
+    context.set_account(
+        &keeper,
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
+    // When we try to sync with a unitialized validator stake account.
+    let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
+        .config(config_manager.config)
+        .sol_staker_stake(sol_staker_stake_manager.stake)
+        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .native_stake(sol_staker_stake_manager.sol_stake)
+        .validator_stake(validator_stake_manager.stake)
+        .validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
+        .keeper_recipient(Some(keeper))
+        .instruction();
+    let tx = Transaction::new_signed_with_payer(
+        &[harvest_stake_rewards_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer],
+        context.last_blockhash,
+    );
+    let err = context
+        .banks_client
+        .process_transaction(tx)
+        .await
+        .unwrap_err();
+
+    // Then we expect an error.
+
+    assert_instruction_error!(err, InstructionError::UninitializedAccount);
+}
+
+#[tokio::test]
+async fn fail_sync_sol_stake_with_invalid_sol_stake_view_program() {
+    let mut program_test = new_program_test();
+    // add a "fake" sol stake view program
+    let fake_sol_stake_view_program = Pubkey::new_unique();
+    program_test.add_program(
+        "paladin_sol_stake_view_program",
+        fake_sol_stake_view_program,
+        None,
+    );
+    let mut context = program_test.start_with_context().await;
+
+    // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
+    let config_manager = ConfigManager::new(&mut context).await;
+    let validator_stake_manager =
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
+    let sol_staker_stake_manager = SolStakerStakeManager::new(
+        &mut context,
+        &config_manager.config,
+        &validator_stake_manager.stake,
+        &validator_stake_manager.vote,
+        5_000_000_000, // 5 SOL staked
+    )
+    .await;
+
+    // Ensure the authority is rent exempt.
+    context.set_account(
+        &sol_staker_stake_manager.authority.pubkey(),
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
+    // Setup the keeper account.
+    let keeper = Pubkey::new_unique();
+    context.set_account(
+        &keeper,
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
+    // When we try to sync with a fake sol stake view program.
+    let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
+        .config(config_manager.config)
+        .sol_staker_stake(sol_staker_stake_manager.stake)
+        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .native_stake(sol_staker_stake_manager.sol_stake)
+        .validator_stake(validator_stake_manager.stake)
+        .validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .sol_stake_view_program(fake_sol_stake_view_program) // <- fake sol stake view program
+        .keeper_recipient(Some(keeper))
+        .instruction();
+    let tx = Transaction::new_signed_with_payer(
+        &[harvest_stake_rewards_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer],
+        context.last_blockhash,
+    );
+    let err = context
+        .banks_client
+        .process_transaction(tx)
+        .await
+        .unwrap_err();
+
+    // Then we expect an error.
+    assert_instruction_error!(err, InstructionError::IncorrectProgramId);
+}
+
+#[tokio::test]
+async fn sync_sol_stake_when_sol_stake_redelegated() {
+    let mut program_test = new_program_test();
+    let first_vote = add_vote_account(
+        &mut program_test,
+        &Pubkey::new_unique(),
+        &Pubkey::new_unique(),
+    );
+    let second_vote = add_vote_account(
+        &mut program_test,
+        &Pubkey::new_unique(),
+        &Pubkey::new_unique(),
+    );
+    let mut context = program_test.start_with_context().await;
+    let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
+    context.warp_to_slot(slot).unwrap();
+
+    // Given a config, validator stake and sol staker stake accounts with 5 SOL staked
+    // with the first vote account.
+
+    let config_manager = ConfigManager::new(&mut context).await;
+    let validator_stake_manager =
+        ValidatorStakeManager::new_with_vote(&mut context, &config_manager.config, first_vote)
+            .await;
+    let sol_staker_stake_manager = SolStakerStakeManager::new(
+        &mut context,
+        &config_manager.config,
+        &validator_stake_manager.stake,
+        &validator_stake_manager.vote,
+        5_000_000_000, // 5 SOL staked
+    )
+    .await;
+
+    // And the SOL staker stake and validator stake accounts are correctly synced.
+    let account = get_account!(context, sol_staker_stake_manager.stake);
+    let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
+
+    assert_eq!(stake_account.lamports_amount, 5_000_000_000);
+
+    let account = get_account!(context, validator_stake_manager.stake);
+    let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
+    assert_eq!(
+        validator_stake_account.total_staked_lamports_amount,
+        5_000_000_000
+    );
+
+    // And we deactivate the stake and wait for the deactivation to take effect.
+    let slot = slot + context.genesis_config().epoch_schedule.slots_per_epoch;
+    context.warp_to_slot(slot).unwrap();
+
+    deactivate_stake_account(
+        &mut context,
+        &stake_account.sol_stake,
+        &sol_staker_stake_manager.authority,
+    )
+    .await;
+
+    let slot = slot + context.genesis_config().epoch_schedule.slots_per_epoch;
+    context.warp_to_slot(slot).unwrap();
+
+    // And we delegate the stake to a second vote account.
+    delegate_stake_account(
+        &mut context,
+        &sol_staker_stake_manager.sol_stake,
+        &second_vote,
+        &sol_staker_stake_manager.authority,
+    )
+    .await;
+
+    // Ensure the authority is rent exempt.
+    context.set_account(
+        &sol_staker_stake_manager.authority.pubkey(),
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
+    // Setup the keeper account.
+    let keeper = Pubkey::new_unique();
+    context.set_account(
+        &keeper,
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
+    // When we sync the SOL stake after the SOL stake has been delegated to a different
+    // vote account.
+    let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
+        .config(config_manager.config)
+        .sol_staker_stake(sol_staker_stake_manager.stake)
+        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .native_stake(sol_staker_stake_manager.sol_stake)
+        .validator_stake(validator_stake_manager.stake)
+        .validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
+        .keeper_recipient(Some(keeper))
+        .instruction();
+    let tx = Transaction::new_signed_with_payer(
+        &[harvest_stake_rewards_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer],
+        context.last_blockhash,
+    );
+    context.banks_client.process_transaction(tx).await.unwrap();
+
+    // Then the SOL amounts are correctly synced (0 SOL staked).
+
+    let account = get_account!(context, sol_staker_stake_manager.stake);
+    let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
+
+    assert_eq!(stake_account.lamports_amount, 0);
+
+    let account = get_account!(context, validator_stake_manager.stake);
+    let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
+    assert_eq!(validator_stake_account.total_staked_lamports_amount, 0);
+}
+
+#[tokio::test]
+async fn harvest_sync_rewards() {
+    let mut program_test = new_program_test();
+    let vote = add_vote_account(
+        &mut program_test,
+        &Pubkey::new_unique(),
+        &Pubkey::new_unique(),
+    );
+    let mut context = program_test.start_with_context().await;
+    let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
+    context.warp_to_slot(slot).unwrap();
+
+    // Given a config, validator stake and sol staker stake accounts with 1 SOL staked.
+
+    // default sync_rewards_lamports = 1_000_000 (0.001 SOL)
+    let config_manager = ConfigManager::new(&mut context).await;
+    let validator_stake_manager =
+        ValidatorStakeManager::new_with_vote(&mut context, &config_manager.config, vote).await;
+    let sol_staker_stake_manager = SolStakerStakeManager::new(
+        &mut context,
+        &config_manager.config,
+        &validator_stake_manager.stake,
+        &validator_stake_manager.vote,
+        1_000_000_000, // 1 SOL staked
+    )
+    .await;
+
+    // And there is 1 SOL for stake rewards on the config.
+
+    let mut account = get_account!(context, config_manager.config);
+    let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
+    // "manually" set the total amount delegated
+    config_account.token_amount_effective = 1_300_000_000;
+    config_account.accumulated_stake_rewards_per_token =
+        calculate_stake_rewards_per_token(1_300_000_000, 1_300_000_000);
+
+    account.lamports += 1_300_000_000; // 1 SOL
+    account.data = config_account.try_to_vec().unwrap();
+    context.set_account(&config_manager.config, &account.into());
+
+    // And the SOL staker stake has 1_300_000_000 tokens staked.
+
+    let mut account = get_account!(context, sol_staker_stake_manager.stake);
+    let mut stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
+    // "manually" set the staked values:
+    //   - delegation amount = 1_300_000_000
+    //   - lamports amount = 1_000_000_000
+    stake_account.delegation.amount = 1_300_000_000;
+    stake_account.delegation.effective_amount = 1_300_000_000;
+    stake_account.lamports_amount = 1_000_000_000;
+    account.data = stake_account.try_to_vec().unwrap();
+    context.set_account(&sol_staker_stake_manager.stake, &account.into());
+
+    // And the SOL staker stake and validator stake accounts are correctly synced.
+
+    let account = get_account!(context, sol_staker_stake_manager.stake);
+    let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
+
+    assert_eq!(stake_account.lamports_amount, 1_000_000_000);
+
+    let account = get_account!(context, validator_stake_manager.stake);
+    let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
+    assert_eq!(
+        validator_stake_account.total_staked_lamports_amount,
+        1_000_000_000
+    );
+
+    // And we deactivate the stake.
+
+    deactivate_stake_account(
+        &mut context,
+        &stake_account.sol_stake,
+        &sol_staker_stake_manager.authority,
+    )
+    .await;
+
+    // Ensure the authority is rent exempt.
+    context.set_account(
+        &sol_staker_stake_manager.authority.pubkey(),
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
+    // Setup the keeper account.
+    let keeper = Pubkey::new_unique();
+    context.set_account(
+        &keeper,
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
+    // When we harvest rewards for syncing the SOL stake after deactivating the SOL stake.
+    let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
+        .config(config_manager.config)
+        .sol_staker_stake(sol_staker_stake_manager.stake)
+        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .native_stake(sol_staker_stake_manager.sol_stake)
+        .validator_stake(validator_stake_manager.stake)
+        .validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
+        .keeper_recipient(Some(keeper))
+        .instruction();
+    let tx = Transaction::new_signed_with_payer(
+        &[harvest_stake_rewards_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer],
+        context.last_blockhash,
+    );
+    context.banks_client.process_transaction(tx).await.unwrap();
+
+    // Then the destination account has the sync rewards.
+    let account = get_account!(context, keeper);
+    assert_eq!(account.lamports, 100_000_000 + 1_000_000); // rent + rewards
+
+    // The authority account gets the remaining rewards.
+    let account = get_account!(context, sol_staker_stake_manager.authority.pubkey());
+    assert_eq!(account.lamports, 100_000_000 + 1_299_000_000); // rent + rewards
+
+    // Then the SOL amounts are correctly synced (0 SOL staked).
+    let account = get_account!(context, validator_stake_manager.stake);
+    let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
+    assert_eq!(validator_stake_account.total_staked_lamports_amount, 0);
+
+    let account = get_account!(context, sol_staker_stake_manager.stake);
+    let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
+
+    assert_eq!(stake_account.lamports_amount, 0);
+
+    // And the last seen stake rewards per token on the SOL staker stake account
+    // was updated correctly.
+    let account = get_account!(context, config_manager.config);
+    let config_account = Config::from_bytes(account.data.as_ref()).unwrap();
+    assert_eq!(
+        stake_account.delegation.last_seen_stake_rewards_per_token,
+        config_account.accumulated_stake_rewards_per_token,
+    );
 }
