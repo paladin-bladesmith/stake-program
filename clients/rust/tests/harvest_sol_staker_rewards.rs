@@ -690,7 +690,6 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_config_account() {
     assert_instruction_error!(err, InstructionError::InvalidSeeds);
 }
 
-#[ignore = "TODO: Fix this test"]
 #[tokio::test]
 async fn fail_harvest_sol_staker_rewards_with_uninitialized_stake_account() {
     let mut context = setup().await;
@@ -729,6 +728,17 @@ async fn fail_harvest_sol_staker_rewards_with_uninitialized_stake_account() {
         1_000_000_000,
     )
     .await;
+
+    // Uninitialize the sol staker account.
+    context.set_account(
+        &sol_staker_stake_manager.stake,
+        &AccountSharedData::from(Account {
+            lamports: 100_000_000,
+            data: vec![5; SolStakerStake::LEN],
+            owner: paladin_stake_program_client::ID,
+            ..Default::default()
+        }),
+    );
 
     // Set the starting authority balance.
     context.set_account(
