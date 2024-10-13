@@ -108,8 +108,6 @@ pub fn process_harvest_sol_staker_rewards(
         bytemuck::try_from_bytes::<GetStakeActivatingAndDeactivatingReturnData>(&return_data)
             .map_err(|_error| ProgramError::InvalidAccountData)?;
     let delegated_vote = stake_state_data.delegated_vote.get();
-    solana_program::msg!("{:?}", delegated_vote);
-    solana_program::msg!("{:?}", sol_staker_stake.delegation.validator_vote);
     let delegate_changed = delegated_vote != Some(sol_staker_stake.delegation.validator_vote);
     let stake_amount = match delegate_changed {
         // TODO: We zero their effective PAL, but how do they re-activate it?
