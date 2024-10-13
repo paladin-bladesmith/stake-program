@@ -53,7 +53,7 @@ pub struct InactivateSolStakerStakeInstructionData {
 
 impl InactivateSolStakerStakeInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 17 }
+        Self { discriminator: 15 }
     }
 }
 

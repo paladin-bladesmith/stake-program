@@ -505,43 +505,6 @@ pub enum StakeInstruction {
     )]
     SolStakerStakeTokens(u64),
 
-    /// Sync the SOL stake balance with a validator and SOL staker stake accounts.
-    ///
-    /// NOTE: Anybody can sync the balance of a SOL stake account.
-    #[account(
-        0,
-        name = "config",
-        desc = "Stake config account"
-    )]
-    #[account(
-        1,
-        writable,
-        name = "sol_staker_stake",
-        desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
-    )]
-    #[account(
-        2,
-        writable,
-        name = "validator_stake",
-        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
-    )]
-    #[account(
-        3,
-        name = "sol_stake",
-        desc = "SOL stake account"
-    )]
-    #[account(
-        4,
-        name = "sysvar_stake_history",
-        desc = "Stake history sysvar"
-    )]
-    #[account(
-        5,
-        name = "sol_stake_view_program",
-        desc = "Paladin SOL Stake View program"
-    )]
-    SyncSolStake,
-
     /// Harvests stake SOL rewards earned by the given sol staker stake account.
     ///
     /// NOTE: This is very similar to the logic in the rewards program. Since the
@@ -591,50 +554,6 @@ pub enum StakeInstruction {
         desc = "Sol stake view program"
     )]
     HarvestSolStakerRewards,
-
-    /// Harvest rewards for syncing the SOL stake balance with a validator and SOL staker stake accounts.
-    ///
-    /// NOTE: Rewards are collected only if the stake balance is out-of-sync.
-    #[account(
-        0,
-        writable,
-        name = "config",
-        desc = "Stake config account"
-    )]
-    #[account(
-        1,
-        writable,
-        name = "sol_staker_stake",
-        desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
-    )]
-    #[account(
-        2,
-        writable,
-        name = "validator_stake",
-        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
-    )]
-    #[account(
-        3,
-        name = "sol_stake",
-        desc = "SOL stake account"
-    )]
-    #[account(
-        4,
-        writable,
-        name = "destination",
-        desc = "Destination account for withdrawn lamports"
-    )]
-    #[account(
-        5,
-        name = "sysvar_stake_history",
-        desc = "Stake history sysvar"
-    )]
-    #[account(
-        6,
-        name = "sol_stake_view_program",
-        desc = "Paladin SOL Stake View program"
-    )]
-    HarvestSyncRewards,
 
     /// Move tokens from deactivating to inactive.
     ///
@@ -798,13 +717,11 @@ impl StakeInstruction {
                 data.extend_from_slice(&amount.to_le_bytes());
                 data
             }
-            StakeInstruction::SyncSolStake => vec![14],
-            StakeInstruction::HarvestSolStakerRewards => vec![15],
-            StakeInstruction::HarvestSyncRewards => vec![16],
-            StakeInstruction::InactivateSolStakerStake => vec![17],
+            StakeInstruction::HarvestSolStakerRewards => vec![14],
+            StakeInstruction::InactivateSolStakerStake => vec![15],
             StakeInstruction::SlashSolStakerStake(amount) => {
                 let mut data = Vec::with_capacity(9);
-                data.push(18);
+                data.push(16);
                 data.extend_from_slice(&amount.to_le_bytes());
                 data
             }
@@ -901,16 +818,12 @@ impl StakeInstruction {
 
                 Ok(StakeInstruction::SolStakerStakeTokens(amount))
             }
-            // 14 - SyncSolStake
-            Some((&14, _)) => Ok(StakeInstruction::SyncSolStake),
-            // 15 - HarvestSolStakerRewards
-            Some((&15, _)) => Ok(StakeInstruction::HarvestSolStakerRewards),
-            // 16 - HarvestSyncRewards
-            Some((&16, _)) => Ok(StakeInstruction::HarvestSyncRewards),
-            // 17 - InactivateSolStakerStake
-            Some((&17, _)) => Ok(StakeInstruction::InactivateSolStakerStake),
-            // 18 - SlashSolStakerStake: u64 (8)
-            Some((&18, rest)) if rest.len() == 8 => {
+            // 14 - HarvestSolStakerRewards
+            Some((&14, _)) => Ok(StakeInstruction::HarvestSolStakerRewards),
+            // 15 - InactivateSolStakerStake
+            Some((&15, _)) => Ok(StakeInstruction::InactivateSolStakerStake),
+            // 16 - SlashSolStakerStake: u64 (8)
+            Some((&16, rest)) if rest.len() == 8 => {
                 let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
 
                 Ok(StakeInstruction::SlashSolStakerStake(amount))

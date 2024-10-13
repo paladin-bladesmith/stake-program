@@ -93,7 +93,7 @@ pub struct SlashSolStakerStakeInstructionData {
 
 impl SlashSolStakerStakeInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 18 }
+        Self { discriminator: 16 }
     }
 }
 

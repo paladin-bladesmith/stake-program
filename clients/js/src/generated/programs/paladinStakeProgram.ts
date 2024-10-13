@@ -12,7 +12,6 @@ import {
   type ParsedDistributeRewardsInstruction,
   type ParsedHarvestHolderRewardsInstruction,
   type ParsedHarvestSolStakerRewardsInstruction,
-  type ParsedHarvestSyncRewardsInstruction,
   type ParsedHarvestValidatorRewardsInstruction,
   type ParsedInactivateSolStakerStakeInstruction,
   type ParsedInactivateValidatorStakeInstruction,
@@ -23,7 +22,6 @@ import {
   type ParsedSlashSolStakerStakeInstruction,
   type ParsedSlashValidatorStakeInstruction,
   type ParsedSolStakerStakeTokensInstruction,
-  type ParsedSyncSolStakeInstruction,
   type ParsedUpdateConfigInstruction,
   type ParsedValidatorStakeTokensInstruction,
   type ParsedWithdrawInactiveStakeInstruction,
@@ -53,9 +51,7 @@ export enum PaladinStakeProgramInstruction {
   DistributeRewards,
   InitializeSolStakerStake,
   SolStakerStakeTokens,
-  SyncSolStake,
   HarvestSolStakerRewards,
-  HarvestSyncRewards,
   InactivateSolStakerStake,
   SlashSolStakerStake,
 }
@@ -108,18 +104,12 @@ export function identifyPaladinStakeProgramInstruction(
     return PaladinStakeProgramInstruction.SolStakerStakeTokens;
   }
   if (containsBytes(data, getU8Encoder().encode(14), 0)) {
-    return PaladinStakeProgramInstruction.SyncSolStake;
-  }
-  if (containsBytes(data, getU8Encoder().encode(15), 0)) {
     return PaladinStakeProgramInstruction.HarvestSolStakerRewards;
   }
-  if (containsBytes(data, getU8Encoder().encode(16), 0)) {
-    return PaladinStakeProgramInstruction.HarvestSyncRewards;
-  }
-  if (containsBytes(data, getU8Encoder().encode(17), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(15), 0)) {
     return PaladinStakeProgramInstruction.InactivateSolStakerStake;
   }
-  if (containsBytes(data, getU8Encoder().encode(18), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(16), 0)) {
     return PaladinStakeProgramInstruction.SlashSolStakerStake;
   }
   throw new Error(
@@ -173,14 +163,8 @@ export type ParsedPaladinStakeProgramInstruction<
       instructionType: PaladinStakeProgramInstruction.SolStakerStakeTokens;
     } & ParsedSolStakerStakeTokensInstruction<TProgram>)
   | ({
-      instructionType: PaladinStakeProgramInstruction.SyncSolStake;
-    } & ParsedSyncSolStakeInstruction<TProgram>)
-  | ({
       instructionType: PaladinStakeProgramInstruction.HarvestSolStakerRewards;
     } & ParsedHarvestSolStakerRewardsInstruction<TProgram>)
-  | ({
-      instructionType: PaladinStakeProgramInstruction.HarvestSyncRewards;
-    } & ParsedHarvestSyncRewardsInstruction<TProgram>)
   | ({
       instructionType: PaladinStakeProgramInstruction.InactivateSolStakerStake;
     } & ParsedInactivateSolStakerStakeInstruction<TProgram>)

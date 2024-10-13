@@ -12,12 +12,11 @@ use crate::{
     instruction::{
         accounts::{
             DeactivateStakeAccounts, DistributeRewardsAccounts, HarvestHolderRewardsAccounts,
-            HarvestSolStakerRewardsAccounts, HarvestSyncRewardsAccounts,
-            HarvestValidatorRewardsAccounts, InactivateSolStakerStakeAccounts,
-            InactivateValidatorStakeAccounts, InitializeConfigAccounts,
-            InitializeSolStakerStakeAccounts, InitializeValidatorStakeAccounts,
-            SetAuthorityAccounts, SlashSolStakerStakeAccounts, SlashValidatorStakeAccounts,
-            SolStakerStakeTokensAccounts, SyncSolStakeAccounts, UpdateConfigAccounts,
+            HarvestSolStakerRewardsAccounts, HarvestValidatorRewardsAccounts,
+            InactivateSolStakerStakeAccounts, InactivateValidatorStakeAccounts,
+            InitializeConfigAccounts, InitializeSolStakerStakeAccounts,
+            InitializeValidatorStakeAccounts, SetAuthorityAccounts, SlashSolStakerStakeAccounts,
+            SlashValidatorStakeAccounts, SolStakerStakeTokensAccounts, UpdateConfigAccounts,
             ValidatorStakeTokensAccounts, WithdrawInactiveStakeAccounts,
         },
         StakeInstruction,
@@ -33,7 +32,6 @@ mod deactivate_stake;
 mod distribute_rewards;
 mod harvest_holder_rewards;
 mod harvest_sol_staker_rewards;
-mod harvest_sync_rewards;
 mod harvest_validator_rewards;
 mod inactivate_sol_staker_stake;
 mod inactivate_validator_stake;
@@ -44,7 +42,6 @@ mod set_authority;
 mod slash_sol_staker_stake;
 mod slash_validator_stake;
 mod sol_staker_stake_tokens;
-mod sync_sol_stake;
 mod update_config;
 mod validator_stake_tokens;
 mod withdraw_inactive_stake;
@@ -171,25 +168,11 @@ pub fn process_instruction<'a>(
                 amount,
             )
         }
-        StakeInstruction::SyncSolStake => {
-            msg!("Instruction: SyncSolStake");
-            sync_sol_stake::process_sync_sol_stake(
-                program_id,
-                SyncSolStakeAccounts::context(accounts)?,
-            )
-        }
         StakeInstruction::HarvestSolStakerRewards => {
             msg!("Instruction: HarvestSolStakerRewards");
             harvest_sol_staker_rewards::process_harvest_sol_staker_rewards(
                 program_id,
                 HarvestSolStakerRewardsAccounts::context(accounts)?,
-            )
-        }
-        StakeInstruction::HarvestSyncRewards => {
-            msg!("Instruction: HarvestSyncRewards");
-            harvest_sync_rewards::process_harvest_sync_rewards(
-                program_id,
-                HarvestSyncRewardsAccounts::context(accounts)?,
             )
         }
         StakeInstruction::InactivateSolStakerStake => {
