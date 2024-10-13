@@ -535,11 +535,13 @@ pub enum StakeInstruction {
     )]
     #[account(
         4,
+        writable,
         name = "validator_stake",
         desc = "Validator stake account"
     )]
     #[account(
         5,
+        writable,
         name = "validator_stake_authority",
         desc = "Validator stake authority"
     )]
@@ -552,6 +554,13 @@ pub enum StakeInstruction {
         7,
         name = "sol_stake_view_program",
         desc = "Sol stake view program"
+    )]
+    #[account(
+        8,
+        optional,
+        writable,
+        name = "keeper_recipient",
+        desc = "Recipient for sol sync bounty"
     )]
     HarvestSolStakerRewards,
 

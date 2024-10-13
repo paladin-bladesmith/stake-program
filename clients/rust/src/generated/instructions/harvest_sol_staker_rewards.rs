@@ -26,6 +26,8 @@ pub struct HarvestSolStakerRewards {
     pub sysvar_stake_history: solana_program::pubkey::Pubkey,
     /// Sol stake view program
     pub sol_stake_view_program: solana_program::pubkey::Pubkey,
+    /// Recipient for sol sync bounty
+    pub keeper_recipient: Option<solana_program::pubkey::Pubkey>,
 }
 
 impl HarvestSolStakerRewards {
@@ -37,7 +39,7 @@ impl HarvestSolStakerRewards {
         &self,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(8 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.config,
             false,
@@ -54,11 +56,11 @@ impl HarvestSolStakerRewards {
             self.native_stake,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             self.validator_stake,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             self.validator_stake_authority,
             false,
         ));
@@ -70,6 +72,17 @@ impl HarvestSolStakerRewards {
             self.sol_stake_view_program,
             false,
         ));
+        if let Some(keeper_recipient) = self.keeper_recipient {
+            accounts.push(solana_program::instruction::AccountMeta::new(
+                keeper_recipient,
+                false,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::PALADIN_STAKE_PROGRAM_ID,
+                false,
+            ));
+        }
         accounts.extend_from_slice(remaining_accounts);
         let data = HarvestSolStakerRewardsInstructionData::new()
             .try_to_vec()
@@ -108,10 +121,11 @@ impl Default for HarvestSolStakerRewardsInstructionData {
 ///   1. `[writable]` sol_staker_stake
 ///   2. `[writable]` stake_authority
 ///   3. `[]` native_stake
-///   4. `[]` validator_stake
-///   5. `[]` validator_stake_authority
+///   4. `[writable]` validator_stake
+///   5. `[writable]` validator_stake_authority
 ///   6. `[optional]` sysvar_stake_history (default to `SysvarStakeHistory1111111111111111111111111`)
 ///   7. `[]` sol_stake_view_program
+///   8. `[writable, optional]` keeper_recipient
 #[derive(Clone, Debug, Default)]
 pub struct HarvestSolStakerRewardsBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
@@ -122,6 +136,7 @@ pub struct HarvestSolStakerRewardsBuilder {
     validator_stake_authority: Option<solana_program::pubkey::Pubkey>,
     sysvar_stake_history: Option<solana_program::pubkey::Pubkey>,
     sol_stake_view_program: Option<solana_program::pubkey::Pubkey>,
+    keeper_recipient: Option<solana_program::pubkey::Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -196,6 +211,16 @@ impl HarvestSolStakerRewardsBuilder {
         self.sol_stake_view_program = Some(sol_stake_view_program);
         self
     }
+    /// `[optional account]`
+    /// Recipient for sol sync bounty
+    #[inline(always)]
+    pub fn keeper_recipient(
+        &mut self,
+        keeper_recipient: Option<solana_program::pubkey::Pubkey>,
+    ) -> &mut Self {
+        self.keeper_recipient = keeper_recipient;
+        self
+    }
     /// Add an aditional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -231,6 +256,7 @@ impl HarvestSolStakerRewardsBuilder {
             sol_stake_view_program: self
                 .sol_stake_view_program
                 .expect("sol_stake_view_program is not set"),
+            keeper_recipient: self.keeper_recipient,
         };
 
         accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)
@@ -255,6 +281,8 @@ pub struct HarvestSolStakerRewardsCpiAccounts<'a, 'b> {
     pub sysvar_stake_history: &'b solana_program::account_info::AccountInfo<'a>,
     /// Sol stake view program
     pub sol_stake_view_program: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Recipient for sol sync bounty
+    pub keeper_recipient: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 }
 
 /// `harvest_sol_staker_rewards` CPI instruction.
@@ -277,6 +305,8 @@ pub struct HarvestSolStakerRewardsCpi<'a, 'b> {
     pub sysvar_stake_history: &'b solana_program::account_info::AccountInfo<'a>,
     /// Sol stake view program
     pub sol_stake_view_program: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Recipient for sol sync bounty
+    pub keeper_recipient: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 }
 
 impl<'a, 'b> HarvestSolStakerRewardsCpi<'a, 'b> {
@@ -294,6 +324,7 @@ impl<'a, 'b> HarvestSolStakerRewardsCpi<'a, 'b> {
             validator_stake_authority: accounts.validator_stake_authority,
             sysvar_stake_history: accounts.sysvar_stake_history,
             sol_stake_view_program: accounts.sol_stake_view_program,
+            keeper_recipient: accounts.keeper_recipient,
         }
     }
     #[inline(always)]
@@ -329,7 +360,7 @@ impl<'a, 'b> HarvestSolStakerRewardsCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(8 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.config.key,
             false,
@@ -346,11 +377,11 @@ impl<'a, 'b> HarvestSolStakerRewardsCpi<'a, 'b> {
             *self.native_stake.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             *self.validator_stake.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             *self.validator_stake_authority.key,
             false,
         ));
@@ -362,6 +393,17 @@ impl<'a, 'b> HarvestSolStakerRewardsCpi<'a, 'b> {
             *self.sol_stake_view_program.key,
             false,
         ));
+        if let Some(keeper_recipient) = self.keeper_recipient {
+            accounts.push(solana_program::instruction::AccountMeta::new(
+                *keeper_recipient.key,
+                false,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::PALADIN_STAKE_PROGRAM_ID,
+                false,
+            ));
+        }
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -378,7 +420,7 @@ impl<'a, 'b> HarvestSolStakerRewardsCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(8 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(9 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.config.clone());
         account_infos.push(self.sol_staker_stake.clone());
@@ -388,6 +430,9 @@ impl<'a, 'b> HarvestSolStakerRewardsCpi<'a, 'b> {
         account_infos.push(self.validator_stake_authority.clone());
         account_infos.push(self.sysvar_stake_history.clone());
         account_infos.push(self.sol_stake_view_program.clone());
+        if let Some(keeper_recipient) = self.keeper_recipient {
+            account_infos.push(keeper_recipient.clone());
+        }
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -408,10 +453,11 @@ impl<'a, 'b> HarvestSolStakerRewardsCpi<'a, 'b> {
 ///   1. `[writable]` sol_staker_stake
 ///   2. `[writable]` stake_authority
 ///   3. `[]` native_stake
-///   4. `[]` validator_stake
-///   5. `[]` validator_stake_authority
+///   4. `[writable]` validator_stake
+///   5. `[writable]` validator_stake_authority
 ///   6. `[]` sysvar_stake_history
 ///   7. `[]` sol_stake_view_program
+///   8. `[writable, optional]` keeper_recipient
 #[derive(Clone, Debug)]
 pub struct HarvestSolStakerRewardsCpiBuilder<'a, 'b> {
     instruction: Box<HarvestSolStakerRewardsCpiBuilderInstruction<'a, 'b>>,
@@ -429,6 +475,7 @@ impl<'a, 'b> HarvestSolStakerRewardsCpiBuilder<'a, 'b> {
             validator_stake_authority: None,
             sysvar_stake_history: None,
             sol_stake_view_program: None,
+            keeper_recipient: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -503,6 +550,16 @@ impl<'a, 'b> HarvestSolStakerRewardsCpiBuilder<'a, 'b> {
         sol_stake_view_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.sol_stake_view_program = Some(sol_stake_view_program);
+        self
+    }
+    /// `[optional account]`
+    /// Recipient for sol sync bounty
+    #[inline(always)]
+    pub fn keeper_recipient(
+        &mut self,
+        keeper_recipient: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    ) -> &mut Self {
+        self.instruction.keeper_recipient = keeper_recipient;
         self
     }
     /// Add an additional account to the instruction.
@@ -585,6 +642,8 @@ impl<'a, 'b> HarvestSolStakerRewardsCpiBuilder<'a, 'b> {
                 .instruction
                 .sol_stake_view_program
                 .expect("sol_stake_view_program is not set"),
+
+            keeper_recipient: self.instruction.keeper_recipient,
         };
         instruction.invoke_signed_with_remaining_accounts(
             signers_seeds,
@@ -604,6 +663,7 @@ struct HarvestSolStakerRewardsCpiBuilderInstruction<'a, 'b> {
     validator_stake_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     sysvar_stake_history: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     sol_stake_view_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    keeper_recipient: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

@@ -12,7 +12,9 @@ use crate::{
     instruction::accounts::{Context, HarvestSolStakerRewardsAccounts},
     processor::{harvest, unpack_initialized, unpack_initialized_mut},
     require,
-    state::{find_sol_staker_stake_pda, Config, SolStakerStake},
+    state::{
+        find_sol_staker_stake_pda, find_validator_stake_pda, Config, SolStakerStake, ValidatorStake,
+    },
 };
 
 /// Harvests stake SOL rewards earned by the given SOL staker stake account.
@@ -59,8 +61,8 @@ pub fn process_harvest_sol_staker_rewards(
         "sol staker stake"
     );
 
-    let mut stake_data = ctx.accounts.sol_staker_stake.try_borrow_mut_data()?;
-    let sol_staker_stake = unpack_initialized_mut::<SolStakerStake>(&mut stake_data)?;
+    let mut sol_staker_stake_data = ctx.accounts.sol_staker_stake.try_borrow_mut_data()?;
+    let sol_staker_stake = unpack_initialized_mut::<SolStakerStake>(&mut sol_staker_stake_data)?;
 
     let (derivation, _) = find_sol_staker_stake_pda(
         &sol_staker_stake.sol_stake,
@@ -90,6 +92,35 @@ pub fn process_harvest_sol_staker_rewards(
         "sol stake"
     );
 
+    // validator stake
+    // - owner must be the stake program
+    // - must have the correct derivation (validates both the validator vote
+    //   and config accounts)
+    // - must be initialized
+
+    require!(
+        ctx.accounts.validator_stake.owner == program_id,
+        ProgramError::InvalidAccountOwner,
+        "validator stake"
+    );
+
+    // validator vote must match the SOL staker stake state account's validator vote
+    // (validation done on the derivation of the expected address)
+    let (derivation, _) = find_validator_stake_pda(
+        &sol_staker_stake.delegation.validator_vote,
+        ctx.accounts.config.key,
+        program_id,
+    );
+
+    require!(
+        ctx.accounts.validator_stake.key == &derivation,
+        ProgramError::InvalidSeeds,
+        "validator stake",
+    );
+
+    let mut stake_data = ctx.accounts.validator_stake.try_borrow_mut_data()?;
+    let validator_stake = unpack_initialized_mut::<ValidatorStake>(&mut stake_data)?;
+
     // Sol stake view program.
     // - Must match the expected program ID.
     require!(
@@ -117,22 +148,47 @@ pub fn process_harvest_sol_staker_rewards(
             .and_then(|amount| amount.checked_sub(u64::from(stake_state_data.deactivating)))
             .ok_or(ProgramError::ArithmeticOverflow)?,
     };
+    let requires_sync = stake_amount != sol_staker_stake.lamports_amount;
 
-    // If there is a difference, perform necessary steps to sync the accounts (and pay a sync bounty).
-    if stake_amount != sol_staker_stake.lamports_amount {
-        todo!(
-            "Sync native stake; left={stake_amount}; right={}",
-            sol_staker_stake.lamports_amount
-        );
-    }
-
-    // Process the harvest.
+    // Harvest the staker.
     harvest(
         (config, ctx.accounts.config),
         &mut sol_staker_stake.delegation,
         ctx.accounts.stake_authority,
-        None,
+        match requires_sync {
+            true => Some(
+                ctx.accounts
+                    .keeper_recipient
+                    .ok_or(ProgramError::NotEnoughAccountKeys)?,
+            ),
+            false => None,
+        },
     )?;
+
+    if requires_sync {
+        // Harvest the validator.
+        harvest(
+            (config, ctx.accounts.config),
+            &mut validator_stake.delegation,
+            ctx.accounts.stake_authority,
+            None,
+        )?;
+
+        // Remove the staker's old SOL amount from the validator total.
+        validator_stake.total_staked_lamports_amount = validator_stake
+            .total_staked_lamports_amount
+            .checked_sub(sol_staker_stake.lamports_amount)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
+
+        // Update the stakers's SOL amount.
+        sol_staker_stake.lamports_amount = stake_amount;
+
+        // Add the staker's new SOL amount to the validator total.
+        validator_stake.total_staked_lamports_amount = validator_stake
+            .total_staked_lamports_amount
+            .checked_add(stake_amount)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
+    }
 
     Ok(())
 }

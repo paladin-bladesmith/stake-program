@@ -804,7 +804,7 @@
         },
         {
           "name": "validatorStake",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false,
           "docs": [
             "Validator stake account"
@@ -812,7 +812,7 @@
         },
         {
           "name": "validatorStakeAuthority",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false,
           "docs": [
             "Validator stake authority"
@@ -832,6 +832,15 @@
           "isSigner": false,
           "docs": [
             "Sol stake view program"
+          ]
+        },
+        {
+          "name": "keeperRecipient",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true,
+          "docs": [
+            "Recipient for sol sync bounty"
           ]
         }
       ],

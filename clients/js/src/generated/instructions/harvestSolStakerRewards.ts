@@ -41,6 +41,7 @@ export type HarvestSolStakerRewardsInstruction<
     | string
     | IAccountMeta<string> = 'SysvarStakeHistory1111111111111111111111111',
   TAccountSolStakeViewProgram extends string | IAccountMeta<string> = string,
+  TAccountKeeperRecipient extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -59,10 +60,10 @@ export type HarvestSolStakerRewardsInstruction<
         ? ReadonlyAccount<TAccountNativeStake>
         : TAccountNativeStake,
       TAccountValidatorStake extends string
-        ? ReadonlyAccount<TAccountValidatorStake>
+        ? WritableAccount<TAccountValidatorStake>
         : TAccountValidatorStake,
       TAccountValidatorStakeAuthority extends string
-        ? ReadonlyAccount<TAccountValidatorStakeAuthority>
+        ? WritableAccount<TAccountValidatorStakeAuthority>
         : TAccountValidatorStakeAuthority,
       TAccountSysvarStakeHistory extends string
         ? ReadonlyAccount<TAccountSysvarStakeHistory>
@@ -70,6 +71,9 @@ export type HarvestSolStakerRewardsInstruction<
       TAccountSolStakeViewProgram extends string
         ? ReadonlyAccount<TAccountSolStakeViewProgram>
         : TAccountSolStakeViewProgram,
+      TAccountKeeperRecipient extends string
+        ? WritableAccount<TAccountKeeperRecipient>
+        : TAccountKeeperRecipient,
       ...TRemainingAccounts,
     ]
   >;
@@ -108,6 +112,7 @@ export type HarvestSolStakerRewardsInput<
   TAccountValidatorStakeAuthority extends string = string,
   TAccountSysvarStakeHistory extends string = string,
   TAccountSolStakeViewProgram extends string = string,
+  TAccountKeeperRecipient extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
@@ -125,6 +130,8 @@ export type HarvestSolStakerRewardsInput<
   sysvarStakeHistory?: Address<TAccountSysvarStakeHistory>;
   /** Sol stake view program */
   solStakeViewProgram: Address<TAccountSolStakeViewProgram>;
+  /** Recipient for sol sync bounty */
+  keeperRecipient?: Address<TAccountKeeperRecipient>;
 };
 
 export function getHarvestSolStakerRewardsInstruction<
@@ -136,6 +143,7 @@ export function getHarvestSolStakerRewardsInstruction<
   TAccountValidatorStakeAuthority extends string,
   TAccountSysvarStakeHistory extends string,
   TAccountSolStakeViewProgram extends string,
+  TAccountKeeperRecipient extends string,
 >(
   input: HarvestSolStakerRewardsInput<
     TAccountConfig,
@@ -145,7 +153,8 @@ export function getHarvestSolStakerRewardsInstruction<
     TAccountValidatorStake,
     TAccountValidatorStakeAuthority,
     TAccountSysvarStakeHistory,
-    TAccountSolStakeViewProgram
+    TAccountSolStakeViewProgram,
+    TAccountKeeperRecipient
   >
 ): HarvestSolStakerRewardsInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
@@ -156,7 +165,8 @@ export function getHarvestSolStakerRewardsInstruction<
   TAccountValidatorStake,
   TAccountValidatorStakeAuthority,
   TAccountSysvarStakeHistory,
-  TAccountSolStakeViewProgram
+  TAccountSolStakeViewProgram,
+  TAccountKeeperRecipient
 > {
   // Program address.
   const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
@@ -167,10 +177,10 @@ export function getHarvestSolStakerRewardsInstruction<
     solStakerStake: { value: input.solStakerStake ?? null, isWritable: true },
     stakeAuthority: { value: input.stakeAuthority ?? null, isWritable: true },
     nativeStake: { value: input.nativeStake ?? null, isWritable: false },
-    validatorStake: { value: input.validatorStake ?? null, isWritable: false },
+    validatorStake: { value: input.validatorStake ?? null, isWritable: true },
     validatorStakeAuthority: {
       value: input.validatorStakeAuthority ?? null,
-      isWritable: false,
+      isWritable: true,
     },
     sysvarStakeHistory: {
       value: input.sysvarStakeHistory ?? null,
@@ -180,6 +190,7 @@ export function getHarvestSolStakerRewardsInstruction<
       value: input.solStakeViewProgram ?? null,
       isWritable: false,
     },
+    keeperRecipient: { value: input.keeperRecipient ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -203,6 +214,7 @@ export function getHarvestSolStakerRewardsInstruction<
       getAccountMeta(accounts.validatorStakeAuthority),
       getAccountMeta(accounts.sysvarStakeHistory),
       getAccountMeta(accounts.solStakeViewProgram),
+      getAccountMeta(accounts.keeperRecipient),
     ],
     programAddress,
     data: getHarvestSolStakerRewardsInstructionDataEncoder().encode({}),
@@ -215,7 +227,8 @@ export function getHarvestSolStakerRewardsInstruction<
     TAccountValidatorStake,
     TAccountValidatorStakeAuthority,
     TAccountSysvarStakeHistory,
-    TAccountSolStakeViewProgram
+    TAccountSolStakeViewProgram,
+    TAccountKeeperRecipient
   >;
 
   return instruction;
@@ -243,6 +256,8 @@ export type ParsedHarvestSolStakerRewardsInstruction<
     sysvarStakeHistory: TAccountMetas[6];
     /** Sol stake view program */
     solStakeViewProgram: TAccountMetas[7];
+    /** Recipient for sol sync bounty */
+    keeperRecipient?: TAccountMetas[8] | undefined;
   };
   data: HarvestSolStakerRewardsInstructionData;
 };
@@ -255,7 +270,7 @@ export function parseHarvestSolStakerRewardsInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedHarvestSolStakerRewardsInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 8) {
+  if (instruction.accounts.length < 9) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -264,6 +279,12 @@ export function parseHarvestSolStakerRewardsInstruction<
     const accountMeta = instruction.accounts![accountIndex]!;
     accountIndex += 1;
     return accountMeta;
+  };
+  const getNextOptionalAccount = () => {
+    const accountMeta = getNextAccount();
+    return accountMeta.address === PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS
+      ? undefined
+      : accountMeta;
   };
   return {
     programAddress: instruction.programAddress,
@@ -276,6 +297,7 @@ export function parseHarvestSolStakerRewardsInstruction<
       validatorStakeAuthority: getNextAccount(),
       sysvarStakeHistory: getNextAccount(),
       solStakeViewProgram: getNextAccount(),
+      keeperRecipient: getNextOptionalAccount(),
     },
     data: getHarvestSolStakerRewardsInstructionDataDecoder().decode(
       instruction.data
