@@ -1,4 +1,5 @@
 use bytemuck::Pod;
+use paladin_rewards_program_client::accounts::HolderRewards;
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, msg, program::invoke_signed,
     program_error::ProgramError, program_pack::IsInitialized, pubkey::Pubkey, rent::Rent,
@@ -295,34 +296,48 @@ pub fn unpack_delegation_mut_uncheked(
     Ok(delegation)
 }
 
+pub(crate) struct HarvestAccounts<'a, 'info> {
+    pub(crate) config: &'a AccountInfo<'info>,
+    pub(crate) holder_rewards: &'a AccountInfo<'info>,
+    pub(crate) recipient: &'a AccountInfo<'info>,
+}
+
 pub(crate) fn harvest(
-    (config, config_info): (&Config, &AccountInfo),
+    accounts: HarvestAccounts,
     delegation: &mut Delegation,
-    recipient: &AccountInfo,
     keeper: Option<&AccountInfo>,
 ) -> ProgramResult {
-    // Compute the delegation's accrued rewards.
-    let accumulated_rewards_per_token = u128::from(config.accumulated_stake_rewards_per_token);
-    let last_seen_stake_rewards_per_token =
-        u128::from(delegation.last_seen_stake_rewards_per_token);
-    let effective_amount = delegation.effective_amount;
-    let total_reward = calculate_eligible_rewards(
-        accumulated_rewards_per_token,
-        last_seen_stake_rewards_per_token,
-        effective_amount,
+    // Compute the staking rewards.
+    let config_data = accounts.config.data.borrow();
+    let config = unpack_initialized::<Config>(&config_data)?;
+    let staking_reward = calculate_eligible_rewards(
+        config.accumulated_stake_rewards_per_token.into(),
+        delegation.last_seen_stake_rewards_per_token.into(),
+        delegation.effective_amount,
     )?;
 
-    // Update the last seen amount.
+    // Compute the holder reward.
+    let holder_rewards = HolderRewards::try_from(accounts.holder_rewards)?;
+    let holder_reward = calculate_eligible_rewards(
+        holder_rewards.last_accumulated_rewards_per_token,
+        delegation.last_seen_holder_rewards_per_token.into(),
+        delegation.amount,
+    )?;
+
+    // Claim both at the same time.
+    let total_reward = staking_reward + holder_reward;
     delegation.last_seen_stake_rewards_per_token = config.accumulated_stake_rewards_per_token;
+    delegation.last_seen_holder_rewards_per_token =
+        holder_rewards.last_accumulated_rewards_per_token.into();
 
     // Withdraw the lamports from the config account.
-    let rent_exempt_minimum = Rent::get()?.minimum_balance(config_info.data_len());
-    let config_lamports = config_info
+    let rent_exempt_minimum = Rent::get()?.minimum_balance(accounts.config.data_len());
+    let config_lamports = accounts
+        .config
         .try_borrow_lamports()?
         .checked_sub(total_reward)
         .ok_or(ProgramError::ArithmeticOverflow)?;
     assert!(config_lamports >= rent_exempt_minimum);
-    **config_info.try_borrow_mut_lamports()? = config_lamports;
 
     // Pay the keeper first, if one is set.
     let keeper_reward = match keeper {
@@ -343,11 +358,16 @@ pub(crate) fn harvest(
     let delegator_reward = total_reward
         .checked_sub(keeper_reward)
         .ok_or(ProgramError::ArithmeticOverflow)?;
-    let recipient_lamports = recipient
+    let recipient_lamports = accounts
+        .recipient
         .try_borrow_lamports()?
         .checked_add(delegator_reward)
         .ok_or(ProgramError::ArithmeticOverflow)?;
-    **recipient.try_borrow_mut_lamports()? = recipient_lamports;
+
+    // Update the lamport amounts.
+    drop(config_data);
+    **accounts.config.try_borrow_mut_lamports()? = config_lamports;
+    **accounts.recipient.try_borrow_mut_lamports()? = recipient_lamports;
 
     Ok(())
 }

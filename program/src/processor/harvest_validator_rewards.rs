@@ -3,9 +3,9 @@ use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pub
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, HarvestValidatorRewardsAccounts},
-    processor::{harvest, unpack_initialized, unpack_initialized_mut},
+    processor::{harvest, unpack_initialized_mut, HarvestAccounts},
     require,
-    state::{find_validator_stake_pda, Config, ValidatorStake},
+    state::{find_validator_stake_pda, ValidatorStake},
 };
 
 /// Harvests stake SOL rewards earned by the given validator stake account.
@@ -26,27 +26,16 @@ pub fn process_harvest_validator_rewards(
     // config
     // - owner must be the stake program
     // - must be initialized
-
     require!(
         ctx.accounts.config.owner == program_id,
         ProgramError::InvalidAccountOwner,
         "config"
     );
 
-    let config_data = ctx.accounts.config.try_borrow_data()?;
-    let config = unpack_initialized::<Config>(&config_data)?;
-
-    require!(
-        config.is_initialized(),
-        ProgramError::UninitializedAccount,
-        "config",
-    );
-
     // stake
     // - owner must be the stake program
     // - must be initialized
     // - derivation must match (validates the config account)
-
     require!(
         ctx.accounts.validator_stake.owner == program_id,
         ProgramError::InvalidAccountOwner,
@@ -71,16 +60,19 @@ pub fn process_harvest_validator_rewards(
     // stake authority
     // - must match the authority on the stake account
     require!(
-        ctx.accounts.stake_authority.key == &validator_stake.delegation.authority,
+        ctx.accounts.validator_stake_authority.key == &validator_stake.delegation.authority,
         StakeError::InvalidAuthority,
         "stake authority",
     );
 
     // Process the harvest.
     harvest(
-        (config, ctx.accounts.config),
+        HarvestAccounts {
+            config: ctx.accounts.config,
+            holder_rewards: ctx.accounts.holder_rewards,
+            recipient: ctx.accounts.validator_stake_authority,
+        },
         &mut validator_stake.delegation,
-        ctx.accounts.stake_authority,
         None,
     )?;
 

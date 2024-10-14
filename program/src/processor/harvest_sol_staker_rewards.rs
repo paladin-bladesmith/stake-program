@@ -10,11 +10,9 @@ use solana_program::{
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, HarvestSolStakerRewardsAccounts},
-    processor::{harvest, unpack_initialized, unpack_initialized_mut},
+    processor::{harvest, unpack_initialized_mut, HarvestAccounts},
     require,
-    state::{
-        find_sol_staker_stake_pda, find_validator_stake_pda, Config, SolStakerStake, ValidatorStake,
-    },
+    state::{find_sol_staker_stake_pda, find_validator_stake_pda, SolStakerStake, ValidatorStake},
 };
 
 /// Harvests stake SOL rewards earned by the given SOL staker stake account.
@@ -24,13 +22,14 @@ use crate::{
 /// based on the proportion of total stake.
 ///
 /// 0. `[w]` Config account
-/// 1. `[w]` Staker PAL stake account
-/// 2. `[w]` Staker authority
-/// 3. `[ ]` Staker native stake account
-/// 4. `[w]` Validator stake account
-/// 5. `[w]` Validator stake authority
-/// 6. `[ ]` Stake history sysvar
-/// 7. `[ ]` Paladin SOL stake view program
+/// 1. `[w]` Vault authority
+/// 2. `[w]` Staker PAL stake account
+/// 3. `[w]` Staker authority
+/// 4. `[ ]` Staker native stake account
+/// 5. `[w]` Validator stake account
+/// 6. `[w]` Validator stake authority
+/// 7. `[ ]` Stake history sysvar
+/// 8. `[ ]` Paladin SOL stake view program
 pub fn process_harvest_sol_staker_rewards(
     program_id: &Pubkey,
     ctx: Context<HarvestSolStakerRewardsAccounts>,
@@ -40,21 +39,16 @@ pub fn process_harvest_sol_staker_rewards(
     // config
     // - owner must be the stake program
     // - must be initialized
-
     require!(
         ctx.accounts.config.owner == program_id,
         ProgramError::InvalidAccountOwner,
         "config"
     );
 
-    let config_data = ctx.accounts.config.try_borrow_data()?;
-    let config = unpack_initialized::<Config>(&config_data)?;
-
     // sol staker stake
     // - owner must be the stake program
     // - must be initialized
     // - derivation must match (validates the config account)
-
     require!(
         ctx.accounts.sol_staker_stake.owner == program_id,
         ProgramError::InvalidAccountOwner,
@@ -79,7 +73,7 @@ pub fn process_harvest_sol_staker_rewards(
     // stake authority
     // - must match the authority on the stake account
     require!(
-        ctx.accounts.stake_authority.key == &sol_staker_stake.delegation.authority,
+        ctx.accounts.sol_staker_stake_authority.key == &sol_staker_stake.delegation.authority,
         StakeError::InvalidAuthority,
         "stake authority",
     );
@@ -152,9 +146,12 @@ pub fn process_harvest_sol_staker_rewards(
 
     // Harvest the staker.
     harvest(
-        (config, ctx.accounts.config),
+        HarvestAccounts {
+            config: ctx.accounts.config,
+            holder_rewards: ctx.accounts.holder_rewards,
+            recipient: ctx.accounts.sol_staker_stake_authority,
+        },
         &mut sol_staker_stake.delegation,
-        ctx.accounts.stake_authority,
         match requires_sync {
             true => Some(
                 ctx.accounts
@@ -168,9 +165,12 @@ pub fn process_harvest_sol_staker_rewards(
     if requires_sync {
         // Harvest the validator.
         harvest(
-            (config, ctx.accounts.config),
+            HarvestAccounts {
+                config: ctx.accounts.config,
+                holder_rewards: ctx.accounts.holder_rewards,
+                recipient: ctx.accounts.validator_stake_authority,
+            },
             &mut validator_stake.delegation,
-            ctx.accounts.stake_authority,
             None,
         )?;
 

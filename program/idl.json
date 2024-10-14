@@ -334,14 +334,6 @@
           ]
         },
         {
-          "name": "stake",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Validator or SOL staker stake account"
-          ]
-        },
-        {
           "name": "vault",
           "isMut": true,
           "isSigner": false,
@@ -350,27 +342,19 @@
           ]
         },
         {
+          "name": "holderRewardsPool",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Holder rewards pool account"
+          ]
+        },
+        {
           "name": "holderRewards",
           "isMut": false,
           "isSigner": false,
           "docs": [
             "Holder rewards account for vault token account"
-          ]
-        },
-        {
-          "name": "destination",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Destination account for withdrawn lamports"
-          ]
-        },
-        {
-          "name": "stakeAuthority",
-          "isMut": false,
-          "isSigner": true,
-          "docs": [
-            "Stake authority"
           ]
         },
         {
@@ -424,19 +408,44 @@
           ]
         },
         {
+          "name": "holderRewards",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Holder rewards account"
+          ]
+        },
+        {
           "name": "validatorStake",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+            "Validator stake account"
           ]
         },
         {
-          "name": "stakeAuthority",
+          "name": "validatorStakeAuthority",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Stake authority"
+            "Validator stake authority"
+          ]
+        },
+        {
+          "name": "sysvarStakeHistory",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Stake history sysvar"
+          ]
+        },
+        {
+          "name": "keeperRecipient",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true,
+          "docs": [
+            "Recipient for sol sync bounty"
           ]
         }
       ],
@@ -771,11 +780,27 @@
       "name": "HarvestSolStakerRewards",
       "accounts": [
         {
+          "name": "solStakeViewProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Sol stake view program"
+          ]
+        },
+        {
           "name": "config",
           "isMut": true,
           "isSigner": false,
           "docs": [
             "Stake config account"
+          ]
+        },
+        {
+          "name": "holderRewards",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Holder rewards account"
           ]
         },
         {
@@ -787,11 +812,11 @@
           ]
         },
         {
-          "name": "stakeAuthority",
+          "name": "solStakerStakeAuthority",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Stake authority"
+            "SOL staker stake authority"
           ]
         },
         {
@@ -824,14 +849,6 @@
           "isSigner": false,
           "docs": [
             "Stake history sysvar"
-          ]
-        },
-        {
-          "name": "solStakeViewProgram",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Sol stake view program"
           ]
         },
         {

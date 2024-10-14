@@ -18,13 +18,10 @@ import {
   type Decoder,
   type Encoder,
   type IAccountMeta,
-  type IAccountSignerMeta,
   type IInstruction,
   type IInstructionWithAccounts,
   type IInstructionWithData,
   type ReadonlyAccount,
-  type ReadonlySignerAccount,
-  type TransactionSigner,
   type WritableAccount,
 } from '@solana/web3.js';
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
@@ -33,11 +30,9 @@ import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 export type HarvestHolderRewardsInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
-  TAccountStake extends string | IAccountMeta<string> = string,
   TAccountVault extends string | IAccountMeta<string> = string,
+  TAccountHolderRewardsPool extends string | IAccountMeta<string> = string,
   TAccountHolderRewards extends string | IAccountMeta<string> = string,
-  TAccountDestination extends string | IAccountMeta<string> = string,
-  TAccountStakeAuthority extends string | IAccountMeta<string> = string,
   TAccountVaultAuthority extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
@@ -54,22 +49,15 @@ export type HarvestHolderRewardsInstruction<
       TAccountConfig extends string
         ? ReadonlyAccount<TAccountConfig>
         : TAccountConfig,
-      TAccountStake extends string
-        ? WritableAccount<TAccountStake>
-        : TAccountStake,
       TAccountVault extends string
         ? WritableAccount<TAccountVault>
         : TAccountVault,
+      TAccountHolderRewardsPool extends string
+        ? ReadonlyAccount<TAccountHolderRewardsPool>
+        : TAccountHolderRewardsPool,
       TAccountHolderRewards extends string
         ? ReadonlyAccount<TAccountHolderRewards>
         : TAccountHolderRewards,
-      TAccountDestination extends string
-        ? WritableAccount<TAccountDestination>
-        : TAccountDestination,
-      TAccountStakeAuthority extends string
-        ? ReadonlySignerAccount<TAccountStakeAuthority> &
-            IAccountSignerMeta<TAccountStakeAuthority>
-        : TAccountStakeAuthority,
       TAccountVaultAuthority extends string
         ? WritableAccount<TAccountVaultAuthority>
         : TAccountVaultAuthority,
@@ -113,11 +101,9 @@ export function getHarvestHolderRewardsInstructionDataCodec(): Codec<
 
 export type HarvestHolderRewardsInput<
   TAccountConfig extends string = string,
-  TAccountStake extends string = string,
   TAccountVault extends string = string,
+  TAccountHolderRewardsPool extends string = string,
   TAccountHolderRewards extends string = string,
-  TAccountDestination extends string = string,
-  TAccountStakeAuthority extends string = string,
   TAccountVaultAuthority extends string = string,
   TAccountMint extends string = string,
   TAccountTokenProgram extends string = string,
@@ -125,16 +111,12 @@ export type HarvestHolderRewardsInput<
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
-  /** Validator or SOL staker stake account */
-  stake: Address<TAccountStake>;
   /** Vault token account */
   vault: Address<TAccountVault>;
+  /** Holder rewards pool account */
+  holderRewardsPool: Address<TAccountHolderRewardsPool>;
   /** Holder rewards account for vault token account */
   holderRewards: Address<TAccountHolderRewards>;
-  /** Destination account for withdrawn lamports */
-  destination: Address<TAccountDestination>;
-  /** Stake authority */
-  stakeAuthority: TransactionSigner<TAccountStakeAuthority>;
   /** Vault authority (pda of `['token-owner', config]`) */
   vaultAuthority: Address<TAccountVaultAuthority>;
   /** Stake token mint */
@@ -147,11 +129,9 @@ export type HarvestHolderRewardsInput<
 
 export function getHarvestHolderRewardsInstruction<
   TAccountConfig extends string,
-  TAccountStake extends string,
   TAccountVault extends string,
+  TAccountHolderRewardsPool extends string,
   TAccountHolderRewards extends string,
-  TAccountDestination extends string,
-  TAccountStakeAuthority extends string,
   TAccountVaultAuthority extends string,
   TAccountMint extends string,
   TAccountTokenProgram extends string,
@@ -159,11 +139,9 @@ export function getHarvestHolderRewardsInstruction<
 >(
   input: HarvestHolderRewardsInput<
     TAccountConfig,
-    TAccountStake,
     TAccountVault,
+    TAccountHolderRewardsPool,
     TAccountHolderRewards,
-    TAccountDestination,
-    TAccountStakeAuthority,
     TAccountVaultAuthority,
     TAccountMint,
     TAccountTokenProgram,
@@ -172,11 +150,9 @@ export function getHarvestHolderRewardsInstruction<
 ): HarvestHolderRewardsInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
-  TAccountStake,
   TAccountVault,
+  TAccountHolderRewardsPool,
   TAccountHolderRewards,
-  TAccountDestination,
-  TAccountStakeAuthority,
   TAccountVaultAuthority,
   TAccountMint,
   TAccountTokenProgram,
@@ -188,11 +164,12 @@ export function getHarvestHolderRewardsInstruction<
   // Original accounts.
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
-    stake: { value: input.stake ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
+    holderRewardsPool: {
+      value: input.holderRewardsPool ?? null,
+      isWritable: false,
+    },
     holderRewards: { value: input.holderRewards ?? null, isWritable: false },
-    destination: { value: input.destination ?? null, isWritable: true },
-    stakeAuthority: { value: input.stakeAuthority ?? null, isWritable: false },
     vaultAuthority: { value: input.vaultAuthority ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
@@ -217,11 +194,9 @@ export function getHarvestHolderRewardsInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.config),
-      getAccountMeta(accounts.stake),
       getAccountMeta(accounts.vault),
+      getAccountMeta(accounts.holderRewardsPool),
       getAccountMeta(accounts.holderRewards),
-      getAccountMeta(accounts.destination),
-      getAccountMeta(accounts.stakeAuthority),
       getAccountMeta(accounts.vaultAuthority),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.tokenProgram),
@@ -232,11 +207,9 @@ export function getHarvestHolderRewardsInstruction<
   } as HarvestHolderRewardsInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
-    TAccountStake,
     TAccountVault,
+    TAccountHolderRewardsPool,
     TAccountHolderRewards,
-    TAccountDestination,
-    TAccountStakeAuthority,
     TAccountVaultAuthority,
     TAccountMint,
     TAccountTokenProgram,
@@ -254,24 +227,20 @@ export type ParsedHarvestHolderRewardsInstruction<
   accounts: {
     /** Stake config account */
     config: TAccountMetas[0];
-    /** Validator or SOL staker stake account */
-    stake: TAccountMetas[1];
     /** Vault token account */
-    vault: TAccountMetas[2];
+    vault: TAccountMetas[1];
+    /** Holder rewards pool account */
+    holderRewardsPool: TAccountMetas[2];
     /** Holder rewards account for vault token account */
     holderRewards: TAccountMetas[3];
-    /** Destination account for withdrawn lamports */
-    destination: TAccountMetas[4];
-    /** Stake authority */
-    stakeAuthority: TAccountMetas[5];
     /** Vault authority (pda of `['token-owner', config]`) */
-    vaultAuthority: TAccountMetas[6];
+    vaultAuthority: TAccountMetas[4];
     /** Stake token mint */
-    mint: TAccountMetas[7];
+    mint: TAccountMetas[5];
     /** Token program */
-    tokenProgram: TAccountMetas[8];
+    tokenProgram: TAccountMetas[6];
     /** System program */
-    systemProgram: TAccountMetas[9];
+    systemProgram: TAccountMetas[7];
   };
   data: HarvestHolderRewardsInstructionData;
 };
@@ -284,7 +253,7 @@ export function parseHarvestHolderRewardsInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedHarvestHolderRewardsInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 10) {
+  if (instruction.accounts.length < 8) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -298,11 +267,9 @@ export function parseHarvestHolderRewardsInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       config: getNextAccount(),
-      stake: getNextAccount(),
       vault: getNextAccount(),
+      holderRewardsPool: getNextAccount(),
       holderRewards: getNextAccount(),
-      destination: getNextAccount(),
-      stakeAuthority: getNextAccount(),
       vaultAuthority: getNextAccount(),
       mint: getNextAccount(),
       tokenProgram: getNextAccount(),

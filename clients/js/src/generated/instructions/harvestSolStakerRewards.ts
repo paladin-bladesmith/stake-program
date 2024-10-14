@@ -29,9 +29,13 @@ import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export type HarvestSolStakerRewardsInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+  TAccountSolStakeViewProgram extends string | IAccountMeta<string> = string,
   TAccountConfig extends string | IAccountMeta<string> = string,
+  TAccountHolderRewards extends string | IAccountMeta<string> = string,
   TAccountSolStakerStake extends string | IAccountMeta<string> = string,
-  TAccountStakeAuthority extends string | IAccountMeta<string> = string,
+  TAccountSolStakerStakeAuthority extends
+    | string
+    | IAccountMeta<string> = string,
   TAccountNativeStake extends string | IAccountMeta<string> = string,
   TAccountValidatorStake extends string | IAccountMeta<string> = string,
   TAccountValidatorStakeAuthority extends
@@ -40,22 +44,27 @@ export type HarvestSolStakerRewardsInstruction<
   TAccountSysvarStakeHistory extends
     | string
     | IAccountMeta<string> = 'SysvarStakeHistory1111111111111111111111111',
-  TAccountSolStakeViewProgram extends string | IAccountMeta<string> = string,
   TAccountKeeperRecipient extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
+      TAccountSolStakeViewProgram extends string
+        ? ReadonlyAccount<TAccountSolStakeViewProgram>
+        : TAccountSolStakeViewProgram,
       TAccountConfig extends string
         ? WritableAccount<TAccountConfig>
         : TAccountConfig,
+      TAccountHolderRewards extends string
+        ? ReadonlyAccount<TAccountHolderRewards>
+        : TAccountHolderRewards,
       TAccountSolStakerStake extends string
         ? WritableAccount<TAccountSolStakerStake>
         : TAccountSolStakerStake,
-      TAccountStakeAuthority extends string
-        ? WritableAccount<TAccountStakeAuthority>
-        : TAccountStakeAuthority,
+      TAccountSolStakerStakeAuthority extends string
+        ? WritableAccount<TAccountSolStakerStakeAuthority>
+        : TAccountSolStakerStakeAuthority,
       TAccountNativeStake extends string
         ? ReadonlyAccount<TAccountNativeStake>
         : TAccountNativeStake,
@@ -68,9 +77,6 @@ export type HarvestSolStakerRewardsInstruction<
       TAccountSysvarStakeHistory extends string
         ? ReadonlyAccount<TAccountSysvarStakeHistory>
         : TAccountSysvarStakeHistory,
-      TAccountSolStakeViewProgram extends string
-        ? ReadonlyAccount<TAccountSolStakeViewProgram>
-        : TAccountSolStakeViewProgram,
       TAccountKeeperRecipient extends string
         ? WritableAccount<TAccountKeeperRecipient>
         : TAccountKeeperRecipient,
@@ -104,22 +110,27 @@ export function getHarvestSolStakerRewardsInstructionDataCodec(): Codec<
 }
 
 export type HarvestSolStakerRewardsInput<
+  TAccountSolStakeViewProgram extends string = string,
   TAccountConfig extends string = string,
+  TAccountHolderRewards extends string = string,
   TAccountSolStakerStake extends string = string,
-  TAccountStakeAuthority extends string = string,
+  TAccountSolStakerStakeAuthority extends string = string,
   TAccountNativeStake extends string = string,
   TAccountValidatorStake extends string = string,
   TAccountValidatorStakeAuthority extends string = string,
   TAccountSysvarStakeHistory extends string = string,
-  TAccountSolStakeViewProgram extends string = string,
   TAccountKeeperRecipient extends string = string,
 > = {
+  /** Sol stake view program */
+  solStakeViewProgram: Address<TAccountSolStakeViewProgram>;
   /** Stake config account */
   config: Address<TAccountConfig>;
+  /** Holder rewards account */
+  holderRewards: Address<TAccountHolderRewards>;
   /** SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`) */
   solStakerStake: Address<TAccountSolStakerStake>;
-  /** Stake authority */
-  stakeAuthority: Address<TAccountStakeAuthority>;
+  /** SOL staker stake authority */
+  solStakerStakeAuthority: Address<TAccountSolStakerStakeAuthority>;
   /** Native stake account */
   nativeStake: Address<TAccountNativeStake>;
   /** Validator stake account */
@@ -128,44 +139,45 @@ export type HarvestSolStakerRewardsInput<
   validatorStakeAuthority: Address<TAccountValidatorStakeAuthority>;
   /** Stake history sysvar */
   sysvarStakeHistory?: Address<TAccountSysvarStakeHistory>;
-  /** Sol stake view program */
-  solStakeViewProgram: Address<TAccountSolStakeViewProgram>;
   /** Recipient for sol sync bounty */
   keeperRecipient?: Address<TAccountKeeperRecipient>;
 };
 
 export function getHarvestSolStakerRewardsInstruction<
+  TAccountSolStakeViewProgram extends string,
   TAccountConfig extends string,
+  TAccountHolderRewards extends string,
   TAccountSolStakerStake extends string,
-  TAccountStakeAuthority extends string,
+  TAccountSolStakerStakeAuthority extends string,
   TAccountNativeStake extends string,
   TAccountValidatorStake extends string,
   TAccountValidatorStakeAuthority extends string,
   TAccountSysvarStakeHistory extends string,
-  TAccountSolStakeViewProgram extends string,
   TAccountKeeperRecipient extends string,
 >(
   input: HarvestSolStakerRewardsInput<
+    TAccountSolStakeViewProgram,
     TAccountConfig,
+    TAccountHolderRewards,
     TAccountSolStakerStake,
-    TAccountStakeAuthority,
+    TAccountSolStakerStakeAuthority,
     TAccountNativeStake,
     TAccountValidatorStake,
     TAccountValidatorStakeAuthority,
     TAccountSysvarStakeHistory,
-    TAccountSolStakeViewProgram,
     TAccountKeeperRecipient
   >
 ): HarvestSolStakerRewardsInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+  TAccountSolStakeViewProgram,
   TAccountConfig,
+  TAccountHolderRewards,
   TAccountSolStakerStake,
-  TAccountStakeAuthority,
+  TAccountSolStakerStakeAuthority,
   TAccountNativeStake,
   TAccountValidatorStake,
   TAccountValidatorStakeAuthority,
   TAccountSysvarStakeHistory,
-  TAccountSolStakeViewProgram,
   TAccountKeeperRecipient
 > {
   // Program address.
@@ -173,9 +185,17 @@ export function getHarvestSolStakerRewardsInstruction<
 
   // Original accounts.
   const originalAccounts = {
+    solStakeViewProgram: {
+      value: input.solStakeViewProgram ?? null,
+      isWritable: false,
+    },
     config: { value: input.config ?? null, isWritable: true },
+    holderRewards: { value: input.holderRewards ?? null, isWritable: false },
     solStakerStake: { value: input.solStakerStake ?? null, isWritable: true },
-    stakeAuthority: { value: input.stakeAuthority ?? null, isWritable: true },
+    solStakerStakeAuthority: {
+      value: input.solStakerStakeAuthority ?? null,
+      isWritable: true,
+    },
     nativeStake: { value: input.nativeStake ?? null, isWritable: false },
     validatorStake: { value: input.validatorStake ?? null, isWritable: true },
     validatorStakeAuthority: {
@@ -184,10 +204,6 @@ export function getHarvestSolStakerRewardsInstruction<
     },
     sysvarStakeHistory: {
       value: input.sysvarStakeHistory ?? null,
-      isWritable: false,
-    },
-    solStakeViewProgram: {
-      value: input.solStakeViewProgram ?? null,
       isWritable: false,
     },
     keeperRecipient: { value: input.keeperRecipient ?? null, isWritable: true },
@@ -206,28 +222,30 @@ export function getHarvestSolStakerRewardsInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
+      getAccountMeta(accounts.solStakeViewProgram),
       getAccountMeta(accounts.config),
+      getAccountMeta(accounts.holderRewards),
       getAccountMeta(accounts.solStakerStake),
-      getAccountMeta(accounts.stakeAuthority),
+      getAccountMeta(accounts.solStakerStakeAuthority),
       getAccountMeta(accounts.nativeStake),
       getAccountMeta(accounts.validatorStake),
       getAccountMeta(accounts.validatorStakeAuthority),
       getAccountMeta(accounts.sysvarStakeHistory),
-      getAccountMeta(accounts.solStakeViewProgram),
       getAccountMeta(accounts.keeperRecipient),
     ],
     programAddress,
     data: getHarvestSolStakerRewardsInstructionDataEncoder().encode({}),
   } as HarvestSolStakerRewardsInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+    TAccountSolStakeViewProgram,
     TAccountConfig,
+    TAccountHolderRewards,
     TAccountSolStakerStake,
-    TAccountStakeAuthority,
+    TAccountSolStakerStakeAuthority,
     TAccountNativeStake,
     TAccountValidatorStake,
     TAccountValidatorStakeAuthority,
     TAccountSysvarStakeHistory,
-    TAccountSolStakeViewProgram,
     TAccountKeeperRecipient
   >;
 
@@ -240,24 +258,26 @@ export type ParsedHarvestSolStakerRewardsInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    /** Stake config account */
-    config: TAccountMetas[0];
-    /** SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`) */
-    solStakerStake: TAccountMetas[1];
-    /** Stake authority */
-    stakeAuthority: TAccountMetas[2];
-    /** Native stake account */
-    nativeStake: TAccountMetas[3];
-    /** Validator stake account */
-    validatorStake: TAccountMetas[4];
-    /** Validator stake authority */
-    validatorStakeAuthority: TAccountMetas[5];
-    /** Stake history sysvar */
-    sysvarStakeHistory: TAccountMetas[6];
     /** Sol stake view program */
-    solStakeViewProgram: TAccountMetas[7];
+    solStakeViewProgram: TAccountMetas[0];
+    /** Stake config account */
+    config: TAccountMetas[1];
+    /** Holder rewards account */
+    holderRewards: TAccountMetas[2];
+    /** SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`) */
+    solStakerStake: TAccountMetas[3];
+    /** SOL staker stake authority */
+    solStakerStakeAuthority: TAccountMetas[4];
+    /** Native stake account */
+    nativeStake: TAccountMetas[5];
+    /** Validator stake account */
+    validatorStake: TAccountMetas[6];
+    /** Validator stake authority */
+    validatorStakeAuthority: TAccountMetas[7];
+    /** Stake history sysvar */
+    sysvarStakeHistory: TAccountMetas[8];
     /** Recipient for sol sync bounty */
-    keeperRecipient?: TAccountMetas[8] | undefined;
+    keeperRecipient?: TAccountMetas[9] | undefined;
   };
   data: HarvestSolStakerRewardsInstructionData;
 };
@@ -270,7 +290,7 @@ export function parseHarvestSolStakerRewardsInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedHarvestSolStakerRewardsInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 9) {
+  if (instruction.accounts.length < 10) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -289,14 +309,15 @@ export function parseHarvestSolStakerRewardsInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
+      solStakeViewProgram: getNextAccount(),
       config: getNextAccount(),
+      holderRewards: getNextAccount(),
       solStakerStake: getNextAccount(),
-      stakeAuthority: getNextAccount(),
+      solStakerStakeAuthority: getNextAccount(),
       nativeStake: getNextAccount(),
       validatorStake: getNextAccount(),
       validatorStakeAuthority: getNextAccount(),
       sysvarStakeHistory: getNextAccount(),
-      solStakeViewProgram: getNextAccount(),
       keeperRecipient: getNextOptionalAccount(),
     },
     data: getHarvestSolStakerRewardsInstructionDataDecoder().decode(

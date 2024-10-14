@@ -29,7 +29,7 @@ use crate::{
 /// 5. `[w]` Stake Token Vault, to hold all staked tokens
 ///          (must be the token account on the stake config account)
 /// 6. `[ ]` Token program
-/// 7.. Extra accounts required for the transfer hook
+/// 7. Extra accounts required for the transfer hook
 ///
 /// Instruction data: amount of tokens to stake, as a little-endian `u64`.
 pub fn process_sol_staker_stake_tokens<'a>(

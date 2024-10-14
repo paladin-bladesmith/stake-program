@@ -236,14 +236,13 @@ pub enum StakeInstruction {
     #[account(
         1,
         writable,
-        name = "stake",
-        desc = "Validator or SOL staker stake account"
+        name = "vault",
+        desc = "Vault token account"
     )]
     #[account(
         2,
-        writable,
-        name = "vault",
-        desc = "Vault token account"
+        name = "holder_rewards_pool",
+        desc = "Holder rewards pool account"
     )]
     #[account(
         3,
@@ -253,33 +252,21 @@ pub enum StakeInstruction {
     #[account(
         4,
         writable,
-        name = "destination",
-        desc = "Destination account for withdrawn lamports"
-    )]
-    #[account(
-        5,
-        signer,
-        name = "stake_authority",
-        desc = "Stake authority"
-    )]
-    #[account(
-        6,
-        writable,
         name = "vault_authority",
         desc = "Vault authority (pda of `['token-owner', config]`)"
     )]
     #[account(
-        7,
+        5,
         name = "mint",
         desc = "Stake token mint"
     )]
     #[account(
-        8,
+        6,
         name = "token_program",
         desc = "Token program"
     )]
     #[account(
-        9,
+        7,
         name = "system_program",
         desc = "System program"
     )]
@@ -298,15 +285,32 @@ pub enum StakeInstruction {
     )]
     #[account(
         1,
-        writable,
-        name = "validator_stake",
-        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+        name = "holder_rewards",
+        desc = "Holder rewards account"
     )]
     #[account(
         2,
         writable,
-        name = "stake_authority",
-        desc = "Stake authority"
+        name = "validator_stake",
+        desc = "Validator stake account"
+    )]
+    #[account(
+        3,
+        writable,
+        name = "validator_stake_authority",
+        desc = "Validator stake authority"
+    )]
+    #[account(
+        4,
+        name = "sysvar_stake_history",
+        desc = "Stake history sysvar"
+    )]
+    #[account(
+        5,
+        optional,
+        writable,
+        name = "keeper_recipient",
+        desc = "Recipient for sol sync bounty"
     )]
     HarvestValidatorRewards,
 
@@ -512,51 +516,56 @@ pub enum StakeInstruction {
     /// based on the proportion of total stake.
     #[account(
         0,
+        name = "sol_stake_view_program",
+        desc = "Sol stake view program"
+    )]
+    #[account(
+        1,
         writable,
         name = "config",
         desc = "Stake config account"
     )]
     #[account(
-        1,
+        2,
+        name = "holder_rewards",
+        desc = "Holder rewards account"
+    )]
+    #[account(
+        3,
         writable,
         name = "sol_staker_stake",
         desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
     )]
     #[account(
-        2,
+        4,
         writable,
-        name = "stake_authority",
-        desc = "Stake authority"
+        name = "sol_staker_stake_authority",
+        desc = "SOL staker stake authority"
     )]
     #[account(
-        3,
+        5,
         name = "native_stake",
         desc = "Native stake account"
     )]
     #[account(
-        4,
+        6,
         writable,
         name = "validator_stake",
         desc = "Validator stake account"
     )]
     #[account(
-        5,
+        7,
         writable,
         name = "validator_stake_authority",
         desc = "Validator stake authority"
     )]
     #[account(
-        6,
+        8,
         name = "sysvar_stake_history",
         desc = "Stake history sysvar"
     )]
     #[account(
-        7,
-        name = "sol_stake_view_program",
-        desc = "Sol stake view program"
-    )]
-    #[account(
-        8,
+        9,
         optional,
         writable,
         name = "keeper_recipient",

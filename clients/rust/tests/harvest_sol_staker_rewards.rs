@@ -3,6 +3,7 @@
 mod setup;
 
 use borsh::BorshSerialize;
+use paladin_rewards_program_client::accounts::HolderRewards;
 use paladin_stake_program_client::{
     accounts::{Config, SolStakerStake, ValidatorStake},
     errors::PaladinStakeProgramError,
@@ -33,8 +34,8 @@ async fn harvest_sol_staker_rewards() {
     let mut context = setup().await;
 
     // Given a config account with 26 lamports rewards and 130 staked amount.
-
-    let config = create_config(&mut context).await;
+    let config_manager = ConfigManager::new(&mut context).await;
+    let config = config_manager.config;
 
     let mut account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
@@ -46,7 +47,6 @@ async fn harvest_sol_staker_rewards() {
     context.set_account(&config, &account.into());
 
     // And a validator stake and sol staker stake accounts with 65 staked tokens.
-
     let validator_stake_manager = ValidatorStakeManager::new(&mut context, &config).await;
     let sol_staker_stake_manager = SolStakerStakeManager::new(
         &mut context,
@@ -77,6 +77,26 @@ async fn harvest_sol_staker_rewards() {
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     // When we harvest the stake rewards.
     //
     // We are expecting the rewards to be 13 lamports.
@@ -100,8 +120,9 @@ async fn harvest_sol_staker_rewards() {
 
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -134,8 +155,8 @@ async fn harvest_sol_staker_rewards_wrapped() {
     let mut context = setup().await;
 
     // Given a config account with 26 lamports rewards and 130 staked amount.
-
-    let config = create_config(&mut context).await;
+    let config_manager = ConfigManager::new(&mut context).await;
+    let config = config_manager.config;
 
     let mut account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
@@ -184,6 +205,26 @@ async fn harvest_sol_staker_rewards_wrapped() {
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     // When we harvest the stake rewards.
     //
     // We are expecting the rewards to be 13 lamports.
@@ -207,8 +248,9 @@ async fn harvest_sol_staker_rewards_wrapped() {
 
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -240,8 +282,8 @@ async fn harvest_sol_staker_rewards_with_no_rewards_available() {
     let mut context = setup().await;
 
     // Given a config account with no rewards and 130 staked amount.
-
-    let config = create_config(&mut context).await;
+    let config_manager = ConfigManager::new(&mut context).await;
+    let config = config_manager.config;
 
     let mut account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
@@ -286,6 +328,26 @@ async fn harvest_sol_staker_rewards_with_no_rewards_available() {
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     // Set the starting authority balance.
     context.set_account(
         &sol_staker_stake_manager.authority.pubkey(),
@@ -298,8 +360,9 @@ async fn harvest_sol_staker_rewards_with_no_rewards_available() {
 
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -327,8 +390,8 @@ async fn harvest_sol_staker_rewards_after_harvesting() {
     let mut context = setup().await;
 
     // Given a config account with 26 lamports rewards and 130 staked amount.
-
-    let config = create_config(&mut context).await;
+    let config_manager = ConfigManager::new(&mut context).await;
+    let config = config_manager.config;
 
     let mut account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
@@ -382,6 +445,26 @@ async fn harvest_sol_staker_rewards_after_harvesting() {
     // The "first" harvest is sumulated by setting the last seen stake rewards per token to the
     // config accumulated stake rewards per token.
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     // Make the authority account rent exempt.
     context.set_account(
         &sol_staker_stake_manager.authority.pubkey(),
@@ -394,8 +477,9 @@ async fn harvest_sol_staker_rewards_after_harvesting() {
 
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -418,152 +502,13 @@ async fn harvest_sol_staker_rewards_after_harvesting() {
     assert_eq!(account.lamports, expected_config_lamports);
 }
 
-#[ignore = "Convert this into a harvest with mismatched SOL leads to sync"]
-#[tokio::test]
-async fn harvest_sol_staker_rewards_with_excess_rewards() {
-    let mut context = setup().await;
-
-    // Given a config account with 13_000_000_000 (13 SOL) lamports rewards and
-    // 26_000_000_000 staked amount.
-
-    let config = create_config(&mut context).await;
-
-    let mut account = get_account!(context, config);
-    let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    let config_rent_lamports = account.lamports;
-    // "manually" set the total amount delegated
-    config_account.token_amount_effective = 26_000_000_000;
-    config_account.accumulated_stake_rewards_per_token =
-        calculate_stake_rewards_per_token(13_000_000_000, 26_000_000_000);
-
-    account.lamports += 13_000_000_000;
-    account.data = config_account.try_to_vec().unwrap();
-    context.set_account(&config, &account.into());
-
-    // And a validator stake account and sol staker stake account with 13_000_000_000
-    // staked tokens and 5_000_000_000 (5 SOL) staked lamports.
-
-    let validator_stake_manager = ValidatorStakeManager::new(&mut context, &config).await;
-    let sol_staker_stake_manager = SolStakerStakeManager::new(
-        &mut context,
-        &config,
-        &validator_stake_manager.stake,
-        &validator_stake_manager.vote,
-        5_000_000_000, // 5 SOL
-    )
-    .await;
-
-    let mut account = get_account!(context, validator_stake_manager.stake);
-    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the staked values
-    stake_account.total_staked_lamports_amount = 5_000_000_000;
-    account.data = stake_account.try_to_vec().unwrap();
-    context.set_account(&validator_stake_manager.stake, &account.into());
-
-    let mut account = get_account!(context, sol_staker_stake_manager.stake);
-    let mut stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the staked values:
-    //   - delegation amount = 13_000_000_000
-    //   - lamports amount = 5_000_000_000 (5 SOL)
-    stake_account.delegation.amount = 13_000_000_000;
-    stake_account.delegation.effective_amount = 13_000_000_000;
-    stake_account.lamports_amount = 5_000_000_000;
-    account.data = stake_account.try_to_vec().unwrap();
-    context.set_account(&sol_staker_stake_manager.stake, &account.into());
-
-    // When we harvest the stake rewards with excess rewards.
-    //
-    // We are expecting the rewards received by the SOL staker to be 3.25 SOL and the config
-    // will retain 9.75 SOL (3.25 excess + 6.5 remaining rewards).
-    //
-    // Calculation:
-    //
-    //   [SOL staker stake account]
-    //   - amount staked: 13_000_000_000
-    //   - SOL stake amount: 5_000_000_000
-    //   - stake limit: 1.3 * 5_000_000_000 = 6_500_000_000
-    //
-    //   [config account]
-    //   - total staked: 26_000_000_000
-    //   - stake rewards: 13_000_000_000
-    //   - rewards per token: 13_000_000_000_000_000_000 / 26_000_000_000 = 0.5 SOL
-    //
-    //   [harvest]
-    //   - rewards for 6_500_000_000 staked, since this is the stake limit:
-    //     0.5 * 6_500_000_000 = 3_250_000_000 (3.25 SOL)
-    //
-    //   - the excess rewards are 3_250_000_000 (3.25 SOL), which goes "back" to
-    //     the config account: 6.5 + 3.25 =  9_750_000_000 (9.75 SOL)
-    //
-    //   - and the excess is shared only with the remaining staked amount:
-    //     26_000_000_000 - 13_000_000_000 = 13_000_000_000
-    //
-    //   - the rewards per token for the remaining staked amount:
-    //     3_250_000_000 / 13_000_000_000 = 0.25 SOL
-    //
-    //   - the final accumulated stake rewards per token: 750_000_000 (0.5 + 0.25 SOL)
-
-    // Set the starting authority balance.
-    context.set_account(
-        &sol_staker_stake_manager.authority.pubkey(),
-        &AccountSharedData::from(Account {
-            // amount to cover the account rent
-            lamports: 100_000_000,
-            ..Default::default()
-        }),
-    );
-
-    let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
-        .config(config)
-        .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
-        .validator_stake(validator_stake_manager.stake)
-        .validator_stake_authority(validator_stake_manager.authority.pubkey())
-        .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
-        .instruction();
-    let tx = Transaction::new_signed_with_payer(
-        &[harvest_stake_rewards_ix],
-        Some(&context.payer.pubkey()),
-        &[&context.payer],
-        context.last_blockhash,
-    );
-    context.banks_client.process_transaction(tx).await.unwrap();
-
-    // Then the destination account has the rewards.
-    let account = get_account!(context, sol_staker_stake_manager.authority.pubkey());
-    assert_eq!(account.lamports, 3_250_000_000);
-
-    // And the stake account has the updated last seen stake rewards per token.
-
-    let account = get_account!(context, sol_staker_stake_manager.stake);
-    let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(
-        stake_account.delegation.last_seen_stake_rewards_per_token,
-        750_000_000_000_000_000
-    );
-
-    // And the config account has the remaining rewards plus the excess rewards.
-
-    let account = get_account!(context, config);
-    let config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(
-        config_account.accumulated_stake_rewards_per_token,
-        750_000_000_000_000_000
-    );
-    assert_eq!(
-        account.lamports,
-        config_rent_lamports.saturating_add(9_750_000_000)
-    );
-}
-
 #[tokio::test]
 async fn fail_harvest_sol_staker_rewards_with_wrong_authority() {
     let mut context = setup().await;
 
     // Given a config account with 26 lamports rewards and 130 staked amount.
-
-    let config = create_config(&mut context).await;
+    let config_manager = ConfigManager::new(&mut context).await;
+    let config = config_manager.config;
 
     let mut account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
@@ -607,13 +552,34 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_authority() {
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     // When we try harvest the stake rewards with the wrong authority.
 
     let fake_authority = Pubkey::new_unique();
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(fake_authority) // <- wrong authority
+        .sol_staker_stake_authority(fake_authority) // <- wrong authority
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -641,8 +607,8 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_config_account() {
     let mut context = setup().await;
 
     // Given a config account with 26 lamports rewards and 130 staked amount.
-
-    let config = create_config(&mut context).await;
+    let config_manager = ConfigManager::new(&mut context).await;
+    let config = config_manager.config;
 
     let mut account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
@@ -690,6 +656,26 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_config_account() {
 
     let another_config = create_config(&mut context).await;
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     // Set the starting authority balance.
     context.set_account(
         &sol_staker_stake_manager.authority.pubkey(),
@@ -702,8 +688,9 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_config_account() {
 
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(another_config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -730,8 +717,8 @@ async fn fail_harvest_sol_staker_rewards_with_uninitialized_stake_account() {
     let mut context = setup().await;
 
     // Given a config account with 26 lamports rewards and 130 staked amount.
-
-    let config = create_config(&mut context).await;
+    let config_manager = ConfigManager::new(&mut context).await;
+    let config = config_manager.config;
 
     let mut account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
@@ -785,10 +772,31 @@ async fn fail_harvest_sol_staker_rewards_with_uninitialized_stake_account() {
         }),
     );
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -882,11 +890,32 @@ async fn harvest_sol_stake_when_deactivating() {
         }),
     );
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     // When we sync the SOL stake after deactivating the SOL stake.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -986,11 +1015,32 @@ async fn harvest_sol_stake_when_inactive() {
         }),
     );
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     // When we sync the SOL stake after deactivating the SOL stake.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -1083,10 +1133,31 @@ async fn sync_sol_stake_when_effective() {
         }),
     );
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -1154,10 +1225,31 @@ async fn sync_sol_stake_when_activating() {
         }),
     );
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -1228,11 +1320,32 @@ async fn fail_sync_sol_stake_with_wrong_config_account() {
         }),
     );
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     // When we try to sync the SOL stake with the wrong config account.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(another_config.config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -1305,11 +1418,32 @@ async fn fail_sync_sol_stake_with_wrong_sol_stake_account() {
         }),
     );
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     // When we try to sync the SOL stake with the wrong config account.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(another_sol_stake.pubkey())
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -1375,11 +1509,32 @@ async fn fail_sync_sol_stake_with_wrong_validator_stake() {
         }),
     );
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     // When we try to sync with the wrong validator stake account.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(another_validator_stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -1451,11 +1606,32 @@ async fn fail_sync_sol_stake_with_uninitialized_config() {
         }),
     );
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     // When we try to sync with a unitialized config account.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -1527,11 +1703,32 @@ async fn fail_sync_sol_stake_with_uninitialized_validator_stake() {
         }),
     );
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     // When we try to sync with a unitialized validator stake account.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -1601,11 +1798,32 @@ async fn fail_sync_sol_stake_with_invalid_sol_stake_view_program() {
         }),
     );
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     // When we try to sync with a fake sol stake view program.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -1718,12 +1936,33 @@ async fn sync_sol_stake_when_sol_stake_redelegated() {
         }),
     );
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     // When we sync the SOL stake after the SOL stake has been delegated to a different
     // vote account.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -1847,11 +2086,32 @@ async fn harvest_sync_rewards() {
         }),
     );
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     // When we harvest rewards for syncing the SOL stake after deactivating the SOL stake.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -1995,11 +2255,32 @@ async fn harvest_sync_rewards_wrapped() {
         }),
     );
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     // When we harvest rewards for syncing the SOL stake after deactivating the SOL stake.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -2135,12 +2416,33 @@ async fn harvest_sync_rewards_without_rewards() {
         }),
     );
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     // When we harvest rewards for syncing the SOL stake after deactivating the SOL stake
     // on a SOL staker stake account with no rewards.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -2276,11 +2578,32 @@ async fn harvest_sync_rewards_with_closed_sol_stake_account() {
         }),
     );
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     // When we harvest rewards for syncing the SOL stake after closing the SOL stake account.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -2429,10 +2752,31 @@ async fn harvest_sync_rewards_with_capped_sync_rewards() {
         }),
     );
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -2544,11 +2888,32 @@ async fn fail_harvest_sync_rewards_with_wrong_sol_stake_account() {
         }),
     );
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     // When we try to harvest rewards for syncing the SOL stake with the wrong SOL stake account.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(another_sol_stake.pubkey()) // <- wrong SOL stake account
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -2624,11 +2989,32 @@ async fn fail_harvest_sync_rewards_with_wrong_validator_stake_account() {
         }),
     );
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     // When we try to harvest rewards for syncing the SOL stake with the wrong validator stake account.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(another_validator_stake) // <- wrong validator stake account
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -2703,11 +3089,32 @@ async fn fail_harvest_sync_rewards_with_wrong_config_account() {
         }),
     );
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     // When we try to harvest rewards for syncing the SOL stake with the wrong config account.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
-        .config(another_config) // <- invalid config
+        .config(another_config)
+        .holder_rewards(holder_rewards) // <- invalid config
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -2785,12 +3192,33 @@ async fn fail_harvest_sync_rewards_with_invalid_sol_stake_view_program() {
         }),
     );
 
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     // When we try to harvest rewards for syncing the SOL stake with an invalid sol stake
     // view program.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
-        .stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
@@ -2813,3 +3241,6 @@ async fn fail_harvest_sync_rewards_with_invalid_sol_stake_view_program() {
 
     assert_instruction_error!(err, InstructionError::IncorrectProgramId);
 }
+
+// TODO: Test case where we pass the wrong holders_reward.
+// TODO: Test case where we pass the wrong stake_view (this might already exist, check that).
