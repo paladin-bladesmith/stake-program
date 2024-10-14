@@ -30,7 +30,7 @@ async fn distribute_rewards() {
     // "manually" set the total amount delegated
     let account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 5; // <- 5 tokens
+    config_account.token_amount_effective = 5; // <- 5 tokens
 
     let updated_config = Account {
         lamports: account.lamports,
@@ -88,7 +88,7 @@ async fn distribute_rewards_wrapped() {
     // "manually" set the total amount delegated and max reward.
     let account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 5; // <- 5 tokens
+    config_account.token_amount_effective = 5; // <- 5 tokens
     config_account.accumulated_stake_rewards_per_token = u128::MAX; // Maximum rate.
 
     let updated_config = Account {
@@ -244,7 +244,7 @@ async fn fail_distribute_rewards_with_payer_insufficient_funds() {
     // "manually" set the total amount delegated
     let account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 5; // <- 5 tokens
+    config_account.token_amount_effective = 5; // <- 5 tokens
 
     let updated_config = Account {
         lamports: account.lamports,
