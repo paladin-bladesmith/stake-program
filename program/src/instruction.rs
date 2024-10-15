@@ -632,8 +632,20 @@ pub enum StakeInstruction {
     #[account(
         1,
         writable,
-        name = "stake",
+        name = "sol_staker_stake",
         desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+    )]
+    #[account(
+        2,
+        writable,
+        name = "sol_staker_stake_authority",
+        desc = "SOL staker stake authority account"
+    )]
+    #[account(
+        3,
+        writable,
+        name = "vault_holder_rewards",
+        desc = "Vault holder rewards account"
     )]
     InactivateSolStakerStake,
 

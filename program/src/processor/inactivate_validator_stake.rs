@@ -35,7 +35,6 @@ pub fn process_inactivate_validator_stake(
     // - must be a ValidatorStake account
     // - must be initialized
     // - must have the correct derivation
-    solana_program::msg!("0");
     require!(
         ctx.accounts.validator_stake.owner == program_id,
         ProgramError::InvalidAccountOwner,
@@ -56,7 +55,6 @@ pub fn process_inactivate_validator_stake(
     let delegation = &mut stake.delegation;
 
     // Harvest rewards & update last claim tracking.
-    solana_program::msg!("1");
     harvest(
         HarvestAccounts {
             config: ctx.accounts.config,
@@ -66,7 +64,6 @@ pub fn process_inactivate_validator_stake(
         delegation,
         None,
     )?;
-    solana_program::msg!("2");
 
     // config
     // - owner must be the stake program
@@ -85,11 +82,10 @@ pub fn process_inactivate_validator_stake(
         "config",
     );
 
+    // Inactivates the stake if eligible.
     let Some(timestamp) = delegation.deactivation_timestamp else {
         return Err(StakeError::NoDeactivatedTokens.into());
     };
-
-    // Inactivates the stake if eligible.
     let inactive_timestamp = config.cooldown_time_seconds.saturating_add(timestamp.get());
     let current_timestamp = Clock::get()?.unix_timestamp as u64;
 

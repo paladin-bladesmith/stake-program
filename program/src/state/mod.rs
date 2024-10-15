@@ -180,6 +180,7 @@ pub struct Delegation {
     /// Amount of staked tokens currently active.
     pub amount: u64,
 
+    // TODO: Amount does not include inactive amount but amount is used for holder rewards (which inactive tokens should still earn)...
     /// Amount of staked tokens (but capped at 1.3 PAL per SOL).
     pub effective_amount: u64,
 
