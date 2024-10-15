@@ -53,7 +53,7 @@ async fn withdraw_inactive_stake_with_validator_stake() {
 
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 50;
+    config_account.token_amount_effective = 50;
     // "manually" update the config account data
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
@@ -157,7 +157,7 @@ async fn withdraw_inactive_stake_with_validator_stake() {
 
     let account = get_account!(context, config_manager.config);
     let config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(config_account.token_amount_delegated, 50);
+    assert_eq!(config_account.token_amount_effective, 50);
 
     // And the inactive amount on the stake account should be updated.
 
@@ -195,7 +195,7 @@ async fn withdraw_inactive_stake_with_sol_staker_stake() {
 
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 50;
+    config_account.token_amount_effective = 50;
     // "manually" update the config account data
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
@@ -299,7 +299,7 @@ async fn withdraw_inactive_stake_with_sol_staker_stake() {
 
     let account = get_account!(context, config_manager.config);
     let config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(config_account.token_amount_delegated, 50);
+    assert_eq!(config_account.token_amount_effective, 50);
 
     // And the inactive amount on the sol staker stake account should be updated.
 
@@ -338,7 +338,7 @@ async fn fail_withdraw_inactive_stake_with_validator_stake_without_inactive_stak
 
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     // "manually" update the config account data
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
@@ -460,7 +460,7 @@ async fn fail_withdraw_inactive_stake_with_sol_staker_stake_without_inactive_sta
 
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     // "manually" update the config account data
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
@@ -583,7 +583,7 @@ async fn fail_withdraw_inactive_stake_with_invalid_stake_authority() {
 
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     // "manually" update the config account data
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
@@ -603,7 +603,7 @@ async fn fail_withdraw_inactive_stake_with_invalid_stake_authority() {
 
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     // "manually" update the config account data
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
@@ -728,7 +728,7 @@ async fn fail_withdraw_inactive_stake_with_uninitialized_stake_account() {
 
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     // "manually" update the config account data
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
@@ -856,7 +856,7 @@ async fn fail_withdraw_inactive_stake_with_uninitialized_config_account() {
 
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     // "manually" update the config account data
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
@@ -992,7 +992,7 @@ async fn fail_withdraw_inactive_stake_with_wrong_config_account() {
 
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     // "manually" update the config account data
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
@@ -1120,7 +1120,7 @@ async fn fail_withdraw_inactive_stake_with_wrong_mint() {
 
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     // "manually" update the config account data
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
@@ -1255,7 +1255,7 @@ async fn fail_withdraw_inactive_stake_with_wrong_vault_account() {
 
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     // "manually" update the config account data
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
@@ -1392,7 +1392,7 @@ async fn fail_withdraw_inactive_stake_with_vault_as_destination() {
 
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     // "manually" update the config account data
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
