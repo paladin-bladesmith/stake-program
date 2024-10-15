@@ -30,6 +30,8 @@ pub fn process_inactivate_sol_staker_stake(
 ) -> ProgramResult {
     // Account validation.
 
+    // TODO: We need to harvest before we can modify the effective stake numbers.
+
     // config
     // - owner must be the stake program
     // - must be initialized

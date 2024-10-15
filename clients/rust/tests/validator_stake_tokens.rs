@@ -25,11 +25,7 @@ use solana_sdk::{
     signature::{Keypair, Signer},
     transaction::Transaction,
 };
-use spl_token_2022::{
-    extension::{PodStateWithExtensions, StateWithExtensions},
-    pod::PodAccount,
-    state::Account,
-};
+use spl_token_2022::{extension::StateWithExtensions, state::Account};
 
 #[tokio::test]
 async fn validator_stake_tokens_simple() {
@@ -659,9 +655,6 @@ async fn validator_stake_tokens_with_insufficient_staked_sol_effective_capped() 
     // - stake limit: 1.3 * 2_000_000_000 = 2_600_000_000
     //
     // Stake amount exceeds the limit: 2_600_000_001 > 2_600_000_000
-
-    let token = get_account!(context, rewards_manager.token_account);
-    let token = PodStateWithExtensions::<PodAccount>::unpack(&token.data).unwrap();
 
     let mut stake_ix = ValidatorStakeTokensBuilder::new()
         .config(config_manager.config)

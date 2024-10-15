@@ -245,11 +245,27 @@
           ]
         },
         {
-          "name": "stake",
+          "name": "validatorStake",
           "isMut": true,
           "isSigner": false,
           "docs": [
             "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+          ]
+        },
+        {
+          "name": "validatorStakeAuthority",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Validator stake authority account"
+          ]
+        },
+        {
+          "name": "vaultHolderRewards",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Vault holder rewards account"
           ]
         }
       ],

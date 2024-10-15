@@ -12,7 +12,6 @@ use paladin_stake_program_client::{
 };
 use setup::{
     config::{create_config, ConfigManager},
-    rewards::{create_holder_rewards, create_holder_rewards_pool},
     validator_stake::ValidatorStakeManager,
 };
 use solana_program_test::{tokio, ProgramTest};
@@ -20,7 +19,6 @@ use solana_sdk::{
     account::{Account, AccountSharedData},
     instruction::InstructionError,
     pubkey::Pubkey,
-    rent::Rent,
     signature::{Keypair, Signer},
     transaction::Transaction,
 };

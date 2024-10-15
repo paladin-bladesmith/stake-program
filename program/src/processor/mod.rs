@@ -317,7 +317,7 @@ pub(crate) fn harvest(
     )?;
 
     // Compute the holder reward.
-    let holder_rewards = HolderRewards::try_from(accounts.holder_rewards)?;
+    let holder_rewards = HolderRewards::try_from(accounts.holder_rewards).unwrap();
     let holder_reward = calculate_eligible_rewards(
         holder_rewards.last_accumulated_rewards_per_token,
         delegation.last_seen_holder_rewards_per_token.into(),
