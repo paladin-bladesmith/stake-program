@@ -332,11 +332,14 @@ pub(crate) fn harvest(
 
     // Withdraw the lamports from the config account.
     let rent_exempt_minimum = Rent::get()?.minimum_balance(accounts.config.data_len());
+    solana_program::msg!("config: {}", accounts.config.lamports());
+    solana_program::msg!("total_reward: {}", total_reward);
     let config_lamports = accounts
         .config
         .lamports()
         .checked_sub(total_reward)
-        .ok_or(ProgramError::ArithmeticOverflow)?;
+        .ok_or(ProgramError::ArithmeticOverflow)
+        .unwrap();
     assert!(config_lamports >= rent_exempt_minimum);
 
     // Pay the keeper first, if one is set.
@@ -346,7 +349,8 @@ pub(crate) fn harvest(
             let keeper_lamports = keeper
                 .try_borrow_lamports()?
                 .checked_add(keeper_reward)
-                .ok_or(ProgramError::ArithmeticOverflow)?;
+                .ok_or(ProgramError::ArithmeticOverflow)
+                .unwrap();
             **keeper.try_borrow_mut_lamports()? = keeper_lamports;
 
             keeper_reward
@@ -357,12 +361,14 @@ pub(crate) fn harvest(
     // Pay the delegator.
     let delegator_reward = total_reward
         .checked_sub(keeper_reward)
-        .ok_or(ProgramError::ArithmeticOverflow)?;
+        .ok_or(ProgramError::ArithmeticOverflow)
+        .unwrap();
     let recipient_lamports = accounts
         .recipient
         .lamports()
         .checked_add(delegator_reward)
-        .ok_or(ProgramError::ArithmeticOverflow)?;
+        .ok_or(ProgramError::ArithmeticOverflow)
+        .unwrap();
 
     // Update the lamport amounts.
     drop(config_data);
