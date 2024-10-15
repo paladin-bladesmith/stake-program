@@ -977,7 +977,7 @@
           ]
         },
         {
-          "name": "stake",
+          "name": "solStakerStake",
           "isMut": true,
           "isSigner": false,
           "docs": [
@@ -985,11 +985,11 @@
           ]
         },
         {
-          "name": "validatorStake",
+          "name": "solStakerStakeAuthority",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+            "SOL staker stake authority account"
           ]
         },
         {
@@ -1001,6 +1001,14 @@
           ]
         },
         {
+          "name": "mint",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Vault token mint"
+          ]
+        },
+        {
           "name": "vault",
           "isMut": true,
           "isSigner": false,
@@ -1009,11 +1017,11 @@
           ]
         },
         {
-          "name": "mint",
-          "isMut": true,
+          "name": "vaultHolderRewards",
+          "isMut": false,
           "isSigner": false,
           "docs": [
-            "Stake Token Mint"
+            "Vault holder rewards account"
           ]
         },
         {

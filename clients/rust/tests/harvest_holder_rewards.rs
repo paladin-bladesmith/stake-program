@@ -910,7 +910,7 @@ async fn fail_harvest_holder_rewards_with_wrong_config() {
         .unwrap_err();
 
     // Then we expect an error.
-    assert_instruction_error!(err, InstructionError::Custom(16));
+    assert_custom_error!(err, PaladinStakeProgramError::IncorrectVaultAccount);
 }
 
 #[tokio::test]
