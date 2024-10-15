@@ -332,8 +332,6 @@ pub(crate) fn harvest(
 
     // Withdraw the lamports from the config account.
     let rent_exempt_minimum = Rent::get()?.minimum_balance(accounts.config.data_len());
-    solana_program::msg!("config: {}", accounts.config.lamports());
-    solana_program::msg!("total_reward: {}", total_reward);
     let config_lamports = accounts
         .config
         .lamports()

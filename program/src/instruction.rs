@@ -91,28 +91,40 @@ pub enum StakeInstruction {
     #[account(
         2,
         writable,
+        name = "validator_stake_authority",
+        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+    )]
+    #[account(
+        3,
+        writable,
         name = "source_token_account",
         desc = "Token account"
     )]
     #[account(
-        3,
+        4,
         signer,
         name = "token_account_authority",
         desc = "Owner or delegate of the token account"
     )]
     #[account(
-        4,
+        5,
         name = "mint",
         desc = "Stake Token Mint"
     )]
     #[account(
-        5,
+        6,
         writable,
         name = "vault",
         desc = "Stake token Vault"
     )]
     #[account(
-        6,
+        7,
+        writable,
+        name = "vault_holder_rewards",
+        desc = "Holder rewards for the vault account (to facilitate harvest)"
+    )]
+    #[account(
+        8,
         name = "token_program",
         desc = "Token program"
     )]

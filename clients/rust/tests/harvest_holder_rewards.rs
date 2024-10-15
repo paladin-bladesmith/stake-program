@@ -8,8 +8,7 @@ use paladin_stake_program_client::{
     accounts::{Config, SolStakerStake, ValidatorStake},
     errors::PaladinStakeProgramError,
     instructions::{
-        HarvestHolderRewardsBuilder, HarvestSolStakerRewards, HarvestSolStakerRewardsBuilder,
-        HarvestValidatorRewardsBuilder,
+        HarvestHolderRewardsBuilder, HarvestSolStakerRewardsBuilder, HarvestValidatorRewardsBuilder,
     },
     pdas::{find_validator_stake_pda, find_vault_pda},
 };
@@ -28,10 +27,7 @@ use solana_sdk::{
     signature::{Keypair, Signer},
     transaction::Transaction,
 };
-use spl_token_2022::{
-    extension::{PodStateWithExtensionsMut, StateWithExtensions},
-    pod::PodAccount,
-};
+use spl_token_2022::{extension::PodStateWithExtensionsMut, pod::PodAccount};
 
 #[tokio::test]
 async fn validator_stake_harvest_holder_rewards() {
@@ -49,19 +45,16 @@ async fn validator_stake_harvest_holder_rewards() {
     let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account with 100 staked amount.
-
     let config_manager = ConfigManager::new(&mut context).await;
-
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the total amount delegated
     config_account.token_amount_effective = 100;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
 
     // Set vault token balance to match the total staked (100).
     let mut account = get_account!(context, config_manager.vault);
-    let mut vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
+    let vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
     vault.base.amount = 100.into();
     context.set_account(&config_manager.vault, &account.into());
 
@@ -192,7 +185,7 @@ async fn validator_stake_harvest_holder_rewards_wrapped() {
 
     // Set vault token balance to match the total staked (100).
     let mut account = get_account!(context, config_manager.vault);
-    let mut vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
+    let vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
     vault.base.amount = 100.into();
     context.set_account(&config_manager.vault, &account.into());
 
@@ -345,7 +338,7 @@ async fn validator_stake_harvest_holder_rewards_with_no_rewards_available() {
 
     // Set vault token balance to match the total staked (100).
     let mut account = get_account!(context, config_manager.vault);
-    let mut vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
+    let vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
     vault.base.amount = 100.into();
     context.set_account(&config_manager.vault, &account.into());
 
@@ -446,7 +439,7 @@ async fn validator_stake_harvest_holder_rewards_after_harvesting() {
 
     // Set vault token balance to match the total staked (100).
     let mut account = get_account!(context, config_manager.vault);
-    let mut vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
+    let vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
     vault.base.amount = 100.into();
     context.set_account(&config_manager.vault, &account.into());
 
@@ -583,7 +576,7 @@ async fn validator_stake_fail_harvest_holder_rewards_with_wrong_authority() {
 
     // Set vault token balance to match the total staked (100).
     let mut account = get_account!(context, config_manager.vault);
-    let mut vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
+    let vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
     vault.base.amount = 100.into();
     context.set_account(&config_manager.vault, &account.into());
 
@@ -757,7 +750,7 @@ async fn fail_harvest_holder_rewards_with_uninitialized_stake() {
 
     // Set vault token balance to match the total staked (100).
     let mut account = get_account!(context, config_manager.vault);
-    let mut vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
+    let vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
     vault.base.amount = 100.into();
     context.set_account(&config_manager.vault, &account.into());
 
@@ -846,7 +839,7 @@ async fn fail_harvest_holder_rewards_with_wrong_config() {
 
     // Set vault token balance to match the total staked (100).
     let mut account = get_account!(context, config_manager.vault);
-    let mut vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
+    let vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
     vault.base.amount = 100.into();
     context.set_account(&config_manager.vault, &account.into());
 
@@ -917,8 +910,7 @@ async fn fail_harvest_holder_rewards_with_wrong_config() {
         .unwrap_err();
 
     // Then we expect an error.
-    let custom_err = PaladinStakeProgramError::IncorrectVaultAccount as u32;
-    assert_instruction_error!(err, InstructionError::Custom(custom_err));
+    assert_instruction_error!(err, InstructionError::Custom(16));
 }
 
 #[tokio::test]
@@ -936,7 +928,7 @@ async fn sol_staker_stake_harvest_holder_rewards() {
 
     // Set vault token balance to match the total staked (100).
     let mut account = get_account!(context, config_manager.vault);
-    let mut vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
+    let vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
     vault.base.amount = 100.into();
     context.set_account(&config_manager.vault, &account.into());
 
@@ -1066,7 +1058,7 @@ async fn sol_staker_stake_harvest_holder_rewards_with_no_rewards_available() {
 
     // Set vault token balance to match the total staked (100).
     let mut account = get_account!(context, config_manager.vault);
-    let mut vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
+    let vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
     vault.base.amount = 100.into();
     context.set_account(&config_manager.vault, &account.into());
 
@@ -1170,17 +1162,13 @@ async fn sol_staker_stake_harvest_holder_rewards_after_harvesting() {
 
     // Set vault token balance to match the total staked (100).
     let mut account = get_account!(context, config_manager.vault);
-    let mut vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
+    let vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
     vault.base.amount = 100.into();
     context.set_account(&config_manager.vault, &account.into());
 
     // And a stake account wiht a 50 staked amount.
     let validator_stake_manager =
         ValidatorStakeManager::new(&mut context, &config_manager.config).await;
-    let mut account = get_account!(context, validator_stake_manager.stake);
-    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    account.data = stake_account.try_to_vec().unwrap();
-    context.set_account(&validator_stake_manager.stake, &account.into());
 
     // And a sol staker stake account wiht a 50 total staked amount.
     let sol_staker_stake_manager = SolStakerStakeManager::new(
@@ -1319,17 +1307,13 @@ async fn sol_staker_stake_fail_harvest_holder_rewards_with_wrong_authority() {
 
     // Set vault token balance to match the total staked (100).
     let mut account = get_account!(context, config_manager.vault);
-    let mut vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
+    let vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
     vault.base.amount = 100.into();
     context.set_account(&config_manager.vault, &account.into());
 
-    // And a stake account wiht a 50 staked amount.
+    // And a validator stake account.
     let validator_stake_manager =
         ValidatorStakeManager::new(&mut context, &config_manager.config).await;
-    let mut account = get_account!(context, validator_stake_manager.stake);
-    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    account.data = stake_account.try_to_vec().unwrap();
-    context.set_account(&validator_stake_manager.stake, &account.into());
 
     // And a sol staker stake account wiht a 50 total staked amount.
     let sol_staker_stake_manager = SolStakerStakeManager::new(

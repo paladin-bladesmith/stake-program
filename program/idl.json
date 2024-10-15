@@ -127,6 +127,14 @@
           ]
         },
         {
+          "name": "validatorStakeAuthority",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+          ]
+        },
+        {
           "name": "sourceTokenAccount",
           "isMut": true,
           "isSigner": false,
@@ -156,6 +164,14 @@
           "isSigner": false,
           "docs": [
             "Stake token Vault"
+          ]
+        },
+        {
+          "name": "vaultHolderRewards",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Holder rewards for the vault account (to facilitate harvest)"
           ]
         },
         {
