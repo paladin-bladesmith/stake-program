@@ -334,7 +334,7 @@ pub(crate) fn harvest(
     let rent_exempt_minimum = Rent::get()?.minimum_balance(accounts.config.data_len());
     let config_lamports = accounts
         .config
-        .try_borrow_lamports()?
+        .lamports()
         .checked_sub(total_reward)
         .ok_or(ProgramError::ArithmeticOverflow)?;
     assert!(config_lamports >= rent_exempt_minimum);
@@ -360,7 +360,7 @@ pub(crate) fn harvest(
         .ok_or(ProgramError::ArithmeticOverflow)?;
     let recipient_lamports = accounts
         .recipient
-        .try_borrow_lamports()?
+        .lamports()
         .checked_add(delegator_reward)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 

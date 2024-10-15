@@ -77,7 +77,6 @@ pub fn process_harvest_holder_rewards(
         StakeError::InvalidMint,
         "mint"
     );
-    drop(vault_data);
 
     // vault authority
     // - derivation must match
@@ -106,6 +105,8 @@ pub fn process_harvest_holder_rewards(
     );
 
     // Harvest latest holder rewards.
+    drop(vault_data);
+    drop(config_data);
     invoke(
         &paladin_rewards_program_client::instructions::HarvestRewards {
             holder_rewards_pool: *ctx.accounts.holder_rewards_pool.key,

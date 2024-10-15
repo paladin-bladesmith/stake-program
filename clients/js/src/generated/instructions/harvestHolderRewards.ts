@@ -38,6 +38,7 @@ export type HarvestHolderRewardsInstruction<
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
+  TAccountPaladinRewardsProgram extends string | IAccountMeta<string> = string,
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
@@ -47,19 +48,19 @@ export type HarvestHolderRewardsInstruction<
   IInstructionWithAccounts<
     [
       TAccountConfig extends string
-        ? ReadonlyAccount<TAccountConfig>
+        ? WritableAccount<TAccountConfig>
         : TAccountConfig,
       TAccountVault extends string
         ? WritableAccount<TAccountVault>
         : TAccountVault,
       TAccountHolderRewardsPool extends string
-        ? ReadonlyAccount<TAccountHolderRewardsPool>
+        ? WritableAccount<TAccountHolderRewardsPool>
         : TAccountHolderRewardsPool,
       TAccountHolderRewards extends string
-        ? ReadonlyAccount<TAccountHolderRewards>
+        ? WritableAccount<TAccountHolderRewards>
         : TAccountHolderRewards,
       TAccountVaultAuthority extends string
-        ? WritableAccount<TAccountVaultAuthority>
+        ? ReadonlyAccount<TAccountVaultAuthority>
         : TAccountVaultAuthority,
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
@@ -67,6 +68,9 @@ export type HarvestHolderRewardsInstruction<
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
+      TAccountPaladinRewardsProgram extends string
+        ? ReadonlyAccount<TAccountPaladinRewardsProgram>
+        : TAccountPaladinRewardsProgram,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -107,6 +111,7 @@ export type HarvestHolderRewardsInput<
   TAccountVaultAuthority extends string = string,
   TAccountMint extends string = string,
   TAccountTokenProgram extends string = string,
+  TAccountPaladinRewardsProgram extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   /** Stake config account */
@@ -123,6 +128,8 @@ export type HarvestHolderRewardsInput<
   mint: Address<TAccountMint>;
   /** Token program */
   tokenProgram?: Address<TAccountTokenProgram>;
+  /** Paladin rewards program */
+  paladinRewardsProgram: Address<TAccountPaladinRewardsProgram>;
   /** System program */
   systemProgram?: Address<TAccountSystemProgram>;
 };
@@ -135,6 +142,7 @@ export function getHarvestHolderRewardsInstruction<
   TAccountVaultAuthority extends string,
   TAccountMint extends string,
   TAccountTokenProgram extends string,
+  TAccountPaladinRewardsProgram extends string,
   TAccountSystemProgram extends string,
 >(
   input: HarvestHolderRewardsInput<
@@ -145,6 +153,7 @@ export function getHarvestHolderRewardsInstruction<
     TAccountVaultAuthority,
     TAccountMint,
     TAccountTokenProgram,
+    TAccountPaladinRewardsProgram,
     TAccountSystemProgram
   >
 ): HarvestHolderRewardsInstruction<
@@ -156,6 +165,7 @@ export function getHarvestHolderRewardsInstruction<
   TAccountVaultAuthority,
   TAccountMint,
   TAccountTokenProgram,
+  TAccountPaladinRewardsProgram,
   TAccountSystemProgram
 > {
   // Program address.
@@ -163,16 +173,20 @@ export function getHarvestHolderRewardsInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    config: { value: input.config ?? null, isWritable: false },
+    config: { value: input.config ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
     holderRewardsPool: {
       value: input.holderRewardsPool ?? null,
-      isWritable: false,
+      isWritable: true,
     },
-    holderRewards: { value: input.holderRewards ?? null, isWritable: false },
-    vaultAuthority: { value: input.vaultAuthority ?? null, isWritable: true },
+    holderRewards: { value: input.holderRewards ?? null, isWritable: true },
+    vaultAuthority: { value: input.vaultAuthority ?? null, isWritable: false },
     mint: { value: input.mint ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    paladinRewardsProgram: {
+      value: input.paladinRewardsProgram ?? null,
+      isWritable: false,
+    },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -200,6 +214,7 @@ export function getHarvestHolderRewardsInstruction<
       getAccountMeta(accounts.vaultAuthority),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.paladinRewardsProgram),
       getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
@@ -213,6 +228,7 @@ export function getHarvestHolderRewardsInstruction<
     TAccountVaultAuthority,
     TAccountMint,
     TAccountTokenProgram,
+    TAccountPaladinRewardsProgram,
     TAccountSystemProgram
   >;
 
@@ -239,8 +255,10 @@ export type ParsedHarvestHolderRewardsInstruction<
     mint: TAccountMetas[5];
     /** Token program */
     tokenProgram: TAccountMetas[6];
+    /** Paladin rewards program */
+    paladinRewardsProgram: TAccountMetas[7];
     /** System program */
-    systemProgram: TAccountMetas[7];
+    systemProgram: TAccountMetas[8];
   };
   data: HarvestHolderRewardsInstructionData;
 };
@@ -253,7 +271,7 @@ export function parseHarvestHolderRewardsInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedHarvestHolderRewardsInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 8) {
+  if (instruction.accounts.length < 9) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -273,6 +291,7 @@ export function parseHarvestHolderRewardsInstruction<
       vaultAuthority: getNextAccount(),
       mint: getNextAccount(),
       tokenProgram: getNextAccount(),
+      paladinRewardsProgram: getNextAccount(),
       systemProgram: getNextAccount(),
     },
     data: getHarvestHolderRewardsInstructionDataDecoder().decode(

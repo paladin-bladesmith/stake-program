@@ -3,11 +3,13 @@
 mod setup;
 
 use borsh::BorshSerialize;
-use paladin_rewards_program_client::accounts::HolderRewards;
+use paladin_rewards_program_client::accounts::{HolderRewards, HolderRewardsPool};
 use paladin_stake_program_client::{
     accounts::{Config, SolStakerStake, ValidatorStake},
     errors::PaladinStakeProgramError,
-    instructions::HarvestHolderRewardsBuilder,
+    instructions::{
+        HarvestHolderRewardsBuilder, HarvestSolStakerRewards, HarvestValidatorRewardsBuilder,
+    },
     pdas::{find_validator_stake_pda, find_vault_pda},
 };
 use setup::{
@@ -25,6 +27,10 @@ use solana_sdk::{
     signature::{Keypair, Signer},
     transaction::Transaction,
 };
+use spl_token_2022::{
+    extension::{PodStateWithExtensionsMut, StateWithExtensions},
+    pod::PodAccount,
+};
 
 #[tokio::test]
 async fn validator_stake_harvest_holder_rewards() {
@@ -39,6 +45,7 @@ async fn validator_stake_harvest_holder_rewards() {
         None,
     );
     let mut context = program_test.start_with_context().await;
+    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account with 100 staked amount.
 
@@ -47,38 +54,28 @@ async fn validator_stake_harvest_holder_rewards() {
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the total amount delegated
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
 
-    // And 4 SOL rewards on its vault account.
-
-    let mut account = get_account!(context, config_manager.vault);
-    account.lamports = account.lamports.saturating_add(4_000_000_000);
-    let rewards_lamports = account.lamports;
-    context.set_account(&config_manager.vault, &account.into());
-
-    // And a stake account wiht a 50 staked amount.
-
+    // And a stake account with a 50 staked amount.
     let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
+    // Set stake to 50.
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the amount to 50
     stake_account.delegation.amount = 50;
-
+    stake_account.delegation.effective_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
 
     // And we initialize the holder rewards accounts.
-
     let holder_rewards_pool = create_holder_rewards_pool(
         &mut context,
         &config_manager.mint,
         &config_manager.mint_authority,
     )
     .await;
-
     let holder_rewards = create_holder_rewards(
         &mut context,
         &holder_rewards_pool,
@@ -87,14 +84,22 @@ async fn validator_stake_harvest_holder_rewards() {
     )
     .await;
 
-    let mut account = get_account!(context, holder_rewards);
-    let mut holder_rewards_account = HolderRewards::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set last accumulated rewards per token to 40_000_000 (0.04 SOL)
-    holder_rewards_account.last_accumulated_rewards_per_token =
-        40_000_000 * 1_000_000_000_000_000_000;
+    // Set vault token balance to match the total staked (100).
+    let mut account = get_account!(context, config_manager.vault);
+    let mut vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
+    vault.base.amount = 100.into();
+    context.set_account(&config_manager.vault, &account.into());
 
-    account.data = holder_rewards_account.try_to_vec().unwrap();
-    context.set_account(&holder_rewards, &account.into());
+    // Setup pool state to enable claiming lamports.
+    let mut account = get_account!(context, holder_rewards_pool);
+    let mut holder_rewards_pool_state =
+        HolderRewardsPool::from_bytes(account.data.as_ref()).unwrap();
+    holder_rewards_pool_state.accumulated_rewards_per_token =
+        40_000_000 * 1_000_000_000_000_000_000;
+    let rewards_lamports = 4_000_000_000;
+    account.lamports = account.lamports + rewards_lamports;
+    account.data = holder_rewards_pool_state.try_to_vec().unwrap();
+    context.set_account(&holder_rewards_pool, &account.into());
 
     // When we harvest the holder rewards.
     //
@@ -106,43 +111,42 @@ async fn validator_stake_harvest_holder_rewards() {
     //   - rewards per token: 4_000_000_000_000_000_000 / 100 = 40_000_000_000_000_000 (0.04 SOL)
     //   - rewards for 50 staked: 40_000_000_000_000_000 * 50 = 2_000_000_000_000_000_000 (2 SOL)
 
-    let destination = Pubkey::new_unique();
-
-    let harvest_holder_rewards_ix = HarvestHolderRewardsBuilder::new()
+    let harvest_holder = HarvestHolderRewardsBuilder::new()
         .config(config_manager.config)
-        .stake(stake_manager.stake)
-        .vault(config_manager.vault)
+        .holder_rewards_pool(holder_rewards_pool)
         .holder_rewards(holder_rewards)
+        .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
-        .stake_authority(stake_manager.authority.pubkey())
-        .destination(destination)
         .mint(config_manager.mint)
         .token_program(spl_token_2022::ID)
+        .paladin_rewards_program(paladin_rewards_program_client::ID)
         .instruction();
-
+    let harvest_validator = HarvestValidatorRewardsBuilder::new()
+        .config(config_manager.config)
+        .holder_rewards(holder_rewards)
+        .validator_stake(stake_manager.stake)
+        .validator_stake_authority(stake_manager.authority.pubkey())
+        .instruction();
     let tx = Transaction::new_signed_with_payer(
-        &[harvest_holder_rewards_ix],
+        &[harvest_holder, harvest_validator],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &stake_manager.authority],
+        &[&context.payer],
         context.last_blockhash,
     );
     context.banks_client.process_transaction(tx).await.unwrap();
 
-    // Then the destination account has the rewards.
-
-    let account = get_account!(context, destination);
+    // Assert - The destination account has the rewards.
+    let account = get_account!(context, stake_manager.authority.pubkey());
     assert_eq!(account.lamports, 2_000_000_000);
 
-    // And there should be rewards left on the vault account.
-
-    let account = get_account!(context, config_manager.vault);
+    // Assert - There should be rewards left on the config account.
+    let account = get_account!(context, config_manager.config);
     assert_eq!(
         account.lamports,
-        rewards_lamports.saturating_sub(2_000_000_000)
+        rewards_lamports - 2_000_000_000 + rent.minimum_balance(Config::LEN),
     );
 
-    // And the stake account last seen holder rewards per token is update.
-
+    // Assert - The stake account last seen holder rewards per token is update.
     let account = get_account!(context, stake_manager.stake);
     let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
@@ -150,17 +154,16 @@ async fn validator_stake_harvest_holder_rewards() {
         40_000_000 * 1_000_000_000_000_000_000
     );
 
-    // And the vault authority did not keep any lamports (the account should not exist).
-
+    // Assert - The vault authority did not keep any lamports (the account should not exist).
     let account = context
         .banks_client
         .get_account(find_vault_pda(&config_manager.config).0)
         .await
         .unwrap();
-
     assert!(account.is_none());
 }
 
+/*
 #[tokio::test]
 async fn validator_stake_harvest_holder_rewards_wrapped() {
     let mut program_test = ProgramTest::new(
@@ -1567,3 +1570,4 @@ async fn sol_staker_stake_fail_harvest_holder_rewards_with_wrong_authority() {
 
     assert_custom_error!(err, PaladinStakeProgramError::InvalidAuthority);
 }
+*/

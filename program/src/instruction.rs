@@ -230,6 +230,7 @@ pub enum StakeInstruction {
     /// `HarvestRewards` on the vault account before this.
     #[account(
         0,
+        writable,
         name = "config",
         desc = "Stake config account"
     )]
@@ -241,17 +242,18 @@ pub enum StakeInstruction {
     )]
     #[account(
         2,
+        writable,
         name = "holder_rewards_pool",
         desc = "Holder rewards pool account"
     )]
     #[account(
         3,
+        writable,
         name = "holder_rewards",
         desc = "Holder rewards account for vault token account"
     )]
     #[account(
         4,
-        writable,
         name = "vault_authority",
         desc = "Vault authority (pda of `['token-owner', config]`)"
     )]
@@ -267,6 +269,11 @@ pub enum StakeInstruction {
     )]
     #[account(
         7,
+        name = "paladin_rewards_program",
+        desc = "Paladin rewards program"
+    )]
+    #[account(
+        8,
         name = "system_program",
         desc = "System program"
     )]

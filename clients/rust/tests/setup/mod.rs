@@ -8,6 +8,7 @@ use spl_transfer_hook_interface::{
 };
 
 pub mod config;
+pub mod harvest;
 pub mod rewards;
 pub mod sol_staker_stake;
 pub mod stake;

@@ -327,7 +327,7 @@
       "accounts": [
         {
           "name": "config",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false,
           "docs": [
             "Stake config account"
@@ -343,7 +343,7 @@
         },
         {
           "name": "holderRewardsPool",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false,
           "docs": [
             "Holder rewards pool account"
@@ -351,7 +351,7 @@
         },
         {
           "name": "holderRewards",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false,
           "docs": [
             "Holder rewards account for vault token account"
@@ -359,7 +359,7 @@
         },
         {
           "name": "vaultAuthority",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false,
           "docs": [
             "Vault authority (pda of `['token-owner', config]`)"
@@ -379,6 +379,14 @@
           "isSigner": false,
           "docs": [
             "Token program"
+          ]
+        },
+        {
+          "name": "paladinRewardsProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Paladin rewards program"
           ]
         },
         {

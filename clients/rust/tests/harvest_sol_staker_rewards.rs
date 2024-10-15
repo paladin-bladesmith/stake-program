@@ -12,6 +12,7 @@ use paladin_stake_program_client::{
 use setup::{
     calculate_stake_rewards_per_token,
     config::{create_config, ConfigManager},
+    harvest::setup_keeper,
     new_program_test, setup,
     sol_staker_stake::SolStakerStakeManager,
     stake::{create_stake_account, deactivate_stake_account, delegate_stake_account},
@@ -880,15 +881,7 @@ async fn harvest_sol_stake_when_deactivating() {
     );
 
     // Setup the keeper account.
-    let keeper = Pubkey::new_unique();
-    context.set_account(
-        &keeper,
-        &AccountSharedData::from(Account {
-            // amount to cover the account rent
-            lamports: 100_000_000,
-            ..Default::default()
-        }),
-    );
+    let keeper = setup_keeper(&mut context);
 
     // Setup a holder rewards account with 0 accrued rewards.
     let rent = context.banks_client.get_rent().await.unwrap();
@@ -1005,15 +998,7 @@ async fn harvest_sol_stake_when_inactive() {
     );
 
     // Setup the keeper account.
-    let keeper = Pubkey::new_unique();
-    context.set_account(
-        &keeper,
-        &AccountSharedData::from(Account {
-            // amount to cover the account rent
-            lamports: 100_000_000,
-            ..Default::default()
-        }),
-    );
+    let keeper = setup_keeper(&mut context);
 
     // Setup a holder rewards account with 0 accrued rewards.
     let rent = context.banks_client.get_rent().await.unwrap();
@@ -1123,15 +1108,7 @@ async fn sync_sol_stake_when_effective() {
     );
 
     // Setup the keeper account.
-    let keeper = Pubkey::new_unique();
-    context.set_account(
-        &keeper,
-        &AccountSharedData::from(Account {
-            // amount to cover the account rent
-            lamports: 100_000_000,
-            ..Default::default()
-        }),
-    );
+    let keeper = setup_keeper(&mut context);
 
     // Setup a holder rewards account with 0 accrued rewards.
     let rent = context.banks_client.get_rent().await.unwrap();
@@ -1215,15 +1192,7 @@ async fn sync_sol_stake_when_activating() {
     );
 
     // Setup the keeper account.
-    let keeper = Pubkey::new_unique();
-    context.set_account(
-        &keeper,
-        &AccountSharedData::from(Account {
-            // amount to cover the account rent
-            lamports: 100_000_000,
-            ..Default::default()
-        }),
-    );
+    let keeper = setup_keeper(&mut context);
 
     // Setup a holder rewards account with 0 accrued rewards.
     let rent = context.banks_client.get_rent().await.unwrap();
@@ -1310,15 +1279,7 @@ async fn fail_sync_sol_stake_with_wrong_config_account() {
     );
 
     // Setup the keeper account.
-    let keeper = Pubkey::new_unique();
-    context.set_account(
-        &keeper,
-        &AccountSharedData::from(Account {
-            // amount to cover the account rent
-            lamports: 100_000_000,
-            ..Default::default()
-        }),
-    );
+    let keeper = setup_keeper(&mut context);
 
     // Setup a holder rewards account with 0 accrued rewards.
     let rent = context.banks_client.get_rent().await.unwrap();
@@ -1408,15 +1369,7 @@ async fn fail_sync_sol_stake_with_wrong_sol_stake_account() {
     );
 
     // Setup the keeper account.
-    let keeper = Pubkey::new_unique();
-    context.set_account(
-        &keeper,
-        &AccountSharedData::from(Account {
-            // amount to cover the account rent
-            lamports: 100_000_000,
-            ..Default::default()
-        }),
-    );
+    let keeper = setup_keeper(&mut context);
 
     // Setup a holder rewards account with 0 accrued rewards.
     let rent = context.banks_client.get_rent().await.unwrap();
@@ -1499,15 +1452,7 @@ async fn fail_sync_sol_stake_with_wrong_validator_stake() {
     );
 
     // Setup the keeper account.
-    let keeper = Pubkey::new_unique();
-    context.set_account(
-        &keeper,
-        &AccountSharedData::from(Account {
-            // amount to cover the account rent
-            lamports: 100_000_000,
-            ..Default::default()
-        }),
-    );
+    let keeper = setup_keeper(&mut context);
 
     // Setup a holder rewards account with 0 accrued rewards.
     let rent = context.banks_client.get_rent().await.unwrap();
@@ -1596,15 +1541,7 @@ async fn fail_sync_sol_stake_with_uninitialized_config() {
     );
 
     // Setup the keeper account.
-    let keeper = Pubkey::new_unique();
-    context.set_account(
-        &keeper,
-        &AccountSharedData::from(Account {
-            // amount to cover the account rent
-            lamports: 100_000_000,
-            ..Default::default()
-        }),
-    );
+    let keeper = setup_keeper(&mut context);
 
     // Setup a holder rewards account with 0 accrued rewards.
     let rent = context.banks_client.get_rent().await.unwrap();
@@ -1693,15 +1630,7 @@ async fn fail_sync_sol_stake_with_uninitialized_validator_stake() {
     );
 
     // Setup the keeper account.
-    let keeper = Pubkey::new_unique();
-    context.set_account(
-        &keeper,
-        &AccountSharedData::from(Account {
-            // amount to cover the account rent
-            lamports: 100_000_000,
-            ..Default::default()
-        }),
-    );
+    let keeper = setup_keeper(&mut context);
 
     // Setup a holder rewards account with 0 accrued rewards.
     let rent = context.banks_client.get_rent().await.unwrap();
@@ -1788,15 +1717,7 @@ async fn fail_sync_sol_stake_with_invalid_sol_stake_view_program() {
     );
 
     // Setup the keeper account.
-    let keeper = Pubkey::new_unique();
-    context.set_account(
-        &keeper,
-        &AccountSharedData::from(Account {
-            // amount to cover the account rent
-            lamports: 100_000_000,
-            ..Default::default()
-        }),
-    );
+    let keeper = setup_keeper(&mut context);
 
     // Setup a holder rewards account with 0 accrued rewards.
     let rent = context.banks_client.get_rent().await.unwrap();
@@ -1926,15 +1847,7 @@ async fn sync_sol_stake_when_sol_stake_redelegated() {
     );
 
     // Setup the keeper account.
-    let keeper = Pubkey::new_unique();
-    context.set_account(
-        &keeper,
-        &AccountSharedData::from(Account {
-            // amount to cover the account rent
-            lamports: 100_000_000,
-            ..Default::default()
-        }),
-    );
+    let keeper = setup_keeper(&mut context);
 
     // Setup a holder rewards account with 0 accrued rewards.
     let rent = context.banks_client.get_rent().await.unwrap();
@@ -2076,15 +1989,7 @@ async fn harvest_sync_rewards() {
     );
 
     // Setup the keeper account.
-    let keeper = Pubkey::new_unique();
-    context.set_account(
-        &keeper,
-        &AccountSharedData::from(Account {
-            // amount to cover the account rent
-            lamports: 100_000_000,
-            ..Default::default()
-        }),
-    );
+    let keeper = setup_keeper(&mut context);
 
     // Setup a holder rewards account with 0 accrued rewards.
     let rent = context.banks_client.get_rent().await.unwrap();
@@ -2245,15 +2150,7 @@ async fn harvest_sync_rewards_wrapped() {
     );
 
     // Setup the keeper account.
-    let keeper = Pubkey::new_unique();
-    context.set_account(
-        &keeper,
-        &AccountSharedData::from(Account {
-            // amount to cover the account rent
-            lamports: 100_000_000,
-            ..Default::default()
-        }),
-    );
+    let keeper = setup_keeper(&mut context);
 
     // Setup a holder rewards account with 0 accrued rewards.
     let rent = context.banks_client.get_rent().await.unwrap();
@@ -2406,15 +2303,7 @@ async fn harvest_sync_rewards_without_rewards() {
     );
 
     // Setup the keeper account.
-    let keeper = Pubkey::new_unique();
-    context.set_account(
-        &keeper,
-        &AccountSharedData::from(Account {
-            // amount to cover the account rent
-            lamports: 100_000_000,
-            ..Default::default()
-        }),
-    );
+    let keeper = setup_keeper(&mut context);
 
     // Setup a holder rewards account with 0 accrued rewards.
     let rent = context.banks_client.get_rent().await.unwrap();
@@ -2568,15 +2457,7 @@ async fn harvest_sync_rewards_with_closed_sol_stake_account() {
     );
 
     // Setup the keeper account.
-    let keeper = Pubkey::new_unique();
-    context.set_account(
-        &keeper,
-        &AccountSharedData::from(Account {
-            // amount to cover the account rent
-            lamports: 100_000_000,
-            ..Default::default()
-        }),
-    );
+    let keeper = setup_keeper(&mut context);
 
     // Setup a holder rewards account with 0 accrued rewards.
     let rent = context.banks_client.get_rent().await.unwrap();
@@ -2742,15 +2623,7 @@ async fn harvest_sync_rewards_with_capped_sync_rewards() {
     );
 
     // Setup the keeper account.
-    let keeper = Pubkey::new_unique();
-    context.set_account(
-        &keeper,
-        &AccountSharedData::from(Account {
-            // amount to cover the account rent
-            lamports: 100_000_000,
-            ..Default::default()
-        }),
-    );
+    let keeper = setup_keeper(&mut context);
 
     // Setup a holder rewards account with 0 accrued rewards.
     let rent = context.banks_client.get_rent().await.unwrap();
@@ -2878,15 +2751,7 @@ async fn fail_harvest_sync_rewards_with_wrong_sol_stake_account() {
     );
 
     // Setup the keeper account.
-    let keeper = Pubkey::new_unique();
-    context.set_account(
-        &keeper,
-        &AccountSharedData::from(Account {
-            // amount to cover the account rent
-            lamports: 100_000_000,
-            ..Default::default()
-        }),
-    );
+    let keeper = setup_keeper(&mut context);
 
     // Setup a holder rewards account with 0 accrued rewards.
     let rent = context.banks_client.get_rent().await.unwrap();
@@ -2979,15 +2844,7 @@ async fn fail_harvest_sync_rewards_with_wrong_validator_stake_account() {
     );
 
     // Setup the keeper account.
-    let keeper = Pubkey::new_unique();
-    context.set_account(
-        &keeper,
-        &AccountSharedData::from(Account {
-            // amount to cover the account rent
-            lamports: 100_000_000,
-            ..Default::default()
-        }),
-    );
+    let keeper = setup_keeper(&mut context);
 
     // Setup a holder rewards account with 0 accrued rewards.
     let rent = context.banks_client.get_rent().await.unwrap();
@@ -3079,15 +2936,7 @@ async fn fail_harvest_sync_rewards_with_wrong_config_account() {
     );
 
     // Setup the keeper account.
-    let keeper = Pubkey::new_unique();
-    context.set_account(
-        &keeper,
-        &AccountSharedData::from(Account {
-            // amount to cover the account rent
-            lamports: 100_000_000,
-            ..Default::default()
-        }),
-    );
+    let keeper = setup_keeper(&mut context);
 
     // Setup a holder rewards account with 0 accrued rewards.
     let rent = context.banks_client.get_rent().await.unwrap();
@@ -3182,15 +3031,7 @@ async fn fail_harvest_sync_rewards_with_invalid_sol_stake_view_program() {
     );
 
     // Setup the keeper account.
-    let keeper = Pubkey::new_unique();
-    context.set_account(
-        &keeper,
-        &AccountSharedData::from(Account {
-            // amount to cover the account rent
-            lamports: 100_000_000,
-            ..Default::default()
-        }),
-    );
+    let keeper = setup_keeper(&mut context);
 
     // Setup a holder rewards account with 0 accrued rewards.
     let rent = context.banks_client.get_rent().await.unwrap();
