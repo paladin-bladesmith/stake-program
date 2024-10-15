@@ -501,28 +501,40 @@ pub enum StakeInstruction {
     #[account(
         2,
         writable,
+        name = "sol_staker_stake_authority",
+        desc = "SOL staker stake authority account"
+    )]
+    #[account(
+        3,
+        writable,
         name = "source_token_account",
         desc = "Token account"
     )]
     #[account(
-        3,
+        4,
         signer,
         name = "token_account_authority",
         desc = "Owner or delegate of the token account"
     )]
     #[account(
-        4,
+        5,
         name = "mint",
         desc = "Stake Token Mint"
     )]
     #[account(
-        5,
+        6,
         writable,
         name = "vault",
         desc = "Stake token Vault"
     )]
     #[account(
-        6,
+        7,
+        writable,
+        name = "vault_holder_rewards",
+        desc = "Stake token Vault"
+    )]
+    #[account(
+        8,
         name = "token_program",
         desc = "Token program"
     )]

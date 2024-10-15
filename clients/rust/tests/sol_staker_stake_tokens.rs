@@ -26,11 +26,10 @@ use solana_sdk::{
 use spl_token_2022::{extension::StateWithExtensions, state::Account};
 
 #[tokio::test]
-async fn sol_staker_stake_tokens() {
+async fn sol_staker_stake_tokens_simple() {
     let mut context = setup().await;
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
-
     let config_manager = ConfigManager::new(&mut context).await;
     let validator_stake_manager =
         ValidatorStakeManager::new(&mut context, &config_manager.config).await;
@@ -44,14 +43,12 @@ async fn sol_staker_stake_tokens() {
     .await;
 
     // And we initialize the holder rewards accounts and mint 6_500_000_000 tokens.
-
     let rewards_manager = RewardsManager::new(
         &mut context,
         &config_manager.mint,
         &config_manager.mint_authority,
     )
     .await;
-
     mint_to(
         &mut context,
         &config_manager.mint,
@@ -64,8 +61,7 @@ async fn sol_staker_stake_tokens() {
     .unwrap();
 
     // And we create the holder rewards account for the vault account.
-
-    create_holder_rewards(
+    let vault_holder_rewards = create_holder_rewards(
         &mut context,
         &rewards_manager.pool,
         &config_manager.mint,
@@ -82,14 +78,15 @@ async fn sol_staker_stake_tokens() {
     let mut stake_ix = SolStakerStakeTokensBuilder::new()
         .config(config_manager.config)
         .sol_staker_stake(sol_staker_staker_manager.stake)
+        .sol_staker_stake_authority(sol_staker_staker_manager.authority.pubkey())
         .source_token_account(rewards_manager.token_account)
         .token_account_authority(rewards_manager.owner.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
+        .vault_holder_rewards(vault_holder_rewards)
         .token_program(spl_token_2022::ID)
         .amount(6_500_000_000) // <- stake 6_500_000_000 tokens
         .instruction();
-
     add_extra_account_metas_for_transfer(
         &mut context,
         &mut stake_ix,
@@ -101,7 +98,6 @@ async fn sol_staker_stake_tokens() {
         50,
     )
     .await;
-
     let tx = Transaction::new_signed_with_payer(
         &[stake_ix],
         Some(&context.payer.pubkey()),
@@ -111,19 +107,16 @@ async fn sol_staker_stake_tokens() {
     context.banks_client.process_transaction(tx).await.unwrap();
 
     // Then the tokens are staked.
-
     let account = get_account!(context, sol_staker_staker_manager.stake);
     let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(stake_account.delegation.amount, 6_500_000_000);
 
     // And the vault account has 6_500_000_000 tokens.
-
     let account = get_account!(context, config_manager.vault);
     let vault = StateWithExtensions::<Account>::unpack(&account.data).unwrap();
     assert_eq!(vault.base.amount, 6_500_000_000);
 
     // And the config account has 6_500_000_000 tokens delegated (staked).
-
     let account = get_account!(context, config_manager.config);
     let config = Config::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(config.token_amount_effective, 6_500_000_000);
@@ -134,7 +127,6 @@ async fn fail_sol_staker_stake_tokens_with_wrong_vault_account() {
     let mut context = setup().await;
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
-
     let config_manager = ConfigManager::new(&mut context).await;
     let validator_stake_manager =
         ValidatorStakeManager::new(&mut context, &config_manager.config).await;
@@ -148,14 +140,12 @@ async fn fail_sol_staker_stake_tokens_with_wrong_vault_account() {
     .await;
 
     // And we initialize the holder rewards accounts and mint 6_500_000_000 tokens.
-
     let rewards_manager = RewardsManager::new(
         &mut context,
         &config_manager.mint,
         &config_manager.mint_authority,
     )
     .await;
-
     mint_to(
         &mut context,
         &config_manager.mint,
@@ -168,7 +158,6 @@ async fn fail_sol_staker_stake_tokens_with_wrong_vault_account() {
     .unwrap();
 
     // And we create a fake vault token account.
-
     let wrong_vault = Keypair::new();
     create_token_account(
         &mut context,
@@ -179,8 +168,7 @@ async fn fail_sol_staker_stake_tokens_with_wrong_vault_account() {
     )
     .await
     .unwrap();
-
-    create_holder_rewards(
+    let vault_holder_rewards = create_holder_rewards(
         &mut context,
         &rewards_manager.pool,
         &config_manager.mint,
@@ -189,18 +177,18 @@ async fn fail_sol_staker_stake_tokens_with_wrong_vault_account() {
     .await;
 
     // When we try to stake tokens to the fake vault account.
-
     let mut stake_ix = SolStakerStakeTokensBuilder::new()
         .config(config_manager.config)
         .sol_staker_stake(sol_staker_staker_manager.stake)
+        .sol_staker_stake_authority(sol_staker_staker_manager.authority.pubkey())
         .source_token_account(rewards_manager.token_account)
         .token_account_authority(rewards_manager.owner.pubkey())
         .mint(config_manager.mint)
         .vault(wrong_vault.pubkey()) // <- wrong vault account
+        .vault_holder_rewards(vault_holder_rewards)
         .token_program(spl_token_2022::ID)
         .amount(6_500_000_000)
         .instruction();
-
     add_extra_account_metas_for_transfer(
         &mut context,
         &mut stake_ix,
@@ -212,7 +200,6 @@ async fn fail_sol_staker_stake_tokens_with_wrong_vault_account() {
         6_500_000_000,
     )
     .await;
-
     let tx = Transaction::new_signed_with_payer(
         &[stake_ix],
         Some(&context.payer.pubkey()),
@@ -226,7 +213,6 @@ async fn fail_sol_staker_stake_tokens_with_wrong_vault_account() {
         .unwrap_err();
 
     // Then we expect an error.
-
     assert_custom_error!(err, PaladinStakeProgramError::IncorrectVaultAccount);
 }
 
@@ -235,7 +221,6 @@ async fn fail_sol_staker_stake_tokens_with_wrong_config_account() {
     let mut context = setup().await;
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
-
     let config_manager = ConfigManager::new(&mut context).await;
     let validator_stake_manager =
         ValidatorStakeManager::new(&mut context, &config_manager.config).await;
@@ -249,14 +234,12 @@ async fn fail_sol_staker_stake_tokens_with_wrong_config_account() {
     .await;
 
     // And we initialize the holder rewards accounts and mint 6_500_000_000 tokens.
-
     let rewards_manager = RewardsManager::new(
         &mut context,
         &config_manager.mint,
         &config_manager.mint_authority,
     )
     .await;
-
     mint_to(
         &mut context,
         &config_manager.mint,
@@ -269,8 +252,7 @@ async fn fail_sol_staker_stake_tokens_with_wrong_config_account() {
     .unwrap();
 
     // And we create the holder rewards account for the vault account.
-
-    create_holder_rewards(
+    let vault_holder_rewards = create_holder_rewards(
         &mut context,
         &rewards_manager.pool,
         &config_manager.mint,
@@ -279,22 +261,21 @@ async fn fail_sol_staker_stake_tokens_with_wrong_config_account() {
     .await;
 
     // And we create another config account.
-
     let another_config = ConfigManager::new(&mut context).await;
 
     // When we try to stake tokens using the wrong config account.
-
     let mut stake_ix = SolStakerStakeTokensBuilder::new()
         .config(another_config.config)
         .sol_staker_stake(sol_staker_staker_manager.stake)
+        .sol_staker_stake_authority(sol_staker_staker_manager.authority.pubkey())
         .source_token_account(rewards_manager.token_account)
         .token_account_authority(rewards_manager.owner.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
+        .vault_holder_rewards(vault_holder_rewards)
         .token_program(spl_token_2022::ID)
         .amount(6_500_000_000) // <- stake 6_500_000_000 tokens
         .instruction();
-
     add_extra_account_metas_for_transfer(
         &mut context,
         &mut stake_ix,
@@ -306,7 +287,6 @@ async fn fail_sol_staker_stake_tokens_with_wrong_config_account() {
         50,
     )
     .await;
-
     let tx = Transaction::new_signed_with_payer(
         &[stake_ix],
         Some(&context.payer.pubkey()),
@@ -320,7 +300,6 @@ async fn fail_sol_staker_stake_tokens_with_wrong_config_account() {
         .unwrap_err();
 
     // Then we expect an error.
-
     assert_instruction_error!(err, InstructionError::InvalidSeeds);
 }
 
@@ -329,7 +308,6 @@ async fn fail_sol_staker_stake_tokens_with_zero_amount() {
     let mut context = setup().await;
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
-
     let config_manager = ConfigManager::new(&mut context).await;
     let validator_stake_manager =
         ValidatorStakeManager::new(&mut context, &config_manager.config).await;
@@ -343,14 +321,12 @@ async fn fail_sol_staker_stake_tokens_with_zero_amount() {
     .await;
 
     // And we initialize the holder rewards accounts and mint 6_500_000_000 tokens.
-
     let rewards_manager = RewardsManager::new(
         &mut context,
         &config_manager.mint,
         &config_manager.mint_authority,
     )
     .await;
-
     mint_to(
         &mut context,
         &config_manager.mint,
@@ -363,8 +339,7 @@ async fn fail_sol_staker_stake_tokens_with_zero_amount() {
     .unwrap();
 
     // And we create the holder rewards account for the vault account.
-
-    create_holder_rewards(
+    let vault_holder_rewards = create_holder_rewards(
         &mut context,
         &rewards_manager.pool,
         &config_manager.mint,
@@ -373,18 +348,18 @@ async fn fail_sol_staker_stake_tokens_with_zero_amount() {
     .await;
 
     // When we try to stake 0 tokens.
-
     let mut stake_ix = SolStakerStakeTokensBuilder::new()
         .config(config_manager.config)
         .sol_staker_stake(sol_staker_staker_manager.stake)
+        .sol_staker_stake_authority(sol_staker_staker_manager.authority.pubkey())
         .source_token_account(rewards_manager.token_account)
         .token_account_authority(rewards_manager.owner.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
+        .vault_holder_rewards(vault_holder_rewards)
         .token_program(spl_token_2022::ID)
         .amount(0) // <- 0 tokens
         .instruction();
-
     add_extra_account_metas_for_transfer(
         &mut context,
         &mut stake_ix,
@@ -396,7 +371,6 @@ async fn fail_sol_staker_stake_tokens_with_zero_amount() {
         50,
     )
     .await;
-
     let tx = Transaction::new_signed_with_payer(
         &[stake_ix],
         Some(&context.payer.pubkey()),
@@ -410,7 +384,6 @@ async fn fail_sol_staker_stake_tokens_with_zero_amount() {
         .unwrap_err();
 
     // Then we expect an error.
-
     assert_custom_error!(err, PaladinStakeProgramError::InvalidAmount);
 }
 
@@ -419,7 +392,6 @@ async fn fail_sol_staker_stake_tokens_with_uninitialized_stake_account() {
     let mut context = setup().await;
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
-
     let config_manager = ConfigManager::new(&mut context).await;
     let validator_stake_manager =
         ValidatorStakeManager::new(&mut context, &config_manager.config).await;
@@ -433,14 +405,12 @@ async fn fail_sol_staker_stake_tokens_with_uninitialized_stake_account() {
     .await;
 
     // And we initialize the holder rewards accounts and mint 6_500_000_000 tokens.
-
     let rewards_manager = RewardsManager::new(
         &mut context,
         &config_manager.mint,
         &config_manager.mint_authority,
     )
     .await;
-
     mint_to(
         &mut context,
         &config_manager.mint,
@@ -453,8 +423,7 @@ async fn fail_sol_staker_stake_tokens_with_uninitialized_stake_account() {
     .unwrap();
 
     // And we create the holder rewards account for the vault account.
-
-    create_holder_rewards(
+    let vault_holder_rewards = create_holder_rewards(
         &mut context,
         &rewards_manager.pool,
         &config_manager.mint,
@@ -463,7 +432,6 @@ async fn fail_sol_staker_stake_tokens_with_uninitialized_stake_account() {
     .await;
 
     // And an uninitialized stake account.
-
     context.set_account(
         &sol_staker_staker_manager.stake,
         &AccountSharedData::from(solana_sdk::account::Account {
@@ -475,18 +443,18 @@ async fn fail_sol_staker_stake_tokens_with_uninitialized_stake_account() {
     );
 
     // When we try to stake the tokens to the uninitialized stake account.
-
     let mut stake_ix = SolStakerStakeTokensBuilder::new()
         .config(config_manager.config)
         .sol_staker_stake(sol_staker_staker_manager.stake)
+        .sol_staker_stake_authority(sol_staker_staker_manager.authority.pubkey())
         .source_token_account(rewards_manager.token_account)
         .token_account_authority(rewards_manager.owner.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
+        .vault_holder_rewards(vault_holder_rewards)
         .token_program(spl_token_2022::ID)
         .amount(6_500_000_000)
         .instruction();
-
     add_extra_account_metas_for_transfer(
         &mut context,
         &mut stake_ix,
@@ -498,7 +466,6 @@ async fn fail_sol_staker_stake_tokens_with_uninitialized_stake_account() {
         50,
     )
     .await;
-
     let tx = Transaction::new_signed_with_payer(
         &[stake_ix],
         Some(&context.payer.pubkey()),
@@ -512,7 +479,6 @@ async fn fail_sol_staker_stake_tokens_with_uninitialized_stake_account() {
         .unwrap_err();
 
     // Then we expect an error.
-
     assert_instruction_error!(err, InstructionError::UninitializedAccount);
 }
 
@@ -521,7 +487,6 @@ async fn sol_staker_stake_tokens_with_insufficient_staked_sol_reduces_effective(
     let mut context = setup().await;
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
-
     let config_manager = ConfigManager::new(&mut context).await;
     let validator_stake_manager =
         ValidatorStakeManager::new(&mut context, &config_manager.config).await;
@@ -535,14 +500,12 @@ async fn sol_staker_stake_tokens_with_insufficient_staked_sol_reduces_effective(
     .await;
 
     // And we initialize the holder rewards accounts and mint 6_500_000_001 tokens.
-
     let rewards_manager = RewardsManager::new(
         &mut context,
         &config_manager.mint,
         &config_manager.mint_authority,
     )
     .await;
-
     mint_to(
         &mut context,
         &config_manager.mint,
@@ -555,8 +518,7 @@ async fn sol_staker_stake_tokens_with_insufficient_staked_sol_reduces_effective(
     .unwrap();
 
     // And we create the holder rewards account for the vault account.
-
-    create_holder_rewards(
+    let vault_holder_rewards = create_holder_rewards(
         &mut context,
         &rewards_manager.pool,
         &config_manager.mint,
@@ -575,14 +537,15 @@ async fn sol_staker_stake_tokens_with_insufficient_staked_sol_reduces_effective(
     let mut stake_ix = SolStakerStakeTokensBuilder::new()
         .config(config_manager.config)
         .sol_staker_stake(sol_staker_staker_manager.stake)
+        .sol_staker_stake_authority(sol_staker_staker_manager.authority.pubkey())
         .source_token_account(rewards_manager.token_account)
         .token_account_authority(rewards_manager.owner.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
+        .vault_holder_rewards(vault_holder_rewards)
         .token_program(spl_token_2022::ID)
         .amount(6_500_000_001) // <- stake 6_500_000_001 tokens
         .instruction();
-
     add_extra_account_metas_for_transfer(
         &mut context,
         &mut stake_ix,
@@ -594,7 +557,6 @@ async fn sol_staker_stake_tokens_with_insufficient_staked_sol_reduces_effective(
         6_500_000_001,
     )
     .await;
-
     let tx = Transaction::new_signed_with_payer(
         &[stake_ix],
         Some(&context.payer.pubkey()),

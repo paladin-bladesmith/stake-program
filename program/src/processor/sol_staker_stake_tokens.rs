@@ -7,7 +7,7 @@ use spl_token_2022::{
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, SolStakerStakeTokensAccounts},
-    processor::unpack_initialized_mut,
+    processor::{harvest, unpack_initialized_mut, HarvestAccounts},
     require,
     state::{
         calculate_maximum_stake_for_lamports_amount, find_sol_staker_stake_pda, Config,
@@ -23,13 +23,15 @@ use crate::{
 /// 0. `[w]` Stake config account
 /// 1. `[w]` SOL staker stake account
 ///          (PDA seeds: ['stake::state::sol_staker_stake', validator, config_account])
-/// 2. `[w]` Token Account
-/// 3. `[s]` Owner or delegate of the token account
-/// 4. `[ ]` Stake Token Mint
-/// 5. `[w]` Stake Token Vault, to hold all staked tokens
+/// 2. `[w]` SOL staker stake authority account
+/// 3. `[w]` Token Account
+/// 4. `[s]` Owner or delegate of the token account
+/// 5. `[ ]` Stake Token Mint
+/// 6. `[w]` Stake Token Vault, to hold all staked tokens
 ///          (must be the token account on the stake config account)
-/// 6. `[ ]` Token program
-/// 7. Extra accounts required for the transfer hook
+/// 7. `[w]` Stake Token Vault holder rewards
+/// 8. `[ ]` Token program
+/// 9. Extra accounts required for the transfer hook
 ///
 /// Instruction data: amount of tokens to stake, as a little-endian `u64`.
 pub fn process_sol_staker_stake_tokens<'a>(
@@ -39,44 +41,49 @@ pub fn process_sol_staker_stake_tokens<'a>(
 ) -> ProgramResult {
     // Account validation.
 
-    // config
-    // - owner must be the stake program
-    // - must be initialized
-
-    require!(
-        ctx.accounts.config.owner == program_id,
-        ProgramError::InvalidAccountOwner,
-        "config"
-    );
-
-    let mut config_data = ctx.accounts.config.try_borrow_mut_data()?;
-    let config = unpack_initialized_mut::<Config>(&mut config_data)?;
-
     // sol staker stake
     // - owner must be the stake program
     // - must be initialized
     // - must have the correct derivation (validates the config account)
-
     require!(
         ctx.accounts.sol_staker_stake.owner == program_id,
         ProgramError::InvalidAccountOwner,
         "sol staker stake"
     );
-
     let mut sol_staker_stake_data = ctx.accounts.sol_staker_stake.try_borrow_mut_data()?;
     let sol_staker_stake = unpack_initialized_mut::<SolStakerStake>(&mut sol_staker_stake_data)?;
-
     let (derivation, _) = find_sol_staker_stake_pda(
         &sol_staker_stake.sol_stake,
         ctx.accounts.config.key,
         program_id,
     );
-
     require!(
         ctx.accounts.sol_staker_stake.key == &derivation,
         ProgramError::InvalidSeeds,
         "sol staker stake",
     );
+
+    // Harvest rewards & update last claim tracking.
+    harvest(
+        HarvestAccounts {
+            config: ctx.accounts.config,
+            holder_rewards: ctx.accounts.vault_holder_rewards,
+            recipient: ctx.accounts.sol_staker_stake_authority,
+        },
+        &mut sol_staker_stake.delegation,
+        None,
+    )?;
+
+    // config
+    // - owner must be the stake program
+    // - must be initialized
+    require!(
+        ctx.accounts.config.owner == program_id,
+        ProgramError::InvalidAccountOwner,
+        "config"
+    );
+    let mut config_data = ctx.accounts.config.try_borrow_mut_data()?;
+    let config = unpack_initialized_mut::<Config>(&mut config_data)?;
 
     // vault
     // - must be the token account on the stake config account

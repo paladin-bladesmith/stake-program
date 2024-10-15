@@ -36,10 +36,14 @@ export type SolStakerStakeTokensInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountSolStakerStake extends string | IAccountMeta<string> = string,
+  TAccountSolStakerStakeAuthority extends
+    | string
+    | IAccountMeta<string> = string,
   TAccountSourceTokenAccount extends string | IAccountMeta<string> = string,
   TAccountTokenAccountAuthority extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountVault extends string | IAccountMeta<string> = string,
+  TAccountVaultHolderRewards extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
@@ -54,6 +58,9 @@ export type SolStakerStakeTokensInstruction<
       TAccountSolStakerStake extends string
         ? WritableAccount<TAccountSolStakerStake>
         : TAccountSolStakerStake,
+      TAccountSolStakerStakeAuthority extends string
+        ? WritableAccount<TAccountSolStakerStakeAuthority>
+        : TAccountSolStakerStakeAuthority,
       TAccountSourceTokenAccount extends string
         ? WritableAccount<TAccountSourceTokenAccount>
         : TAccountSourceTokenAccount,
@@ -67,6 +74,9 @@ export type SolStakerStakeTokensInstruction<
       TAccountVault extends string
         ? WritableAccount<TAccountVault>
         : TAccountVault,
+      TAccountVaultHolderRewards extends string
+        ? WritableAccount<TAccountVaultHolderRewards>
+        : TAccountVaultHolderRewards,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
@@ -113,16 +123,20 @@ export function getSolStakerStakeTokensInstructionDataCodec(): Codec<
 export type SolStakerStakeTokensInput<
   TAccountConfig extends string = string,
   TAccountSolStakerStake extends string = string,
+  TAccountSolStakerStakeAuthority extends string = string,
   TAccountSourceTokenAccount extends string = string,
   TAccountTokenAccountAuthority extends string = string,
   TAccountMint extends string = string,
   TAccountVault extends string = string,
+  TAccountVaultHolderRewards extends string = string,
   TAccountTokenProgram extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
   /** SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`) */
   solStakerStake: Address<TAccountSolStakerStake>;
+  /** SOL staker stake authority account */
+  solStakerStakeAuthority: Address<TAccountSolStakerStakeAuthority>;
   /** Token account */
   sourceTokenAccount: Address<TAccountSourceTokenAccount>;
   /** Owner or delegate of the token account */
@@ -131,6 +145,8 @@ export type SolStakerStakeTokensInput<
   mint: Address<TAccountMint>;
   /** Stake token Vault */
   vault: Address<TAccountVault>;
+  /** Stake token Vault */
+  vaultHolderRewards: Address<TAccountVaultHolderRewards>;
   /** Token program */
   tokenProgram?: Address<TAccountTokenProgram>;
   amount: SolStakerStakeTokensInstructionDataArgs['amount'];
@@ -139,29 +155,35 @@ export type SolStakerStakeTokensInput<
 export function getSolStakerStakeTokensInstruction<
   TAccountConfig extends string,
   TAccountSolStakerStake extends string,
+  TAccountSolStakerStakeAuthority extends string,
   TAccountSourceTokenAccount extends string,
   TAccountTokenAccountAuthority extends string,
   TAccountMint extends string,
   TAccountVault extends string,
+  TAccountVaultHolderRewards extends string,
   TAccountTokenProgram extends string,
 >(
   input: SolStakerStakeTokensInput<
     TAccountConfig,
     TAccountSolStakerStake,
+    TAccountSolStakerStakeAuthority,
     TAccountSourceTokenAccount,
     TAccountTokenAccountAuthority,
     TAccountMint,
     TAccountVault,
+    TAccountVaultHolderRewards,
     TAccountTokenProgram
   >
 ): SolStakerStakeTokensInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountSolStakerStake,
+  TAccountSolStakerStakeAuthority,
   TAccountSourceTokenAccount,
   TAccountTokenAccountAuthority,
   TAccountMint,
   TAccountVault,
+  TAccountVaultHolderRewards,
   TAccountTokenProgram
 > {
   // Program address.
@@ -171,6 +193,10 @@ export function getSolStakerStakeTokensInstruction<
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
     solStakerStake: { value: input.solStakerStake ?? null, isWritable: true },
+    solStakerStakeAuthority: {
+      value: input.solStakerStakeAuthority ?? null,
+      isWritable: true,
+    },
     sourceTokenAccount: {
       value: input.sourceTokenAccount ?? null,
       isWritable: true,
@@ -181,6 +207,10 @@ export function getSolStakerStakeTokensInstruction<
     },
     mint: { value: input.mint ?? null, isWritable: false },
     vault: { value: input.vault ?? null, isWritable: true },
+    vaultHolderRewards: {
+      value: input.vaultHolderRewards ?? null,
+      isWritable: true,
+    },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -202,10 +232,12 @@ export function getSolStakerStakeTokensInstruction<
     accounts: [
       getAccountMeta(accounts.config),
       getAccountMeta(accounts.solStakerStake),
+      getAccountMeta(accounts.solStakerStakeAuthority),
       getAccountMeta(accounts.sourceTokenAccount),
       getAccountMeta(accounts.tokenAccountAuthority),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.vault),
+      getAccountMeta(accounts.vaultHolderRewards),
       getAccountMeta(accounts.tokenProgram),
     ],
     programAddress,
@@ -216,10 +248,12 @@ export function getSolStakerStakeTokensInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountSolStakerStake,
+    TAccountSolStakerStakeAuthority,
     TAccountSourceTokenAccount,
     TAccountTokenAccountAuthority,
     TAccountMint,
     TAccountVault,
+    TAccountVaultHolderRewards,
     TAccountTokenProgram
   >;
 
@@ -236,16 +270,20 @@ export type ParsedSolStakerStakeTokensInstruction<
     config: TAccountMetas[0];
     /** SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`) */
     solStakerStake: TAccountMetas[1];
+    /** SOL staker stake authority account */
+    solStakerStakeAuthority: TAccountMetas[2];
     /** Token account */
-    sourceTokenAccount: TAccountMetas[2];
+    sourceTokenAccount: TAccountMetas[3];
     /** Owner or delegate of the token account */
-    tokenAccountAuthority: TAccountMetas[3];
+    tokenAccountAuthority: TAccountMetas[4];
     /** Stake Token Mint */
-    mint: TAccountMetas[4];
+    mint: TAccountMetas[5];
     /** Stake token Vault */
-    vault: TAccountMetas[5];
+    vault: TAccountMetas[6];
+    /** Stake token Vault */
+    vaultHolderRewards: TAccountMetas[7];
     /** Token program */
-    tokenProgram: TAccountMetas[6];
+    tokenProgram: TAccountMetas[8];
   };
   data: SolStakerStakeTokensInstructionData;
 };
@@ -258,7 +296,7 @@ export function parseSolStakerStakeTokensInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedSolStakerStakeTokensInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 7) {
+  if (instruction.accounts.length < 9) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -273,10 +311,12 @@ export function parseSolStakerStakeTokensInstruction<
     accounts: {
       config: getNextAccount(),
       solStakerStake: getNextAccount(),
+      solStakerStakeAuthority: getNextAccount(),
       sourceTokenAccount: getNextAccount(),
       tokenAccountAuthority: getNextAccount(),
       mint: getNextAccount(),
       vault: getNextAccount(),
+      vaultHolderRewards: getNextAccount(),
       tokenProgram: getNextAccount(),
     },
     data: getSolStakerStakeTokensInstructionDataDecoder().decode(

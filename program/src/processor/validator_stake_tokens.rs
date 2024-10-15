@@ -17,8 +17,8 @@ use crate::{
 
 /// Stakes tokens with the given config.
 ///
-/// NOTE: This instruction is used by validator stake accounts. The total amount of staked
-/// tokens is limited to the 1.3 * current amount of SOL staked to the validator.
+/// NOTE: This instruction is used by validator stake accounts. The total amount of effective
+/// staked tokens is limited to the 1.3 * current amount of SOL staked to the validator.
 ///
 /// 0. `[w]` Stake config account
 /// 1. `[w]` Validator stake account

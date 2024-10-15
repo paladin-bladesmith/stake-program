@@ -749,6 +749,14 @@
           ]
         },
         {
+          "name": "solStakerStakeAuthority",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "SOL staker stake authority account"
+          ]
+        },
+        {
           "name": "sourceTokenAccount",
           "isMut": true,
           "isSigner": false,
@@ -774,6 +782,14 @@
         },
         {
           "name": "vault",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Stake token Vault"
+          ]
+        },
+        {
+          "name": "vaultHolderRewards",
           "isMut": true,
           "isSigner": false,
           "docs": [
