@@ -1,3 +1,4 @@
+use paladin_rewards_program_client::accounts::HolderRewards;
 use paladin_sol_stake_view_program_client::{
     instructions::GetStakeActivatingAndDeactivatingCpiBuilder,
     GetStakeActivatingAndDeactivatingReturnData,
@@ -10,9 +11,11 @@ use solana_program::{
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, HarvestSolStakerRewardsAccounts},
-    processor::{harvest, unpack_initialized_mut, HarvestAccounts},
+    processor::{harvest, unpack_initialized, unpack_initialized_mut, HarvestAccounts},
     require,
-    state::{find_sol_staker_stake_pda, find_validator_stake_pda, SolStakerStake, ValidatorStake},
+    state::{
+        find_sol_staker_stake_pda, find_validator_stake_pda, Config, SolStakerStake, ValidatorStake,
+    },
 };
 
 /// Harvests stake SOL rewards earned by the given SOL staker stake account.
@@ -44,6 +47,12 @@ pub fn process_harvest_sol_staker_rewards(
         ProgramError::InvalidAccountOwner,
         "config"
     );
+    let vault_key = {
+        let config = ctx.accounts.config.data.borrow();
+        let config = unpack_initialized::<Config>(&config)?;
+
+        config.vault
+    };
 
     // sol staker stake
     // - owner must be the stake program
@@ -57,13 +66,11 @@ pub fn process_harvest_sol_staker_rewards(
 
     let mut sol_staker_stake_data = ctx.accounts.sol_staker_stake.try_borrow_mut_data()?;
     let sol_staker_stake = unpack_initialized_mut::<SolStakerStake>(&mut sol_staker_stake_data)?;
-
     let (derivation, _) = find_sol_staker_stake_pda(
         &sol_staker_stake.sol_stake,
         ctx.accounts.config.key,
         program_id,
     );
-
     require!(
         ctx.accounts.sol_staker_stake.key == &derivation,
         ProgramError::InvalidSeeds,
@@ -91,7 +98,6 @@ pub fn process_harvest_sol_staker_rewards(
     // - must have the correct derivation (validates both the validator vote
     //   and config accounts)
     // - must be initialized
-
     require!(
         ctx.accounts.validator_stake.owner == program_id,
         ProgramError::InvalidAccountOwner,
@@ -105,15 +111,22 @@ pub fn process_harvest_sol_staker_rewards(
         ctx.accounts.config.key,
         program_id,
     );
-
     require!(
         ctx.accounts.validator_stake.key == &derivation,
         ProgramError::InvalidSeeds,
         "validator stake",
     );
-
     let mut stake_data = ctx.accounts.validator_stake.try_borrow_mut_data()?;
     let validator_stake = unpack_initialized_mut::<ValidatorStake>(&mut stake_data)?;
+
+    // Holder rewards.
+    // - Must be derived from the vault account.
+    let derivation = HolderRewards::find_pda(&vault_key).0;
+    require!(
+        ctx.accounts.vault_holder_rewards.key == &derivation,
+        ProgramError::InvalidSeeds,
+        "vault_holder_rewards"
+    );
 
     // Sol stake view program.
     // - Must match the expected program ID.
@@ -148,7 +161,7 @@ pub fn process_harvest_sol_staker_rewards(
     harvest(
         HarvestAccounts {
             config: ctx.accounts.config,
-            holder_rewards: ctx.accounts.holder_rewards,
+            holder_rewards: ctx.accounts.vault_holder_rewards,
             recipient: ctx.accounts.sol_staker_stake_authority,
         },
         &mut sol_staker_stake.delegation,
@@ -167,7 +180,7 @@ pub fn process_harvest_sol_staker_rewards(
         harvest(
             HarvestAccounts {
                 config: ctx.accounts.config,
-                holder_rewards: ctx.accounts.holder_rewards,
+                holder_rewards: ctx.accounts.vault_holder_rewards,
                 recipient: ctx.accounts.validator_stake_authority,
             },
             &mut validator_stake.delegation,

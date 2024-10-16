@@ -2960,8 +2960,8 @@ async fn fail_harvest_sync_rewards_with_wrong_config_account() {
 
     // When we try to harvest rewards for syncing the SOL stake with the wrong config account.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
-        .config(another_config)
-        .holder_rewards(holder_rewards) // <- invalid config
+        .config(another_config) // <- invalid config
+        .holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -3081,6 +3081,111 @@ async fn fail_harvest_sync_rewards_with_invalid_sol_stake_view_program() {
     // Then we expect an error.
 
     assert_instruction_error!(err, InstructionError::IncorrectProgramId);
+}
+
+#[tokio::test]
+async fn fail_harvest_sync_rewards_with_wrong_vault_holder_rewards() {
+    let mut program_test = new_program_test();
+    let vote = add_vote_account(
+        &mut program_test,
+        &Pubkey::new_unique(),
+        &Pubkey::new_unique(),
+    );
+    let mut context = program_test.start_with_context().await;
+    let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
+    context.warp_to_slot(slot).unwrap();
+
+    // Given a config, validator stake and sol staker stake accounts with 1 SOL staked.
+    let config_manager = ConfigManager::new(&mut context).await;
+    let validator_stake_manager =
+        ValidatorStakeManager::new_with_vote(&mut context, &config_manager.config, vote).await;
+    let sol_staker_stake_manager = SolStakerStakeManager::new(
+        &mut context,
+        &config_manager.config,
+        &validator_stake_manager.stake,
+        &validator_stake_manager.vote,
+        1_000_000_000, // 1 SOL staked
+    )
+    .await;
+
+    // Ensure the authority is rent exempt.
+    context.set_account(
+        &sol_staker_stake_manager.authority.pubkey(),
+        &AccountSharedData::from(Account {
+            // amount to cover the account rent
+            lamports: 100_000_000,
+            ..Default::default()
+        }),
+    );
+
+    // Setup the keeper account.
+    let keeper = setup_keeper(&mut context);
+
+    // Setup a holder rewards account with 0 accrued rewards.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
+    context.set_account(
+        &holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
+    // Setup another (wrong) holder rewards.
+    let wrong_holder_rewards = HolderRewards::find_pda(&Pubkey::new_unique()).0;
+    context.set_account(
+        &wrong_holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
+    // When we try to harvest rewards for syncing the SOL stake with the wrong config account.
+    let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
+        .config(config_manager.config)
+        .holder_rewards(wrong_holder_rewards)
+        .sol_staker_stake(sol_staker_stake_manager.stake)
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .native_stake(sol_staker_stake_manager.sol_stake)
+        .validator_stake(validator_stake_manager.stake)
+        .validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
+        .keeper_recipient(Some(keeper))
+        .instruction();
+    let tx = Transaction::new_signed_with_payer(
+        &[harvest_stake_rewards_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer],
+        context.last_blockhash,
+    );
+    let err = context
+        .banks_client
+        .process_transaction(tx)
+        .await
+        .unwrap_err();
+
+    // Then we expect an error.
+    assert_instruction_error!(err, InstructionError::InvalidSeeds);
 }
 
 // TODO: Test case where we pass the wrong holders_reward.
