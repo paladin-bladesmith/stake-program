@@ -30,7 +30,7 @@ import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 export type HarvestValidatorRewardsInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
-  TAccountHolderRewards extends string | IAccountMeta<string> = string,
+  TAccountVaultHolderRewards extends string | IAccountMeta<string> = string,
   TAccountValidatorStake extends string | IAccountMeta<string> = string,
   TAccountValidatorStakeAuthority extends
     | string
@@ -47,9 +47,9 @@ export type HarvestValidatorRewardsInstruction<
       TAccountConfig extends string
         ? WritableAccount<TAccountConfig>
         : TAccountConfig,
-      TAccountHolderRewards extends string
-        ? ReadonlyAccount<TAccountHolderRewards>
-        : TAccountHolderRewards,
+      TAccountVaultHolderRewards extends string
+        ? ReadonlyAccount<TAccountVaultHolderRewards>
+        : TAccountVaultHolderRewards,
       TAccountValidatorStake extends string
         ? WritableAccount<TAccountValidatorStake>
         : TAccountValidatorStake,
@@ -93,7 +93,7 @@ export function getHarvestValidatorRewardsInstructionDataCodec(): Codec<
 
 export type HarvestValidatorRewardsInput<
   TAccountConfig extends string = string,
-  TAccountHolderRewards extends string = string,
+  TAccountVaultHolderRewards extends string = string,
   TAccountValidatorStake extends string = string,
   TAccountValidatorStakeAuthority extends string = string,
   TAccountSysvarStakeHistory extends string = string,
@@ -102,7 +102,7 @@ export type HarvestValidatorRewardsInput<
   /** Stake config account */
   config: Address<TAccountConfig>;
   /** Holder rewards account */
-  holderRewards: Address<TAccountHolderRewards>;
+  vaultHolderRewards: Address<TAccountVaultHolderRewards>;
   /** Validator stake account */
   validatorStake: Address<TAccountValidatorStake>;
   /** Validator stake authority */
@@ -115,7 +115,7 @@ export type HarvestValidatorRewardsInput<
 
 export function getHarvestValidatorRewardsInstruction<
   TAccountConfig extends string,
-  TAccountHolderRewards extends string,
+  TAccountVaultHolderRewards extends string,
   TAccountValidatorStake extends string,
   TAccountValidatorStakeAuthority extends string,
   TAccountSysvarStakeHistory extends string,
@@ -123,7 +123,7 @@ export function getHarvestValidatorRewardsInstruction<
 >(
   input: HarvestValidatorRewardsInput<
     TAccountConfig,
-    TAccountHolderRewards,
+    TAccountVaultHolderRewards,
     TAccountValidatorStake,
     TAccountValidatorStakeAuthority,
     TAccountSysvarStakeHistory,
@@ -132,7 +132,7 @@ export function getHarvestValidatorRewardsInstruction<
 ): HarvestValidatorRewardsInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
-  TAccountHolderRewards,
+  TAccountVaultHolderRewards,
   TAccountValidatorStake,
   TAccountValidatorStakeAuthority,
   TAccountSysvarStakeHistory,
@@ -144,7 +144,10 @@ export function getHarvestValidatorRewardsInstruction<
   // Original accounts.
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
-    holderRewards: { value: input.holderRewards ?? null, isWritable: false },
+    vaultHolderRewards: {
+      value: input.vaultHolderRewards ?? null,
+      isWritable: false,
+    },
     validatorStake: { value: input.validatorStake ?? null, isWritable: true },
     validatorStakeAuthority: {
       value: input.validatorStakeAuthority ?? null,
@@ -171,7 +174,7 @@ export function getHarvestValidatorRewardsInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.config),
-      getAccountMeta(accounts.holderRewards),
+      getAccountMeta(accounts.vaultHolderRewards),
       getAccountMeta(accounts.validatorStake),
       getAccountMeta(accounts.validatorStakeAuthority),
       getAccountMeta(accounts.sysvarStakeHistory),
@@ -182,7 +185,7 @@ export function getHarvestValidatorRewardsInstruction<
   } as HarvestValidatorRewardsInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
-    TAccountHolderRewards,
+    TAccountVaultHolderRewards,
     TAccountValidatorStake,
     TAccountValidatorStakeAuthority,
     TAccountSysvarStakeHistory,
@@ -201,7 +204,7 @@ export type ParsedHarvestValidatorRewardsInstruction<
     /** Stake config account */
     config: TAccountMetas[0];
     /** Holder rewards account */
-    holderRewards: TAccountMetas[1];
+    vaultHolderRewards: TAccountMetas[1];
     /** Validator stake account */
     validatorStake: TAccountMetas[2];
     /** Validator stake authority */
@@ -242,7 +245,7 @@ export function parseHarvestValidatorRewardsInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       config: getNextAccount(),
-      holderRewards: getNextAccount(),
+      vaultHolderRewards: getNextAccount(),
       validatorStake: getNextAccount(),
       validatorStakeAuthority: getNextAccount(),
       sysvarStakeHistory: getNextAccount(),

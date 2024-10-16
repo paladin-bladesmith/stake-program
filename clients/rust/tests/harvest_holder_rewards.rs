@@ -302,12 +302,9 @@ async fn validator_stake_harvest_holder_rewards_wrapped() {
     let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account with 100 staked amount.
-
     let config_manager = ConfigManager::new(&mut context).await;
-
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the total amount delegated and max reward.
     config_account.token_amount_effective = 100;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());

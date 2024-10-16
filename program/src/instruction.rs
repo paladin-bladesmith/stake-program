@@ -316,7 +316,7 @@ pub enum StakeInstruction {
     )]
     #[account(
         1,
-        name = "holder_rewards",
+        name = "vault_holder_rewards",
         desc = "Holder rewards account"
     )]
     #[account(

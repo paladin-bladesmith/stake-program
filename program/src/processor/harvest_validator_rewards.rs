@@ -1,11 +1,12 @@
+use paladin_rewards_program_client::accounts::HolderRewards;
 use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey};
 
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, HarvestValidatorRewardsAccounts},
-    processor::{harvest, unpack_initialized_mut, HarvestAccounts},
+    processor::{harvest, unpack_initialized, unpack_initialized_mut, HarvestAccounts},
     require,
-    state::{find_validator_stake_pda, ValidatorStake},
+    state::{find_validator_stake_pda, Config, ValidatorStake},
 };
 
 /// Harvests stake SOL rewards earned by the given validator stake account.
@@ -31,6 +32,12 @@ pub fn process_harvest_validator_rewards(
         ProgramError::InvalidAccountOwner,
         "config"
     );
+    let vault_key = {
+        let config = ctx.accounts.config.data.borrow();
+        let config = unpack_initialized::<Config>(&config)?;
+
+        config.vault
+    };
 
     // stake
     // - owner must be the stake program
@@ -65,11 +72,20 @@ pub fn process_harvest_validator_rewards(
         "stake authority",
     );
 
+    // Holder rewards.
+    // - Must be derived from the vault account.
+    let derivation = HolderRewards::find_pda(&vault_key).0;
+    require!(
+        ctx.accounts.vault_holder_rewards.key == &derivation,
+        ProgramError::InvalidSeeds,
+        "vault_holder_rewards"
+    );
+
     // Process the harvest.
     harvest(
         HarvestAccounts {
             config: ctx.accounts.config,
-            holder_rewards: ctx.accounts.holder_rewards,
+            holder_rewards: ctx.accounts.vault_holder_rewards,
             recipient: ctx.accounts.validator_stake_authority,
         },
         &mut validator_stake.delegation,
