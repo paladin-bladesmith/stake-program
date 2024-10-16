@@ -6,9 +6,12 @@ use solana_program::{
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, InactivateValidatorStakeAccounts},
-    processor::unpack_initialized_mut,
+    processor::{harvest, unpack_initialized_mut, HarvestAccounts},
     require,
-    state::{find_validator_stake_pda, Config, ValidatorStake},
+    state::{
+        calculate_maximum_stake_for_lamports_amount, find_validator_stake_pda, Config,
+        ValidatorStake,
+    },
 };
 
 /// Move tokens from deactivating to inactive.
@@ -27,95 +30,101 @@ pub fn process_inactivate_validator_stake(
 ) -> ProgramResult {
     // Account validation.
 
+    // stake
+    // - owner must be the stake program
+    // - must be a ValidatorStake account
+    // - must be initialized
+    // - must have the correct derivation
+    require!(
+        ctx.accounts.validator_stake.owner == program_id,
+        ProgramError::InvalidAccountOwner,
+        "stake"
+    );
+    let stake_data = &mut ctx.accounts.validator_stake.try_borrow_mut_data()?;
+    let stake = unpack_initialized_mut::<ValidatorStake>(stake_data)?;
+    let (derivation, _) = find_validator_stake_pda(
+        &stake.delegation.validator_vote,
+        ctx.accounts.config.key,
+        program_id,
+    );
+    require!(
+        ctx.accounts.validator_stake.key == &derivation,
+        ProgramError::InvalidSeeds,
+        "stake",
+    );
+    let delegation = &mut stake.delegation;
+
+    // Harvest rewards & update last claim tracking.
+    harvest(
+        HarvestAccounts {
+            config: ctx.accounts.config,
+            holder_rewards: ctx.accounts.vault_holder_rewards,
+            recipient: ctx.accounts.validator_stake_authority,
+        },
+        delegation,
+        None,
+    )?;
+
     // config
     // - owner must be the stake program
     // - must be initialized
-
     require!(
         ctx.accounts.config.owner == program_id,
         ProgramError::InvalidAccountOwner,
         "config"
     );
-
     let data = &mut ctx.accounts.config.try_borrow_mut_data()?;
     let config = bytemuck::try_from_bytes_mut::<Config>(data)
         .map_err(|_error| ProgramError::InvalidAccountData)?;
-
     require!(
         config.is_initialized(),
         ProgramError::UninitializedAccount,
         "config",
     );
 
-    // stake
-    // - owner must be the stake program
-    // - must be a ValidatorStake account
-    // - must be initialized
-    // - must have the correct derivation
+    // Inactivates the stake if eligible.
+    let Some(timestamp) = delegation.deactivation_timestamp else {
+        return Err(StakeError::NoDeactivatedTokens.into());
+    };
+    let inactive_timestamp = config.cooldown_time_seconds.saturating_add(timestamp.get());
+    let current_timestamp = Clock::get()?.unix_timestamp as u64;
 
     require!(
-        ctx.accounts.stake.owner == program_id,
-        ProgramError::InvalidAccountOwner,
-        "stake"
+        current_timestamp >= inactive_timestamp,
+        StakeError::ActiveDeactivationCooldown,
+        "{} second(s) remaining for deactivation",
+        inactive_timestamp.saturating_sub(current_timestamp),
     );
 
-    let stake_data = &mut ctx.accounts.stake.try_borrow_mut_data()?;
-    let validator_stake = unpack_initialized_mut::<ValidatorStake>(stake_data)?;
+    msg!("Inactivating {} token(s)", delegation.deactivating_amount);
 
-    let (derivation, _) = find_validator_stake_pda(
-        &validator_stake.delegation.validator_vote,
-        ctx.accounts.config.key,
-        program_id,
-    );
+    // Compute the new stake values.
+    let validator_active = delegation
+        .active_amount
+        .checked_sub(delegation.deactivating_amount)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
+    let validator_inactive = delegation
+        .inactive_amount
+        .checked_add(delegation.deactivating_amount)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
+    let validator_limit =
+        calculate_maximum_stake_for_lamports_amount(stake.total_staked_lamports_amount)?;
+    let validator_effective = std::cmp::min(validator_active, validator_limit);
+    let effective_delta = delegation
+        .effective_amount
+        .checked_sub(validator_effective)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
 
-    require!(
-        ctx.accounts.stake.key == &derivation,
-        ProgramError::InvalidSeeds,
-        "stake",
-    );
+    // Update the state values.
+    delegation.active_amount = validator_active;
+    delegation.effective_amount = validator_effective;
+    delegation.deactivating_amount = 0;
+    delegation.deactivation_timestamp = None;
+    delegation.inactive_amount = validator_inactive;
+    config.token_amount_effective = config
+        .token_amount_effective
+        .checked_sub(effective_delta)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
 
-    let delegation = &mut validator_stake.delegation;
-
-    // Inactivates the stake if elegible.
-
-    if let Some(timestamp) = delegation.deactivation_timestamp {
-        let inactive_timestamp = config.cooldown_time_seconds.saturating_add(timestamp.get());
-        let current_timestamp = Clock::get()?.unix_timestamp as u64;
-
-        require!(
-            current_timestamp >= inactive_timestamp,
-            StakeError::ActiveDeactivationCooldown,
-            "{} second(s) remaining for deactivation",
-            inactive_timestamp.saturating_sub(current_timestamp),
-        );
-
-        msg!("Inactivating {} token(s)", delegation.deactivating_amount);
-
-        // moves deactivating amount to inactive
-        delegation.amount = delegation
-            .amount
-            .checked_sub(delegation.deactivating_amount)
-            .ok_or(ProgramError::ArithmeticOverflow)?;
-
-        delegation.inactive_amount = delegation
-            .inactive_amount
-            .checked_add(delegation.deactivating_amount)
-            .ok_or(ProgramError::ArithmeticOverflow)?;
-
-        // Update the config and stake account data.
-
-        config.token_amount_delegated = config
-            .token_amount_delegated
-            .checked_sub(delegation.deactivating_amount)
-            .ok_or(ProgramError::ArithmeticOverflow)?;
-
-        // Clears the deactivation.
-
-        delegation.deactivating_amount = 0;
-        delegation.deactivation_timestamp = None;
-
-        Ok(())
-    } else {
-        Err(StakeError::NoDeactivatedTokens.into())
-    }
+    Ok(())
 }

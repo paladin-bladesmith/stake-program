@@ -55,7 +55,8 @@ impl SolStakerStake {
         Self {
             discriminator: SolStakerStake::SPL_DISCRIMINATOR.into(),
             delegation: Delegation {
-                amount: u64::default(),
+                active_amount: u64::default(),
+                effective_amount: u64::default(),
                 deactivation_timestamp: Option::default(),
                 deactivating_amount: u64::default(),
                 inactive_amount: u64::default(),

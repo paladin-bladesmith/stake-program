@@ -5,7 +5,9 @@ use crate::{
     err,
     error::StakeError,
     instruction::accounts::{Context, SlashValidatorStakeAccounts},
-    processor::{process_slash_for_delegation, unpack_initialized_mut, SlashArgs},
+    processor::{
+        harvest, process_slash_for_delegation, unpack_initialized_mut, HarvestAccounts, SlashArgs,
+    },
     require,
     state::{
         create_vault_pda, find_validator_stake_pda, get_vault_pda_signer_seeds, Config,
@@ -34,6 +36,40 @@ pub fn process_slash_validator_stake(
 ) -> ProgramResult {
     // Account validation.
 
+    // stake
+    // - owner must be the stake program
+    // - must be a ValidatorStake account
+    // - must be initialized
+    // - derivation must match (validates the config account)
+    require!(
+        ctx.accounts.validator_stake.owner == program_id,
+        ProgramError::InvalidAccountOwner,
+        "stake"
+    );
+    let mut stake_data = ctx.accounts.validator_stake.try_borrow_mut_data()?;
+    let validator_stake = unpack_initialized_mut::<ValidatorStake>(&mut stake_data)?;
+    let (derivation, _) = find_validator_stake_pda(
+        &validator_stake.delegation.validator_vote,
+        ctx.accounts.config.key,
+        program_id,
+    );
+    require!(
+        ctx.accounts.validator_stake.key == &derivation,
+        ProgramError::InvalidSeeds,
+        "stake",
+    );
+
+    // Harvest rewards & update last claim tracking.
+    harvest(
+        HarvestAccounts {
+            config: ctx.accounts.config,
+            holder_rewards: ctx.accounts.vault_holder_rewards,
+            recipient: ctx.accounts.validator_stake_authority,
+        },
+        &mut validator_stake.delegation,
+        None,
+    )?;
+
     // config
     // - owner must be the stake program
     // - must be initialized
@@ -52,33 +88,6 @@ pub fn process_slash_validator_stake(
         config.is_initialized(),
         ProgramError::UninitializedAccount,
         "config",
-    );
-
-    // stake
-    // - owner must be the stake program
-    // - must be a ValidatorStake account
-    // - must be initialized
-    // - derivation must match (validates the config account)
-
-    require!(
-        ctx.accounts.stake.owner == program_id,
-        ProgramError::InvalidAccountOwner,
-        "stake"
-    );
-
-    let mut stake_data = ctx.accounts.stake.try_borrow_mut_data()?;
-    let stake = unpack_initialized_mut::<ValidatorStake>(&mut stake_data)?;
-
-    let (derivation, _) = find_validator_stake_pda(
-        &stake.delegation.validator_vote,
-        ctx.accounts.config.key,
-        program_id,
-    );
-
-    require!(
-        ctx.accounts.stake.key == &derivation,
-        ProgramError::InvalidSeeds,
-        "stake",
     );
 
     // slash authority
@@ -145,7 +154,8 @@ pub fn process_slash_validator_stake(
 
     process_slash_for_delegation(SlashArgs {
         config,
-        delegation: &mut stake.delegation,
+        delegation: &mut validator_stake.delegation,
+        lamports_stake: validator_stake.total_staked_lamports_amount,
         mint_info: ctx.accounts.mint,
         vault_info: ctx.accounts.vault,
         vault_authority_info: ctx.accounts.vault_authority,

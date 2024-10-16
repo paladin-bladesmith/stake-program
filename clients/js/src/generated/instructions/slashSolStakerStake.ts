@@ -35,11 +35,14 @@ import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 export type SlashSolStakerStakeInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
-  TAccountStake extends string | IAccountMeta<string> = string,
-  TAccountValidatorStake extends string | IAccountMeta<string> = string,
+  TAccountSolStakerStake extends string | IAccountMeta<string> = string,
+  TAccountSolStakerStakeAuthority extends
+    | string
+    | IAccountMeta<string> = string,
   TAccountSlashAuthority extends string | IAccountMeta<string> = string,
-  TAccountVault extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
+  TAccountVault extends string | IAccountMeta<string> = string,
+  TAccountVaultHolderRewards extends string | IAccountMeta<string> = string,
   TAccountVaultAuthority extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
@@ -52,22 +55,25 @@ export type SlashSolStakerStakeInstruction<
       TAccountConfig extends string
         ? WritableAccount<TAccountConfig>
         : TAccountConfig,
-      TAccountStake extends string
-        ? WritableAccount<TAccountStake>
-        : TAccountStake,
-      TAccountValidatorStake extends string
-        ? WritableAccount<TAccountValidatorStake>
-        : TAccountValidatorStake,
+      TAccountSolStakerStake extends string
+        ? WritableAccount<TAccountSolStakerStake>
+        : TAccountSolStakerStake,
+      TAccountSolStakerStakeAuthority extends string
+        ? WritableAccount<TAccountSolStakerStakeAuthority>
+        : TAccountSolStakerStakeAuthority,
       TAccountSlashAuthority extends string
         ? ReadonlySignerAccount<TAccountSlashAuthority> &
             IAccountSignerMeta<TAccountSlashAuthority>
         : TAccountSlashAuthority,
-      TAccountVault extends string
-        ? WritableAccount<TAccountVault>
-        : TAccountVault,
       TAccountMint extends string
         ? WritableAccount<TAccountMint>
         : TAccountMint,
+      TAccountVault extends string
+        ? WritableAccount<TAccountVault>
+        : TAccountVault,
+      TAccountVaultHolderRewards extends string
+        ? ReadonlyAccount<TAccountVaultHolderRewards>
+        : TAccountVaultHolderRewards,
       TAccountVaultAuthority extends string
         ? ReadonlyAccount<TAccountVaultAuthority>
         : TAccountVaultAuthority,
@@ -93,7 +99,7 @@ export function getSlashSolStakerStakeInstructionDataEncoder(): Encoder<SlashSol
       ['discriminator', getU8Encoder()],
       ['amount', getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 18 })
+    (value) => ({ ...value, discriminator: 16 })
   );
 }
 
@@ -116,26 +122,29 @@ export function getSlashSolStakerStakeInstructionDataCodec(): Codec<
 
 export type SlashSolStakerStakeInput<
   TAccountConfig extends string = string,
-  TAccountStake extends string = string,
-  TAccountValidatorStake extends string = string,
+  TAccountSolStakerStake extends string = string,
+  TAccountSolStakerStakeAuthority extends string = string,
   TAccountSlashAuthority extends string = string,
-  TAccountVault extends string = string,
   TAccountMint extends string = string,
+  TAccountVault extends string = string,
+  TAccountVaultHolderRewards extends string = string,
   TAccountVaultAuthority extends string = string,
   TAccountTokenProgram extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
   /** SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`) */
-  stake: Address<TAccountStake>;
-  /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
-  validatorStake: Address<TAccountValidatorStake>;
+  solStakerStake: Address<TAccountSolStakerStake>;
+  /** SOL staker stake authority account */
+  solStakerStakeAuthority: Address<TAccountSolStakerStakeAuthority>;
   /** Config slash authority */
   slashAuthority: TransactionSigner<TAccountSlashAuthority>;
+  /** Vault token mint */
+  mint: Address<TAccountMint>;
   /** Vault token account */
   vault: Address<TAccountVault>;
-  /** Stake Token Mint */
-  mint: Address<TAccountMint>;
+  /** Vault holder rewards account */
+  vaultHolderRewards: Address<TAccountVaultHolderRewards>;
   /** Vault authority (pda of `['token-owner', config]`) */
   vaultAuthority: Address<TAccountVaultAuthority>;
   /** Token program */
@@ -145,32 +154,35 @@ export type SlashSolStakerStakeInput<
 
 export function getSlashSolStakerStakeInstruction<
   TAccountConfig extends string,
-  TAccountStake extends string,
-  TAccountValidatorStake extends string,
+  TAccountSolStakerStake extends string,
+  TAccountSolStakerStakeAuthority extends string,
   TAccountSlashAuthority extends string,
-  TAccountVault extends string,
   TAccountMint extends string,
+  TAccountVault extends string,
+  TAccountVaultHolderRewards extends string,
   TAccountVaultAuthority extends string,
   TAccountTokenProgram extends string,
 >(
   input: SlashSolStakerStakeInput<
     TAccountConfig,
-    TAccountStake,
-    TAccountValidatorStake,
+    TAccountSolStakerStake,
+    TAccountSolStakerStakeAuthority,
     TAccountSlashAuthority,
-    TAccountVault,
     TAccountMint,
+    TAccountVault,
+    TAccountVaultHolderRewards,
     TAccountVaultAuthority,
     TAccountTokenProgram
   >
 ): SlashSolStakerStakeInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
-  TAccountStake,
-  TAccountValidatorStake,
+  TAccountSolStakerStake,
+  TAccountSolStakerStakeAuthority,
   TAccountSlashAuthority,
-  TAccountVault,
   TAccountMint,
+  TAccountVault,
+  TAccountVaultHolderRewards,
   TAccountVaultAuthority,
   TAccountTokenProgram
 > {
@@ -180,11 +192,18 @@ export function getSlashSolStakerStakeInstruction<
   // Original accounts.
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
-    stake: { value: input.stake ?? null, isWritable: true },
-    validatorStake: { value: input.validatorStake ?? null, isWritable: true },
+    solStakerStake: { value: input.solStakerStake ?? null, isWritable: true },
+    solStakerStakeAuthority: {
+      value: input.solStakerStakeAuthority ?? null,
+      isWritable: true,
+    },
     slashAuthority: { value: input.slashAuthority ?? null, isWritable: false },
-    vault: { value: input.vault ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: true },
+    vault: { value: input.vault ?? null, isWritable: true },
+    vaultHolderRewards: {
+      value: input.vaultHolderRewards ?? null,
+      isWritable: false,
+    },
     vaultAuthority: { value: input.vaultAuthority ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
   };
@@ -206,11 +225,12 @@ export function getSlashSolStakerStakeInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.config),
-      getAccountMeta(accounts.stake),
-      getAccountMeta(accounts.validatorStake),
+      getAccountMeta(accounts.solStakerStake),
+      getAccountMeta(accounts.solStakerStakeAuthority),
       getAccountMeta(accounts.slashAuthority),
-      getAccountMeta(accounts.vault),
       getAccountMeta(accounts.mint),
+      getAccountMeta(accounts.vault),
+      getAccountMeta(accounts.vaultHolderRewards),
       getAccountMeta(accounts.vaultAuthority),
       getAccountMeta(accounts.tokenProgram),
     ],
@@ -221,11 +241,12 @@ export function getSlashSolStakerStakeInstruction<
   } as SlashSolStakerStakeInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
-    TAccountStake,
-    TAccountValidatorStake,
+    TAccountSolStakerStake,
+    TAccountSolStakerStakeAuthority,
     TAccountSlashAuthority,
-    TAccountVault,
     TAccountMint,
+    TAccountVault,
+    TAccountVaultHolderRewards,
     TAccountVaultAuthority,
     TAccountTokenProgram
   >;
@@ -242,19 +263,21 @@ export type ParsedSlashSolStakerStakeInstruction<
     /** Stake config account */
     config: TAccountMetas[0];
     /** SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`) */
-    stake: TAccountMetas[1];
-    /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
-    validatorStake: TAccountMetas[2];
+    solStakerStake: TAccountMetas[1];
+    /** SOL staker stake authority account */
+    solStakerStakeAuthority: TAccountMetas[2];
     /** Config slash authority */
     slashAuthority: TAccountMetas[3];
+    /** Vault token mint */
+    mint: TAccountMetas[4];
     /** Vault token account */
-    vault: TAccountMetas[4];
-    /** Stake Token Mint */
-    mint: TAccountMetas[5];
+    vault: TAccountMetas[5];
+    /** Vault holder rewards account */
+    vaultHolderRewards: TAccountMetas[6];
     /** Vault authority (pda of `['token-owner', config]`) */
-    vaultAuthority: TAccountMetas[6];
+    vaultAuthority: TAccountMetas[7];
     /** Token program */
-    tokenProgram: TAccountMetas[7];
+    tokenProgram: TAccountMetas[8];
   };
   data: SlashSolStakerStakeInstructionData;
 };
@@ -267,7 +290,7 @@ export function parseSlashSolStakerStakeInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedSlashSolStakerStakeInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 8) {
+  if (instruction.accounts.length < 9) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -281,11 +304,12 @@ export function parseSlashSolStakerStakeInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       config: getNextAccount(),
-      stake: getNextAccount(),
-      validatorStake: getNextAccount(),
+      solStakerStake: getNextAccount(),
+      solStakerStakeAuthority: getNextAccount(),
       slashAuthority: getNextAccount(),
-      vault: getNextAccount(),
       mint: getNextAccount(),
+      vault: getNextAccount(),
+      vaultHolderRewards: getNextAccount(),
       vaultAuthority: getNextAccount(),
       tokenProgram: getNextAccount(),
     },

@@ -44,17 +44,14 @@ pub fn process_deactivate_stake(
     // config
     // - owner must be the stake program
     // - must be initialized
-
     require!(
         ctx.accounts.config.owner == program_id,
         ProgramError::InvalidAccountOwner,
         "config"
     );
-
     let data = &ctx.accounts.config.try_borrow_data()?;
     let config = bytemuck::try_from_bytes::<Config>(data)
         .map_err(|_error| ProgramError::InvalidAccountData)?;
-
     require!(
         config.is_initialized(),
         ProgramError::UninitializedAccount,
@@ -98,15 +95,15 @@ pub fn process_deactivate_stake(
     );
 
     // Validate the amount.
-
     require!(
-        delegation.amount >= amount,
+        delegation.active_amount >= amount,
         StakeError::InsufficientStakeAmount
     );
 
-    let max_deactivation_amount =
-        get_max_deactivation_amount(delegation.amount, config.max_deactivation_basis_points)?;
-
+    let max_deactivation_amount = get_max_deactivation_amount(
+        delegation.active_amount,
+        config.max_deactivation_basis_points,
+    )?;
     require!(
         amount <= max_deactivation_amount,
         StakeError::MaximumDeactivationAmountExceeded,
@@ -118,7 +115,6 @@ pub fn process_deactivate_stake(
     // Deactivate the stake.
     //
     // If the stake is already deactivating, this will reset the deactivation.
-
     if amount > 0 {
         delegation.deactivating_amount = amount;
         delegation.deactivation_timestamp = NonZeroU64::new(Clock::get()?.unix_timestamp as u64);

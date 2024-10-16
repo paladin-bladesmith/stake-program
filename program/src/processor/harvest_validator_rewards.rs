@@ -1,9 +1,10 @@
+use paladin_rewards_program_client::accounts::HolderRewards;
 use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey};
 
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, HarvestValidatorRewardsAccounts},
-    processor::{process_harvest_for_delegation, unpack_initialized_mut},
+    processor::{harvest, unpack_initialized, unpack_initialized_mut, HarvestAccounts},
     require,
     state::{find_validator_stake_pda, Config, ValidatorStake},
 };
@@ -16,8 +17,7 @@ use crate::{
 ///
 /// 0. `[w]` Config account
 /// 1. `[w]` Validator stake account
-/// 2. `[w]` Destination account
-/// 3. `[s]` Stake authority
+/// 2. `[w]` Stake authority
 pub fn process_harvest_validator_rewards(
     program_id: &Pubkey,
     ctx: Context<HarvestValidatorRewardsAccounts>,
@@ -27,28 +27,22 @@ pub fn process_harvest_validator_rewards(
     // config
     // - owner must be the stake program
     // - must be initialized
-
     require!(
         ctx.accounts.config.owner == program_id,
         ProgramError::InvalidAccountOwner,
         "config"
     );
+    let vault_key = {
+        let config = ctx.accounts.config.data.borrow();
+        let config = unpack_initialized::<Config>(&config)?;
 
-    let mut config_data = ctx.accounts.config.try_borrow_mut_data()?;
-    let config = bytemuck::try_from_bytes_mut::<Config>(&mut config_data)
-        .map_err(|_error| ProgramError::InvalidAccountData)?;
-
-    require!(
-        config.is_initialized(),
-        ProgramError::UninitializedAccount,
-        "config",
-    );
+        config.vault
+    };
 
     // stake
     // - owner must be the stake program
     // - must be initialized
     // - derivation must match (validates the config account)
-
     require!(
         ctx.accounts.validator_stake.owner == program_id,
         ProgramError::InvalidAccountOwner,
@@ -71,28 +65,32 @@ pub fn process_harvest_validator_rewards(
     );
 
     // stake authority
-    // - must be a signer
     // - must match the authority on the stake account
-
     require!(
-        ctx.accounts.stake_authority.is_signer,
-        ProgramError::MissingRequiredSignature,
-        "stake authority",
-    );
-
-    require!(
-        ctx.accounts.stake_authority.key == &validator_stake.delegation.authority,
+        ctx.accounts.validator_stake_authority.key == &validator_stake.delegation.authority,
         StakeError::InvalidAuthority,
         "stake authority",
     );
 
-    // Process the harvest.
+    // Holder rewards.
+    // - Must be derived from the vault account.
+    let derivation = HolderRewards::find_pda(&vault_key).0;
+    require!(
+        ctx.accounts.vault_holder_rewards.key == &derivation,
+        ProgramError::InvalidSeeds,
+        "vault_holder_rewards"
+    );
 
-    process_harvest_for_delegation(
-        config,
+    // Process the harvest.
+    harvest(
+        HarvestAccounts {
+            config: ctx.accounts.config,
+            holder_rewards: ctx.accounts.vault_holder_rewards,
+            recipient: ctx.accounts.validator_stake_authority,
+        },
         &mut validator_stake.delegation,
-        validator_stake.total_staked_lamports_amount,
-        ctx.accounts.config,
-        ctx.accounts.destination,
-    )
+        None,
+    )?;
+
+    Ok(())
 }

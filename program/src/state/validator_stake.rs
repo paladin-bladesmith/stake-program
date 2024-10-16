@@ -29,12 +29,6 @@ pub struct ValidatorStake {
     /// Delegation values for the stake account.
     pub delegation: Delegation,
 
-    /// Total amount of tokens staked on a validator stake account.
-    ///
-    /// The total includes the amount staked by `SolStakerStake` accounts delegating to
-    /// the validator.
-    pub total_staked_token_amount: u64,
-
     /// Total amount of SOL (lamports) staked on the validator.
     pub total_staked_lamports_amount: u64,
 }
@@ -54,7 +48,8 @@ impl ValidatorStake {
         Self {
             discriminator: ValidatorStake::SPL_DISCRIMINATOR.into(),
             delegation: Delegation {
-                amount: u64::default(),
+                active_amount: u64::default(),
+                effective_amount: u64::default(),
                 deactivation_timestamp: Option::default(),
                 deactivating_amount: u64::default(),
                 inactive_amount: u64::default(),
@@ -63,7 +58,6 @@ impl ValidatorStake {
                 last_seen_holder_rewards_per_token: PodU128::default(),
                 last_seen_stake_rewards_per_token: PodU128::default(),
             },
-            total_staked_token_amount: u64::default(),
             total_staked_lamports_amount: u64::default(),
         }
     }

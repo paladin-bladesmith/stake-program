@@ -14,7 +14,6 @@ use borsh::BorshSerialize;
 pub struct ValidatorStake {
     pub discriminator: [u8; 8],
     pub delegation: Delegation,
-    pub total_staked_token_amount: u64,
     pub total_staked_lamports_amount: u64,
 }
 

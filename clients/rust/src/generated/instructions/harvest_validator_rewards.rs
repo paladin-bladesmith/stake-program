@@ -12,12 +12,14 @@ use borsh::BorshSerialize;
 pub struct HarvestValidatorRewards {
     /// Stake config account
     pub config: solana_program::pubkey::Pubkey,
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Holder rewards account
+    pub vault_holder_rewards: solana_program::pubkey::Pubkey,
+    /// Validator stake account
     pub validator_stake: solana_program::pubkey::Pubkey,
-    /// Destination account for withdrawn lamports
-    pub destination: solana_program::pubkey::Pubkey,
-    /// Stake authority
-    pub stake_authority: solana_program::pubkey::Pubkey,
+    /// Validator stake authority
+    pub validator_stake_authority: solana_program::pubkey::Pubkey,
+    /// Stake history sysvar
+    pub sysvar_stake_history: solana_program::pubkey::Pubkey,
 }
 
 impl HarvestValidatorRewards {
@@ -29,9 +31,13 @@ impl HarvestValidatorRewards {
         &self,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.config,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.vault_holder_rewards,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -39,12 +45,12 @@ impl HarvestValidatorRewards {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.destination,
+            self.validator_stake_authority,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.stake_authority,
-            true,
+            self.sysvar_stake_history,
+            false,
         ));
         accounts.extend_from_slice(remaining_accounts);
         let data = HarvestValidatorRewardsInstructionData::new()
@@ -81,15 +87,17 @@ impl Default for HarvestValidatorRewardsInstructionData {
 /// ### Accounts:
 ///
 ///   0. `[writable]` config
-///   1. `[writable]` validator_stake
-///   2. `[writable]` destination
-///   3. `[signer]` stake_authority
+///   1. `[]` vault_holder_rewards
+///   2. `[writable]` validator_stake
+///   3. `[writable]` validator_stake_authority
+///   4. `[optional]` sysvar_stake_history (default to `SysvarStakeHistory1111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct HarvestValidatorRewardsBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
+    vault_holder_rewards: Option<solana_program::pubkey::Pubkey>,
     validator_stake: Option<solana_program::pubkey::Pubkey>,
-    destination: Option<solana_program::pubkey::Pubkey>,
-    stake_authority: Option<solana_program::pubkey::Pubkey>,
+    validator_stake_authority: Option<solana_program::pubkey::Pubkey>,
+    sysvar_stake_history: Option<solana_program::pubkey::Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -103,7 +111,16 @@ impl HarvestValidatorRewardsBuilder {
         self.config = Some(config);
         self
     }
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Holder rewards account
+    #[inline(always)]
+    pub fn vault_holder_rewards(
+        &mut self,
+        vault_holder_rewards: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.vault_holder_rewards = Some(vault_holder_rewards);
+        self
+    }
+    /// Validator stake account
     #[inline(always)]
     pub fn validator_stake(
         &mut self,
@@ -112,19 +129,23 @@ impl HarvestValidatorRewardsBuilder {
         self.validator_stake = Some(validator_stake);
         self
     }
-    /// Destination account for withdrawn lamports
+    /// Validator stake authority
     #[inline(always)]
-    pub fn destination(&mut self, destination: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.destination = Some(destination);
+    pub fn validator_stake_authority(
+        &mut self,
+        validator_stake_authority: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.validator_stake_authority = Some(validator_stake_authority);
         self
     }
-    /// Stake authority
+    /// `[optional account, default to 'SysvarStakeHistory1111111111111111111111111']`
+    /// Stake history sysvar
     #[inline(always)]
-    pub fn stake_authority(
+    pub fn sysvar_stake_history(
         &mut self,
-        stake_authority: solana_program::pubkey::Pubkey,
+        sysvar_stake_history: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
-        self.stake_authority = Some(stake_authority);
+        self.sysvar_stake_history = Some(sysvar_stake_history);
         self
     }
     /// Add an aditional account to the instruction.
@@ -149,9 +170,16 @@ impl HarvestValidatorRewardsBuilder {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = HarvestValidatorRewards {
             config: self.config.expect("config is not set"),
+            vault_holder_rewards: self
+                .vault_holder_rewards
+                .expect("vault_holder_rewards is not set"),
             validator_stake: self.validator_stake.expect("validator_stake is not set"),
-            destination: self.destination.expect("destination is not set"),
-            stake_authority: self.stake_authority.expect("stake_authority is not set"),
+            validator_stake_authority: self
+                .validator_stake_authority
+                .expect("validator_stake_authority is not set"),
+            sysvar_stake_history: self.sysvar_stake_history.unwrap_or(solana_program::pubkey!(
+                "SysvarStakeHistory1111111111111111111111111"
+            )),
         };
 
         accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)
@@ -162,12 +190,14 @@ impl HarvestValidatorRewardsBuilder {
 pub struct HarvestValidatorRewardsCpiAccounts<'a, 'b> {
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Holder rewards account
+    pub vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Validator stake account
     pub validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Destination account for withdrawn lamports
-    pub destination: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Stake authority
-    pub stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Validator stake authority
+    pub validator_stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Stake history sysvar
+    pub sysvar_stake_history: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `harvest_validator_rewards` CPI instruction.
@@ -176,12 +206,14 @@ pub struct HarvestValidatorRewardsCpi<'a, 'b> {
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Holder rewards account
+    pub vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Validator stake account
     pub validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Destination account for withdrawn lamports
-    pub destination: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Stake authority
-    pub stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Validator stake authority
+    pub validator_stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Stake history sysvar
+    pub sysvar_stake_history: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 impl<'a, 'b> HarvestValidatorRewardsCpi<'a, 'b> {
@@ -192,9 +224,10 @@ impl<'a, 'b> HarvestValidatorRewardsCpi<'a, 'b> {
         Self {
             __program: program,
             config: accounts.config,
+            vault_holder_rewards: accounts.vault_holder_rewards,
             validator_stake: accounts.validator_stake,
-            destination: accounts.destination,
-            stake_authority: accounts.stake_authority,
+            validator_stake_authority: accounts.validator_stake_authority,
+            sysvar_stake_history: accounts.sysvar_stake_history,
         }
     }
     #[inline(always)]
@@ -230,9 +263,13 @@ impl<'a, 'b> HarvestValidatorRewardsCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.config.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.vault_holder_rewards.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -240,12 +277,12 @@ impl<'a, 'b> HarvestValidatorRewardsCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.destination.key,
+            *self.validator_stake_authority.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.stake_authority.key,
-            true,
+            *self.sysvar_stake_history.key,
+            false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
@@ -263,12 +300,13 @@ impl<'a, 'b> HarvestValidatorRewardsCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(4 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(5 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.config.clone());
+        account_infos.push(self.vault_holder_rewards.clone());
         account_infos.push(self.validator_stake.clone());
-        account_infos.push(self.destination.clone());
-        account_infos.push(self.stake_authority.clone());
+        account_infos.push(self.validator_stake_authority.clone());
+        account_infos.push(self.sysvar_stake_history.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -286,9 +324,10 @@ impl<'a, 'b> HarvestValidatorRewardsCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[writable]` config
-///   1. `[writable]` validator_stake
-///   2. `[writable]` destination
-///   3. `[signer]` stake_authority
+///   1. `[]` vault_holder_rewards
+///   2. `[writable]` validator_stake
+///   3. `[writable]` validator_stake_authority
+///   4. `[]` sysvar_stake_history
 #[derive(Clone, Debug)]
 pub struct HarvestValidatorRewardsCpiBuilder<'a, 'b> {
     instruction: Box<HarvestValidatorRewardsCpiBuilderInstruction<'a, 'b>>,
@@ -299,9 +338,10 @@ impl<'a, 'b> HarvestValidatorRewardsCpiBuilder<'a, 'b> {
         let instruction = Box::new(HarvestValidatorRewardsCpiBuilderInstruction {
             __program: program,
             config: None,
+            vault_holder_rewards: None,
             validator_stake: None,
-            destination: None,
-            stake_authority: None,
+            validator_stake_authority: None,
+            sysvar_stake_history: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -315,7 +355,16 @@ impl<'a, 'b> HarvestValidatorRewardsCpiBuilder<'a, 'b> {
         self.instruction.config = Some(config);
         self
     }
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Holder rewards account
+    #[inline(always)]
+    pub fn vault_holder_rewards(
+        &mut self,
+        vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.vault_holder_rewards = Some(vault_holder_rewards);
+        self
+    }
+    /// Validator stake account
     #[inline(always)]
     pub fn validator_stake(
         &mut self,
@@ -324,22 +373,22 @@ impl<'a, 'b> HarvestValidatorRewardsCpiBuilder<'a, 'b> {
         self.instruction.validator_stake = Some(validator_stake);
         self
     }
-    /// Destination account for withdrawn lamports
+    /// Validator stake authority
     #[inline(always)]
-    pub fn destination(
+    pub fn validator_stake_authority(
         &mut self,
-        destination: &'b solana_program::account_info::AccountInfo<'a>,
+        validator_stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.destination = Some(destination);
+        self.instruction.validator_stake_authority = Some(validator_stake_authority);
         self
     }
-    /// Stake authority
+    /// Stake history sysvar
     #[inline(always)]
-    pub fn stake_authority(
+    pub fn sysvar_stake_history(
         &mut self,
-        stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
+        sysvar_stake_history: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.stake_authority = Some(stake_authority);
+        self.instruction.sysvar_stake_history = Some(sysvar_stake_history);
         self
     }
     /// Add an additional account to the instruction.
@@ -388,20 +437,25 @@ impl<'a, 'b> HarvestValidatorRewardsCpiBuilder<'a, 'b> {
 
             config: self.instruction.config.expect("config is not set"),
 
+            vault_holder_rewards: self
+                .instruction
+                .vault_holder_rewards
+                .expect("vault_holder_rewards is not set"),
+
             validator_stake: self
                 .instruction
                 .validator_stake
                 .expect("validator_stake is not set"),
 
-            destination: self
+            validator_stake_authority: self
                 .instruction
-                .destination
-                .expect("destination is not set"),
+                .validator_stake_authority
+                .expect("validator_stake_authority is not set"),
 
-            stake_authority: self
+            sysvar_stake_history: self
                 .instruction
-                .stake_authority
-                .expect("stake_authority is not set"),
+                .sysvar_stake_history
+                .expect("sysvar_stake_history is not set"),
         };
         instruction.invoke_signed_with_remaining_accounts(
             signers_seeds,
@@ -414,9 +468,10 @@ impl<'a, 'b> HarvestValidatorRewardsCpiBuilder<'a, 'b> {
 struct HarvestValidatorRewardsCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    vault_holder_rewards: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     validator_stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    destination: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    stake_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    validator_stake_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    sysvar_stake_history: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

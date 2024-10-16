@@ -42,7 +42,7 @@ async fn validator_stake_deactivate_stake() {
     // "manually" set the total amount delegated
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
 
@@ -53,7 +53,7 @@ async fn validator_stake_deactivate_stake() {
     // "manually" set the amount to 100
     let mut account = get_account!(context, validator_stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 100;
+    stake_account.delegation.active_amount = 100;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&validator_stake_manager.stake, &account.into());
 
@@ -79,7 +79,7 @@ async fn validator_stake_deactivate_stake() {
     let account = get_account!(context, validator_stake_manager.stake);
     let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
 
-    assert_eq!(stake_account.delegation.amount, 100);
+    assert_eq!(stake_account.delegation.active_amount, 100);
     assert_eq!(stake_account.delegation.deactivating_amount, 5);
     assert!(stake_account
         .delegation
@@ -104,7 +104,7 @@ async fn validator_stake_deactivate_stake_with_active_deactivation() {
     // "manually" set the total amount delegated
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
 
@@ -115,7 +115,7 @@ async fn validator_stake_deactivate_stake_with_active_deactivation() {
     // "manually" set the amount to 100
     let mut account = get_account!(context, validator_stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 100;
+    stake_account.delegation.active_amount = 100;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&validator_stake_manager.stake, &account.into());
 
@@ -195,7 +195,7 @@ async fn fail_validator_stake_deactivate_stake_with_amount_greater_than_stake_am
     // "manually" set the total amount delegated
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
 
@@ -206,7 +206,7 @@ async fn fail_validator_stake_deactivate_stake_with_amount_greater_than_stake_am
     // "manually" set the amount to 100
     let mut account = get_account!(context, validator_stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 100;
+    stake_account.delegation.active_amount = 100;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&validator_stake_manager.stake, &account.into());
 
@@ -252,7 +252,7 @@ async fn fail_validator_stake_deactivate_stake_with_invalid_authority() {
     // "manually" set the total amount delegated
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
 
@@ -263,7 +263,7 @@ async fn fail_validator_stake_deactivate_stake_with_invalid_authority() {
     // "manually" set the amount to 100
     let mut account = get_account!(context, validator_stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 100;
+    stake_account.delegation.active_amount = 100;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&validator_stake_manager.stake, &account.into());
 
@@ -311,7 +311,7 @@ async fn validator_stake_deactivate_stake_with_zero_amount() {
     // "manually" set the total amount delegated
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
 
@@ -322,7 +322,7 @@ async fn validator_stake_deactivate_stake_with_zero_amount() {
     // "manually" set the amount to 100
     let mut account = get_account!(context, validator_stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 100;
+    stake_account.delegation.active_amount = 100;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&validator_stake_manager.stake, &account.into());
 
@@ -434,7 +434,7 @@ async fn fail_validator_stake_deactivate_stake_with_maximum_deactivation_amount_
     // "manually" set the total amount delegated
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
 
@@ -445,7 +445,7 @@ async fn fail_validator_stake_deactivate_stake_with_maximum_deactivation_amount_
     // "manually" set the amount to 100
     let mut account = get_account!(context, validator_stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 100;
+    stake_account.delegation.active_amount = 100;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&validator_stake_manager.stake, &account.into());
 
@@ -494,7 +494,7 @@ async fn fail_deactivate_stake_with_uninitialized_config_account() {
     // "manually" set the total amount delegated
     let account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
 
     let updated_config = Account {
         lamports: account.lamports,
@@ -516,7 +516,7 @@ async fn fail_deactivate_stake_with_uninitialized_config_account() {
     let account = get_account!(context, stake_pda);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 100
-    stake_account.delegation.amount = 100;
+    stake_account.delegation.active_amount = 100;
 
     let updated_stake = Account {
         lamports: account.lamports,
@@ -576,23 +576,15 @@ async fn sol_staker_stake_deactivate_stake() {
     // "manually" set the total amount delegated
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
 
     // And a validator stake account.
-
     let validator_stake_manager =
         ValidatorStakeManager::new(&mut context, &config_manager.config).await;
-    // "manually" set the amount to 100
-    let mut account = get_account!(context, validator_stake_manager.stake);
-    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.total_staked_token_amount = 100;
-    account.data = stake_account.try_to_vec().unwrap();
-    context.set_account(&validator_stake_manager.stake, &account.into());
 
     // And a SOL staker stake account.
-
     let sol_staker_stake_manager = SolStakerStakeManager::new(
         &mut context,
         &config_manager.config,
@@ -604,7 +596,7 @@ async fn sol_staker_stake_deactivate_stake() {
     // "manually" set the amount to 100
     let mut account = get_account!(context, sol_staker_stake_manager.stake);
     let mut stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 100;
+    stake_account.delegation.active_amount = 100;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
 
@@ -630,7 +622,7 @@ async fn sol_staker_stake_deactivate_stake() {
     let account = get_account!(context, sol_staker_stake_manager.stake);
     let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
 
-    assert_eq!(stake_account.delegation.amount, 100);
+    assert_eq!(stake_account.delegation.active_amount, 100);
     assert_eq!(stake_account.delegation.deactivating_amount, 5);
     assert!(stake_account
         .delegation
@@ -649,7 +641,7 @@ async fn sol_staker_stake_deactivate_stake_with_active_deactivation() {
     // "manually" set the total amount delegated
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
 
@@ -660,7 +652,7 @@ async fn sol_staker_stake_deactivate_stake_with_active_deactivation() {
     // "manually" set the amount to 100
     let mut account = get_account!(context, validator_stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 100;
+    stake_account.delegation.active_amount = 100;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&validator_stake_manager.stake, &account.into());
 
@@ -677,7 +669,7 @@ async fn sol_staker_stake_deactivate_stake_with_active_deactivation() {
     // "manually" set the amount to 100
     let mut account = get_account!(context, sol_staker_stake_manager.stake);
     let mut stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 100;
+    stake_account.delegation.active_amount = 100;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
 
@@ -751,7 +743,7 @@ async fn fail_sol_staker_stake_deactivate_stake_with_amount_greater_than_stake_a
     // "manually" set the total amount delegated
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
 
@@ -762,7 +754,7 @@ async fn fail_sol_staker_stake_deactivate_stake_with_amount_greater_than_stake_a
     // "manually" set the amount to 100
     let mut account = get_account!(context, validator_stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 100;
+    stake_account.delegation.active_amount = 100;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&validator_stake_manager.stake, &account.into());
 
@@ -779,7 +771,7 @@ async fn fail_sol_staker_stake_deactivate_stake_with_amount_greater_than_stake_a
     // "manually" set the amount to 100
     let mut account = get_account!(context, sol_staker_stake_manager.stake);
     let mut stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 100;
+    stake_account.delegation.active_amount = 100;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
 
@@ -819,7 +811,7 @@ async fn fail_sol_staker_stake_deactivate_stake_with_maximum_deactivation_amount
     // "manually" set the total amount delegated
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
 
@@ -830,7 +822,7 @@ async fn fail_sol_staker_stake_deactivate_stake_with_maximum_deactivation_amount
     // "manually" set the amount to 100
     let mut account = get_account!(context, validator_stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 100;
+    stake_account.delegation.active_amount = 100;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&validator_stake_manager.stake, &account.into());
 
@@ -847,7 +839,7 @@ async fn fail_sol_staker_stake_deactivate_stake_with_maximum_deactivation_amount
     // "manually" set the amount to 100
     let mut account = get_account!(context, sol_staker_stake_manager.stake);
     let mut stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 100;
+    stake_account.delegation.active_amount = 100;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
 

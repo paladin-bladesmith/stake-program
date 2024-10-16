@@ -25,7 +25,7 @@ use crate::{
 /// 5. `[s]` Stake authority
 /// 6. `[ ]` Vault authority, PDA with seeds `['token-owner', stake_config]`
 /// 7. `[ ]` Token program
-/// 8.. Extra required accounts for transfer hook
+/// 8. Extra required accounts for transfer hook
 ///
 /// Instruction data: amount of tokens to move.
 pub fn process_withdraw_inactive_stake<'a>(

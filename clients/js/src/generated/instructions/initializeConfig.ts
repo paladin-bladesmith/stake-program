@@ -8,6 +8,8 @@
 
 import {
   combineCodec,
+  getAddressDecoder,
+  getAddressEncoder,
   getStructDecoder,
   getStructEncoder,
   getU16Decoder,
@@ -34,8 +36,6 @@ import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 export type InitializeConfigInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
-  TAccountSlashAuthority extends string | IAccountMeta<string> = string,
-  TAccountConfigAuthority extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountVault extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
@@ -46,12 +46,6 @@ export type InitializeConfigInstruction<
       TAccountConfig extends string
         ? WritableAccount<TAccountConfig>
         : TAccountConfig,
-      TAccountSlashAuthority extends string
-        ? ReadonlyAccount<TAccountSlashAuthority>
-        : TAccountSlashAuthority,
-      TAccountConfigAuthority extends string
-        ? ReadonlyAccount<TAccountConfigAuthority>
-        : TAccountConfigAuthority,
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
@@ -64,12 +58,16 @@ export type InitializeConfigInstruction<
 
 export type InitializeConfigInstructionData = {
   discriminator: number;
+  slashAuthority: Address;
+  configAuthority: Address;
   cooldownTimeSeconds: bigint;
   maxDeactivationBasisPoints: number;
   syncRewardsLamports: bigint;
 };
 
 export type InitializeConfigInstructionDataArgs = {
+  slashAuthority: Address;
+  configAuthority: Address;
   cooldownTimeSeconds: number | bigint;
   maxDeactivationBasisPoints: number;
   syncRewardsLamports: number | bigint;
@@ -79,6 +77,8 @@ export function getInitializeConfigInstructionDataEncoder(): Encoder<InitializeC
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
+      ['slashAuthority', getAddressEncoder()],
+      ['configAuthority', getAddressEncoder()],
       ['cooldownTimeSeconds', getU64Encoder()],
       ['maxDeactivationBasisPoints', getU16Encoder()],
       ['syncRewardsLamports', getU64Encoder()],
@@ -90,6 +90,8 @@ export function getInitializeConfigInstructionDataEncoder(): Encoder<InitializeC
 export function getInitializeConfigInstructionDataDecoder(): Decoder<InitializeConfigInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
+    ['slashAuthority', getAddressDecoder()],
+    ['configAuthority', getAddressDecoder()],
     ['cooldownTimeSeconds', getU64Decoder()],
     ['maxDeactivationBasisPoints', getU16Decoder()],
     ['syncRewardsLamports', getU64Decoder()],
@@ -108,21 +110,17 @@ export function getInitializeConfigInstructionDataCodec(): Codec<
 
 export type InitializeConfigInput<
   TAccountConfig extends string = string,
-  TAccountSlashAuthority extends string = string,
-  TAccountConfigAuthority extends string = string,
   TAccountMint extends string = string,
   TAccountVault extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
-  /** Slash authority */
-  slashAuthority: Address<TAccountSlashAuthority>;
-  /** Config authority */
-  configAuthority: Address<TAccountConfigAuthority>;
   /** Stake token mint */
   mint: Address<TAccountMint>;
   /** Stake vault token account */
   vault: Address<TAccountVault>;
+  slashAuthority: InitializeConfigInstructionDataArgs['slashAuthority'];
+  configAuthority: InitializeConfigInstructionDataArgs['configAuthority'];
   cooldownTimeSeconds: InitializeConfigInstructionDataArgs['cooldownTimeSeconds'];
   maxDeactivationBasisPoints: InitializeConfigInstructionDataArgs['maxDeactivationBasisPoints'];
   syncRewardsLamports: InitializeConfigInstructionDataArgs['syncRewardsLamports'];
@@ -130,23 +128,13 @@ export type InitializeConfigInput<
 
 export function getInitializeConfigInstruction<
   TAccountConfig extends string,
-  TAccountSlashAuthority extends string,
-  TAccountConfigAuthority extends string,
   TAccountMint extends string,
   TAccountVault extends string,
 >(
-  input: InitializeConfigInput<
-    TAccountConfig,
-    TAccountSlashAuthority,
-    TAccountConfigAuthority,
-    TAccountMint,
-    TAccountVault
-  >
+  input: InitializeConfigInput<TAccountConfig, TAccountMint, TAccountVault>
 ): InitializeConfigInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
-  TAccountSlashAuthority,
-  TAccountConfigAuthority,
   TAccountMint,
   TAccountVault
 > {
@@ -156,11 +144,6 @@ export function getInitializeConfigInstruction<
   // Original accounts.
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
-    slashAuthority: { value: input.slashAuthority ?? null, isWritable: false },
-    configAuthority: {
-      value: input.configAuthority ?? null,
-      isWritable: false,
-    },
     mint: { value: input.mint ?? null, isWritable: false },
     vault: { value: input.vault ?? null, isWritable: false },
   };
@@ -176,8 +159,6 @@ export function getInitializeConfigInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.config),
-      getAccountMeta(accounts.slashAuthority),
-      getAccountMeta(accounts.configAuthority),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.vault),
     ],
@@ -188,8 +169,6 @@ export function getInitializeConfigInstruction<
   } as InitializeConfigInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
-    TAccountSlashAuthority,
-    TAccountConfigAuthority,
     TAccountMint,
     TAccountVault
   >;
@@ -205,14 +184,10 @@ export type ParsedInitializeConfigInstruction<
   accounts: {
     /** Stake config account */
     config: TAccountMetas[0];
-    /** Slash authority */
-    slashAuthority: TAccountMetas[1];
-    /** Config authority */
-    configAuthority: TAccountMetas[2];
     /** Stake token mint */
-    mint: TAccountMetas[3];
+    mint: TAccountMetas[1];
     /** Stake vault token account */
-    vault: TAccountMetas[4];
+    vault: TAccountMetas[2];
   };
   data: InitializeConfigInstructionData;
 };
@@ -225,7 +200,7 @@ export function parseInitializeConfigInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedInitializeConfigInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 5) {
+  if (instruction.accounts.length < 3) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -239,8 +214,6 @@ export function parseInitializeConfigInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       config: getNextAccount(),
-      slashAuthority: getNextAccount(),
-      configAuthority: getNextAccount(),
       mint: getNextAccount(),
       vault: getNextAccount(),
     },

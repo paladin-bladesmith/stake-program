@@ -29,10 +29,10 @@ pub struct Config {
     /// the stake is inactive and able to be withdrawn.
     pub cooldown_time_seconds: u64,
 
-    /// Total number of tokens delegated to the system. Since anyone can transfer
-    /// tokens into the vault without passing through the program, this number
-    /// is maintained independently.
-    pub token_amount_delegated: u64,
+    /// Total number of tokens that are earning rewards in the system. Since anyone can transfer
+    /// tokens into the vault without passing through the program, this number is maintained
+    /// independently.
+    pub token_amount_effective: u64,
 
     /// Lamports amount paid to for syncing a SOL stake account.
     pub sync_rewards_lamports: u64,
@@ -72,7 +72,7 @@ impl Config {
             slash_authority,
             vault,
             cooldown_time_seconds,
-            token_amount_delegated: 0,
+            token_amount_effective: 0,
             accumulated_stake_rewards_per_token: PodU128::default(),
             max_deactivation_basis_points,
             sync_rewards_lamports,

@@ -53,7 +53,7 @@ async fn initialize_stake_with_validator_vote() {
 
     let initialize_ix = InitializeValidatorStakeBuilder::new()
         .config(config)
-        .stake(stake_pda)
+        .validator_stake(stake_pda)
         .validator_vote(validator_vote)
         .instruction();
 
@@ -109,7 +109,7 @@ async fn fail_initialize_stake_with_initialized_account() {
 
     let initialize_ix = InitializeValidatorStakeBuilder::new()
         .config(config)
-        .stake(stake_pda)
+        .validator_stake(stake_pda)
         .validator_vote(validator_vote)
         .instruction();
 
@@ -128,7 +128,7 @@ async fn fail_initialize_stake_with_initialized_account() {
 
     let initialize_ix = InitializeValidatorStakeBuilder::new()
         .config(config)
-        .stake(stake_pda)
+        .validator_stake(stake_pda)
         .validator_vote(validator_vote)
         .instruction();
 
@@ -171,7 +171,7 @@ async fn fail_initialize_stake_with_invalid_derivation() {
 
     let initialize_ix = InitializeValidatorStakeBuilder::new()
         .config(config)
-        .stake(stake_pda)
+        .validator_stake(stake_pda)
         .validator_vote(validator_vote)
         .instruction();
 
@@ -221,7 +221,7 @@ async fn fail_initialize_stake_with_invalid_vote_account() {
 
     let initialize_ix = InitializeValidatorStakeBuilder::new()
         .config(config)
-        .stake(stake_pda)
+        .validator_stake(stake_pda)
         .validator_vote(validator_vote)
         .instruction();
 
@@ -285,7 +285,7 @@ async fn fail_initialize_stake_with_uninitialized_config_account() {
 
     let initialize_ix = InitializeValidatorStakeBuilder::new()
         .config(uninitialized_config.pubkey())
-        .stake(stake_pda)
+        .validator_stake(stake_pda)
         .validator_vote(validator_vote)
         .instruction();
 

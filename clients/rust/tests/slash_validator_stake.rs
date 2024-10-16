@@ -3,6 +3,7 @@
 mod setup;
 
 use borsh::BorshSerialize;
+use paladin_rewards_program_client::accounts::HolderRewards;
 use paladin_stake_program_client::{
     accounts::{Config, ValidatorStake},
     errors::PaladinStakeProgramError,
@@ -35,21 +36,18 @@ async fn slash_validator_stake() {
     )
     .start_with_context()
     .await;
+    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config and stake accounts.
-
     let config_manager = ConfigManager::new(&mut context).await;
     let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we set 100 tokens to the vault account.
-
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the total amount delegated
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
-
     mint_to(
         &mut context,
         &config_manager.mint,
@@ -62,28 +60,46 @@ async fn slash_validator_stake() {
     .unwrap();
 
     // And we set 50 tokens to the validator stake account.
-
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the amount to 50
-    stake_account.delegation.amount = 50;
-
+    stake_account.delegation.active_amount = 50;
+    stake_account.delegation.effective_amount = 50;
+    stake_account.total_staked_lamports_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
 
-    // When we slash 50 tokens.
+    // And we create the holder rewards account for the vault account.
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
+    let vault_holder_rewards_state = HolderRewards {
+        last_accumulated_rewards_per_token: 0,
+        unharvested_rewards: 0,
+        padding: 0,
+    };
+    context.set_account(
+        &vault_holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
 
+    // When we slash 50 tokens.
     let slash_ix = SlashValidatorStakeBuilder::new()
         .config(config_manager.config)
-        .stake(stake_manager.stake)
+        .validator_stake(stake_manager.stake)
+        .validator_stake_authority(stake_manager.authority.pubkey())
         .slash_authority(config_manager.authority.pubkey())
-        .vault(config_manager.vault)
         .mint(config_manager.mint)
+        .vault(config_manager.vault)
+        .vault_holder_rewards(vault_holder_rewards)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .token_program(spl_token_2022::ID)
         .amount(50) // <- slash 50 tokens
         .instruction();
-
     let tx = Transaction::new_signed_with_payer(
         &[slash_ix],
         Some(&context.payer.pubkey()),
@@ -93,23 +109,20 @@ async fn slash_validator_stake() {
     context.banks_client.process_transaction(tx).await.unwrap();
 
     // Then the tokens are burned.
-
     let account = get_account!(context, config_manager.vault);
     let vault =
         StateWithExtensions::<spl_token_2022::state::Account>::unpack(&account.data).unwrap();
     assert_eq!(vault.base.amount, 50);
 
     // And the config account has 50 tokens delegated (staked).
-
     let account = get_account!(context, config_manager.config);
     let config = Config::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(config.token_amount_delegated, 50);
+    assert_eq!(config.token_amount_effective, 50);
 
     // And the slashed validator stake account has no tokens.
-
     let account = get_account!(context, stake_manager.stake);
     let stake = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake.delegation.amount, 0);
+    assert_eq!(stake.delegation.active_amount, 0);
 }
 
 #[tokio::test]
@@ -121,21 +134,18 @@ async fn fail_slash_validator_stake_with_zero_amount() {
     )
     .start_with_context()
     .await;
+    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config and stake accounts.
-
     let config_manager = ConfigManager::new(&mut context).await;
     let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we set 100 tokens to the vault account.
-
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the total amount delegated
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
-
     mint_to(
         &mut context,
         &config_manager.mint,
@@ -148,28 +158,46 @@ async fn fail_slash_validator_stake_with_zero_amount() {
     .unwrap();
 
     // And we set 50 tokens to the validator stake account.
-
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the amount to 50
-    stake_account.delegation.amount = 50;
-
+    stake_account.delegation.active_amount = 50;
+    stake_account.delegation.effective_amount = 50;
+    stake_account.total_staked_lamports_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
 
-    // When we try to slash 0 tokens.
+    // And we create the holder rewards account for the vault account.
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
+    let vault_holder_rewards_state = HolderRewards {
+        last_accumulated_rewards_per_token: 0,
+        unharvested_rewards: 0,
+        padding: 0,
+    };
+    context.set_account(
+        &vault_holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
 
+    // When we try to slash 0 tokens.
     let slash_ix = SlashValidatorStakeBuilder::new()
         .config(config_manager.config)
-        .stake(stake_manager.stake)
+        .validator_stake(stake_manager.stake)
+        .validator_stake_authority(stake_manager.authority.pubkey())
         .slash_authority(config_manager.authority.pubkey())
-        .vault(config_manager.vault)
         .mint(config_manager.mint)
+        .vault(config_manager.vault)
+        .vault_holder_rewards(vault_holder_rewards)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .token_program(spl_token_2022::ID)
         .amount(0) // <- 0 tokens
         .instruction();
-
     let tx = Transaction::new_signed_with_payer(
         &[slash_ix],
         Some(&context.payer.pubkey()),
@@ -183,7 +211,6 @@ async fn fail_slash_validator_stake_with_zero_amount() {
         .unwrap_err();
 
     // Then we expect an error.
-
     assert_custom_error!(err, PaladinStakeProgramError::InvalidAmount);
 }
 
@@ -196,22 +223,19 @@ async fn slash_validator_stake_with_no_staked_amount() {
     )
     .start_with_context()
     .await;
+    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config and stake accounts (stake account does not have tokens
     // staked).
-
     let config_manager = ConfigManager::new(&mut context).await;
     let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we set 100 tokens to the vault account.
-
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the total amount delegated
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
-
     mint_to(
         &mut context,
         &config_manager.mint,
@@ -223,19 +247,38 @@ async fn slash_validator_stake_with_no_staked_amount() {
     .await
     .unwrap();
 
-    // When we slash 50 tokens from the validator stake account without staked tokens.
+    // And we create the holder rewards account for the vault account.
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
+    let vault_holder_rewards_state = HolderRewards {
+        last_accumulated_rewards_per_token: 0,
+        unharvested_rewards: 0,
+        padding: 0,
+    };
+    context.set_account(
+        &vault_holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
 
+    // When we slash 50 tokens from the validator stake account without staked tokens.
     let slash_ix = SlashValidatorStakeBuilder::new()
         .config(config_manager.config)
-        .stake(stake_manager.stake)
+        .validator_stake(stake_manager.stake)
+        .validator_stake_authority(stake_manager.authority.pubkey())
         .slash_authority(config_manager.authority.pubkey())
-        .vault(config_manager.vault)
         .mint(config_manager.mint)
+        .vault(config_manager.vault)
+        .vault_holder_rewards(vault_holder_rewards)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .token_program(spl_token_2022::ID)
         .amount(50) // <- 50 tokens
         .instruction();
-
     let tx = Transaction::new_signed_with_payer(
         &[slash_ix],
         Some(&context.payer.pubkey()),
@@ -245,7 +288,6 @@ async fn slash_validator_stake_with_no_staked_amount() {
     context.banks_client.process_transaction(tx).await.unwrap();
 
     // Then the slash is successful but not token is burned.
-
     let account = get_account!(context, config_manager.vault);
     let vault =
         StateWithExtensions::<spl_token_2022::state::Account>::unpack(&account.data).unwrap();
@@ -261,21 +303,18 @@ async fn fail_slash_validator_stake_with_invalid_slash_authority() {
     )
     .start_with_context()
     .await;
+    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config and stake accounts.
-
     let config_manager = ConfigManager::new(&mut context).await;
     let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we set 100 tokens to the vault account.
-
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the total amount delegated
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
-
     mint_to(
         &mut context,
         &config_manager.mint,
@@ -288,25 +327,43 @@ async fn fail_slash_validator_stake_with_invalid_slash_authority() {
     .unwrap();
 
     // And we set 50 tokens to the validator stake account.
-
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the amount to 50
-    stake_account.delegation.amount = 50;
-
+    stake_account.delegation.active_amount = 50;
+    stake_account.delegation.effective_amount = 50;
+    stake_account.total_staked_lamports_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
 
+    // And we create the holder rewards account for the vault account.
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
+    let vault_holder_rewards_state = HolderRewards {
+        last_accumulated_rewards_per_token: 0,
+        unharvested_rewards: 0,
+        padding: 0,
+    };
+    context.set_account(
+        &vault_holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
     // When we try to slash with a "fake" slash authority.
-
     let fake_authority = Keypair::new();
-
     let slash_ix = SlashValidatorStakeBuilder::new()
         .config(config_manager.config)
-        .stake(stake_manager.stake)
+        .validator_stake(stake_manager.stake)
+        .validator_stake_authority(stake_manager.authority.pubkey())
         .slash_authority(fake_authority.pubkey())
-        .vault(config_manager.vault)
         .mint(config_manager.mint)
+        .vault(config_manager.vault)
+        .vault_holder_rewards(vault_holder_rewards)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .token_program(spl_token_2022::ID)
         .amount(50) // <- slash 50 tokens
@@ -325,7 +382,6 @@ async fn fail_slash_validator_stake_with_invalid_slash_authority() {
         .unwrap_err();
 
     // Then we expect an error.
-
     assert_custom_error!(err, PaladinStakeProgramError::InvalidAuthority);
 }
 
@@ -338,21 +394,18 @@ async fn fail_slash_validator_stake_with_incorrect_vault_account() {
     )
     .start_with_context()
     .await;
+    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config and stake accounts.
-
     let config_manager = ConfigManager::new(&mut context).await;
     let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we set 100 tokens to the vault account.
-
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the total amount delegated
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
-
     mint_to(
         &mut context,
         &config_manager.mint,
@@ -365,17 +418,34 @@ async fn fail_slash_validator_stake_with_incorrect_vault_account() {
     .unwrap();
 
     // And we set 50 tokens to the validator stake account.
-
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the amount to 50
-    stake_account.delegation.amount = 50;
-
+    stake_account.delegation.active_amount = 50;
+    stake_account.delegation.effective_amount = 50;
+    stake_account.total_staked_lamports_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
 
-    // And we create a fake vault account with 100 tokens.
+    // And we create the holder rewards account for the vault account.
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
+    let vault_holder_rewards_state = HolderRewards {
+        last_accumulated_rewards_per_token: 0,
+        unharvested_rewards: 0,
+        padding: 0,
+    };
+    context.set_account(
+        &vault_holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
 
+    // And we create a fake vault account with 100 tokens.
     let fake_vault_account = Keypair::new();
     create_token_account(
         &mut context,
@@ -386,7 +456,6 @@ async fn fail_slash_validator_stake_with_incorrect_vault_account() {
     )
     .await
     .unwrap();
-
     mint_to(
         &mut context,
         &config_manager.mint,
@@ -399,18 +468,18 @@ async fn fail_slash_validator_stake_with_incorrect_vault_account() {
     .unwrap();
 
     // When we try to slash with the "fake" vault account.
-
     let slash_ix = SlashValidatorStakeBuilder::new()
         .config(config_manager.config)
-        .stake(stake_manager.stake)
+        .validator_stake(stake_manager.stake)
+        .validator_stake_authority(stake_manager.authority.pubkey())
         .slash_authority(config_manager.authority.pubkey())
-        .vault(fake_vault_account.pubkey())
         .mint(config_manager.mint)
+        .vault(fake_vault_account.pubkey())
+        .vault_holder_rewards(vault_holder_rewards)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .token_program(spl_token_2022::ID)
         .amount(50) // <- slash 50 tokens
         .instruction();
-
     let tx = Transaction::new_signed_with_payer(
         &[slash_ix],
         Some(&context.payer.pubkey()),
@@ -424,7 +493,6 @@ async fn fail_slash_validator_stake_with_incorrect_vault_account() {
         .unwrap_err();
 
     // Then we expect an error.
-
     assert_custom_error!(err, PaladinStakeProgramError::IncorrectVaultAccount);
 }
 
@@ -437,20 +505,17 @@ async fn fail_slash_validator_stake_with_uninitialized_stake_account() {
     )
     .start_with_context()
     .await;
+    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config and stake accounts.
-
     let config_manager = ConfigManager::new(&mut context).await;
 
     // And we set 100 tokens to the vault account.
-
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the total amount delegated
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
-
     mint_to(
         &mut context,
         &config_manager.mint,
@@ -463,10 +528,8 @@ async fn fail_slash_validator_stake_with_uninitialized_stake_account() {
     .unwrap();
 
     // And an uninitialized validator stake account.
-
     let validator_vote = Pubkey::new_unique();
     let (stake, _) = find_validator_stake_pda(&validator_vote, &config_manager.config);
-
     context.set_account(
         &stake,
         &AccountSharedData::from(Account {
@@ -477,19 +540,38 @@ async fn fail_slash_validator_stake_with_uninitialized_stake_account() {
         }),
     );
 
-    // When we try to slash with an uninitialized stake account.
+    // And we create the holder rewards account for the vault account.
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
+    let vault_holder_rewards_state = HolderRewards {
+        last_accumulated_rewards_per_token: 0,
+        unharvested_rewards: 0,
+        padding: 0,
+    };
+    context.set_account(
+        &vault_holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
 
+    // When we try to slash with an uninitialized stake account.
     let slash_ix = SlashValidatorStakeBuilder::new()
         .config(config_manager.config)
-        .stake(stake)
+        .validator_stake(stake)
+        .validator_stake_authority(Pubkey::new_unique())
         .slash_authority(config_manager.authority.pubkey())
-        .vault(config_manager.vault)
         .mint(config_manager.mint)
+        .vault(config_manager.vault)
+        .vault_holder_rewards(vault_holder_rewards)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .token_program(spl_token_2022::ID)
         .amount(50) // <- slash 50 tokens
         .instruction();
-
     let tx = Transaction::new_signed_with_payer(
         &[slash_ix],
         Some(&context.payer.pubkey()),
@@ -503,7 +585,6 @@ async fn fail_slash_validator_stake_with_uninitialized_stake_account() {
         .unwrap_err();
 
     // Then we expect an error.
-
     assert_instruction_error!(err, InstructionError::UninitializedAccount);
 }
 
@@ -516,21 +597,18 @@ async fn fail_slash_validator_stake_with_uninitialized_config_account() {
     )
     .start_with_context()
     .await;
+    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config and stake accounts.
-
     let config_manager = ConfigManager::new(&mut context).await;
     let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we set 100 tokens to the vault account.
-
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the total amount delegated
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
-
     mint_to(
         &mut context,
         &config_manager.mint,
@@ -543,17 +621,15 @@ async fn fail_slash_validator_stake_with_uninitialized_config_account() {
     .unwrap();
 
     // And we set 50 tokens to the validator stake account.
-
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the amount to 50
-    stake_account.delegation.amount = 50;
-
+    stake_account.delegation.active_amount = 50;
+    stake_account.delegation.effective_amount = 50;
+    stake_account.total_staked_lamports_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
 
     // And we uninitialize the config account.
-
     context.set_account(
         &config_manager.config,
         &AccountSharedData::from(Account {
@@ -564,19 +640,38 @@ async fn fail_slash_validator_stake_with_uninitialized_config_account() {
         }),
     );
 
-    // When we try to slash with an uninitialized config account.
+    // And we create the holder rewards account for the vault account.
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
+    let vault_holder_rewards_state = HolderRewards {
+        last_accumulated_rewards_per_token: 0,
+        unharvested_rewards: 0,
+        padding: 0,
+    };
+    context.set_account(
+        &vault_holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
 
+    // When we try to slash with an uninitialized config account.
     let slash_ix = SlashValidatorStakeBuilder::new()
         .config(config_manager.config)
-        .stake(stake_manager.stake)
+        .validator_stake(stake_manager.stake)
+        .validator_stake_authority(stake_manager.authority.pubkey())
         .slash_authority(config_manager.authority.pubkey())
-        .vault(config_manager.vault)
         .mint(config_manager.mint)
+        .vault(config_manager.vault)
+        .vault_holder_rewards(vault_holder_rewards)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .token_program(spl_token_2022::ID)
         .amount(50) // <- slash 50 tokens
         .instruction();
-
     let tx = Transaction::new_signed_with_payer(
         &[slash_ix],
         Some(&context.payer.pubkey()),
@@ -603,21 +698,18 @@ async fn fail_slash_validator_stake_with_wrong_config_account() {
     )
     .start_with_context()
     .await;
+    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config and stake accounts.
-
     let config_manager = ConfigManager::new(&mut context).await;
     let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we set 100 tokens to the vault account.
-
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the total amount delegated
-    config_account.token_amount_delegated = 100;
+    config_account.token_amount_effective = 100;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
-
     mint_to(
         &mut context,
         &config_manager.mint,
@@ -630,32 +722,49 @@ async fn fail_slash_validator_stake_with_wrong_config_account() {
     .unwrap();
 
     // And we set 100 tokens to the validator stake account.
-
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the amount to 50
-    stake_account.delegation.amount = 50;
-
+    stake_account.delegation.active_amount = 50;
+    stake_account.delegation.effective_amount = 50;
+    stake_account.total_staked_lamports_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
 
-    // And we create a new config account.
+    // And we create the holder rewards account for the vault account.
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
+    let vault_holder_rewards_state = HolderRewards {
+        last_accumulated_rewards_per_token: 0,
+        unharvested_rewards: 0,
+        padding: 0,
+    };
+    context.set_account(
+        &vault_holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
 
+    // And we create a new config account.
     let another_config_manager = ConfigManager::new(&mut context).await;
 
     // When we try to slash with the wrong config account.
-
     let slash_ix = SlashValidatorStakeBuilder::new()
         .config(another_config_manager.config)
-        .stake(stake_manager.stake)
+        .validator_stake(stake_manager.stake)
+        .validator_stake_authority(stake_manager.authority.pubkey())
         .slash_authority(another_config_manager.authority.pubkey())
-        .vault(another_config_manager.vault)
         .mint(another_config_manager.mint)
+        .vault(another_config_manager.vault)
+        .vault_holder_rewards(vault_holder_rewards)
         .vault_authority(find_vault_pda(&another_config_manager.config).0)
         .token_program(spl_token_2022::ID)
         .amount(50) // <- slash 50 tokens
         .instruction();
-
     let tx = Transaction::new_signed_with_payer(
         &[slash_ix],
         Some(&context.payer.pubkey()),
@@ -669,7 +778,6 @@ async fn fail_slash_validator_stake_with_wrong_config_account() {
         .unwrap_err();
 
     // Then we expect an error.
-
     assert_instruction_error!(err, InstructionError::InvalidSeeds);
 }
 
@@ -682,21 +790,18 @@ async fn fail_slash_validator_stake_with_insufficient_total_amount_delegated() {
     )
     .start_with_context()
     .await;
+    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config and stake accounts.
-
     let config_manager = ConfigManager::new(&mut context).await;
     let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we set 50 tokens to the vault account.
-
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the total amount delegated
-    config_account.token_amount_delegated = 50;
+    config_account.token_amount_effective = 50;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
-
     mint_to(
         &mut context,
         &config_manager.mint,
@@ -709,28 +814,46 @@ async fn fail_slash_validator_stake_with_insufficient_total_amount_delegated() {
     .unwrap();
 
     // And we set 100 tokens to the validator stake account.
-
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the amount to 100
-    stake_account.delegation.amount = 100;
-
+    stake_account.delegation.active_amount = 100;
+    stake_account.delegation.effective_amount = 100;
+    stake_account.total_staked_lamports_amount = 100;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
 
-    // When we try to slash 100 tokens from the stake account.
+    // And we create the holder rewards account for the vault account.
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
+    let vault_holder_rewards_state = HolderRewards {
+        last_accumulated_rewards_per_token: 0,
+        unharvested_rewards: 0,
+        padding: 0,
+    };
+    context.set_account(
+        &vault_holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
 
+    // When we try to slash 100 tokens from the stake account.
     let slash_ix = SlashValidatorStakeBuilder::new()
         .config(config_manager.config)
-        .stake(stake_manager.stake)
+        .validator_stake(stake_manager.stake)
+        .validator_stake_authority(stake_manager.authority.pubkey())
         .slash_authority(config_manager.authority.pubkey())
-        .vault(config_manager.vault)
         .mint(config_manager.mint)
+        .vault(config_manager.vault)
+        .vault_holder_rewards(vault_holder_rewards)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .token_program(spl_token_2022::ID)
         .amount(100) // <- 100 tokens
         .instruction();
-
     let tx = Transaction::new_signed_with_payer(
         &[slash_ix],
         Some(&context.payer.pubkey()),
@@ -744,8 +867,7 @@ async fn fail_slash_validator_stake_with_insufficient_total_amount_delegated() {
         .unwrap_err();
 
     // Then we expect an error since there are not enough delegated tokens.
-
-    assert_custom_error!(err, PaladinStakeProgramError::InvalidSlashAmount);
+    assert_instruction_error!(err, InstructionError::ArithmeticOverflow);
 }
 
 #[tokio::test]
@@ -757,21 +879,18 @@ async fn slash_validator_stake_updating_deactivating_amount() {
     )
     .start_with_context()
     .await;
+    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config and stake accounts.
-
     let config_manager = ConfigManager::new(&mut context).await;
     let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we set 75 tokens to the vault account.
-
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the total amount delegated
-    config_account.token_amount_delegated = 75;
+    config_account.token_amount_effective = 75;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
-
     mint_to(
         &mut context,
         &config_manager.mint,
@@ -785,12 +904,11 @@ async fn slash_validator_stake_updating_deactivating_amount() {
 
     // And we set 100 tokens to the validator stake account (50 staked, 25 inactive and
     // 25 deactivating).
-
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the amount to 75, inactive amount to 25 and
-    // deactivating amount to 25
-    stake_account.delegation.amount = 75;
+    stake_account.delegation.active_amount = 75;
+    stake_account.delegation.effective_amount = 75;
+    stake_account.total_staked_lamports_amount = 75;
     stake_account.delegation.inactive_amount = 25;
     stake_account.delegation.deactivating_amount = 25;
     let timestamp = context
@@ -800,23 +918,41 @@ async fn slash_validator_stake_updating_deactivating_amount() {
         .unwrap()
         .unix_timestamp;
     stake_account.delegation.deactivation_timestamp = NullableU64::from(timestamp as u64);
-
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
 
-    // When we slash 75 tokens from the stake account.
+    // And we create the holder rewards account for the vault account.
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
+    let vault_holder_rewards_state = HolderRewards {
+        last_accumulated_rewards_per_token: 0,
+        unharvested_rewards: 0,
+        padding: 0,
+    };
+    context.set_account(
+        &vault_holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
 
+    // When we slash 75 tokens from the stake account.
     let slash_ix = SlashValidatorStakeBuilder::new()
         .config(config_manager.config)
-        .stake(stake_manager.stake)
+        .validator_stake(stake_manager.stake)
+        .validator_stake_authority(stake_manager.authority.pubkey())
         .slash_authority(config_manager.authority.pubkey())
-        .vault(config_manager.vault)
         .mint(config_manager.mint)
+        .vault(config_manager.vault)
+        .vault_holder_rewards(vault_holder_rewards)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .token_program(spl_token_2022::ID)
         .amount(75) // <- 75 tokens
         .instruction();
-
     let tx = Transaction::new_signed_with_payer(
         &[slash_ix],
         Some(&context.payer.pubkey()),
@@ -826,25 +962,21 @@ async fn slash_validator_stake_updating_deactivating_amount() {
     context.banks_client.process_transaction(tx).await.unwrap();
 
     // Then 75 tokens are burned.
-
     let account = get_account!(context, config_manager.vault);
     let vault =
         StateWithExtensions::<spl_token_2022::state::Account>::unpack(&account.data).unwrap();
     assert_eq!(vault.base.amount, 25);
 
     // And the config account has no tokens delegated.
-
     let account = get_account!(context, config_manager.config);
     let config = Config::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(config.token_amount_delegated, 0);
+    assert_eq!(config.token_amount_effective, 0);
 
     // And the slashed stake account has no active/deactivating tokens.
-
     let account = get_account!(context, stake_manager.stake);
     let stake = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake.delegation.amount, 0);
+    assert_eq!(stake.delegation.active_amount, 0);
     assert_eq!(stake.delegation.deactivating_amount, 0);
-    assert!(stake.delegation.deactivation_timestamp.value().is_none());
     assert_eq!(stake.delegation.inactive_amount, 25);
 }
 
@@ -857,21 +989,18 @@ async fn slash_validator_stake_with_insufficient_stake_amount() {
     )
     .start_with_context()
     .await;
+    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config and validator stake accounts.
-
     let config_manager = ConfigManager::new(&mut context).await;
     let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we set 1000 tokens to the vault account.
-
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the total amount delegated
-    config_account.token_amount_delegated = 900;
+    config_account.token_amount_effective = 900;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
-
     mint_to(
         &mut context,
         &config_manager.mint,
@@ -884,29 +1013,47 @@ async fn slash_validator_stake_with_insufficient_stake_amount() {
     .unwrap();
 
     // And we set 500 active tokens and 100 inactive.
-
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the amount to 500, inactive amount to 100
-    stake_account.delegation.amount = 500;
+    stake_account.delegation.active_amount = 500;
+    stake_account.delegation.effective_amount = 500;
+    stake_account.total_staked_lamports_amount = 500;
     stake_account.delegation.inactive_amount = 100;
-
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
 
-    // When we try to slash 600 tokens from the stake account.
+    // And we create the holder rewards account for the vault account.
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
+    let vault_holder_rewards_state = HolderRewards {
+        last_accumulated_rewards_per_token: 0,
+        unharvested_rewards: 0,
+        padding: 0,
+    };
+    context.set_account(
+        &vault_holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
 
+    // When we try to slash 600 tokens from the stake account.
     let slash_ix = SlashValidatorStakeBuilder::new()
         .config(config_manager.config)
-        .stake(stake_manager.stake)
+        .validator_stake(stake_manager.stake)
+        .validator_stake_authority(stake_manager.authority.pubkey())
         .slash_authority(config_manager.authority.pubkey())
-        .vault(config_manager.vault)
         .mint(config_manager.mint)
+        .vault(config_manager.vault)
+        .vault_holder_rewards(vault_holder_rewards)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .token_program(spl_token_2022::ID)
         .amount(600) // <- 600 tokens
         .instruction();
-
     let tx = Transaction::new_signed_with_payer(
         &[slash_ix],
         Some(&context.payer.pubkey()),
@@ -916,23 +1063,20 @@ async fn slash_validator_stake_with_insufficient_stake_amount() {
     context.banks_client.process_transaction(tx).await.unwrap();
 
     // Then only 500 tokens are burned (500 tokens left).
-
     let account = get_account!(context, config_manager.vault);
     let vault =
         StateWithExtensions::<spl_token_2022::state::Account>::unpack(&account.data).unwrap();
     assert_eq!(vault.base.amount, 500);
 
     // And the config account has 400 tokens delegated.
-
     let account = get_account!(context, config_manager.config);
     let config = Config::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(config.token_amount_delegated, 400);
+    assert_eq!(config.token_amount_effective, 400);
 
     // And the slashed stake account has no active tokens (100 inactive).
-
     let account = get_account!(context, stake_manager.stake);
     let stake = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake.delegation.amount, 0);
+    assert_eq!(stake.delegation.active_amount, 0);
     assert_eq!(stake.delegation.deactivating_amount, 0);
     assert_eq!(stake.delegation.inactive_amount, 100);
 }

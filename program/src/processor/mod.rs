@@ -1,6 +1,5 @@
-use std::cmp::min;
-
 use bytemuck::Pod;
+use paladin_rewards_program_client::accounts::HolderRewards;
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, msg, program::invoke_signed,
     program_error::ProgramError, program_pack::IsInitialized, pubkey::Pubkey, rent::Rent,
@@ -14,20 +13,19 @@ use crate::{
     instruction::{
         accounts::{
             DeactivateStakeAccounts, DistributeRewardsAccounts, HarvestHolderRewardsAccounts,
-            HarvestSolStakerRewardsAccounts, HarvestSyncRewardsAccounts,
-            HarvestValidatorRewardsAccounts, InactivateSolStakerStakeAccounts,
-            InactivateValidatorStakeAccounts, InitializeConfigAccounts,
-            InitializeSolStakerStakeAccounts, InitializeValidatorStakeAccounts,
-            SetAuthorityAccounts, SlashSolStakerStakeAccounts, SlashValidatorStakeAccounts,
-            SolStakerStakeTokensAccounts, SyncSolStakeAccounts, UpdateConfigAccounts,
+            HarvestSolStakerRewardsAccounts, HarvestValidatorRewardsAccounts,
+            InactivateSolStakerStakeAccounts, InactivateValidatorStakeAccounts,
+            InitializeConfigAccounts, InitializeSolStakerStakeAccounts,
+            InitializeValidatorStakeAccounts, SetAuthorityAccounts, SlashSolStakerStakeAccounts,
+            SlashValidatorStakeAccounts, SolStakerStakeTokensAccounts, UpdateConfigAccounts,
             ValidatorStakeTokensAccounts, WithdrawInactiveStakeAccounts,
         },
         StakeInstruction,
     },
     state::{
         calculate_eligible_rewards, calculate_maximum_stake_for_lamports_amount,
-        calculate_stake_rewards_per_token, find_sol_staker_stake_pda, find_validator_stake_pda,
-        Config, Delegation, SolStakerStake, ValidatorStake,
+        find_sol_staker_stake_pda, find_validator_stake_pda, Config, Delegation, SolStakerStake,
+        ValidatorStake,
     },
 };
 
@@ -35,7 +33,6 @@ mod deactivate_stake;
 mod distribute_rewards;
 mod harvest_holder_rewards;
 mod harvest_sol_staker_rewards;
-mod harvest_sync_rewards;
 mod harvest_validator_rewards;
 mod inactivate_sol_staker_stake;
 mod inactivate_validator_stake;
@@ -46,7 +43,6 @@ mod set_authority;
 mod slash_sol_staker_stake;
 mod slash_validator_stake;
 mod sol_staker_stake_tokens;
-mod sync_sol_stake;
 mod update_config;
 mod validator_stake_tokens;
 mod withdraw_inactive_stake;
@@ -98,6 +94,8 @@ pub fn process_instruction<'a>(
             )
         }
         StakeInstruction::InitializeConfig {
+            slash_authority,
+            config_authority,
             cooldown_time_seconds,
             max_deactivation_basis_points,
             sync_rewards_lamports,
@@ -106,6 +104,8 @@ pub fn process_instruction<'a>(
             initialize_config::process_initialize_config(
                 program_id,
                 InitializeConfigAccounts::context(accounts)?,
+                slash_authority,
+                config_authority,
                 cooldown_time_seconds,
                 max_deactivation_basis_points,
                 sync_rewards_lamports,
@@ -173,25 +173,11 @@ pub fn process_instruction<'a>(
                 amount,
             )
         }
-        StakeInstruction::SyncSolStake => {
-            msg!("Instruction: SyncSolStake");
-            sync_sol_stake::process_sync_sol_stake(
-                program_id,
-                SyncSolStakeAccounts::context(accounts)?,
-            )
-        }
         StakeInstruction::HarvestSolStakerRewards => {
             msg!("Instruction: HarvestSolStakerRewards");
             harvest_sol_staker_rewards::process_harvest_sol_staker_rewards(
                 program_id,
                 HarvestSolStakerRewardsAccounts::context(accounts)?,
-            )
-        }
-        StakeInstruction::HarvestSyncRewards => {
-            msg!("Instruction: HarvestSyncRewards");
-            harvest_sync_rewards::process_harvest_sync_rewards(
-                program_id,
-                HarvestSyncRewardsAccounts::context(accounts)?,
             )
         }
         StakeInstruction::InactivateSolStakerStake => {
@@ -228,6 +214,16 @@ macro_rules! require {
     ( $constraint:expr, $error:expr, $message:literal, $($args:tt)+ ) => {
         require!( $constraint, $error, format!($message, $($args)+) );
     };
+}
+
+#[inline]
+pub fn unpack_initialized<T: Pod + IsInitialized>(data: &[u8]) -> Result<&T, ProgramError> {
+    let account =
+        bytemuck::try_from_bytes::<T>(data).map_err(|_error| ProgramError::InvalidAccountData)?;
+
+    require!(account.is_initialized(), ProgramError::UninitializedAccount);
+
+    Ok(account)
 }
 
 /// Unpacks an initialized account from the given data and
@@ -304,126 +300,87 @@ pub fn unpack_delegation_mut_uncheked(
     Ok(delegation)
 }
 
-/// Processes the harvest for a stake delegation.
-///
-/// This function will calculate the rewards for the delegation, either `ValidatorStake` or
-/// `SolStakerStake` and transfer the elegible rewards. It will check whether the stake amount
-/// exceeds the maximum stake limit and distribute the rewards back to the stakers if the stake
-/// amount exceeds the limit.
-pub fn process_harvest_for_delegation(
-    config: &mut Config,
+pub(crate) struct HarvestAccounts<'a, 'info> {
+    pub(crate) config: &'a AccountInfo<'info>,
+    pub(crate) holder_rewards: &'a AccountInfo<'info>,
+    pub(crate) recipient: &'a AccountInfo<'info>,
+}
+
+pub(crate) fn harvest(
+    accounts: HarvestAccounts,
     delegation: &mut Delegation,
-    lamports_amount: u64,
-    config_info: &AccountInfo,
-    destination_info: &AccountInfo,
+    keeper: Option<&AccountInfo>,
 ) -> ProgramResult {
-    // Determine the stake rewards.
-    //
-    // The rewards are caped using the minimum of the token amount staked and the
-    // token amount limit calculated from the SOL amount staked. This is to prevent getting
-    // rewards from exceeding token amount based on the SOL amount staked.
-    //
-    // Any excess rewards are distributes back to stakers and the SOL staker forfeits
-    // the rewards for the exceeding amount.
-
-    let stake_limit = calculate_maximum_stake_for_lamports_amount(lamports_amount)?;
-    let validated_amount = min(delegation.amount, stake_limit as u64);
-
-    let accumulated_rewards_per_token = u128::from(config.accumulated_stake_rewards_per_token);
-    let last_seen_stake_rewards_per_token =
-        u128::from(delegation.last_seen_stake_rewards_per_token);
-
-    let rewards = calculate_eligible_rewards(
-        accumulated_rewards_per_token,
-        last_seen_stake_rewards_per_token,
-        validated_amount,
+    // Compute the staking rewards.
+    let config_data = accounts.config.data.borrow();
+    let config = unpack_initialized::<Config>(&config_data)?;
+    let staking_reward = calculate_eligible_rewards(
+        config.accumulated_stake_rewards_per_token.into(),
+        delegation.last_seen_stake_rewards_per_token.into(),
+        delegation.effective_amount,
     )?;
 
-    // Transfer the rewards to the destination account.
+    // Compute the holder reward.
+    let holder_rewards = HolderRewards::try_from(accounts.holder_rewards)?;
+    let holder_reward = calculate_eligible_rewards(
+        holder_rewards.last_accumulated_rewards_per_token,
+        delegation.last_seen_holder_rewards_per_token.into(),
+        delegation.active_amount + delegation.inactive_amount,
+    )?;
 
-    if rewards == 0 {
-        msg!("No rewards to harvest");
-        Ok(())
-    } else {
-        // If the config does not have enough lamports to cover the rewards, only
-        // harvest the available lamports. This should never happen, but the check
-        // is a failsafe.
-        let rewards = {
-            let rent = Rent::get()?;
-            let rent_exempt_lamports = rent.minimum_balance(Config::LEN);
+    // Claim both at the same time.
+    let total_reward = staking_reward + holder_reward;
+    delegation.last_seen_stake_rewards_per_token = config.accumulated_stake_rewards_per_token;
+    delegation.last_seen_holder_rewards_per_token =
+        holder_rewards.last_accumulated_rewards_per_token.into();
 
-            std::cmp::min(
-                rewards,
-                config_info.lamports().saturating_sub(rent_exempt_lamports),
-            )
-        };
+    // Withdraw the lamports from the config account.
+    let rent_exempt_minimum = Rent::get()?.minimum_balance(accounts.config.data_len());
+    let config_lamports = accounts
+        .config
+        .lamports()
+        .checked_sub(total_reward)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
+    assert!(config_lamports >= rent_exempt_minimum);
 
-        // Move the amount from the config to the destination account.
-        let updated_config_lamports = config_info
-            .lamports()
-            .checked_sub(rewards)
-            .ok_or(ProgramError::ArithmeticOverflow)?;
-        let updated_destination_lamports = destination_info
-            .lamports()
-            .checked_add(rewards)
-            .ok_or(ProgramError::ArithmeticOverflow)?;
-
-        **config_info.try_borrow_mut_lamports()? = updated_config_lamports;
-        **destination_info.try_borrow_mut_lamports()? = updated_destination_lamports;
-
-        // Check whether the staked token amount exceeded the validated amount.
-        //
-        // When there is an excess, the rewards for the excess token amount are distributed back
-        // to the stakers without taking into consideration the stakers' stake amount – i.e.,
-        // the rewards for the exceeding amount are forfeited by the staker.
-        if validated_amount < delegation.amount {
-            msg!(
-                "Staked amount ({}) exceeds maximum stake limit ({})",
-                delegation.amount,
-                stake_limit
-            );
-
-            let excess = delegation
-                .amount
-                .checked_sub(stake_limit)
+    // Pay the keeper first, if one is set.
+    let keeper_reward = match keeper {
+        Some(keeper) => {
+            let keeper_reward = std::cmp::min(total_reward, config.sync_rewards_lamports);
+            let keeper_lamports = keeper
+                .try_borrow_lamports()?
+                .checked_add(keeper_reward)
                 .ok_or(ProgramError::ArithmeticOverflow)?;
+            **keeper.try_borrow_mut_lamports()? = keeper_lamports;
 
-            let excess_rewards = calculate_eligible_rewards(
-                accumulated_rewards_per_token,
-                last_seen_stake_rewards_per_token,
-                excess as u64,
-            )?;
-
-            // Calculate the rewards per token without considering the stakes' stake
-            // amount, since the staker with the exceeding amount won't be claiming a
-            // a share of these rewards.
-            let rewards_per_token = calculate_stake_rewards_per_token(
-                excess_rewards,
-                config
-                    .token_amount_delegated
-                    .checked_sub(delegation.amount)
-                    .ok_or(ProgramError::ArithmeticOverflow)?,
-            )?;
-
-            if rewards_per_token != 0 {
-                // Update the accumulated stake rewards per token on the config to
-                // reflect the addition of the rewards for the exceeding amount.
-                let accumulated = accumulated_rewards_per_token.wrapping_add(rewards_per_token);
-                config.accumulated_stake_rewards_per_token = accumulated.into();
-            }
+            keeper_reward
         }
+        None => 0,
+    };
 
-        // Update the last seen stake rewards.
-        delegation.last_seen_stake_rewards_per_token = config.accumulated_stake_rewards_per_token;
+    // Pay the delegator.
+    let delegator_reward = total_reward
+        .checked_sub(keeper_reward)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
+    let recipient_lamports = accounts
+        .recipient
+        .lamports()
+        .checked_add(delegator_reward)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
 
-        Ok(())
-    }
+    // Update the lamport amounts.
+    drop(config_data);
+    **accounts.config.try_borrow_mut_lamports()? = config_lamports;
+    **accounts.recipient.try_borrow_mut_lamports()? = recipient_lamports;
+
+    Ok(())
 }
 
 /// Arguments to process the slash of a stake delegation.
 struct SlashArgs<'a, 'b> {
     config: &'b mut Config,
     delegation: &'b mut Delegation,
+    lamports_stake: u64,
     mint_info: &'b AccountInfo<'a>,
     vault_info: &'b AccountInfo<'a>,
     vault_authority_info: &'b AccountInfo<'a>,
@@ -433,10 +390,11 @@ struct SlashArgs<'a, 'b> {
 }
 
 /// Processes the slash for a stake delegation.
-fn process_slash_for_delegation(args: SlashArgs) -> Result<u64, ProgramError> {
+fn process_slash_for_delegation(args: SlashArgs) -> ProgramResult {
     let SlashArgs {
         config,
         delegation,
+        lamports_stake,
         mint_info,
         vault_info,
         vault_authority_info,
@@ -463,54 +421,34 @@ fn process_slash_for_delegation(args: SlashArgs) -> Result<u64, ProgramError> {
         "amount must be greater than 0"
     );
 
-    // slashes active stake
-    let active_stake_to_slash = min(amount, delegation.amount);
-    delegation.amount = delegation
-        .amount
-        .checked_sub(active_stake_to_slash)
+    // Compute actual slash & new stake numbers.
+    let actual_slash = std::cmp::min(amount, delegation.active_amount);
+    let active = delegation
+        .active_amount
+        .checked_sub(actual_slash)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
+    let limit = calculate_maximum_stake_for_lamports_amount(lamports_stake)?;
+    let effective = std::cmp::min(active, limit);
+    let effective_delta = delegation
+        .effective_amount
+        .checked_sub(effective)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
-    if delegation.deactivating_amount > delegation.amount {
-        // adjust the deactivating amount if it's greater than the "active" stake
-        // after slashing
-        delegation.deactivating_amount = delegation.amount;
-        // clear the deactivation timestamp if there in no deactivating
-        // amount left
-        if delegation.deactivating_amount == 0 {
-            delegation.deactivation_timestamp = None;
-        }
-    }
-
-    // Update the token amount delegated on the config account.
-    //
-    // The instruction will fail if the amount to slash is greater than the
-    // total amount delegated (it should never happen).
-    require!(
-        config.token_amount_delegated >= active_stake_to_slash,
-        StakeError::InvalidSlashAmount,
-        "slash amount greater than total amount delegated ({} required, {} delegated)",
-        active_stake_to_slash,
-        config.token_amount_delegated
-    );
-
-    config.token_amount_delegated = config
-        .token_amount_delegated
-        .checked_sub(active_stake_to_slash)
+    // Update stake amounts.
+    delegation.active_amount = active;
+    delegation.effective_amount = effective;
+    config.token_amount_effective = config
+        .token_amount_effective
+        .checked_sub(effective_delta)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
-    if amount > active_stake_to_slash {
-        // The amount to slash was greater than the amount available on the
-        // stake account.
-        msg!(
-            "Slash amount greater than available tokens on stake account ({} required, {} available)",
-            amount,
-            active_stake_to_slash,
-        );
+    // Check if we need to downwards adjust deactivating amount.
+    if delegation.deactivating_amount > delegation.active_amount {
+        delegation.deactivating_amount = delegation.active_amount;
     }
 
     // Burn the tokens from the vault account (if there are tokens to slash).
-
-    if active_stake_to_slash > 0 {
+    if actual_slash > 0 {
         let mint_data = mint_info.try_borrow_data()?;
         let mint = PodStateWithExtensions::<PodMint>::unpack(&mint_data)?;
         let decimals = mint.base.decimals;
@@ -523,7 +461,7 @@ fn process_slash_for_delegation(args: SlashArgs) -> Result<u64, ProgramError> {
             mint_info.key,
             vault_authority_info.key,
             &[],
-            active_stake_to_slash,
+            actual_slash,
             decimals,
         )?;
 
@@ -539,5 +477,5 @@ fn process_slash_for_delegation(args: SlashArgs) -> Result<u64, ProgramError> {
         )?;
     }
 
-    Ok(active_stake_to_slash)
+    Ok(())
 }

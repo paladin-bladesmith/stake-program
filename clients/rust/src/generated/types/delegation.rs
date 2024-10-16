@@ -13,10 +13,11 @@ use solana_program::pubkey::Pubkey;
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Delegation {
-    pub amount: u64,
+    pub active_amount: u64,
+    pub inactive_amount: u64,
+    pub effective_amount: u64,
     pub deactivation_timestamp: NullableU64,
     pub deactivating_amount: u64,
-    pub inactive_amount: u64,
     #[cfg_attr(
         feature = "serde",
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")

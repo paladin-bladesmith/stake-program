@@ -2,7 +2,7 @@ use arrayref::array_ref;
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
 use shank::{ShankContext, ShankInstruction, ShankType};
-use solana_program::program_error::ProgramError;
+use solana_program::{program_error::ProgramError, pubkey::Pubkey};
 
 /// Enum defining all instructions in the Stake program.
 #[repr(C)]
@@ -18,32 +18,24 @@ pub enum StakeInstruction {
     )]
     #[account(
         1,
-        name = "slash_authority",
-        desc = "Slash authority"
-    )]
-    #[account(
-        2,
-        name = "config_authority",
-        desc = "Config authority"
-    )]
-    #[account(
-        3,
         name = "mint",
         desc = "Stake token mint"
     )]
     #[account(
-        4,
+        2,
         name = "vault",
         desc = "Stake vault token account"
     )]
     InitializeConfig {
+        slash_authority: Pubkey,
+        config_authority: Pubkey,
         cooldown_time_seconds: u64,
         max_deactivation_basis_points: u16,
         sync_rewards_lamports: u64,
     },
 
     /// Initializes stake account data for a validator.
-    /// 
+    ///
     /// NOTE: Anybody can create the stake account for a validator. For new
     /// accounts, the authority is initialized to the validator vote account's
     /// withdraw authority.
@@ -55,7 +47,7 @@ pub enum StakeInstruction {
     #[account(
         1,
         writable,
-        name = "stake",
+        name = "validator_stake",
         desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
     )]
     #[account(
@@ -71,10 +63,10 @@ pub enum StakeInstruction {
     InitializeValidatorStake,
 
     /// Stakes tokens with the given config.
-    /// 
+    ///
     /// NOTE: This instruction is used by validator stake accounts. The total amount of staked
     /// tokens is limited to the 1.3 * current amount of SOL staked to the validator.
-    /// 
+    ///
     /// Instruction data: amount of tokens to stake, as a little-endian `u64`.
     #[account(
         0,
@@ -91,39 +83,51 @@ pub enum StakeInstruction {
     #[account(
         2,
         writable,
+        name = "validator_stake_authority",
+        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+    )]
+    #[account(
+        3,
+        writable,
         name = "source_token_account",
         desc = "Token account"
     )]
     #[account(
-        3,
+        4,
         signer,
         name = "token_account_authority",
         desc = "Owner or delegate of the token account"
     )]
     #[account(
-        4,
+        5,
         name = "mint",
         desc = "Stake Token Mint"
     )]
     #[account(
-        5,
+        6,
         writable,
         name = "vault",
         desc = "Stake token Vault"
     )]
     #[account(
-        6,
+        7,
+        writable,
+        name = "vault_holder_rewards",
+        desc = "Holder rewards for the vault account (to facilitate harvest)"
+    )]
+    #[account(
+        8,
         name = "token_program",
         desc = "Token program"
     )]
     ValidatorStakeTokens(u64),
 
     /// Deactivate staked tokens for a stake delegation.
-    /// 
+    ///
     /// Only one deactivation may be in-flight at once, so if this is called
     /// with an active deactivation, it will succeed, but reset the amount and
     /// timestamp.
-    /// 
+    ///
     /// Instruction data: amount of tokens to deactivate, as a little-endian `u64`.
     #[account(
         0,
@@ -145,10 +149,10 @@ pub enum StakeInstruction {
     DeactivateStake(u64),
 
     /// Move tokens from deactivating to inactive.
-    /// 
+    ///
     /// Reduces the total voting power for the validator stake account and the total staked
     /// amount on the system.
-    /// 
+    ///
     /// NOTE: This instruction is permissionless, so anybody can finish
     /// deactivating someone's tokens, preparing them to be withdrawn.
     #[account(
@@ -160,16 +164,28 @@ pub enum StakeInstruction {
     #[account(
         1,
         writable,
-        name = "stake",
+        name = "validator_stake",
         desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+    )]
+    #[account(
+        2,
+        writable,
+        name = "validator_stake_authority",
+        desc = "Validator stake authority account"
+    )]
+    #[account(
+        3,
+        writable,
+        name = "vault_holder_rewards",
+        desc = "Vault holder rewards account"
     )]
     InactivateValidatorStake,
 
     /// Withdraw inactive staked tokens from the vault.
-    /// 
+    ///
     /// After a deactivation has gone through the cooldown period and been
     /// "inactivated", the authority may move the tokens out of the vault.
-    /// 
+    ///
     /// Instruction data: amount of tokens to move.
     #[account(
         0,
@@ -211,7 +227,7 @@ pub enum StakeInstruction {
         name = "vault_authority",
         desc = "Vault authority (pda of `['token-owner', config]`)"
     )]
-    
+
     #[account(
         7,
         name = "token_program",
@@ -220,7 +236,7 @@ pub enum StakeInstruction {
     WithdrawInactiveStake(u64),
 
     /// Harvests holder SOL rewards earned by the given stake account.
-    /// 
+    ///
     /// NOTE: This mostly replicates the logic in the rewards program. Since the
     /// staked tokens are all held by this program, stakers need a way to access
     /// their portion of holder rewards.
@@ -230,14 +246,15 @@ pub enum StakeInstruction {
     /// `HarvestRewards` on the vault account before this.
     #[account(
         0,
+        writable,
         name = "config",
         desc = "Stake config account"
     )]
     #[account(
         1,
         writable,
-        name = "stake",
-        desc = "Validator or SOL staker stake account"
+        name = "holder_rewards_pool",
+        desc = "Holder rewards pool account"
     )]
     #[account(
         2,
@@ -247,49 +264,78 @@ pub enum StakeInstruction {
     )]
     #[account(
         3,
-        name = "holder_rewards",
+        writable,
+        name = "vault_holder_rewards",
         desc = "Holder rewards account for vault token account"
     )]
     #[account(
         4,
-        writable,
-        name = "destination", 
-        desc = "Destination account for withdrawn lamports"
-    )]
-    #[account(
-        5,
-        signer,
-        name = "stake_authority",
-        desc = "Stake authority"
-    )]
-    #[account(
-        6,
-        writable,
         name = "vault_authority",
         desc = "Vault authority (pda of `['token-owner', config]`)"
     )]
     #[account(
-        7,
+        5,
         name = "mint",
         desc = "Stake token mint"
     )]
     #[account(
-        8,
+        6,
         name = "token_program",
         desc = "Token program"
     )]
     #[account(
-        9,
+        7,
+        name = "paladin_rewards_program",
+        desc = "Paladin rewards program"
+    )]
+    #[account(
+        8,
         name = "system_program",
         desc = "System program"
     )]
     HarvestHolderRewards,
 
     /// Harvests stake SOL rewards earned by the given validator stake account.
-    /// 
+    ///
     /// NOTE: This is very similar to the logic in the rewards program. Since the
     /// staking rewards are held in a separate account, they must be distributed
     /// based on the proportion of total stake.
+    #[account(
+        0,
+        writable,
+        name = "config",
+        desc = "Stake config account"
+    )]
+    #[account(
+        1,
+        name = "vault_holder_rewards",
+        desc = "Holder rewards account"
+    )]
+    #[account(
+        2,
+        writable,
+        name = "validator_stake",
+        desc = "Validator stake account"
+    )]
+    #[account(
+        3,
+        writable,
+        name = "validator_stake_authority",
+        desc = "Validator stake authority"
+    )]
+    #[account(
+        4,
+        name = "sysvar_stake_history",
+        desc = "Stake history sysvar"
+    )]
+    HarvestValidatorRewards,
+
+    /// Slashes a validator stake account for the given amount.
+    ///
+    /// Burns the given amount of tokens from the vault account, and reduces the
+    /// amount in the stake account.
+    ///
+    /// Instruction data: amount of tokens to slash.
     #[account(
         0,
         writable,
@@ -305,60 +351,39 @@ pub enum StakeInstruction {
     #[account(
         2,
         writable,
-        name = "destination",
-        desc = "Destination account for withdrawn lamports"
+        name = "validator_stake_authority",
+        desc = "Validator stake authority account"
     )]
     #[account(
         3,
-        signer,
-        name = "stake_authority",
-        desc = "Stake authority"
-    )]
-    HarvestValidatorRewards,
-
-    /// Slashes a validator stake account for the given amount.
-    /// 
-    /// Burns the given amount of tokens from the vault account, and reduces the
-    /// amount in the stake account.
-    /// 
-    /// Instruction data: amount of tokens to slash.
-    #[account(
-        0,
-        writable,
-        name = "config",
-        desc = "Stake config account"
-    )]
-    #[account(
-        1,
-        writable,
-        name = "stake",
-        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
-    )]
-    #[account(
-        2,
         signer,
         name = "slash_authority",
         desc = "Config slash authority"
     )]
     #[account(
-        3,
+        4,
         writable,
         name = "vault",
         desc = "Vault token account"
     )]
     #[account(
-        4,
+        5,
+        name = "vault_holder_rewards",
+        desc = "Vault token account"
+    )]
+    #[account(
+        6,
         writable,
         name = "mint",
         desc = "Stake Token Mint"
     )]
     #[account(
-        5,
+        7,
         name = "vault_authority",
         desc = "Vault authority (pda of `['token-owner', config]`)"
     )]
     #[account(
-        6,
+        8,
         name = "token_program",
         desc = "Token program"
     )]
@@ -464,10 +489,10 @@ pub enum StakeInstruction {
     InitializeSolStakerStake,
 
     /// Stakes tokens with the given config.
-    /// 
+    ///
     /// NOTE: This instruction is used by SOL staker stake accounts. The total amount of staked
     /// tokens is limited to the 1.3 * current amount of SOL staked by the SOL staker.
-    /// 
+    ///
     /// Instruction data: amount of tokens to stake, as a little-endian `u64`.
     #[account(
         0,
@@ -484,8 +509,8 @@ pub enum StakeInstruction {
     #[account(
         2,
         writable,
-        name = "validator_stake",
-        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+        name = "sol_staker_stake_authority",
+        desc = "SOL staker stake authority account"
     )]
     #[account(
         3,
@@ -512,128 +537,85 @@ pub enum StakeInstruction {
     )]
     #[account(
         7,
+        name = "vault_holder_rewards",
+        desc = "Stake token Vault"
+    )]
+    #[account(
+        8,
         name = "token_program",
         desc = "Token program"
     )]
     SolStakerStakeTokens(u64),
 
-    /// Sync the SOL stake balance with a validator and SOL staker stake accounts.
-    ///
-    /// NOTE: Anybody can sync the balance of a SOL stake account.
-    #[account(
-        0,
-        name = "config",
-        desc = "Stake config account"
-    )]
-    #[account(
-        1,
-        writable,
-        name = "sol_staker_stake",
-        desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
-    )]
-    #[account(
-        2,
-        writable,
-        name = "validator_stake",
-        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
-    )]
-    #[account(
-        3,
-        name = "sol_stake",
-        desc = "SOL stake account"
-    )]
-    #[account(
-        4,
-        name = "sysvar_stake_history",
-        desc = "Stake history sysvar"
-    )]
-    #[account(
-        5,
-        name = "sol_stake_view_program",
-        desc = "Paladin SOL Stake View program"
-    )]
-    SyncSolStake,
-
     /// Harvests stake SOL rewards earned by the given sol staker stake account.
-    /// 
+    ///
     /// NOTE: This is very similar to the logic in the rewards program. Since the
     /// staking rewards are held in a separate account, they must be distributed
     /// based on the proportion of total stake.
     #[account(
         0,
+        name = "sol_stake_view_program",
+        desc = "Sol stake view program"
+    )]
+    #[account(
+        1,
         writable,
         name = "config",
         desc = "Stake config account"
     )]
     #[account(
-        1,
-        writable,
-        name = "sol_staker_stake",
-        desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
-    )]
-    #[account(
         2,
-        writable,
-        name = "destination",
-        desc = "Destination account for withdrawn lamports"
+        name = "vault_holder_rewards",
+        desc = "Holder rewards account"
     )]
     #[account(
         3,
-        signer,
-        name = "stake_authority",
-        desc = "Stake authority"
-    )]
-    HarvestSolStakerRewards,
-
-    /// Harvest rewards for syncing the SOL stake balance with a validator and SOL staker stake accounts.
-    ///
-    /// NOTE: Rewards are collected only if the stake balance is out-of-sync.
-    #[account(
-        0,
-        writable,
-        name = "config",
-        desc = "Stake config account"
-    )]
-    #[account(
-        1,
         writable,
         name = "sol_staker_stake",
         desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
-    )]
-    #[account(
-        2,
-        writable,
-        name = "validator_stake",
-        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
-    )]
-    #[account(
-        3,
-        name = "sol_stake",
-        desc = "SOL stake account"
     )]
     #[account(
         4,
         writable,
-        name = "destination",
-        desc = "Destination account for withdrawn lamports"
+        name = "sol_staker_stake_authority",
+        desc = "SOL staker stake authority"
     )]
     #[account(
         5,
+        name = "native_stake",
+        desc = "Native stake account"
+    )]
+    #[account(
+        6,
+        writable,
+        name = "validator_stake",
+        desc = "Validator stake account"
+    )]
+    #[account(
+        7,
+        writable,
+        name = "validator_stake_authority",
+        desc = "Validator stake authority"
+    )]
+    #[account(
+        8,
         name = "sysvar_stake_history",
         desc = "Stake history sysvar"
     )]
     #[account(
-        6,
-        name = "sol_stake_view_program",
-        desc = "Paladin SOL Stake View program"
+        9,
+        optional,
+        writable,
+        name = "keeper_recipient",
+        desc = "Recipient for sol sync bounty"
     )]
-    HarvestSyncRewards,
+    HarvestSolStakerRewards,
 
     /// Move tokens from deactivating to inactive.
-    /// 
+    ///
     /// Reduces the total voting power for the SOL staker stake account and the total staked
     /// amount on the correspondent validator stake and config accounts.
-    /// 
+    ///
     /// NOTE: This instruction is permissionless, so anybody can finish
     /// deactivating someone's tokens, preparing them to be withdrawn.
     #[account(
@@ -645,22 +627,28 @@ pub enum StakeInstruction {
     #[account(
         1,
         writable,
-        name = "stake",
+        name = "sol_staker_stake",
         desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
     )]
     #[account(
         2,
         writable,
-        name = "validator_stake",
-        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+        name = "sol_staker_stake_authority",
+        desc = "SOL staker stake authority account"
+    )]
+    #[account(
+        3,
+        writable,
+        name = "vault_holder_rewards",
+        desc = "Vault holder rewards account"
     )]
     InactivateSolStakerStake,
 
     /// Slashes a validator stake account for the given amount.
-    /// 
+    ///
     /// Burns the given amount of tokens from the vault account, and reduces the
     /// amount in the stake account.
-    /// 
+    ///
     /// Instruction data: amount of tokens to slash.
     #[account(
         0,
@@ -671,14 +659,14 @@ pub enum StakeInstruction {
     #[account(
         1,
         writable,
-        name = "stake",
+        name = "sol_staker_stake",
         desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
     )]
     #[account(
         2,
         writable,
-        name = "validator_stake",
-        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+        name = "sol_staker_stake_authority",
+        desc = "SOL staker stake authority account"
     )]
     #[account(
         3,
@@ -689,22 +677,27 @@ pub enum StakeInstruction {
     #[account(
         4,
         writable,
-        name = "vault",
-        desc = "Vault token account"
+        name = "mint",
+        desc = "Vault token mint"
     )]
     #[account(
         5,
         writable,
-        name = "mint",
-        desc = "Stake Token Mint"
+        name = "vault",
+        desc = "Vault token account"
     )]
     #[account(
         6,
+        name = "vault_holder_rewards",
+        desc = "Vault holder rewards account"
+    )]
+    #[account(
+        7,
         name = "vault_authority",
         desc = "Vault authority (pda of `['token-owner', config]`)"
     )]
     #[account(
-        7,
+        8,
         name = "token_program",
         desc = "Token program"
     )]
@@ -716,12 +709,16 @@ impl StakeInstruction {
     pub fn pack(&self) -> Vec<u8> {
         match self {
             StakeInstruction::InitializeConfig {
+                slash_authority,
+                config_authority,
                 cooldown_time_seconds,
                 max_deactivation_basis_points,
                 sync_rewards_lamports,
             } => {
                 let mut data = Vec::with_capacity(11);
                 data.push(0);
+                data.extend_from_slice(&slash_authority.to_bytes());
+                data.extend_from_slice(&config_authority.to_bytes());
                 data.extend_from_slice(&cooldown_time_seconds.to_le_bytes());
                 data.extend_from_slice(&max_deactivation_basis_points.to_le_bytes());
                 data.extend_from_slice(&sync_rewards_lamports.to_le_bytes());
@@ -797,13 +794,11 @@ impl StakeInstruction {
                 data.extend_from_slice(&amount.to_le_bytes());
                 data
             }
-            StakeInstruction::SyncSolStake => vec![14],
-            StakeInstruction::HarvestSolStakerRewards => vec![15],
-            StakeInstruction::HarvestSyncRewards => vec![16],
-            StakeInstruction::InactivateSolStakerStake => vec![17],
+            StakeInstruction::HarvestSolStakerRewards => vec![14],
+            StakeInstruction::InactivateSolStakerStake => vec![15],
             StakeInstruction::SlashSolStakerStake(amount) => {
                 let mut data = Vec::with_capacity(9);
-                data.push(18);
+                data.push(16);
                 data.extend_from_slice(&amount.to_le_bytes());
                 data
             }
@@ -814,12 +809,16 @@ impl StakeInstruction {
     pub fn unpack(input: &[u8]) -> Result<Self, ProgramError> {
         match input.split_first() {
             // 0 - InitializeConfig: u64 (8) + u16 (2) + u64 (8)
-            Some((&0, rest)) if rest.len() == 18 => {
-                let cooldown_time_seconds = u64::from_le_bytes(*array_ref![rest, 0, 8]);
-                let max_deactivation_basis_points = u16::from_le_bytes(*array_ref![rest, 8, 2]);
-                let sync_rewards_lamports = u64::from_le_bytes(*array_ref![rest, 10, 8]);
+            Some((&0, rest)) if rest.len() == 32 + 32 + 8 + 2 + 8 => {
+                let slash_authority = Pubkey::new_from_array(*array_ref![rest, 0, 32]);
+                let config_authority = Pubkey::new_from_array(*array_ref![rest, 32, 32]);
+                let cooldown_time_seconds = u64::from_le_bytes(*array_ref![rest, 64, 8]);
+                let max_deactivation_basis_points = u16::from_le_bytes(*array_ref![rest, 72, 2]);
+                let sync_rewards_lamports = u64::from_le_bytes(*array_ref![rest, 74, 8]);
 
                 Ok(StakeInstruction::InitializeConfig {
+                    slash_authority,
+                    config_authority,
                     cooldown_time_seconds,
                     max_deactivation_basis_points,
                     sync_rewards_lamports,
@@ -900,16 +899,12 @@ impl StakeInstruction {
 
                 Ok(StakeInstruction::SolStakerStakeTokens(amount))
             }
-            // 14 - SyncSolStake
-            Some((&14, _)) => Ok(StakeInstruction::SyncSolStake),
-            // 15 - HarvestSolStakerRewards
-            Some((&15, _)) => Ok(StakeInstruction::HarvestSolStakerRewards),
-            // 16 - HarvestSyncRewards
-            Some((&16, _)) => Ok(StakeInstruction::HarvestSyncRewards),
-            // 17 - InactivateSolStakerStake
-            Some((&17, _)) => Ok(StakeInstruction::InactivateSolStakerStake),
-            // 18 - SlashSolStakerStake: u64 (8)
-            Some((&18, rest)) if rest.len() == 8 => {
+            // 14 - HarvestSolStakerRewards
+            Some((&14, _)) => Ok(StakeInstruction::HarvestSolStakerRewards),
+            // 15 - InactivateSolStakerStake
+            Some((&15, _)) => Ok(StakeInstruction::InactivateSolStakerStake),
+            // 16 - SlashSolStakerStake: u64 (8)
+            Some((&16, rest)) if rest.len() == 8 => {
                 let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
 
                 Ok(StakeInstruction::SlashSolStakerStake(amount))
@@ -945,6 +940,8 @@ mod tests {
     #[test]
     fn test_pack_unpack_initialize_config() {
         let original = StakeInstruction::InitializeConfig {
+            slash_authority: Pubkey::new_unique(),
+            config_authority: Pubkey::new_unique(),
             cooldown_time_seconds: 120,
             max_deactivation_basis_points: 500,
             sync_rewards_lamports: 100,

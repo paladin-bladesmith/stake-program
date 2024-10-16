@@ -80,7 +80,7 @@ pub async fn create_validator_stake(
 
     let initialize_ix = InitializeValidatorStakeBuilder::new()
         .config(*config)
-        .stake(stake_pda)
+        .validator_stake(stake_pda)
         .validator_vote(*vote)
         .instruction();
 

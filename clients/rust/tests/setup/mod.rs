@@ -8,6 +8,7 @@ use spl_transfer_hook_interface::{
 };
 
 pub mod config;
+pub mod harvest;
 pub mod rewards;
 pub mod sol_staker_stake;
 pub mod stake;
@@ -17,6 +18,8 @@ pub mod vote;
 
 /// Scaling factor for rewards per token (1e18).
 pub const REWARDS_PER_TOKEN_SCALING_FACTOR: u128 = 1_000_000_000_000_000_000;
+
+pub const SWAD: u64 = 10u64.pow(9);
 
 pub fn new_program_test() -> ProgramTest {
     let mut program_test = ProgramTest::new(

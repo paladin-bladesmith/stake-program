@@ -14,22 +14,6 @@
           ]
         },
         {
-          "name": "slashAuthority",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Slash authority"
-          ]
-        },
-        {
-          "name": "configAuthority",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Config authority"
-          ]
-        },
-        {
           "name": "mint",
           "isMut": false,
           "isSigner": false,
@@ -47,6 +31,14 @@
         }
       ],
       "args": [
+        {
+          "name": "slashAuthority",
+          "type": "publicKey"
+        },
+        {
+          "name": "configAuthority",
+          "type": "publicKey"
+        },
         {
           "name": "cooldownTimeSeconds",
           "type": "u64"
@@ -77,7 +69,7 @@
           ]
         },
         {
-          "name": "stake",
+          "name": "validatorStake",
           "isMut": true,
           "isSigner": false,
           "docs": [
@@ -127,6 +119,14 @@
           ]
         },
         {
+          "name": "validatorStakeAuthority",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+          ]
+        },
+        {
           "name": "sourceTokenAccount",
           "isMut": true,
           "isSigner": false,
@@ -156,6 +156,14 @@
           "isSigner": false,
           "docs": [
             "Stake token Vault"
+          ]
+        },
+        {
+          "name": "vaultHolderRewards",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Holder rewards for the vault account (to facilitate harvest)"
           ]
         },
         {
@@ -229,11 +237,27 @@
           ]
         },
         {
-          "name": "stake",
+          "name": "validatorStake",
           "isMut": true,
           "isSigner": false,
           "docs": [
             "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+          ]
+        },
+        {
+          "name": "validatorStakeAuthority",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Validator stake authority account"
+          ]
+        },
+        {
+          "name": "vaultHolderRewards",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Vault holder rewards account"
           ]
         }
       ],
@@ -327,18 +351,18 @@
       "accounts": [
         {
           "name": "config",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false,
           "docs": [
             "Stake config account"
           ]
         },
         {
-          "name": "stake",
+          "name": "holderRewardsPool",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator or SOL staker stake account"
+            "Holder rewards pool account"
           ]
         },
         {
@@ -350,32 +374,16 @@
           ]
         },
         {
-          "name": "holderRewards",
-          "isMut": false,
+          "name": "vaultHolderRewards",
+          "isMut": true,
           "isSigner": false,
           "docs": [
             "Holder rewards account for vault token account"
           ]
         },
         {
-          "name": "destination",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Destination account for withdrawn lamports"
-          ]
-        },
-        {
-          "name": "stakeAuthority",
-          "isMut": false,
-          "isSigner": true,
-          "docs": [
-            "Stake authority"
-          ]
-        },
-        {
           "name": "vaultAuthority",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false,
           "docs": [
             "Vault authority (pda of `['token-owner', config]`)"
@@ -395,6 +403,14 @@
           "isSigner": false,
           "docs": [
             "Token program"
+          ]
+        },
+        {
+          "name": "paladinRewardsProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Paladin rewards program"
           ]
         },
         {
@@ -424,27 +440,35 @@
           ]
         },
         {
+          "name": "vaultHolderRewards",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Holder rewards account"
+          ]
+        },
+        {
           "name": "validatorStake",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+            "Validator stake account"
           ]
         },
         {
-          "name": "destination",
+          "name": "validatorStakeAuthority",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Destination account for withdrawn lamports"
+            "Validator stake authority"
           ]
         },
         {
-          "name": "stakeAuthority",
+          "name": "sysvarStakeHistory",
           "isMut": false,
-          "isSigner": true,
+          "isSigner": false,
           "docs": [
-            "Stake authority"
+            "Stake history sysvar"
           ]
         }
       ],
@@ -466,11 +490,19 @@
           ]
         },
         {
-          "name": "stake",
+          "name": "validatorStake",
           "isMut": true,
           "isSigner": false,
           "docs": [
             "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+          ]
+        },
+        {
+          "name": "validatorStakeAuthority",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Validator stake authority account"
           ]
         },
         {
@@ -484,6 +516,14 @@
         {
           "name": "vault",
           "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Vault token account"
+          ]
+        },
+        {
+          "name": "vaultHolderRewards",
+          "isMut": false,
           "isSigner": false,
           "docs": [
             "Vault token account"
@@ -724,11 +764,11 @@
           ]
         },
         {
-          "name": "validatorStake",
+          "name": "solStakerStakeAuthority",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+            "SOL staker stake authority account"
           ]
         },
         {
@@ -764,6 +804,14 @@
           ]
         },
         {
+          "name": "vaultHolderRewards",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Stake token Vault"
+          ]
+        },
+        {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false,
@@ -784,14 +832,30 @@
       }
     },
     {
-      "name": "SyncSolStake",
+      "name": "HarvestSolStakerRewards",
       "accounts": [
         {
-          "name": "config",
+          "name": "solStakeViewProgram",
           "isMut": false,
           "isSigner": false,
           "docs": [
+            "Sol stake view program"
+          ]
+        },
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
             "Stake config account"
+          ]
+        },
+        {
+          "name": "vaultHolderRewards",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Holder rewards account"
           ]
         },
         {
@@ -803,19 +867,35 @@
           ]
         },
         {
+          "name": "solStakerStakeAuthority",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "SOL staker stake authority"
+          ]
+        },
+        {
+          "name": "nativeStake",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Native stake account"
+          ]
+        },
+        {
           "name": "validatorStake",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+            "Validator stake account"
           ]
         },
         {
-          "name": "solStake",
-          "isMut": false,
+          "name": "validatorStakeAuthority",
+          "isMut": true,
           "isSigner": false,
           "docs": [
-            "SOL stake account"
+            "Validator stake authority"
           ]
         },
         {
@@ -827,11 +907,12 @@
           ]
         },
         {
-          "name": "solStakeViewProgram",
-          "isMut": false,
+          "name": "keeperRecipient",
+          "isMut": true,
           "isSigner": false,
+          "isOptional": true,
           "docs": [
-            "Paladin SOL Stake View program"
+            "Recipient for sol sync bounty"
           ]
         }
       ],
@@ -839,114 +920,6 @@
       "discriminant": {
         "type": "u8",
         "value": 14
-      }
-    },
-    {
-      "name": "HarvestSolStakerRewards",
-      "accounts": [
-        {
-          "name": "config",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Stake config account"
-          ]
-        },
-        {
-          "name": "solStakerStake",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
-          ]
-        },
-        {
-          "name": "destination",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Destination account for withdrawn lamports"
-          ]
-        },
-        {
-          "name": "stakeAuthority",
-          "isMut": false,
-          "isSigner": true,
-          "docs": [
-            "Stake authority"
-          ]
-        }
-      ],
-      "args": [],
-      "discriminant": {
-        "type": "u8",
-        "value": 15
-      }
-    },
-    {
-      "name": "HarvestSyncRewards",
-      "accounts": [
-        {
-          "name": "config",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Stake config account"
-          ]
-        },
-        {
-          "name": "solStakerStake",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
-          ]
-        },
-        {
-          "name": "validatorStake",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
-          ]
-        },
-        {
-          "name": "solStake",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "SOL stake account"
-          ]
-        },
-        {
-          "name": "destination",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Destination account for withdrawn lamports"
-          ]
-        },
-        {
-          "name": "sysvarStakeHistory",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Stake history sysvar"
-          ]
-        },
-        {
-          "name": "solStakeViewProgram",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Paladin SOL Stake View program"
-          ]
-        }
-      ],
-      "args": [],
-      "discriminant": {
-        "type": "u8",
-        "value": 16
       }
     },
     {
@@ -961,7 +934,7 @@
           ]
         },
         {
-          "name": "stake",
+          "name": "solStakerStake",
           "isMut": true,
           "isSigner": false,
           "docs": [
@@ -969,18 +942,26 @@
           ]
         },
         {
-          "name": "validatorStake",
+          "name": "solStakerStakeAuthority",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+            "SOL staker stake authority account"
+          ]
+        },
+        {
+          "name": "vaultHolderRewards",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Vault holder rewards account"
           ]
         }
       ],
       "args": [],
       "discriminant": {
         "type": "u8",
-        "value": 17
+        "value": 15
       }
     },
     {
@@ -995,7 +976,7 @@
           ]
         },
         {
-          "name": "stake",
+          "name": "solStakerStake",
           "isMut": true,
           "isSigner": false,
           "docs": [
@@ -1003,11 +984,11 @@
           ]
         },
         {
-          "name": "validatorStake",
+          "name": "solStakerStakeAuthority",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+            "SOL staker stake authority account"
           ]
         },
         {
@@ -1019,6 +1000,14 @@
           ]
         },
         {
+          "name": "mint",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Vault token mint"
+          ]
+        },
+        {
           "name": "vault",
           "isMut": true,
           "isSigner": false,
@@ -1027,11 +1016,11 @@
           ]
         },
         {
-          "name": "mint",
-          "isMut": true,
+          "name": "vaultHolderRewards",
+          "isMut": false,
           "isSigner": false,
           "docs": [
-            "Stake Token Mint"
+            "Vault holder rewards account"
           ]
         },
         {
@@ -1059,7 +1048,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 18
+        "value": 16
       }
     }
   ],
@@ -1099,7 +1088,7 @@
             "type": "u64"
           },
           {
-            "name": "tokenAmountDelegated",
+            "name": "tokenAmountEffective",
             "type": "u64"
           },
           {
@@ -1184,10 +1173,6 @@
             }
           },
           {
-            "name": "totalStakedTokenAmount",
-            "type": "u64"
-          },
-          {
             "name": "totalStakedLamportsAmount",
             "type": "u64"
           }
@@ -1202,7 +1187,15 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "amount",
+            "name": "activeAmount",
+            "type": "u64"
+          },
+          {
+            "name": "inactiveAmount",
+            "type": "u64"
+          },
+          {
+            "name": "effectiveAmount",
             "type": "u64"
           },
           {
@@ -1215,10 +1208,6 @@
           },
           {
             "name": "deactivatingAmount",
-            "type": "u64"
-          },
-          {
-            "name": "inactiveAmount",
             "type": "u64"
           },
           {

@@ -18,12 +18,10 @@ import {
   type Decoder,
   type Encoder,
   type IAccountMeta,
-  type IAccountSignerMeta,
   type IInstruction,
   type IInstructionWithAccounts,
   type IInstructionWithData,
-  type ReadonlySignerAccount,
-  type TransactionSigner,
+  type ReadonlyAccount,
   type WritableAccount,
 } from '@solana/web3.js';
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
@@ -32,9 +30,14 @@ import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 export type HarvestValidatorRewardsInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
+  TAccountVaultHolderRewards extends string | IAccountMeta<string> = string,
   TAccountValidatorStake extends string | IAccountMeta<string> = string,
-  TAccountDestination extends string | IAccountMeta<string> = string,
-  TAccountStakeAuthority extends string | IAccountMeta<string> = string,
+  TAccountValidatorStakeAuthority extends
+    | string
+    | IAccountMeta<string> = string,
+  TAccountSysvarStakeHistory extends
+    | string
+    | IAccountMeta<string> = 'SysvarStakeHistory1111111111111111111111111',
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -43,16 +46,18 @@ export type HarvestValidatorRewardsInstruction<
       TAccountConfig extends string
         ? WritableAccount<TAccountConfig>
         : TAccountConfig,
+      TAccountVaultHolderRewards extends string
+        ? ReadonlyAccount<TAccountVaultHolderRewards>
+        : TAccountVaultHolderRewards,
       TAccountValidatorStake extends string
         ? WritableAccount<TAccountValidatorStake>
         : TAccountValidatorStake,
-      TAccountDestination extends string
-        ? WritableAccount<TAccountDestination>
-        : TAccountDestination,
-      TAccountStakeAuthority extends string
-        ? ReadonlySignerAccount<TAccountStakeAuthority> &
-            IAccountSignerMeta<TAccountStakeAuthority>
-        : TAccountStakeAuthority,
+      TAccountValidatorStakeAuthority extends string
+        ? WritableAccount<TAccountValidatorStakeAuthority>
+        : TAccountValidatorStakeAuthority,
+      TAccountSysvarStakeHistory extends string
+        ? ReadonlyAccount<TAccountSysvarStakeHistory>
+        : TAccountSysvarStakeHistory,
       ...TRemainingAccounts,
     ]
   >;
@@ -84,38 +89,44 @@ export function getHarvestValidatorRewardsInstructionDataCodec(): Codec<
 
 export type HarvestValidatorRewardsInput<
   TAccountConfig extends string = string,
+  TAccountVaultHolderRewards extends string = string,
   TAccountValidatorStake extends string = string,
-  TAccountDestination extends string = string,
-  TAccountStakeAuthority extends string = string,
+  TAccountValidatorStakeAuthority extends string = string,
+  TAccountSysvarStakeHistory extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
-  /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
+  /** Holder rewards account */
+  vaultHolderRewards: Address<TAccountVaultHolderRewards>;
+  /** Validator stake account */
   validatorStake: Address<TAccountValidatorStake>;
-  /** Destination account for withdrawn lamports */
-  destination: Address<TAccountDestination>;
-  /** Stake authority */
-  stakeAuthority: TransactionSigner<TAccountStakeAuthority>;
+  /** Validator stake authority */
+  validatorStakeAuthority: Address<TAccountValidatorStakeAuthority>;
+  /** Stake history sysvar */
+  sysvarStakeHistory?: Address<TAccountSysvarStakeHistory>;
 };
 
 export function getHarvestValidatorRewardsInstruction<
   TAccountConfig extends string,
+  TAccountVaultHolderRewards extends string,
   TAccountValidatorStake extends string,
-  TAccountDestination extends string,
-  TAccountStakeAuthority extends string,
+  TAccountValidatorStakeAuthority extends string,
+  TAccountSysvarStakeHistory extends string,
 >(
   input: HarvestValidatorRewardsInput<
     TAccountConfig,
+    TAccountVaultHolderRewards,
     TAccountValidatorStake,
-    TAccountDestination,
-    TAccountStakeAuthority
+    TAccountValidatorStakeAuthority,
+    TAccountSysvarStakeHistory
   >
 ): HarvestValidatorRewardsInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
+  TAccountVaultHolderRewards,
   TAccountValidatorStake,
-  TAccountDestination,
-  TAccountStakeAuthority
+  TAccountValidatorStakeAuthority,
+  TAccountSysvarStakeHistory
 > {
   // Program address.
   const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
@@ -123,31 +134,49 @@ export function getHarvestValidatorRewardsInstruction<
   // Original accounts.
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
+    vaultHolderRewards: {
+      value: input.vaultHolderRewards ?? null,
+      isWritable: false,
+    },
     validatorStake: { value: input.validatorStake ?? null, isWritable: true },
-    destination: { value: input.destination ?? null, isWritable: true },
-    stakeAuthority: { value: input.stakeAuthority ?? null, isWritable: false },
+    validatorStakeAuthority: {
+      value: input.validatorStakeAuthority ?? null,
+      isWritable: true,
+    },
+    sysvarStakeHistory: {
+      value: input.sysvarStakeHistory ?? null,
+      isWritable: false,
+    },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
     ResolvedAccount
   >;
 
+  // Resolve default values.
+  if (!accounts.sysvarStakeHistory.value) {
+    accounts.sysvarStakeHistory.value =
+      'SysvarStakeHistory1111111111111111111111111' as Address<'SysvarStakeHistory1111111111111111111111111'>;
+  }
+
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
       getAccountMeta(accounts.config),
+      getAccountMeta(accounts.vaultHolderRewards),
       getAccountMeta(accounts.validatorStake),
-      getAccountMeta(accounts.destination),
-      getAccountMeta(accounts.stakeAuthority),
+      getAccountMeta(accounts.validatorStakeAuthority),
+      getAccountMeta(accounts.sysvarStakeHistory),
     ],
     programAddress,
     data: getHarvestValidatorRewardsInstructionDataEncoder().encode({}),
   } as HarvestValidatorRewardsInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
+    TAccountVaultHolderRewards,
     TAccountValidatorStake,
-    TAccountDestination,
-    TAccountStakeAuthority
+    TAccountValidatorStakeAuthority,
+    TAccountSysvarStakeHistory
   >;
 
   return instruction;
@@ -161,12 +190,14 @@ export type ParsedHarvestValidatorRewardsInstruction<
   accounts: {
     /** Stake config account */
     config: TAccountMetas[0];
-    /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
-    validatorStake: TAccountMetas[1];
-    /** Destination account for withdrawn lamports */
-    destination: TAccountMetas[2];
-    /** Stake authority */
-    stakeAuthority: TAccountMetas[3];
+    /** Holder rewards account */
+    vaultHolderRewards: TAccountMetas[1];
+    /** Validator stake account */
+    validatorStake: TAccountMetas[2];
+    /** Validator stake authority */
+    validatorStakeAuthority: TAccountMetas[3];
+    /** Stake history sysvar */
+    sysvarStakeHistory: TAccountMetas[4];
   };
   data: HarvestValidatorRewardsInstructionData;
 };
@@ -179,7 +210,7 @@ export function parseHarvestValidatorRewardsInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedHarvestValidatorRewardsInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 4) {
+  if (instruction.accounts.length < 5) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -193,9 +224,10 @@ export function parseHarvestValidatorRewardsInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       config: getNextAccount(),
+      vaultHolderRewards: getNextAccount(),
       validatorStake: getNextAccount(),
-      destination: getNextAccount(),
-      stakeAuthority: getNextAccount(),
+      validatorStakeAuthority: getNextAccount(),
+      sysvarStakeHistory: getNextAccount(),
     },
     data: getHarvestValidatorRewardsInstructionDataDecoder().decode(
       instruction.data

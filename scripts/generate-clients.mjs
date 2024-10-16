@@ -214,7 +214,7 @@ kinobi.update(
       size: 152,
     },
     solStakerStake: {
-      size: 176,
+      size: 184,
     },
   })
 );
