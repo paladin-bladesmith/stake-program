@@ -6,7 +6,6 @@
 //!
 
 pub(crate) mod r#deactivate_stake;
-pub(crate) mod r#distribute_rewards;
 pub(crate) mod r#harvest_holder_rewards;
 pub(crate) mod r#harvest_sol_staker_rewards;
 pub(crate) mod r#harvest_validator_rewards;
@@ -24,7 +23,6 @@ pub(crate) mod r#validator_stake_tokens;
 pub(crate) mod r#withdraw_inactive_stake;
 
 pub use self::r#deactivate_stake::*;
-pub use self::r#distribute_rewards::*;
 pub use self::r#harvest_holder_rewards::*;
 pub use self::r#harvest_sol_staker_rewards::*;
 pub use self::r#harvest_validator_rewards::*;

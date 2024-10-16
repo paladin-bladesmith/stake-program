@@ -9,7 +9,6 @@
 import { containsBytes, getU8Encoder, type Address } from '@solana/web3.js';
 import {
   type ParsedDeactivateStakeInstruction,
-  type ParsedDistributeRewardsInstruction,
   type ParsedHarvestHolderRewardsInstruction,
   type ParsedHarvestSolStakerRewardsInstruction,
   type ParsedHarvestValidatorRewardsInstruction,
@@ -48,7 +47,6 @@ export enum PaladinStakeProgramInstruction {
   SlashValidatorStake,
   SetAuthority,
   UpdateConfig,
-  DistributeRewards,
   InitializeSolStakerStake,
   SolStakerStakeTokens,
   HarvestSolStakerRewards,
@@ -95,21 +93,18 @@ export function identifyPaladinStakeProgramInstruction(
     return PaladinStakeProgramInstruction.UpdateConfig;
   }
   if (containsBytes(data, getU8Encoder().encode(11), 0)) {
-    return PaladinStakeProgramInstruction.DistributeRewards;
-  }
-  if (containsBytes(data, getU8Encoder().encode(12), 0)) {
     return PaladinStakeProgramInstruction.InitializeSolStakerStake;
   }
-  if (containsBytes(data, getU8Encoder().encode(13), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(12), 0)) {
     return PaladinStakeProgramInstruction.SolStakerStakeTokens;
   }
-  if (containsBytes(data, getU8Encoder().encode(14), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(13), 0)) {
     return PaladinStakeProgramInstruction.HarvestSolStakerRewards;
   }
-  if (containsBytes(data, getU8Encoder().encode(15), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(14), 0)) {
     return PaladinStakeProgramInstruction.InactivateSolStakerStake;
   }
-  if (containsBytes(data, getU8Encoder().encode(16), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(15), 0)) {
     return PaladinStakeProgramInstruction.SlashSolStakerStake;
   }
   throw new Error(
@@ -153,9 +148,6 @@ export type ParsedPaladinStakeProgramInstruction<
   | ({
       instructionType: PaladinStakeProgramInstruction.UpdateConfig;
     } & ParsedUpdateConfigInstruction<TProgram>)
-  | ({
-      instructionType: PaladinStakeProgramInstruction.DistributeRewards;
-    } & ParsedDistributeRewardsInstruction<TProgram>)
   | ({
       instructionType: PaladinStakeProgramInstruction.InitializeSolStakerStake;
     } & ParsedInitializeSolStakerStakeInstruction<TProgram>)

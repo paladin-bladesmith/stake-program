@@ -77,7 +77,7 @@ export type InitializeSolStakerStakeInstructionDataArgs = {};
 export function getInitializeSolStakerStakeInstructionDataEncoder(): Encoder<InitializeSolStakerStakeInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', getU8Encoder()]]),
-    (value) => ({ ...value, discriminator: 12 })
+    (value) => ({ ...value, discriminator: 11 })
   );
 }
 

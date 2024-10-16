@@ -640,45 +640,6 @@
       }
     },
     {
-      "name": "DistributeRewards",
-      "accounts": [
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true,
-          "docs": [
-            "Reward payer"
-          ]
-        },
-        {
-          "name": "config",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Stake config account"
-          ]
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "System program"
-          ]
-        }
-      ],
-      "args": [
-        {
-          "name": "args",
-          "type": "u64"
-        }
-      ],
-      "discriminant": {
-        "type": "u8",
-        "value": 11
-      }
-    },
-    {
       "name": "InitializeSolStakerStake",
       "accounts": [
         {
@@ -741,7 +702,7 @@
       "args": [],
       "discriminant": {
         "type": "u8",
-        "value": 12
+        "value": 11
       }
     },
     {
@@ -828,7 +789,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 13
+        "value": 12
       }
     },
     {
@@ -919,7 +880,7 @@
       "args": [],
       "discriminant": {
         "type": "u8",
-        "value": 14
+        "value": 13
       }
     },
     {
@@ -961,7 +922,7 @@
       "args": [],
       "discriminant": {
         "type": "u8",
-        "value": 15
+        "value": 14
       }
     },
     {
@@ -1048,7 +1009,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 16
+        "value": 15
       }
     }
   ],
@@ -1093,6 +1054,10 @@
           },
           {
             "name": "syncRewardsLamports",
+            "type": "u64"
+          },
+          {
+            "name": "lamportsLast",
             "type": "u64"
           },
           {

@@ -99,7 +99,7 @@ export function getSolStakerStakeTokensInstructionDataEncoder(): Encoder<SolStak
       ['discriminator', getU8Encoder()],
       ['amount', getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 13 })
+    (value) => ({ ...value, discriminator: 12 })
   );
 }
 

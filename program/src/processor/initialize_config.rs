@@ -148,6 +148,7 @@ pub fn process_initialize_config(
         max_deactivation_basis_points,
         sync_rewards_lamports,
         signer_bump,
+        ctx.accounts.config.lamports(),
     );
 
     Ok(())

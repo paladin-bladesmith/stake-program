@@ -12,6 +12,7 @@ use spl_token_2022::{
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, HarvestHolderRewardsAccounts},
+    processor::sync_config_lamports,
     require,
     state::{get_vault_pda_signer_seeds, Config},
 };
@@ -44,17 +45,14 @@ pub fn process_harvest_holder_rewards(
     // config
     // - owner must be the stake program
     // - must be initialized
-
     require!(
         ctx.accounts.config.owner == program_id,
         ProgramError::InvalidAccountOwner,
         "config"
     );
-
-    let config_data = ctx.accounts.config.try_borrow_data()?;
-    let config = bytemuck::try_from_bytes::<Config>(&config_data)
+    let mut config_data = ctx.accounts.config.try_borrow_mut_data()?;
+    let config = bytemuck::try_from_bytes_mut::<Config>(&mut config_data)
         .map_err(|_error| ProgramError::InvalidAccountData)?;
-
     require!(
         config.is_initialized(),
         ProgramError::UninitializedAccount,
@@ -104,6 +102,9 @@ pub fn process_harvest_holder_rewards(
         "holder rewards",
     );
 
+    // Update the config's last seen lamports.
+    sync_config_lamports(ctx.accounts.config, config)?;
+
     // Harvest latest holder rewards.
     drop(vault_data);
     drop(config_data);
@@ -140,6 +141,12 @@ pub fn process_harvest_holder_rewards(
         ],
         &[vault_seeds.as_slice()],
     )?;
+
+    // Update the configs last seen lamports again.
+    let mut config_data = ctx.accounts.config.try_borrow_mut_data()?;
+    let config = bytemuck::try_from_bytes_mut::<Config>(&mut config_data)
+        .map_err(|_error| ProgramError::InvalidAccountData)?;
+    config.lamports_last = ctx.accounts.config.lamports();
 
     Ok(())
 }

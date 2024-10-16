@@ -56,8 +56,8 @@ async fn harvest_validator_rewards() {
     // "manually" set the total amount delegated
     config_account.token_amount_effective = 130;
     config_account.accumulated_stake_rewards_per_token = calculate_stake_rewards_per_token(26, 130);
-
     account.lamports += 26;
+    config_account.lamports_last = account.lamports;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config, &account.into());
 
@@ -167,8 +167,8 @@ async fn harvest_validator_rewards_wrapped() {
     // If the holder's last seen rate is `u128::MAX`, the calculation should
     // still work with wrapped math.
     config_account.accumulated_stake_rewards_per_token = calculate_stake_rewards_per_token(26, 130);
-
     account.lamports += 26;
+    config_account.lamports_last = account.lamports;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config, &account.into());
 
@@ -275,7 +275,7 @@ async fn harvest_validator_rewards_with_no_rewards_available() {
     // "manually" set the total amount delegated
     config_account.token_amount_effective = 100;
     config_account.accumulated_stake_rewards_per_token = 0;
-
+    config_account.lamports_last = account.lamports;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config, &account.into());
 
@@ -368,9 +368,9 @@ async fn harvest_validator_rewards_after_harvesting() {
     config_account.token_amount_effective = 100;
     config_account.accumulated_stake_rewards_per_token =
         calculate_stake_rewards_per_token(4_000_000_000, 100);
-
     // only 2 SOL left since we are simulating that 2 SOL were already harvested
     account.lamports += 2_000_000_000;
+    config_account.lamports_last = account.lamports;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config, &account.into());
 
@@ -487,8 +487,8 @@ async fn fail_harvest_validator_rewards_with_wrong_authority() {
     config_account.token_amount_effective = 100;
     config_account.accumulated_stake_rewards_per_token =
         calculate_stake_rewards_per_token(4_000_000_000, 100);
-
     account.lamports += 4_000_000_000;
+    config_account.lamports_last = account.lamports;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config, &account.into());
 
@@ -730,8 +730,8 @@ async fn fail_harvest_validator_rewards_with_wrong_config_account() {
     config_account.token_amount_effective = 100;
     config_account.accumulated_stake_rewards_per_token =
         calculate_stake_rewards_per_token(4_000_000_000, 100);
-
     account.lamports += 4_000_000_000;
+    config_account.lamports_last = account.lamports;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config, &account.into());
 
@@ -814,8 +814,8 @@ async fn fail_harvest_validator_rewards_with_wrong_holder_rewards() {
     config_account.token_amount_effective = 100;
     config_account.accumulated_stake_rewards_per_token =
         calculate_stake_rewards_per_token(4_000_000_000, 100);
-
     account.lamports += 4_000_000_000;
+    config_account.lamports_last = account.lamports;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config, &account.into());
 

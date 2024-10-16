@@ -62,7 +62,7 @@ export type InactivateSolStakerStakeInstructionDataArgs = {};
 export function getInactivateSolStakerStakeInstructionDataEncoder(): Encoder<InactivateSolStakerStakeInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', getU8Encoder()]]),
-    (value) => ({ ...value, discriminator: 15 })
+    (value) => ({ ...value, discriminator: 14 })
   );
 }
 

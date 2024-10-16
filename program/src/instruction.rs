@@ -424,27 +424,6 @@ pub enum StakeInstruction {
     )]
     UpdateConfig(ConfigField),
 
-    /// Moves SOL rewards to the config and updates the stake rewards total.
-    #[account(
-        0,
-        writable,
-        signer,
-        name = "payer",
-        desc = "Reward payer"
-    )]
-    #[account(
-        1,
-        writable,
-        name = "config",
-        desc = "Stake config account"
-    )]
-    #[account(
-        2,
-        name = "system_program",
-        desc = "System program"
-    )]
-    DistributeRewards(u64),
-
     /// Initializes stake account data for a SOL staker.
     ///
     /// NOTE: Anybody can create the stake account for a SOL staker. For new
@@ -781,24 +760,18 @@ impl StakeInstruction {
                 }
                 data
             }
-            StakeInstruction::DistributeRewards(amount) => {
-                let mut data = Vec::with_capacity(9);
-                data.push(11);
-                data.extend_from_slice(&amount.to_le_bytes());
-                data
-            }
-            StakeInstruction::InitializeSolStakerStake => vec![12],
+            StakeInstruction::InitializeSolStakerStake => vec![11],
             StakeInstruction::SolStakerStakeTokens(amount) => {
                 let mut data = Vec::with_capacity(9);
-                data.push(13);
+                data.push(12);
                 data.extend_from_slice(&amount.to_le_bytes());
                 data
             }
-            StakeInstruction::HarvestSolStakerRewards => vec![14],
-            StakeInstruction::InactivateSolStakerStake => vec![15],
+            StakeInstruction::HarvestSolStakerRewards => vec![13],
+            StakeInstruction::InactivateSolStakerStake => vec![14],
             StakeInstruction::SlashSolStakerStake(amount) => {
                 let mut data = Vec::with_capacity(9);
-                data.push(16);
+                data.push(15);
                 data.extend_from_slice(&amount.to_le_bytes());
                 data
             }
@@ -885,26 +858,20 @@ impl StakeInstruction {
 
                 Ok(StakeInstruction::UpdateConfig(field))
             }
-            // 11 - DistributeRewards: u64 (8)
-            Some((&11, rest)) if rest.len() == 8 => {
-                let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
-
-                Ok(StakeInstruction::DistributeRewards(amount))
-            }
-            // 12 - InitializeSolStakerStake
-            Some((&12, _)) => Ok(StakeInstruction::InitializeSolStakerStake),
-            // 13 - SolStakerStakeTokens: u64 (8)
-            Some((&13, rest)) if rest.len() == 8 => {
+            // 11 - InitializeSolStakerStake
+            Some((&11, _)) => Ok(StakeInstruction::InitializeSolStakerStake),
+            // 12 - SolStakerStakeTokens: u64 (8)
+            Some((&12, rest)) if rest.len() == 8 => {
                 let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
 
                 Ok(StakeInstruction::SolStakerStakeTokens(amount))
             }
-            // 14 - HarvestSolStakerRewards
-            Some((&14, _)) => Ok(StakeInstruction::HarvestSolStakerRewards),
-            // 15 - InactivateSolStakerStake
-            Some((&15, _)) => Ok(StakeInstruction::InactivateSolStakerStake),
-            // 16 - SlashSolStakerStake: u64 (8)
-            Some((&16, rest)) if rest.len() == 8 => {
+            // 13 - HarvestSolStakerRewards
+            Some((&13, _)) => Ok(StakeInstruction::HarvestSolStakerRewards),
+            // 14 - InactivateSolStakerStake
+            Some((&14, _)) => Ok(StakeInstruction::InactivateSolStakerStake),
+            // 15 - SlashSolStakerStake: u64 (8)
+            Some((&15, rest)) if rest.len() == 8 => {
                 let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
 
                 Ok(StakeInstruction::SlashSolStakerStake(amount))
@@ -1031,14 +998,6 @@ mod tests {
         assert_eq!(original, unpacked);
 
         let original = StakeInstruction::UpdateConfig(ConfigField::MaxDeactivationBasisPoints(500));
-        let packed = original.pack();
-        let unpacked = StakeInstruction::unpack(&packed).unwrap();
-        assert_eq!(original, unpacked);
-    }
-
-    #[test]
-    fn test_pack_unpack_distribute_rewards() {
-        let original = StakeInstruction::DistributeRewards(100);
         let packed = original.pack();
         let unpacked = StakeInstruction::unpack(&packed).unwrap();
         assert_eq!(original, unpacked);

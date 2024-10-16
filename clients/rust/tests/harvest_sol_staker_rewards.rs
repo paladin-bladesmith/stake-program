@@ -40,10 +40,9 @@ async fn harvest_sol_staker_rewards() {
 
     let mut account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the total amount delegated
     config_account.accumulated_stake_rewards_per_token = calculate_stake_rewards_per_token(26, 130);
-
     account.lamports += 26 * SWAD;
+    config_account.lamports_last = account.lamports;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config, &account.into());
 
@@ -168,8 +167,8 @@ async fn harvest_sol_staker_rewards_wrapped() {
     // If the holder's last seen rate is `u128::MAX`, the calculation should
     // still work with wrapped math.
     config_account.accumulated_stake_rewards_per_token = calculate_stake_rewards_per_token(26, 130);
-
     account.lamports += 26 * SWAD;
+    config_account.lamports_last = account.lamports;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config, &account.into());
 
@@ -291,9 +290,8 @@ async fn harvest_sol_staker_rewards_with_no_rewards_available() {
     // "manually" set the total amount delegated
     config_account.token_amount_effective = 130 * SWAD;
     config_account.accumulated_stake_rewards_per_token = 0;
-
     let expected_config_lamports = account.lamports;
-
+    config_account.lamports_last = account.lamports;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config, &account.into());
 
@@ -393,21 +391,17 @@ async fn harvest_sol_staker_rewards_after_harvesting() {
     // Given a config account with 26 lamports rewards and 130 staked amount.
     let config_manager = ConfigManager::new(&mut context).await;
     let config = config_manager.config;
-
     let mut account = get_account!(context, config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the total amount delegated
     config_account.token_amount_effective = 130 * SWAD;
     config_account.accumulated_stake_rewards_per_token = calculate_stake_rewards_per_token(26, 130);
-
     account.lamports += 26 * SWAD;
+    config_account.lamports_last = account.lamports;
     let expected_config_lamports = account.lamports;
-
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config, &account.into());
 
     // And a validator stake and sol staker stake accounts with 65 staked tokens.
-
     let validator_stake_manager = ValidatorStakeManager::new(&mut context, &config).await;
     let sol_staker_stake_manager = SolStakerStakeManager::new(
         &mut context,
@@ -417,7 +411,6 @@ async fn harvest_sol_staker_rewards_after_harvesting() {
         50 * SWAD,
     )
     .await;
-
     let mut account = get_account!(context, validator_stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the staked values:
@@ -486,7 +479,6 @@ async fn harvest_sol_staker_rewards_after_harvesting() {
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
-
     let tx = Transaction::new_signed_with_payer(
         &[harvest_stake_rewards_ix],
         Some(&context.payer.pubkey()),
@@ -516,8 +508,8 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_authority() {
     // "manually" set the total amount delegated
     config_account.token_amount_effective = 130 * SWAD;
     config_account.accumulated_stake_rewards_per_token = calculate_stake_rewards_per_token(26, 130);
-
     account.lamports += 26 * SWAD;
+    config_account.lamports_last = account.lamports;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config, &account.into());
 
@@ -616,8 +608,8 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_config_account() {
     // "manually" set the total amount delegated
     config_account.token_amount_effective = 130 * SWAD;
     config_account.accumulated_stake_rewards_per_token = calculate_stake_rewards_per_token(26, 130);
-
     account.lamports += 26 * SWAD;
+    config_account.lamports_last = account.lamports;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config, &account.into());
 
@@ -726,8 +718,8 @@ async fn fail_harvest_sol_staker_rewards_with_uninitialized_stake_account() {
     // "manually" set the total amount delegated
     config_account.token_amount_effective = 130 * SWAD;
     config_account.accumulated_stake_rewards_per_token = calculate_stake_rewards_per_token(26, 130);
-
     account.lamports += 26 * SWAD;
+    config_account.lamports_last = account.lamports;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config, &account.into());
 
@@ -1937,8 +1929,8 @@ async fn harvest_sync_rewards() {
     config_account.token_amount_effective = 1_300_000_000;
     config_account.accumulated_stake_rewards_per_token =
         calculate_stake_rewards_per_token(1_300_000_000, 1_300_000_000);
-
     account.lamports += 1_300_000_000; // 1 SOL
+    config_account.lamports_last = account.lamports;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
 
@@ -2097,8 +2089,8 @@ async fn harvest_sync_rewards_wrapped() {
     // still work with wrapped math.
     config_account.accumulated_stake_rewards_per_token =
         calculate_stake_rewards_per_token(1_300_000_000, 1_300_000_000);
-
     account.lamports += 1_300_000_000; // 1 SOL
+    config_account.lamports_last = account.lamports;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
 
@@ -2262,8 +2254,8 @@ async fn harvest_sync_rewards_without_rewards() {
     config_account.token_amount_effective = 1_300_000_000;
     config_account.accumulated_stake_rewards_per_token =
         calculate_stake_rewards_per_token(1_300_000_000, 1_300_000_000);
-
     account.lamports += 1_300_000_000; // 1.3 SOL
+    config_account.lamports_last = account.lamports;
     let expected_config_lamports = account.lamports;
 
     account.data = config_account.try_to_vec().unwrap();
@@ -2403,8 +2395,8 @@ async fn harvest_sync_rewards_with_closed_sol_stake_account() {
     config_account.token_amount_effective = 1_300_000_000;
     config_account.accumulated_stake_rewards_per_token =
         calculate_stake_rewards_per_token(1_300_000_000, 1_300_000_000);
-
     account.lamports += 1_300_000_000; // 1 SOL
+    config_account.lamports_last = account.lamports;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
 
@@ -2570,8 +2562,8 @@ async fn harvest_sync_rewards_with_capped_sync_rewards() {
     // a previous reward
     config_account.accumulated_stake_rewards_per_token =
         calculate_stake_rewards_per_token(1_300_000_000, 1_300_000_000) + 200_000_000;
-
     account.lamports += 1_300_000_000;
+    config_account.lamports_last = account.lamports;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
 
