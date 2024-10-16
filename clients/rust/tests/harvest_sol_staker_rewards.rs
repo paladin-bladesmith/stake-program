@@ -121,7 +121,7 @@ async fn harvest_sol_staker_rewards() {
 
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -249,7 +249,7 @@ async fn harvest_sol_staker_rewards_wrapped() {
 
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -361,7 +361,7 @@ async fn harvest_sol_staker_rewards_with_no_rewards_available() {
 
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -478,7 +478,7 @@ async fn harvest_sol_staker_rewards_after_harvesting() {
 
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -578,7 +578,7 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_authority() {
     let fake_authority = Pubkey::new_unique();
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(fake_authority) // <- wrong authority
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -689,7 +689,7 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_config_account() {
 
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(another_config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -795,7 +795,7 @@ async fn fail_harvest_sol_staker_rewards_with_uninitialized_stake_account() {
 
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -906,7 +906,7 @@ async fn harvest_sol_stake_when_deactivating() {
     // When we sync the SOL stake after deactivating the SOL stake.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -1023,7 +1023,7 @@ async fn harvest_sol_stake_when_inactive() {
     // When we sync the SOL stake after deactivating the SOL stake.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -1132,7 +1132,7 @@ async fn sync_sol_stake_when_effective() {
 
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -1216,7 +1216,7 @@ async fn sync_sol_stake_when_activating() {
 
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -1304,7 +1304,7 @@ async fn fail_sync_sol_stake_with_wrong_config_account() {
     // When we try to sync the SOL stake with the wrong config account.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(another_config.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -1394,7 +1394,7 @@ async fn fail_sync_sol_stake_with_wrong_sol_stake_account() {
     // When we try to sync the SOL stake with the wrong config account.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(another_sol_stake.pubkey())
@@ -1477,7 +1477,7 @@ async fn fail_sync_sol_stake_with_wrong_validator_stake() {
     // When we try to sync with the wrong validator stake account.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -1566,7 +1566,7 @@ async fn fail_sync_sol_stake_with_uninitialized_config() {
     // When we try to sync with a unitialized config account.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -1655,7 +1655,7 @@ async fn fail_sync_sol_stake_with_uninitialized_validator_stake() {
     // When we try to sync with a unitialized validator stake account.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -1742,7 +1742,7 @@ async fn fail_sync_sol_stake_with_invalid_sol_stake_view_program() {
     // When we try to sync with a fake sol stake view program.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -1873,7 +1873,7 @@ async fn sync_sol_stake_when_sol_stake_redelegated() {
     // vote account.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -2014,7 +2014,7 @@ async fn harvest_sync_rewards() {
     // When we harvest rewards for syncing the SOL stake after deactivating the SOL stake.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -2175,7 +2175,7 @@ async fn harvest_sync_rewards_wrapped() {
     // When we harvest rewards for syncing the SOL stake after deactivating the SOL stake.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -2329,7 +2329,7 @@ async fn harvest_sync_rewards_without_rewards() {
     // on a SOL staker stake account with no rewards.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -2482,7 +2482,7 @@ async fn harvest_sync_rewards_with_closed_sol_stake_account() {
     // When we harvest rewards for syncing the SOL stake after closing the SOL stake account.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -2647,7 +2647,7 @@ async fn harvest_sync_rewards_with_capped_sync_rewards() {
 
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -2776,7 +2776,7 @@ async fn fail_harvest_sync_rewards_with_wrong_sol_stake_account() {
     // When we try to harvest rewards for syncing the SOL stake with the wrong SOL stake account.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(another_sol_stake.pubkey()) // <- wrong SOL stake account
@@ -2869,7 +2869,7 @@ async fn fail_harvest_sync_rewards_with_wrong_validator_stake_account() {
     // When we try to harvest rewards for syncing the SOL stake with the wrong validator stake account.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -2961,7 +2961,7 @@ async fn fail_harvest_sync_rewards_with_wrong_config_account() {
     // When we try to harvest rewards for syncing the SOL stake with the wrong config account.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(another_config) // <- invalid config
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -3057,7 +3057,7 @@ async fn fail_harvest_sync_rewards_with_invalid_sol_stake_view_program() {
     // view program.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -3163,7 +3163,7 @@ async fn fail_harvest_sync_rewards_with_wrong_vault_holder_rewards() {
     // When we try to harvest rewards for syncing the SOL stake with the wrong config account.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(wrong_holder_rewards)
+        .vault_holder_rewards(wrong_holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)

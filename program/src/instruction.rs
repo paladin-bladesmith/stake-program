@@ -261,19 +261,19 @@ pub enum StakeInstruction {
     #[account(
         1,
         writable,
-        name = "vault",
-        desc = "Vault token account"
-    )]
-    #[account(
-        2,
-        writable,
         name = "holder_rewards_pool",
         desc = "Holder rewards pool account"
     )]
     #[account(
+        2,
+        writable,
+        name = "vault",
+        desc = "Vault token account"
+    )]
+    #[account(
         3,
         writable,
-        name = "holder_rewards",
+        name = "vault_holder_rewards",
         desc = "Holder rewards account for vault token account"
     )]
     #[account(

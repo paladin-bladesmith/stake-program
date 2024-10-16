@@ -93,13 +93,13 @@ pub fn process_harvest_holder_rewards(
     // - owner must be the rewards program
     // - derivation must match
     require!(
-        ctx.accounts.holder_rewards.owner == &paladin_rewards_program_client::ID,
+        ctx.accounts.vault_holder_rewards.owner == &paladin_rewards_program_client::ID,
         ProgramError::InvalidAccountOwner,
         "holder rewards",
     );
     let (derivation, _) = HolderRewards::find_pda(ctx.accounts.vault.key);
     require!(
-        ctx.accounts.holder_rewards.key == &derivation,
+        ctx.accounts.vault_holder_rewards.key == &derivation,
         ProgramError::InvalidSeeds,
         "holder rewards",
     );
@@ -110,14 +110,14 @@ pub fn process_harvest_holder_rewards(
     invoke(
         &paladin_rewards_program_client::instructions::HarvestRewards {
             holder_rewards_pool: *ctx.accounts.holder_rewards_pool.key,
-            holder_rewards: *ctx.accounts.holder_rewards.key,
+            holder_rewards: *ctx.accounts.vault_holder_rewards.key,
             token_account: *ctx.accounts.vault.key,
             mint: *ctx.accounts.mint.key,
         }
         .instruction(),
         &[
             ctx.accounts.holder_rewards_pool.clone(),
-            ctx.accounts.holder_rewards.clone(),
+            ctx.accounts.vault_holder_rewards.clone(),
             ctx.accounts.vault.clone(),
             ctx.accounts.mint.clone(),
         ],

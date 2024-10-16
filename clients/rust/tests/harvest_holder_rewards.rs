@@ -108,7 +108,7 @@ async fn validator_stake_harvest_holder_rewards() {
     let harvest_holder = HarvestHolderRewardsBuilder::new()
         .config(config_manager.config)
         .holder_rewards_pool(holder_rewards_pool)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
@@ -117,7 +117,7 @@ async fn validator_stake_harvest_holder_rewards() {
         .instruction();
     let harvest_validator = HarvestValidatorRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
         .instruction();
@@ -237,7 +237,7 @@ async fn validator_stake_harvest_holder_rewards_with_inactive() {
     let harvest_holder = HarvestHolderRewardsBuilder::new()
         .config(config_manager.config)
         .holder_rewards_pool(holder_rewards_pool)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
@@ -246,7 +246,7 @@ async fn validator_stake_harvest_holder_rewards_with_inactive() {
         .instruction();
     let harvest_validator = HarvestValidatorRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
         .instruction();
@@ -385,7 +385,7 @@ async fn validator_stake_harvest_holder_rewards_wrapped() {
     let harvest_holder = HarvestHolderRewardsBuilder::new()
         .config(config_manager.config)
         .holder_rewards_pool(holder_rewards_pool)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
@@ -394,7 +394,7 @@ async fn validator_stake_harvest_holder_rewards_wrapped() {
         .instruction();
     let harvest_validator = HarvestValidatorRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
         .instruction();
@@ -502,7 +502,7 @@ async fn validator_stake_harvest_holder_rewards_with_no_rewards_available() {
     let harvest_holder = HarvestHolderRewardsBuilder::new()
         .config(config_manager.config)
         .holder_rewards_pool(holder_rewards_pool)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
@@ -511,7 +511,7 @@ async fn validator_stake_harvest_holder_rewards_with_no_rewards_available() {
         .instruction();
     let harvest_validator = HarvestValidatorRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
         .instruction();
@@ -608,7 +608,7 @@ async fn validator_stake_harvest_holder_rewards_after_harvesting() {
     let harvest_holder = HarvestHolderRewardsBuilder::new()
         .config(config_manager.config)
         .holder_rewards_pool(holder_rewards_pool)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
@@ -617,7 +617,7 @@ async fn validator_stake_harvest_holder_rewards_after_harvesting() {
         .instruction();
     let harvest_validator = HarvestValidatorRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
         .instruction();
@@ -637,7 +637,7 @@ async fn validator_stake_harvest_holder_rewards_after_harvesting() {
     let harvest_holder = HarvestHolderRewardsBuilder::new()
         .config(config_manager.config)
         .holder_rewards_pool(holder_rewards_pool)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
@@ -646,7 +646,7 @@ async fn validator_stake_harvest_holder_rewards_after_harvesting() {
         .instruction();
     let harvest_validator = HarvestValidatorRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
         .instruction();
@@ -745,7 +745,7 @@ async fn validator_stake_fail_harvest_holder_rewards_with_wrong_authority() {
     let harvest_holder = HarvestHolderRewardsBuilder::new()
         .config(config_manager.config)
         .holder_rewards_pool(holder_rewards_pool)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
@@ -754,7 +754,7 @@ async fn validator_stake_fail_harvest_holder_rewards_with_wrong_authority() {
         .instruction();
     let harvest_validator = HarvestValidatorRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(fake_authority.pubkey())
         .instruction();
@@ -822,7 +822,7 @@ async fn fail_harvest_holder_rewards_with_uninitialized_config() {
     let harvest_holder = HarvestHolderRewardsBuilder::new()
         .config(config_manager.config)
         .holder_rewards_pool(holder_rewards_pool)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
@@ -831,7 +831,7 @@ async fn fail_harvest_holder_rewards_with_uninitialized_config() {
         .instruction();
     let harvest_validator = HarvestValidatorRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
         .instruction();
@@ -912,7 +912,7 @@ async fn fail_harvest_holder_rewards_with_uninitialized_stake() {
     let harvest_holder = HarvestHolderRewardsBuilder::new()
         .config(config_manager.config)
         .holder_rewards_pool(holder_rewards_pool)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
@@ -921,7 +921,7 @@ async fn fail_harvest_holder_rewards_with_uninitialized_stake() {
         .instruction();
     let harvest_validator = HarvestValidatorRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .validator_stake(stake)
         .validator_stake_authority(Pubkey::new_unique())
         .instruction();
@@ -1010,7 +1010,7 @@ async fn fail_harvest_holder_rewards_with_wrong_config() {
     let harvest_holder = HarvestHolderRewardsBuilder::new()
         .config(another_config_manager.config)
         .holder_rewards_pool(holder_rewards_pool)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&another_config_manager.config).0)
         .mint(config_manager.mint)
@@ -1019,7 +1019,7 @@ async fn fail_harvest_holder_rewards_with_wrong_config() {
         .instruction();
     let harvest_validator = HarvestValidatorRewardsBuilder::new()
         .config(another_config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
         .instruction();
@@ -1116,7 +1116,7 @@ async fn sol_staker_stake_harvest_holder_rewards() {
     let harvest_holder = HarvestHolderRewardsBuilder::new()
         .config(config_manager.config)
         .holder_rewards_pool(holder_rewards_pool)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
@@ -1125,7 +1125,7 @@ async fn sol_staker_stake_harvest_holder_rewards() {
         .instruction();
     let harvest_staker = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -1232,7 +1232,7 @@ async fn sol_staker_stake_harvest_holder_rewards_with_no_rewards_available() {
     let harvest_holder = HarvestHolderRewardsBuilder::new()
         .config(config_manager.config)
         .holder_rewards_pool(holder_rewards_pool)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
@@ -1241,7 +1241,7 @@ async fn sol_staker_stake_harvest_holder_rewards_with_no_rewards_available() {
         .instruction();
     let harvest_staker = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -1341,7 +1341,7 @@ async fn sol_staker_stake_harvest_holder_rewards_after_harvesting() {
     let harvest_holder = HarvestHolderRewardsBuilder::new()
         .config(config_manager.config)
         .holder_rewards_pool(holder_rewards_pool)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
@@ -1350,7 +1350,7 @@ async fn sol_staker_stake_harvest_holder_rewards_after_harvesting() {
         .instruction();
     let harvest_staker = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -1374,7 +1374,7 @@ async fn sol_staker_stake_harvest_holder_rewards_after_harvesting() {
     let harvest_holder = HarvestHolderRewardsBuilder::new()
         .config(config_manager.config)
         .holder_rewards_pool(holder_rewards_pool)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
@@ -1383,7 +1383,7 @@ async fn sol_staker_stake_harvest_holder_rewards_after_harvesting() {
         .instruction();
     let harvest_staker = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
@@ -1487,7 +1487,7 @@ async fn sol_staker_stake_fail_harvest_holder_rewards_with_wrong_authority() {
     let harvest_holder = HarvestHolderRewardsBuilder::new()
         .config(config_manager.config)
         .holder_rewards_pool(holder_rewards_pool)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
@@ -1496,7 +1496,7 @@ async fn sol_staker_stake_fail_harvest_holder_rewards_with_wrong_authority() {
         .instruction();
     let harvest_staker = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
-        .holder_rewards(holder_rewards)
+        .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(fake_authority.pubkey())
         .native_stake(sol_staker_stake_manager.sol_stake)
