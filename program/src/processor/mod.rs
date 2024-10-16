@@ -94,6 +94,8 @@ pub fn process_instruction<'a>(
             )
         }
         StakeInstruction::InitializeConfig {
+            slash_authority,
+            config_authority,
             cooldown_time_seconds,
             max_deactivation_basis_points,
             sync_rewards_lamports,
@@ -102,6 +104,8 @@ pub fn process_instruction<'a>(
             initialize_config::process_initialize_config(
                 program_id,
                 InitializeConfigAccounts::context(accounts)?,
+                slash_authority,
+                config_authority,
                 cooldown_time_seconds,
                 max_deactivation_basis_points,
                 sync_rewards_lamports,

@@ -2,7 +2,7 @@ use arrayref::array_ref;
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
 use shank::{ShankContext, ShankInstruction, ShankType};
-use solana_program::program_error::ProgramError;
+use solana_program::{program_error::ProgramError, pubkey::Pubkey};
 
 /// Enum defining all instructions in the Stake program.
 #[repr(C)]
@@ -18,25 +18,17 @@ pub enum StakeInstruction {
     )]
     #[account(
         1,
-        name = "slash_authority",
-        desc = "Slash authority"
-    )]
-    #[account(
-        2,
-        name = "config_authority",
-        desc = "Config authority"
-    )]
-    #[account(
-        3,
         name = "mint",
         desc = "Stake token mint"
     )]
     #[account(
-        4,
+        2,
         name = "vault",
         desc = "Stake vault token account"
     )]
     InitializeConfig {
+        slash_authority: Pubkey,
+        config_authority: Pubkey,
         cooldown_time_seconds: u64,
         max_deactivation_basis_points: u16,
         sync_rewards_lamports: u64,
@@ -717,12 +709,16 @@ impl StakeInstruction {
     pub fn pack(&self) -> Vec<u8> {
         match self {
             StakeInstruction::InitializeConfig {
+                slash_authority,
+                config_authority,
                 cooldown_time_seconds,
                 max_deactivation_basis_points,
                 sync_rewards_lamports,
             } => {
                 let mut data = Vec::with_capacity(11);
                 data.push(0);
+                data.extend_from_slice(&slash_authority.to_bytes());
+                data.extend_from_slice(&config_authority.to_bytes());
                 data.extend_from_slice(&cooldown_time_seconds.to_le_bytes());
                 data.extend_from_slice(&max_deactivation_basis_points.to_le_bytes());
                 data.extend_from_slice(&sync_rewards_lamports.to_le_bytes());
@@ -813,12 +809,16 @@ impl StakeInstruction {
     pub fn unpack(input: &[u8]) -> Result<Self, ProgramError> {
         match input.split_first() {
             // 0 - InitializeConfig: u64 (8) + u16 (2) + u64 (8)
-            Some((&0, rest)) if rest.len() == 18 => {
-                let cooldown_time_seconds = u64::from_le_bytes(*array_ref![rest, 0, 8]);
-                let max_deactivation_basis_points = u16::from_le_bytes(*array_ref![rest, 8, 2]);
-                let sync_rewards_lamports = u64::from_le_bytes(*array_ref![rest, 10, 8]);
+            Some((&0, rest)) if rest.len() == 32 + 32 + 8 + 2 + 8 => {
+                let slash_authority = Pubkey::new_from_array(*array_ref![rest, 0, 32]);
+                let config_authority = Pubkey::new_from_array(*array_ref![rest, 32, 32]);
+                let cooldown_time_seconds = u64::from_le_bytes(*array_ref![rest, 64, 8]);
+                let max_deactivation_basis_points = u16::from_le_bytes(*array_ref![rest, 72, 2]);
+                let sync_rewards_lamports = u64::from_le_bytes(*array_ref![rest, 74, 8]);
 
                 Ok(StakeInstruction::InitializeConfig {
+                    slash_authority,
+                    config_authority,
                     cooldown_time_seconds,
                     max_deactivation_basis_points,
                     sync_rewards_lamports,
@@ -940,6 +940,8 @@ mod tests {
     #[test]
     fn test_pack_unpack_initialize_config() {
         let original = StakeInstruction::InitializeConfig {
+            slash_authority: Pubkey::new_unique(),
+            config_authority: Pubkey::new_unique(),
             cooldown_time_seconds: 120,
             max_deactivation_basis_points: 500,
             sync_rewards_lamports: 100,

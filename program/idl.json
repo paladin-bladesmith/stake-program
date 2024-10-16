@@ -14,22 +14,6 @@
           ]
         },
         {
-          "name": "slashAuthority",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Slash authority"
-          ]
-        },
-        {
-          "name": "configAuthority",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Config authority"
-          ]
-        },
-        {
           "name": "mint",
           "isMut": false,
           "isSigner": false,
@@ -47,6 +31,14 @@
         }
       ],
       "args": [
+        {
+          "name": "slashAuthority",
+          "type": "publicKey"
+        },
+        {
+          "name": "configAuthority",
+          "type": "publicKey"
+        },
         {
           "name": "cooldownTimeSeconds",
           "type": "u64"

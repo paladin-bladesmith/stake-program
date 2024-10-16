@@ -7,15 +7,12 @@
 
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
+use solana_program::pubkey::Pubkey;
 
 /// Accounts.
 pub struct InitializeConfig {
     /// Stake config account
     pub config: solana_program::pubkey::Pubkey,
-    /// Slash authority
-    pub slash_authority: solana_program::pubkey::Pubkey,
-    /// Config authority
-    pub config_authority: solana_program::pubkey::Pubkey,
     /// Stake token mint
     pub mint: solana_program::pubkey::Pubkey,
     /// Stake vault token account
@@ -35,17 +32,9 @@ impl InitializeConfig {
         args: InitializeConfigInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.config,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.slash_authority,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.config_authority,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -87,6 +76,8 @@ impl Default for InitializeConfigInstructionData {
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct InitializeConfigInstructionArgs {
+    pub slash_authority: Pubkey,
+    pub config_authority: Pubkey,
     pub cooldown_time_seconds: u64,
     pub max_deactivation_basis_points: u16,
     pub sync_rewards_lamports: u64,
@@ -97,17 +88,15 @@ pub struct InitializeConfigInstructionArgs {
 /// ### Accounts:
 ///
 ///   0. `[writable]` config
-///   1. `[]` slash_authority
-///   2. `[]` config_authority
-///   3. `[]` mint
-///   4. `[]` vault
+///   1. `[]` mint
+///   2. `[]` vault
 #[derive(Clone, Debug, Default)]
 pub struct InitializeConfigBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
-    slash_authority: Option<solana_program::pubkey::Pubkey>,
-    config_authority: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
     vault: Option<solana_program::pubkey::Pubkey>,
+    slash_authority: Option<Pubkey>,
+    config_authority: Option<Pubkey>,
     cooldown_time_seconds: Option<u64>,
     max_deactivation_basis_points: Option<u16>,
     sync_rewards_lamports: Option<u64>,
@@ -124,24 +113,6 @@ impl InitializeConfigBuilder {
         self.config = Some(config);
         self
     }
-    /// Slash authority
-    #[inline(always)]
-    pub fn slash_authority(
-        &mut self,
-        slash_authority: solana_program::pubkey::Pubkey,
-    ) -> &mut Self {
-        self.slash_authority = Some(slash_authority);
-        self
-    }
-    /// Config authority
-    #[inline(always)]
-    pub fn config_authority(
-        &mut self,
-        config_authority: solana_program::pubkey::Pubkey,
-    ) -> &mut Self {
-        self.config_authority = Some(config_authority);
-        self
-    }
     /// Stake token mint
     #[inline(always)]
     pub fn mint(&mut self, mint: solana_program::pubkey::Pubkey) -> &mut Self {
@@ -152,6 +123,16 @@ impl InitializeConfigBuilder {
     #[inline(always)]
     pub fn vault(&mut self, vault: solana_program::pubkey::Pubkey) -> &mut Self {
         self.vault = Some(vault);
+        self
+    }
+    #[inline(always)]
+    pub fn slash_authority(&mut self, slash_authority: Pubkey) -> &mut Self {
+        self.slash_authority = Some(slash_authority);
+        self
+    }
+    #[inline(always)]
+    pub fn config_authority(&mut self, config_authority: Pubkey) -> &mut Self {
+        self.config_authority = Some(config_authority);
         self
     }
     #[inline(always)]
@@ -194,12 +175,18 @@ impl InitializeConfigBuilder {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = InitializeConfig {
             config: self.config.expect("config is not set"),
-            slash_authority: self.slash_authority.expect("slash_authority is not set"),
-            config_authority: self.config_authority.expect("config_authority is not set"),
             mint: self.mint.expect("mint is not set"),
             vault: self.vault.expect("vault is not set"),
         };
         let args = InitializeConfigInstructionArgs {
+            slash_authority: self
+                .slash_authority
+                .clone()
+                .expect("slash_authority is not set"),
+            config_authority: self
+                .config_authority
+                .clone()
+                .expect("config_authority is not set"),
             cooldown_time_seconds: self
                 .cooldown_time_seconds
                 .clone()
@@ -222,10 +209,6 @@ impl InitializeConfigBuilder {
 pub struct InitializeConfigCpiAccounts<'a, 'b> {
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Slash authority
-    pub slash_authority: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Config authority
-    pub config_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake token mint
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake vault token account
@@ -238,10 +221,6 @@ pub struct InitializeConfigCpi<'a, 'b> {
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Slash authority
-    pub slash_authority: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Config authority
-    pub config_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake token mint
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake vault token account
@@ -259,8 +238,6 @@ impl<'a, 'b> InitializeConfigCpi<'a, 'b> {
         Self {
             __program: program,
             config: accounts.config,
-            slash_authority: accounts.slash_authority,
-            config_authority: accounts.config_authority,
             mint: accounts.mint,
             vault: accounts.vault,
             __args: args,
@@ -299,17 +276,9 @@ impl<'a, 'b> InitializeConfigCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.config.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.slash_authority.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.config_authority.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -336,11 +305,9 @@ impl<'a, 'b> InitializeConfigCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(5 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(3 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.config.clone());
-        account_infos.push(self.slash_authority.clone());
-        account_infos.push(self.config_authority.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.vault.clone());
         remaining_accounts
@@ -360,10 +327,8 @@ impl<'a, 'b> InitializeConfigCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[writable]` config
-///   1. `[]` slash_authority
-///   2. `[]` config_authority
-///   3. `[]` mint
-///   4. `[]` vault
+///   1. `[]` mint
+///   2. `[]` vault
 #[derive(Clone, Debug)]
 pub struct InitializeConfigCpiBuilder<'a, 'b> {
     instruction: Box<InitializeConfigCpiBuilderInstruction<'a, 'b>>,
@@ -374,10 +339,10 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
         let instruction = Box::new(InitializeConfigCpiBuilderInstruction {
             __program: program,
             config: None,
-            slash_authority: None,
-            config_authority: None,
             mint: None,
             vault: None,
+            slash_authority: None,
+            config_authority: None,
             cooldown_time_seconds: None,
             max_deactivation_basis_points: None,
             sync_rewards_lamports: None,
@@ -394,24 +359,6 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
         self.instruction.config = Some(config);
         self
     }
-    /// Slash authority
-    #[inline(always)]
-    pub fn slash_authority(
-        &mut self,
-        slash_authority: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.slash_authority = Some(slash_authority);
-        self
-    }
-    /// Config authority
-    #[inline(always)]
-    pub fn config_authority(
-        &mut self,
-        config_authority: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.config_authority = Some(config_authority);
-        self
-    }
     /// Stake token mint
     #[inline(always)]
     pub fn mint(&mut self, mint: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
@@ -422,6 +369,16 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn vault(&mut self, vault: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.vault = Some(vault);
+        self
+    }
+    #[inline(always)]
+    pub fn slash_authority(&mut self, slash_authority: Pubkey) -> &mut Self {
+        self.instruction.slash_authority = Some(slash_authority);
+        self
+    }
+    #[inline(always)]
+    pub fn config_authority(&mut self, config_authority: Pubkey) -> &mut Self {
+        self.instruction.config_authority = Some(config_authority);
         self
     }
     #[inline(always)]
@@ -484,6 +441,16 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
         let args = InitializeConfigInstructionArgs {
+            slash_authority: self
+                .instruction
+                .slash_authority
+                .clone()
+                .expect("slash_authority is not set"),
+            config_authority: self
+                .instruction
+                .config_authority
+                .clone()
+                .expect("config_authority is not set"),
             cooldown_time_seconds: self
                 .instruction
                 .cooldown_time_seconds
@@ -505,16 +472,6 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
 
             config: self.instruction.config.expect("config is not set"),
 
-            slash_authority: self
-                .instruction
-                .slash_authority
-                .expect("slash_authority is not set"),
-
-            config_authority: self
-                .instruction
-                .config_authority
-                .expect("config_authority is not set"),
-
             mint: self.instruction.mint.expect("mint is not set"),
 
             vault: self.instruction.vault.expect("vault is not set"),
@@ -531,10 +488,10 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
 struct InitializeConfigCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    slash_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    config_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    slash_authority: Option<Pubkey>,
+    config_authority: Option<Pubkey>,
     cooldown_time_seconds: Option<u64>,
     max_deactivation_basis_points: Option<u16>,
     sync_rewards_lamports: Option<u64>,

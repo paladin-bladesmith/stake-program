@@ -78,10 +78,10 @@ async fn initialize_config_with_mint_and_token() {
 
     let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
-        .config_authority(authority)
-        .slash_authority(authority)
         .mint(mint.pubkey())
         .vault(token.pubkey())
+        .slash_authority(authority)
+        .config_authority(authority)
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL

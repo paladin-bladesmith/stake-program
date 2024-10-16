@@ -33,6 +33,8 @@ const VALID_VAULT_TOKEN_EXTENSIONS: &[ExtensionType] = &[
 pub fn process_initialize_config(
     program_id: &Pubkey,
     ctx: Context<InitializeConfigAccounts>,
+    slash_authority: Pubkey,
+    config_authority: Pubkey,
     cooldown_time_seconds: u64,
     max_deactivation_basis_points: u16,
     sync_rewards_lamports: u64,
@@ -69,31 +71,25 @@ pub fn process_initialize_config(
     // - no other extension apart from `ImmutableOwner` and `TransferHookAccount`
     // - have the correct mint
     // - amount equal to 0
-
     let vault_data = ctx.accounts.vault.try_borrow_data()?;
     // unpack checks if the token account is initialized
     let vault = PodStateWithExtensions::<PodAccount>::unpack(&vault_data)?;
-
     let (vault_signer, signer_bump) = find_vault_pda(ctx.accounts.config.key, program_id);
-
     require!(
         vault.base.owner == vault_signer,
         StakeError::InvalidTokenOwner,
         "vault"
     );
-
     require!(
         vault.base.close_authority == PodCOption::none(),
         StakeError::CloseAuthorityNotNone,
         "vault"
     );
-
     require!(
         vault.base.delegate == PodCOption::none(),
         StakeError::DelegateNotNone,
         "vault"
     );
-
     vault
         .get_extension_types()?
         .iter()
@@ -104,7 +100,6 @@ pub fn process_initialize_config(
             }
             Ok(())
         })?;
-
     require!(
         &vault.base.mint == ctx.accounts.mint.key,
         StakeError::InvalidMint,
@@ -118,23 +113,18 @@ pub fn process_initialize_config(
     // - owner must be stake program
     // - have the correct length
     // - be uninitialized
-
     let mut data = ctx.accounts.config.try_borrow_mut_data()?;
-
     require!(
         ctx.accounts.config.owner == program_id,
         ProgramError::InvalidAccountOwner,
         "config"
     );
-
     require!(
         data.len() == Config::LEN,
         StakeError::InvalidAccountDataLength,
         "config"
     );
-
     let config = bytemuck::from_bytes_mut::<Config>(&mut data);
-
     require!(
         config.is_uninitialized(),
         ProgramError::AccountAlreadyInitialized,
@@ -142,7 +132,6 @@ pub fn process_initialize_config(
     );
 
     // Validate the maximum deactivation basis points argument.
-
     require!(
         max_deactivation_basis_points <= MAX_BASIS_POINTS as u16,
         ProgramError::InvalidArgument,
@@ -151,10 +140,9 @@ pub fn process_initialize_config(
     );
 
     // Initialize the stake config account.
-
     *config = Config::new(
-        OptionalNonZeroPubkey(*ctx.accounts.config_authority.key),
-        OptionalNonZeroPubkey(*ctx.accounts.slash_authority.key),
+        OptionalNonZeroPubkey(config_authority),
+        OptionalNonZeroPubkey(slash_authority),
         *ctx.accounts.vault.key,
         cooldown_time_seconds,
         max_deactivation_basis_points,
