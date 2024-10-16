@@ -31,7 +31,7 @@ export type HarvestSolStakerRewardsInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountSolStakeViewProgram extends string | IAccountMeta<string> = string,
   TAccountConfig extends string | IAccountMeta<string> = string,
-  TAccountHolderRewards extends string | IAccountMeta<string> = string,
+  TAccountVaultHolderRewards extends string | IAccountMeta<string> = string,
   TAccountSolStakerStake extends string | IAccountMeta<string> = string,
   TAccountSolStakerStakeAuthority extends
     | string
@@ -56,9 +56,9 @@ export type HarvestSolStakerRewardsInstruction<
       TAccountConfig extends string
         ? WritableAccount<TAccountConfig>
         : TAccountConfig,
-      TAccountHolderRewards extends string
-        ? ReadonlyAccount<TAccountHolderRewards>
-        : TAccountHolderRewards,
+      TAccountVaultHolderRewards extends string
+        ? ReadonlyAccount<TAccountVaultHolderRewards>
+        : TAccountVaultHolderRewards,
       TAccountSolStakerStake extends string
         ? WritableAccount<TAccountSolStakerStake>
         : TAccountSolStakerStake,
@@ -112,7 +112,7 @@ export function getHarvestSolStakerRewardsInstructionDataCodec(): Codec<
 export type HarvestSolStakerRewardsInput<
   TAccountSolStakeViewProgram extends string = string,
   TAccountConfig extends string = string,
-  TAccountHolderRewards extends string = string,
+  TAccountVaultHolderRewards extends string = string,
   TAccountSolStakerStake extends string = string,
   TAccountSolStakerStakeAuthority extends string = string,
   TAccountNativeStake extends string = string,
@@ -126,7 +126,7 @@ export type HarvestSolStakerRewardsInput<
   /** Stake config account */
   config: Address<TAccountConfig>;
   /** Holder rewards account */
-  holderRewards: Address<TAccountHolderRewards>;
+  vaultHolderRewards: Address<TAccountVaultHolderRewards>;
   /** SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`) */
   solStakerStake: Address<TAccountSolStakerStake>;
   /** SOL staker stake authority */
@@ -146,7 +146,7 @@ export type HarvestSolStakerRewardsInput<
 export function getHarvestSolStakerRewardsInstruction<
   TAccountSolStakeViewProgram extends string,
   TAccountConfig extends string,
-  TAccountHolderRewards extends string,
+  TAccountVaultHolderRewards extends string,
   TAccountSolStakerStake extends string,
   TAccountSolStakerStakeAuthority extends string,
   TAccountNativeStake extends string,
@@ -158,7 +158,7 @@ export function getHarvestSolStakerRewardsInstruction<
   input: HarvestSolStakerRewardsInput<
     TAccountSolStakeViewProgram,
     TAccountConfig,
-    TAccountHolderRewards,
+    TAccountVaultHolderRewards,
     TAccountSolStakerStake,
     TAccountSolStakerStakeAuthority,
     TAccountNativeStake,
@@ -171,7 +171,7 @@ export function getHarvestSolStakerRewardsInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountSolStakeViewProgram,
   TAccountConfig,
-  TAccountHolderRewards,
+  TAccountVaultHolderRewards,
   TAccountSolStakerStake,
   TAccountSolStakerStakeAuthority,
   TAccountNativeStake,
@@ -190,7 +190,10 @@ export function getHarvestSolStakerRewardsInstruction<
       isWritable: false,
     },
     config: { value: input.config ?? null, isWritable: true },
-    holderRewards: { value: input.holderRewards ?? null, isWritable: false },
+    vaultHolderRewards: {
+      value: input.vaultHolderRewards ?? null,
+      isWritable: false,
+    },
     solStakerStake: { value: input.solStakerStake ?? null, isWritable: true },
     solStakerStakeAuthority: {
       value: input.solStakerStakeAuthority ?? null,
@@ -224,7 +227,7 @@ export function getHarvestSolStakerRewardsInstruction<
     accounts: [
       getAccountMeta(accounts.solStakeViewProgram),
       getAccountMeta(accounts.config),
-      getAccountMeta(accounts.holderRewards),
+      getAccountMeta(accounts.vaultHolderRewards),
       getAccountMeta(accounts.solStakerStake),
       getAccountMeta(accounts.solStakerStakeAuthority),
       getAccountMeta(accounts.nativeStake),
@@ -239,7 +242,7 @@ export function getHarvestSolStakerRewardsInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountSolStakeViewProgram,
     TAccountConfig,
-    TAccountHolderRewards,
+    TAccountVaultHolderRewards,
     TAccountSolStakerStake,
     TAccountSolStakerStakeAuthority,
     TAccountNativeStake,
@@ -263,7 +266,7 @@ export type ParsedHarvestSolStakerRewardsInstruction<
     /** Stake config account */
     config: TAccountMetas[1];
     /** Holder rewards account */
-    holderRewards: TAccountMetas[2];
+    vaultHolderRewards: TAccountMetas[2];
     /** SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`) */
     solStakerStake: TAccountMetas[3];
     /** SOL staker stake authority */
@@ -311,7 +314,7 @@ export function parseHarvestSolStakerRewardsInstruction<
     accounts: {
       solStakeViewProgram: getNextAccount(),
       config: getNextAccount(),
-      holderRewards: getNextAccount(),
+      vaultHolderRewards: getNextAccount(),
       solStakerStake: getNextAccount(),
       solStakerStakeAuthority: getNextAccount(),
       nativeStake: getNextAccount(),

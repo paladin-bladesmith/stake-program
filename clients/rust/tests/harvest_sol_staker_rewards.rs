@@ -3187,6 +3187,3 @@ async fn fail_harvest_sync_rewards_with_wrong_vault_holder_rewards() {
     // Then we expect an error.
     assert_instruction_error!(err, InstructionError::InvalidSeeds);
 }
-
-// TODO: Test case where we pass the wrong holders_reward.
-// TODO: Test case where we pass the wrong stake_view (this might already exist, check that).

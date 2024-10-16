@@ -478,15 +478,6 @@
           "docs": [
             "Stake history sysvar"
           ]
-        },
-        {
-          "name": "keeperRecipient",
-          "isMut": true,
-          "isSigner": false,
-          "isOptional": true,
-          "docs": [
-            "Recipient for sol sync bounty"
-          ]
         }
       ],
       "args": [],
@@ -868,7 +859,7 @@
           ]
         },
         {
-          "name": "holderRewards",
+          "name": "vaultHolderRewards",
           "isMut": false,
           "isSigner": false,
           "docs": [

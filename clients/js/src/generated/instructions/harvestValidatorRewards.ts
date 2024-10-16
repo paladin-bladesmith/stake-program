@@ -38,7 +38,6 @@ export type HarvestValidatorRewardsInstruction<
   TAccountSysvarStakeHistory extends
     | string
     | IAccountMeta<string> = 'SysvarStakeHistory1111111111111111111111111',
-  TAccountKeeperRecipient extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -59,9 +58,6 @@ export type HarvestValidatorRewardsInstruction<
       TAccountSysvarStakeHistory extends string
         ? ReadonlyAccount<TAccountSysvarStakeHistory>
         : TAccountSysvarStakeHistory,
-      TAccountKeeperRecipient extends string
-        ? WritableAccount<TAccountKeeperRecipient>
-        : TAccountKeeperRecipient,
       ...TRemainingAccounts,
     ]
   >;
@@ -97,7 +93,6 @@ export type HarvestValidatorRewardsInput<
   TAccountValidatorStake extends string = string,
   TAccountValidatorStakeAuthority extends string = string,
   TAccountSysvarStakeHistory extends string = string,
-  TAccountKeeperRecipient extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
@@ -109,8 +104,6 @@ export type HarvestValidatorRewardsInput<
   validatorStakeAuthority: Address<TAccountValidatorStakeAuthority>;
   /** Stake history sysvar */
   sysvarStakeHistory?: Address<TAccountSysvarStakeHistory>;
-  /** Recipient for sol sync bounty */
-  keeperRecipient?: Address<TAccountKeeperRecipient>;
 };
 
 export function getHarvestValidatorRewardsInstruction<
@@ -119,15 +112,13 @@ export function getHarvestValidatorRewardsInstruction<
   TAccountValidatorStake extends string,
   TAccountValidatorStakeAuthority extends string,
   TAccountSysvarStakeHistory extends string,
-  TAccountKeeperRecipient extends string,
 >(
   input: HarvestValidatorRewardsInput<
     TAccountConfig,
     TAccountVaultHolderRewards,
     TAccountValidatorStake,
     TAccountValidatorStakeAuthority,
-    TAccountSysvarStakeHistory,
-    TAccountKeeperRecipient
+    TAccountSysvarStakeHistory
   >
 ): HarvestValidatorRewardsInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
@@ -135,8 +126,7 @@ export function getHarvestValidatorRewardsInstruction<
   TAccountVaultHolderRewards,
   TAccountValidatorStake,
   TAccountValidatorStakeAuthority,
-  TAccountSysvarStakeHistory,
-  TAccountKeeperRecipient
+  TAccountSysvarStakeHistory
 > {
   // Program address.
   const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
@@ -157,7 +147,6 @@ export function getHarvestValidatorRewardsInstruction<
       value: input.sysvarStakeHistory ?? null,
       isWritable: false,
     },
-    keeperRecipient: { value: input.keeperRecipient ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -178,7 +167,6 @@ export function getHarvestValidatorRewardsInstruction<
       getAccountMeta(accounts.validatorStake),
       getAccountMeta(accounts.validatorStakeAuthority),
       getAccountMeta(accounts.sysvarStakeHistory),
-      getAccountMeta(accounts.keeperRecipient),
     ],
     programAddress,
     data: getHarvestValidatorRewardsInstructionDataEncoder().encode({}),
@@ -188,8 +176,7 @@ export function getHarvestValidatorRewardsInstruction<
     TAccountVaultHolderRewards,
     TAccountValidatorStake,
     TAccountValidatorStakeAuthority,
-    TAccountSysvarStakeHistory,
-    TAccountKeeperRecipient
+    TAccountSysvarStakeHistory
   >;
 
   return instruction;
@@ -211,8 +198,6 @@ export type ParsedHarvestValidatorRewardsInstruction<
     validatorStakeAuthority: TAccountMetas[3];
     /** Stake history sysvar */
     sysvarStakeHistory: TAccountMetas[4];
-    /** Recipient for sol sync bounty */
-    keeperRecipient?: TAccountMetas[5] | undefined;
   };
   data: HarvestValidatorRewardsInstructionData;
 };
@@ -225,7 +210,7 @@ export function parseHarvestValidatorRewardsInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedHarvestValidatorRewardsInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 6) {
+  if (instruction.accounts.length < 5) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -235,12 +220,6 @@ export function parseHarvestValidatorRewardsInstruction<
     accountIndex += 1;
     return accountMeta;
   };
-  const getNextOptionalAccount = () => {
-    const accountMeta = getNextAccount();
-    return accountMeta.address === PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS
-      ? undefined
-      : accountMeta;
-  };
   return {
     programAddress: instruction.programAddress,
     accounts: {
@@ -249,7 +228,6 @@ export function parseHarvestValidatorRewardsInstruction<
       validatorStake: getNextAccount(),
       validatorStakeAuthority: getNextAccount(),
       sysvarStakeHistory: getNextAccount(),
-      keeperRecipient: getNextOptionalAccount(),
     },
     data: getHarvestValidatorRewardsInstructionDataDecoder().decode(
       instruction.data

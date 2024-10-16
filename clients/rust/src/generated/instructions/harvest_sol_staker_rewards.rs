@@ -15,7 +15,7 @@ pub struct HarvestSolStakerRewards {
     /// Stake config account
     pub config: solana_program::pubkey::Pubkey,
     /// Holder rewards account
-    pub holder_rewards: solana_program::pubkey::Pubkey,
+    pub vault_holder_rewards: solana_program::pubkey::Pubkey,
     /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
     pub sol_staker_stake: solana_program::pubkey::Pubkey,
     /// SOL staker stake authority
@@ -51,7 +51,7 @@ impl HarvestSolStakerRewards {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.holder_rewards,
+            self.vault_holder_rewards,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -125,7 +125,7 @@ impl Default for HarvestSolStakerRewardsInstructionData {
 ///
 ///   0. `[]` sol_stake_view_program
 ///   1. `[writable]` config
-///   2. `[]` holder_rewards
+///   2. `[]` vault_holder_rewards
 ///   3. `[writable]` sol_staker_stake
 ///   4. `[writable]` sol_staker_stake_authority
 ///   5. `[]` native_stake
@@ -137,7 +137,7 @@ impl Default for HarvestSolStakerRewardsInstructionData {
 pub struct HarvestSolStakerRewardsBuilder {
     sol_stake_view_program: Option<solana_program::pubkey::Pubkey>,
     config: Option<solana_program::pubkey::Pubkey>,
-    holder_rewards: Option<solana_program::pubkey::Pubkey>,
+    vault_holder_rewards: Option<solana_program::pubkey::Pubkey>,
     sol_staker_stake: Option<solana_program::pubkey::Pubkey>,
     sol_staker_stake_authority: Option<solana_program::pubkey::Pubkey>,
     native_stake: Option<solana_program::pubkey::Pubkey>,
@@ -169,8 +169,11 @@ impl HarvestSolStakerRewardsBuilder {
     }
     /// Holder rewards account
     #[inline(always)]
-    pub fn holder_rewards(&mut self, holder_rewards: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.holder_rewards = Some(holder_rewards);
+    pub fn vault_holder_rewards(
+        &mut self,
+        vault_holder_rewards: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.vault_holder_rewards = Some(vault_holder_rewards);
         self
     }
     /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
@@ -260,7 +263,9 @@ impl HarvestSolStakerRewardsBuilder {
                 .sol_stake_view_program
                 .expect("sol_stake_view_program is not set"),
             config: self.config.expect("config is not set"),
-            holder_rewards: self.holder_rewards.expect("holder_rewards is not set"),
+            vault_holder_rewards: self
+                .vault_holder_rewards
+                .expect("vault_holder_rewards is not set"),
             sol_staker_stake: self.sol_staker_stake.expect("sol_staker_stake is not set"),
             sol_staker_stake_authority: self
                 .sol_staker_stake_authority
@@ -287,7 +292,7 @@ pub struct HarvestSolStakerRewardsCpiAccounts<'a, 'b> {
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
     /// Holder rewards account
-    pub holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
+    pub vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
     /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
     pub sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// SOL staker stake authority
@@ -313,7 +318,7 @@ pub struct HarvestSolStakerRewardsCpi<'a, 'b> {
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
     /// Holder rewards account
-    pub holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
+    pub vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
     /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
     pub sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// SOL staker stake authority
@@ -339,7 +344,7 @@ impl<'a, 'b> HarvestSolStakerRewardsCpi<'a, 'b> {
             __program: program,
             sol_stake_view_program: accounts.sol_stake_view_program,
             config: accounts.config,
-            holder_rewards: accounts.holder_rewards,
+            vault_holder_rewards: accounts.vault_holder_rewards,
             sol_staker_stake: accounts.sol_staker_stake,
             sol_staker_stake_authority: accounts.sol_staker_stake_authority,
             native_stake: accounts.native_stake,
@@ -392,7 +397,7 @@ impl<'a, 'b> HarvestSolStakerRewardsCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.holder_rewards.key,
+            *self.vault_holder_rewards.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -450,7 +455,7 @@ impl<'a, 'b> HarvestSolStakerRewardsCpi<'a, 'b> {
         account_infos.push(self.__program.clone());
         account_infos.push(self.sol_stake_view_program.clone());
         account_infos.push(self.config.clone());
-        account_infos.push(self.holder_rewards.clone());
+        account_infos.push(self.vault_holder_rewards.clone());
         account_infos.push(self.sol_staker_stake.clone());
         account_infos.push(self.sol_staker_stake_authority.clone());
         account_infos.push(self.native_stake.clone());
@@ -478,7 +483,7 @@ impl<'a, 'b> HarvestSolStakerRewardsCpi<'a, 'b> {
 ///
 ///   0. `[]` sol_stake_view_program
 ///   1. `[writable]` config
-///   2. `[]` holder_rewards
+///   2. `[]` vault_holder_rewards
 ///   3. `[writable]` sol_staker_stake
 ///   4. `[writable]` sol_staker_stake_authority
 ///   5. `[]` native_stake
@@ -497,7 +502,7 @@ impl<'a, 'b> HarvestSolStakerRewardsCpiBuilder<'a, 'b> {
             __program: program,
             sol_stake_view_program: None,
             config: None,
-            holder_rewards: None,
+            vault_holder_rewards: None,
             sol_staker_stake: None,
             sol_staker_stake_authority: None,
             native_stake: None,
@@ -529,11 +534,11 @@ impl<'a, 'b> HarvestSolStakerRewardsCpiBuilder<'a, 'b> {
     }
     /// Holder rewards account
     #[inline(always)]
-    pub fn holder_rewards(
+    pub fn vault_holder_rewards(
         &mut self,
-        holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
+        vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.holder_rewards = Some(holder_rewards);
+        self.instruction.vault_holder_rewards = Some(vault_holder_rewards);
         self
     }
     /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
@@ -651,10 +656,10 @@ impl<'a, 'b> HarvestSolStakerRewardsCpiBuilder<'a, 'b> {
 
             config: self.instruction.config.expect("config is not set"),
 
-            holder_rewards: self
+            vault_holder_rewards: self
                 .instruction
-                .holder_rewards
-                .expect("holder_rewards is not set"),
+                .vault_holder_rewards
+                .expect("vault_holder_rewards is not set"),
 
             sol_staker_stake: self
                 .instruction
@@ -700,7 +705,7 @@ struct HarvestSolStakerRewardsCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     sol_stake_view_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    holder_rewards: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    vault_holder_rewards: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     sol_staker_stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     sol_staker_stake_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     native_stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,

@@ -336,13 +336,6 @@ pub enum StakeInstruction {
         name = "sysvar_stake_history",
         desc = "Stake history sysvar"
     )]
-    #[account(
-        5,
-        optional,
-        writable,
-        name = "keeper_recipient",
-        desc = "Recipient for sol sync bounty"
-    )]
     HarvestValidatorRewards,
 
     /// Slashes a validator stake account for the given amount.
