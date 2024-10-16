@@ -107,13 +107,6 @@ pub fn process_harvest_holder_rewards(
     // Harvest latest holder rewards.
     drop(vault_data);
     drop(config_data);
-    {
-        solana_program::msg!(
-            "holder_rewards_pool: {}",
-            ctx.accounts.holder_rewards_pool.lamports()
-        );
-        solana_program::msg!("token_account: {}", ctx.accounts.vault.lamports());
-    }
     invoke(
         &paladin_rewards_program_client::instructions::HarvestRewards {
             holder_rewards_pool: *ctx.accounts.holder_rewards_pool.key,
@@ -129,23 +122,8 @@ pub fn process_harvest_holder_rewards(
             ctx.accounts.mint.clone(),
         ],
     )?;
-    {
-        solana_program::msg!(
-            "holder_rewards_pool: {}",
-            ctx.accounts.holder_rewards_pool.lamports()
-        );
-        solana_program::msg!("token_account: {}", ctx.accounts.vault.lamports());
-    }
 
     // Withdraw the excess lamports from the vault to config.
-    {
-        solana_program::msg!(
-            "holder_rewards_pool: {}",
-            ctx.accounts.holder_rewards_pool.lamports()
-        );
-        solana_program::msg!("token_account: {}", ctx.accounts.vault.lamports());
-        solana_program::msg!("config: {}", ctx.accounts.config.lamports());
-    }
     invoke_signed(
         &withdraw_excess_lamports(
             &spl_token_2022::ID,
@@ -162,16 +140,6 @@ pub fn process_harvest_holder_rewards(
         ],
         &[vault_seeds.as_slice()],
     )?;
-    {
-        solana_program::msg!(
-            "holder_rewards_pool: {}",
-            ctx.accounts.holder_rewards_pool.lamports()
-        );
-        solana_program::msg!("token_account: {}", ctx.accounts.vault.lamports());
-        solana_program::msg!("config: {}", ctx.accounts.config.lamports());
-    }
 
     Ok(())
 }
-
-// TODO: Test that harvest rewards factor both active & inactive stake.

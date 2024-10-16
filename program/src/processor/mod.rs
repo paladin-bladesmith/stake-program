@@ -317,7 +317,7 @@ pub(crate) fn harvest(
     )?;
 
     // Compute the holder reward.
-    let holder_rewards = HolderRewards::try_from(accounts.holder_rewards).unwrap();
+    let holder_rewards = HolderRewards::try_from(accounts.holder_rewards)?;
     let holder_reward = calculate_eligible_rewards(
         holder_rewards.last_accumulated_rewards_per_token,
         delegation.last_seen_holder_rewards_per_token.into(),
@@ -336,8 +336,7 @@ pub(crate) fn harvest(
         .config
         .lamports()
         .checked_sub(total_reward)
-        .ok_or(ProgramError::ArithmeticOverflow)
-        .unwrap();
+        .ok_or(ProgramError::ArithmeticOverflow)?;
     assert!(config_lamports >= rent_exempt_minimum);
 
     // Pay the keeper first, if one is set.
@@ -347,8 +346,7 @@ pub(crate) fn harvest(
             let keeper_lamports = keeper
                 .try_borrow_lamports()?
                 .checked_add(keeper_reward)
-                .ok_or(ProgramError::ArithmeticOverflow)
-                .unwrap();
+                .ok_or(ProgramError::ArithmeticOverflow)?;
             **keeper.try_borrow_mut_lamports()? = keeper_lamports;
 
             keeper_reward
@@ -359,14 +357,12 @@ pub(crate) fn harvest(
     // Pay the delegator.
     let delegator_reward = total_reward
         .checked_sub(keeper_reward)
-        .ok_or(ProgramError::ArithmeticOverflow)
-        .unwrap();
+        .ok_or(ProgramError::ArithmeticOverflow)?;
     let recipient_lamports = accounts
         .recipient
         .lamports()
         .checked_add(delegator_reward)
-        .ok_or(ProgramError::ArithmeticOverflow)
-        .unwrap();
+        .ok_or(ProgramError::ArithmeticOverflow)?;
 
     // Update the lamport amounts.
     drop(config_data);
@@ -420,13 +416,6 @@ fn process_slash_for_delegation(args: SlashArgs) -> ProgramResult {
         StakeError::InvalidAmount,
         "amount must be greater than 0"
     );
-
-    // TODO:
-    //
-    // - Cap slash at `delegation.amount`.
-    // - Perform the slash.
-    // - Adjust deactivating amount as necessary.
-    // - Update all stake values & global effective stake.
 
     // Compute actual slash & new stake numbers.
     let actual_slash = std::cmp::min(amount, delegation.active_amount);

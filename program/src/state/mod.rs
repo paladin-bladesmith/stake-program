@@ -186,7 +186,6 @@ pub struct Delegation {
     /// that determines stake rewards.
     pub inactive_amount: u64,
 
-    // TODO: Can this be a getter that computes the effective stake?
     /// Amount of staked tokens (but capped at 1.3 PAL per SOL).
     pub effective_amount: u64,
 
