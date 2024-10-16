@@ -12,25 +12,24 @@ use crate::{
     error::StakeError,
     instruction::{
         accounts::{
-            DeactivateStakeAccounts, DistributeRewardsAccounts, HarvestHolderRewardsAccounts,
-            HarvestSolStakerRewardsAccounts, HarvestValidatorRewardsAccounts,
-            InactivateSolStakerStakeAccounts, InactivateValidatorStakeAccounts,
-            InitializeConfigAccounts, InitializeSolStakerStakeAccounts,
-            InitializeValidatorStakeAccounts, SetAuthorityAccounts, SlashSolStakerStakeAccounts,
-            SlashValidatorStakeAccounts, SolStakerStakeTokensAccounts, UpdateConfigAccounts,
-            ValidatorStakeTokensAccounts, WithdrawInactiveStakeAccounts,
+            DeactivateStakeAccounts, HarvestHolderRewardsAccounts, HarvestSolStakerRewardsAccounts,
+            HarvestValidatorRewardsAccounts, InactivateSolStakerStakeAccounts,
+            InactivateValidatorStakeAccounts, InitializeConfigAccounts,
+            InitializeSolStakerStakeAccounts, InitializeValidatorStakeAccounts,
+            SetAuthorityAccounts, SlashSolStakerStakeAccounts, SlashValidatorStakeAccounts,
+            SolStakerStakeTokensAccounts, UpdateConfigAccounts, ValidatorStakeTokensAccounts,
+            WithdrawInactiveStakeAccounts,
         },
         StakeInstruction,
     },
     state::{
         calculate_eligible_rewards, calculate_maximum_stake_for_lamports_amount,
-        find_sol_staker_stake_pda, find_validator_stake_pda, Config, Delegation, SolStakerStake,
-        ValidatorStake,
+        calculate_stake_rewards_per_token, find_sol_staker_stake_pda, find_validator_stake_pda,
+        Config, Delegation, SolStakerStake, ValidatorStake,
     },
 };
 
 mod deactivate_stake;
-mod distribute_rewards;
 mod harvest_holder_rewards;
 mod harvest_sol_staker_rewards;
 mod harvest_validator_rewards;
@@ -61,14 +60,6 @@ pub fn process_instruction<'a>(
             deactivate_stake::process_deactivate_stake(
                 program_id,
                 DeactivateStakeAccounts::context(accounts)?,
-                amount,
-            )
-        }
-        StakeInstruction::DistributeRewards(amount) => {
-            msg!("Instruction: DistributeRewards");
-            distribute_rewards::process_distribute_rewards(
-                program_id,
-                DistributeRewardsAccounts::context(accounts)?,
                 amount,
             )
         }
@@ -306,14 +297,36 @@ pub(crate) struct HarvestAccounts<'a, 'info> {
     pub(crate) recipient: &'a AccountInfo<'info>,
 }
 
+pub(crate) fn sync_config_lamports(
+    config: &AccountInfo,
+    config_state: &mut Config,
+) -> ProgramResult {
+    let lamport_delta = config
+        .lamports()
+        .checked_sub(config_state.lamports_last)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
+    let rewards_per_token =
+        calculate_stake_rewards_per_token(lamport_delta, config_state.token_amount_effective)?;
+    config_state.accumulated_stake_rewards_per_token =
+        u128::from(config_state.accumulated_stake_rewards_per_token)
+            .wrapping_add(rewards_per_token)
+            .into();
+    config_state.lamports_last = config.lamports();
+
+    Ok(())
+}
+
 pub(crate) fn harvest(
     accounts: HarvestAccounts,
     delegation: &mut Delegation,
     keeper: Option<&AccountInfo>,
 ) -> ProgramResult {
+    // Sync the config accounts lamports.
+    let mut config_data = accounts.config.data.borrow_mut();
+    let config = unpack_initialized_mut::<Config>(&mut config_data)?;
+    sync_config_lamports(accounts.config, config)?;
+
     // Compute the staking rewards.
-    let config_data = accounts.config.data.borrow();
-    let config = unpack_initialized::<Config>(&config_data)?;
     let staking_reward = calculate_eligible_rewards(
         config.accumulated_stake_rewards_per_token.into(),
         delegation.last_seen_stake_rewards_per_token.into(),
@@ -335,7 +348,7 @@ pub(crate) fn harvest(
         holder_rewards.last_accumulated_rewards_per_token.into();
 
     // Withdraw the lamports from the config account.
-    let rent_exempt_minimum = Rent::get()?.minimum_balance(accounts.config.data_len());
+    let rent_exempt_minimum = Rent::get()?.minimum_balance(Config::LEN);
     let config_lamports = accounts
         .config
         .lamports()
@@ -369,6 +382,7 @@ pub(crate) fn harvest(
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
     // Update the lamport amounts.
+    config.lamports_last = config_lamports;
     drop(config_data);
     **accounts.config.try_borrow_mut_lamports()? = config_lamports;
     **accounts.recipient.try_borrow_mut_lamports()? = recipient_lamports;

@@ -37,6 +37,9 @@ pub struct Config {
     /// Lamports amount paid to for syncing a SOL stake account.
     pub sync_rewards_lamports: u64,
 
+    /// Last seen lamports balance, used to track rewards that were sent between syncs.
+    pub lamports_last: u64,
+
     /// The current stake rewards per token exchange rate.
     ///
     /// Stored as a `u128`, which includes a scaling factor of `1e18` to
@@ -65,6 +68,7 @@ impl Config {
         max_deactivation_basis_points: u16,
         sync_rewards_lamports: u64,
         vault_authority_bump: u8,
+        lamports_last: u64,
     ) -> Self {
         Self {
             discriminator: Config::SPL_DISCRIMINATOR.into(),
@@ -73,6 +77,7 @@ impl Config {
             vault,
             cooldown_time_seconds,
             token_amount_effective: 0,
+            lamports_last,
             accumulated_stake_rewards_per_token: PodU128::default(),
             max_deactivation_basis_points,
             sync_rewards_lamports,

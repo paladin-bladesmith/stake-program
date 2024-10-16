@@ -208,7 +208,7 @@ kinobi.update(
 kinobi.update(
   k.updateAccountsVisitor({
     config: {
-      size: 152,
+      size: 160,
     },
     validatorStake: {
       size: 152,

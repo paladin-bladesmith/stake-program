@@ -7,7 +7,6 @@
  */
 
 export * from './deactivateStake';
-export * from './distributeRewards';
 export * from './harvestHolderRewards';
 export * from './harvestSolStakerRewards';
 export * from './harvestValidatorRewards';

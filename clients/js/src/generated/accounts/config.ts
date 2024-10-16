@@ -53,6 +53,7 @@ export type Config = {
   cooldownTimeSeconds: bigint;
   tokenAmountEffective: bigint;
   syncRewardsLamports: bigint;
+  lamportsLast: bigint;
   accumulatedStakeRewardsPerToken: bigint;
   maxDeactivationBasisPoints: number;
   vaultAuthorityBump: number;
@@ -67,6 +68,7 @@ export type ConfigArgs = {
   cooldownTimeSeconds: number | bigint;
   tokenAmountEffective: number | bigint;
   syncRewardsLamports: number | bigint;
+  lamportsLast: number | bigint;
   accumulatedStakeRewardsPerToken: number | bigint;
   maxDeactivationBasisPoints: number;
   vaultAuthorityBump: number;
@@ -82,6 +84,7 @@ export function getConfigEncoder(): Encoder<ConfigArgs> {
     ['cooldownTimeSeconds', getU64Encoder()],
     ['tokenAmountEffective', getU64Encoder()],
     ['syncRewardsLamports', getU64Encoder()],
+    ['lamportsLast', getU64Encoder()],
     ['accumulatedStakeRewardsPerToken', getU128Encoder()],
     ['maxDeactivationBasisPoints', getU16Encoder()],
     ['vaultAuthorityBump', getU8Encoder()],
@@ -98,6 +101,7 @@ export function getConfigDecoder(): Decoder<Config> {
     ['cooldownTimeSeconds', getU64Decoder()],
     ['tokenAmountEffective', getU64Decoder()],
     ['syncRewardsLamports', getU64Decoder()],
+    ['lamportsLast', getU64Decoder()],
     ['accumulatedStakeRewardsPerToken', getU128Decoder()],
     ['maxDeactivationBasisPoints', getU16Decoder()],
     ['vaultAuthorityBump', getU8Decoder()],
@@ -163,5 +167,5 @@ export async function fetchAllMaybeConfig(
 }
 
 export function getConfigSize(): number {
-  return 152;
+  return 160;
 }
