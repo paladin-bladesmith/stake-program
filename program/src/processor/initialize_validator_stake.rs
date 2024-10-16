@@ -76,52 +76,44 @@ pub fn process_initialize_validator_stake(
     //
     // NOTE: The stake account is created and assigned to the stake program, so it needs
     // to be pre-funded with the minimum rent balance by the caller.
-
     let (derivation, bump) = find_validator_stake_pda(
         ctx.accounts.validator_vote.key,
         ctx.accounts.config.key,
         program_id,
     );
-
     require!(
-        ctx.accounts.stake.key == &derivation,
+        ctx.accounts.validator_stake.key == &derivation,
         ProgramError::InvalidSeeds,
         "stake"
     );
-
     require!(
-        ctx.accounts.stake.data_is_empty(),
+        ctx.accounts.validator_stake.data_is_empty(),
         ProgramError::AccountAlreadyInitialized,
         "stake"
     );
 
     // Allocate and assign.
-
     let bump_seed = [bump];
     let signer_seeds = get_validator_stake_pda_signer_seeds(
         ctx.accounts.validator_vote.key,
         ctx.accounts.config.key,
         &bump_seed,
     );
-
     invoke_signed(
-        &system_instruction::allocate(ctx.accounts.stake.key, ValidatorStake::LEN as u64),
-        &[ctx.accounts.stake.clone()],
+        &system_instruction::allocate(ctx.accounts.validator_stake.key, ValidatorStake::LEN as u64),
+        &[ctx.accounts.validator_stake.clone()],
         &[&signer_seeds],
     )?;
-
     invoke_signed(
-        &system_instruction::assign(ctx.accounts.stake.key, program_id),
-        &[ctx.accounts.stake.clone()],
+        &system_instruction::assign(ctx.accounts.validator_stake.key, program_id),
+        &[ctx.accounts.validator_stake.clone()],
         &[&signer_seeds],
     )?;
 
     // Initialize the stake account.
-
-    let mut data = ctx.accounts.stake.try_borrow_mut_data()?;
-    let stake = bytemuck::from_bytes_mut::<ValidatorStake>(&mut data);
-
-    *stake = ValidatorStake::new(withdraw_authority, *ctx.accounts.validator_vote.key);
+    let mut data = ctx.accounts.validator_stake.try_borrow_mut_data()?;
+    let validator_stake = bytemuck::from_bytes_mut::<ValidatorStake>(&mut data);
+    *validator_stake = ValidatorStake::new(withdraw_authority, *ctx.accounts.validator_vote.key);
 
     Ok(())
 }
