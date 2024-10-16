@@ -99,8 +99,8 @@ pub fn process_inactivate_validator_stake(
     msg!("Inactivating {} token(s)", delegation.deactivating_amount);
 
     // Compute the new stake values.
-    let validator_total = delegation
-        .amount
+    let validator_active = delegation
+        .active_amount
         .checked_sub(delegation.deactivating_amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
     let validator_inactive = delegation
@@ -109,14 +109,14 @@ pub fn process_inactivate_validator_stake(
         .ok_or(ProgramError::ArithmeticOverflow)?;
     let validator_limit =
         calculate_maximum_stake_for_lamports_amount(stake.total_staked_lamports_amount)?;
-    let validator_effective = std::cmp::min(validator_total, validator_limit);
+    let validator_effective = std::cmp::min(validator_active, validator_limit);
     let effective_delta = delegation
         .effective_amount
         .checked_sub(validator_effective)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
     // Update the state values.
-    delegation.amount = validator_total;
+    delegation.active_amount = validator_active;
     delegation.effective_amount = validator_effective;
     delegation.deactivating_amount = 0;
     delegation.deactivation_timestamp = None;

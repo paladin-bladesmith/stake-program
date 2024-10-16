@@ -173,3 +173,5 @@ pub fn process_harvest_holder_rewards(
 
     Ok(())
 }
+
+// TODO: Test that harvest rewards factor both active & inactive stake.

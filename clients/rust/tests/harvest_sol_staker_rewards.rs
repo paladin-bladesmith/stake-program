@@ -72,7 +72,7 @@ async fn harvest_sol_staker_rewards() {
     // "manually" set the staked values:
     //   - delegation amount = 65
     //   - lamports amount = 50
-    stake_account.delegation.amount = 65 * SWAD;
+    stake_account.delegation.active_amount = 65 * SWAD;
     stake_account.delegation.effective_amount = 65 * SWAD;
     stake_account.lamports_amount = 50 * SWAD;
     account.data = stake_account.try_to_vec().unwrap();
@@ -200,7 +200,7 @@ async fn harvest_sol_staker_rewards_wrapped() {
     // "manually" set the staked values:
     //   - delegation amount = 65
     //   - lamports amount = 50
-    stake_account.delegation.amount = 65 * SWAD;
+    stake_account.delegation.active_amount = 65 * SWAD;
     stake_account.delegation.effective_amount = 65 * SWAD;
     stake_account.lamports_amount = 50 * SWAD;
     account.data = stake_account.try_to_vec().unwrap();
@@ -323,7 +323,7 @@ async fn harvest_sol_staker_rewards_with_no_rewards_available() {
     // "manually" set the staked values:
     //   - delegation amount = 65
     //   - lamports amount = 50
-    stake_account.delegation.amount = 65 * SWAD;
+    stake_account.delegation.active_amount = 65 * SWAD;
     stake_account.delegation.effective_amount = 65 * SWAD;
     stake_account.lamports_amount = 50 * SWAD;
     account.data = stake_account.try_to_vec().unwrap();
@@ -433,7 +433,7 @@ async fn harvest_sol_staker_rewards_after_harvesting() {
     //   - delegation amount = 65
     //   - lamports amount = 50
     //   - last seen stake rewards per token = config.accumulated_stake_rewards_per_token
-    stake_account.delegation.amount = 65 * SWAD;
+    stake_account.delegation.active_amount = 65 * SWAD;
     stake_account.delegation.effective_amount = 65 * SWAD;
     stake_account.lamports_amount = 50 * SWAD;
     stake_account.delegation.last_seen_stake_rewards_per_token =
@@ -547,7 +547,7 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_authority() {
     // "manually" set the staked values:
     //   - delegation amount = 65
     //   - lamports amount = 50
-    stake_account.delegation.amount = 65 * SWAD;
+    stake_account.delegation.active_amount = 65 * SWAD;
     stake_account.delegation.effective_amount = 65 * SWAD;
     stake_account.lamports_amount = 50 * SWAD;
     account.data = stake_account.try_to_vec().unwrap();
@@ -647,7 +647,7 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_config_account() {
     // "manually" set the staked values:
     //   - delegation amount = 65
     //   - lamports amount = 50
-    stake_account.delegation.amount = 65 * SWAD;
+    stake_account.delegation.active_amount = 65 * SWAD;
     stake_account.delegation.effective_amount = 65 * SWAD;
     stake_account.lamports_amount = 50 * SWAD;
     account.data = stake_account.try_to_vec().unwrap();
@@ -1949,7 +1949,7 @@ async fn harvest_sync_rewards() {
     // "manually" set the staked values:
     //   - delegation amount = 1_300_000_000
     //   - lamports amount = 1_000_000_000
-    stake_account.delegation.amount = 1_300_000_000;
+    stake_account.delegation.active_amount = 1_300_000_000;
     stake_account.delegation.effective_amount = 1_300_000_000;
     stake_account.lamports_amount = 1_000_000_000;
     account.data = stake_account.try_to_vec().unwrap();
@@ -2415,7 +2415,7 @@ async fn harvest_sync_rewards_with_closed_sol_stake_account() {
     // "manually" set the staked values:
     //   - delegation amount = 1_300_000_000
     //   - lamports amount = 1_000_000_000
-    stake_account.delegation.amount = 1_300_000_000;
+    stake_account.delegation.active_amount = 1_300_000_000;
     stake_account.delegation.effective_amount = 1_300_000_000;
     stake_account.lamports_amount = 1_000_000_000;
     account.data = stake_account.try_to_vec().unwrap();
@@ -2581,7 +2581,7 @@ async fn harvest_sync_rewards_with_capped_sync_rewards() {
     // "manually" set the staked values:
     //   - delegation amount = 1_300_000_000
     //   - lamports amount = 1_000_000_000
-    stake_account.delegation.amount = 1_300_000_000;
+    stake_account.delegation.active_amount = 1_300_000_000;
     stake_account.delegation.effective_amount = 1_300_000_000;
     // set the last seen stake rewards per token to 200_000_000
     stake_account.delegation.last_seen_stake_rewards_per_token = 200_000_000;

@@ -64,8 +64,137 @@ async fn validator_stake_harvest_holder_rewards() {
     // Set stake to 50.
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.effective_amount = 50;
+    account.data = stake_account.try_to_vec().unwrap();
+    context.set_account(&stake_manager.stake, &account.into());
+
+    // And we initialize the holder rewards accounts.
+    let holder_rewards_pool = create_holder_rewards_pool(
+        &mut context,
+        &config_manager.mint,
+        &config_manager.mint_authority,
+    )
+    .await;
+    let holder_rewards = create_holder_rewards(
+        &mut context,
+        &holder_rewards_pool,
+        &config_manager.mint,
+        &config_manager.vault,
+    )
+    .await;
+
+    // Setup pool state to enable claiming lamports.
+    let mut account = get_account!(context, holder_rewards_pool);
+    let mut holder_rewards_pool_state =
+        HolderRewardsPool::from_bytes(account.data.as_ref()).unwrap();
+    holder_rewards_pool_state.accumulated_rewards_per_token =
+        40_000_000 * 1_000_000_000_000_000_000;
+    let rewards_lamports = 4_000_000_000;
+    account.lamports = account.lamports + rewards_lamports;
+    account.data = holder_rewards_pool_state.try_to_vec().unwrap();
+    context.set_account(&holder_rewards_pool, &account.into());
+
+    // When we harvest the holder rewards.
+    //
+    // We are expecting the rewards to be 2 SOL.
+    //
+    // Calculation:
+    //   - total staked: 100
+    //   - holder rewards: 4 SOL
+    //   - rewards per token: 4_000_000_000_000_000_000 / 100 = 40_000_000_000_000_000 (0.04 SOL)
+    //   - rewards for 50 staked: 40_000_000_000_000_000 * 50 = 2_000_000_000_000_000_000 (2 SOL)
+
+    let harvest_holder = HarvestHolderRewardsBuilder::new()
+        .config(config_manager.config)
+        .holder_rewards_pool(holder_rewards_pool)
+        .holder_rewards(holder_rewards)
+        .vault(config_manager.vault)
+        .vault_authority(find_vault_pda(&config_manager.config).0)
+        .mint(config_manager.mint)
+        .token_program(spl_token_2022::ID)
+        .paladin_rewards_program(paladin_rewards_program_client::ID)
+        .instruction();
+    let harvest_validator = HarvestValidatorRewardsBuilder::new()
+        .config(config_manager.config)
+        .holder_rewards(holder_rewards)
+        .validator_stake(stake_manager.stake)
+        .validator_stake_authority(stake_manager.authority.pubkey())
+        .instruction();
+    let tx = Transaction::new_signed_with_payer(
+        &[harvest_holder, harvest_validator],
+        Some(&context.payer.pubkey()),
+        &[&context.payer],
+        context.last_blockhash,
+    );
+    context.banks_client.process_transaction(tx).await.unwrap();
+
+    // Assert - The authority account has the rewards.
+    let account = get_account!(context, stake_manager.authority.pubkey());
+    assert_eq!(account.lamports, 2_000_000_000);
+
+    // Assert - There should be rewards left on the config account.
+    let account = get_account!(context, config_manager.config);
+    assert_eq!(
+        account.lamports,
+        rewards_lamports - 2_000_000_000 + rent.minimum_balance(Config::LEN),
+    );
+
+    // Assert - The stake account last seen holder rewards per token is update.
+    let account = get_account!(context, stake_manager.stake);
+    let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
+    assert_eq!(
+        stake_account.delegation.last_seen_holder_rewards_per_token,
+        40_000_000 * 1_000_000_000_000_000_000
+    );
+
+    // Assert - The vault authority did not keep any lamports (the account should not exist).
+    let account = context
+        .banks_client
+        .get_account(find_vault_pda(&config_manager.config).0)
+        .await
+        .unwrap();
+    assert!(account.is_none());
+}
+
+#[tokio::test]
+async fn validator_stake_harvest_holder_rewards_with_inactive() {
+    let mut program_test = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    );
+    program_test.add_program(
+        "paladin_rewards_program",
+        paladin_rewards_program_client::ID,
+        None,
+    );
+    let mut context = program_test.start_with_context().await;
+    let rent = context.banks_client.get_rent().await.unwrap();
+
+    // Given a config account with 100 staked amount.
+    let config_manager = ConfigManager::new(&mut context).await;
+    let mut account = get_account!(context, config_manager.config);
+    let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
+    config_account.token_amount_effective = 100;
+    account.data = config_account.try_to_vec().unwrap();
+    context.set_account(&config_manager.config, &account.into());
+
+    // Set vault token balance to match the total staked (100).
+    let mut account = get_account!(context, config_manager.vault);
+    let vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
+    vault.base.amount = 100.into();
+    context.set_account(&config_manager.vault, &account.into());
+
+    // And a stake account with a 50 staked amount.
+    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
+
+    // Set stake to 50.
+    let mut account = get_account!(context, stake_manager.stake);
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
+    stake_account.delegation.active_amount = 30;
+    stake_account.delegation.effective_amount = 30;
+    stake_account.delegation.inactive_amount = 20;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
 
@@ -195,7 +324,7 @@ async fn validator_stake_harvest_holder_rewards_wrapped() {
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.effective_amount = 50;
     // Set the stake account's last seen rate to `u128::MAX`.
     stake_account.delegation.last_seen_holder_rewards_per_token = u128::MAX;
@@ -448,7 +577,7 @@ async fn validator_stake_harvest_holder_rewards_after_harvesting() {
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
 
@@ -584,7 +713,7 @@ async fn validator_stake_fail_harvest_holder_rewards_with_wrong_authority() {
     let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
 
@@ -847,7 +976,7 @@ async fn fail_harvest_holder_rewards_with_wrong_config() {
     let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
 
@@ -947,7 +1076,7 @@ async fn sol_staker_stake_harvest_holder_rewards() {
     .await;
     let mut account = get_account!(context, sol_staker_stake_manager.stake);
     let mut stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 40;
+    stake_account.delegation.active_amount = 40;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
 
@@ -1181,7 +1310,7 @@ async fn sol_staker_stake_harvest_holder_rewards_after_harvesting() {
     .await;
     let mut account = get_account!(context, sol_staker_stake_manager.stake);
     let mut stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
 
@@ -1326,7 +1455,7 @@ async fn sol_staker_stake_fail_harvest_holder_rewards_with_wrong_authority() {
     .await;
     let mut account = get_account!(context, sol_staker_stake_manager.stake);
     let mut stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
 

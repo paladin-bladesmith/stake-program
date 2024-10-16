@@ -102,8 +102,8 @@ pub fn process_inactivate_sol_staker_stake(
     msg!("Inactivating {} token(s)", delegation.deactivating_amount);
 
     // Compute the new stake values.
-    let staker_total = delegation
-        .amount
+    let staker_active = delegation
+        .active_amount
         .checked_sub(delegation.deactivating_amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
     let staker_inactive = delegation
@@ -112,14 +112,14 @@ pub fn process_inactivate_sol_staker_stake(
         .ok_or(ProgramError::ArithmeticOverflow)?;
     let staker_limit =
         calculate_maximum_stake_for_lamports_amount(sol_staker_stake.lamports_amount)?;
-    let staker_effective = std::cmp::min(staker_total, staker_limit);
+    let staker_effective = std::cmp::min(staker_active, staker_limit);
     let effective_delta = delegation
         .effective_amount
         .checked_sub(staker_effective)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
     // Update the state values.
-    delegation.amount = staker_total;
+    delegation.active_amount = staker_active;
     delegation.effective_amount = staker_effective;
     delegation.deactivating_amount = 0;
     delegation.deactivation_timestamp = None;

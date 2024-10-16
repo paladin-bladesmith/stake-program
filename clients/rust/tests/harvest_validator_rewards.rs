@@ -69,7 +69,7 @@ async fn harvest_validator_rewards() {
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the staked amount to 65, SOL stake amount to 50
     // (stake maximum limit is 1.3 * 50 = 65)
-    stake_account.delegation.amount = 65;
+    stake_account.delegation.active_amount = 65;
     stake_account.delegation.effective_amount = 65;
     stake_account.total_staked_lamports_amount = 50;
 
@@ -180,7 +180,7 @@ async fn harvest_validator_rewards_wrapped() {
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the staked amount to 65, SOL stake amount to 50
     // (stake maximum limit is 1.3 * 50 = 65)
-    stake_account.delegation.amount = 65;
+    stake_account.delegation.active_amount = 65;
     stake_account.delegation.effective_amount = 65;
     stake_account.total_staked_lamports_amount = 50;
     // Set the stake account's last seen rate to `u128::MAX`.
@@ -286,7 +286,7 @@ async fn harvest_validator_rewards_with_no_rewards_available() {
     let mut account = get_account!(context, validator_stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.effective_amount = 50;
     stake_account.total_staked_lamports_amount = 50;
 
@@ -385,7 +385,7 @@ async fn harvest_validator_rewards_after_harvesting() {
     let mut account = get_account!(context, validator_stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.effective_amount = 50;
     stake_account.total_staked_lamports_amount = 50;
     // same as the current value on the config
@@ -499,7 +499,7 @@ async fn fail_harvest_validator_rewards_with_wrong_authority() {
     let mut account = get_account!(context, validator_stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.effective_amount = 50;
     stake_account.total_staked_lamports_amount = 50;
 
@@ -762,7 +762,7 @@ async fn failharvest_validator_rewards_with_wrong_config_account() {
     let mut account = get_account!(context, validator_stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the amount to 50
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.effective_amount = 50;
     stake_account.total_staked_lamports_amount = 50;
 
@@ -829,7 +829,7 @@ async fn harvest_validator_rewards_with_excess_rewards() {
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // - token amount staked: 13_000_000_000
     // - current lamports staked: 5_000_000_000
-    stake_account.delegation.amount = 13_000_000_000;
+    stake_account.delegation.active_amount = 13_000_000_000;
     stake_account.delegation.effective_amount = 13_000_000_000;
     stake_account.total_staked_lamports_amount = 5_000_000_000;
 

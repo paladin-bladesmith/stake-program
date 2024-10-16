@@ -74,7 +74,7 @@ async fn withdraw_inactive_stake_with_validator_stake() {
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the stake values
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.inactive_amount = 50;
     // "manually" update the stake account data
     account.data = stake_account.try_to_vec().unwrap();
@@ -216,7 +216,7 @@ async fn withdraw_inactive_stake_with_sol_staker_stake() {
     let mut account = get_account!(context, sol_staker_stake_manager.stake);
     let mut stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the stake values
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.inactive_amount = 50;
     // "manually" update the stake account data
     account.data = stake_account.try_to_vec().unwrap();
@@ -359,7 +359,7 @@ async fn fail_withdraw_inactive_stake_with_validator_stake_without_inactive_stak
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the stake values
-    stake_account.delegation.amount = 100;
+    stake_account.delegation.active_amount = 100;
     // "manually" update the stake account data
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
@@ -481,7 +481,7 @@ async fn fail_withdraw_inactive_stake_with_sol_staker_stake_without_inactive_sta
     let mut account = get_account!(context, sol_staker_stake_manager.stake);
     let mut stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the stake values
-    stake_account.delegation.amount = 100;
+    stake_account.delegation.active_amount = 100;
     // "manually" update the stake account data
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
@@ -624,7 +624,7 @@ async fn fail_withdraw_inactive_stake_with_invalid_stake_authority() {
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the stake values
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.inactive_amount = 50;
     // "manually" update the stake account data
     account.data = stake_account.try_to_vec().unwrap();
@@ -877,7 +877,7 @@ async fn fail_withdraw_inactive_stake_with_uninitialized_config_account() {
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the stake values
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.inactive_amount = 50;
     // "manually" update the stake account data
     account.data = stake_account.try_to_vec().unwrap();
@@ -1013,7 +1013,7 @@ async fn fail_withdraw_inactive_stake_with_wrong_config_account() {
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the stake values
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.inactive_amount = 50;
     // "manually" update the stake account data
     account.data = stake_account.try_to_vec().unwrap();
@@ -1141,7 +1141,7 @@ async fn fail_withdraw_inactive_stake_with_wrong_mint() {
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the stake values
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.inactive_amount = 50;
     // "manually" update the stake account data
     account.data = stake_account.try_to_vec().unwrap();
@@ -1276,7 +1276,7 @@ async fn fail_withdraw_inactive_stake_with_wrong_vault_account() {
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the stake values
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.inactive_amount = 50;
     // "manually" update the stake account data
     account.data = stake_account.try_to_vec().unwrap();
@@ -1413,7 +1413,7 @@ async fn fail_withdraw_inactive_stake_with_vault_as_destination() {
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the stake values
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.inactive_amount = 50;
     // "manually" update the stake account data
     account.data = stake_account.try_to_vec().unwrap();

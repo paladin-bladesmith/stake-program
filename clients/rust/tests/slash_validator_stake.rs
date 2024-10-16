@@ -62,7 +62,7 @@ async fn slash_validator_stake() {
     // And we set 50 tokens to the validator stake account.
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.effective_amount = 50;
     stake_account.total_staked_lamports_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
@@ -122,7 +122,7 @@ async fn slash_validator_stake() {
     // And the slashed validator stake account has no tokens.
     let account = get_account!(context, stake_manager.stake);
     let stake = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake.delegation.amount, 0);
+    assert_eq!(stake.delegation.active_amount, 0);
 }
 
 #[tokio::test]
@@ -160,7 +160,7 @@ async fn fail_slash_validator_stake_with_zero_amount() {
     // And we set 50 tokens to the validator stake account.
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.effective_amount = 50;
     stake_account.total_staked_lamports_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
@@ -329,7 +329,7 @@ async fn fail_slash_validator_stake_with_invalid_slash_authority() {
     // And we set 50 tokens to the validator stake account.
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.effective_amount = 50;
     stake_account.total_staked_lamports_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
@@ -420,7 +420,7 @@ async fn fail_slash_validator_stake_with_incorrect_vault_account() {
     // And we set 50 tokens to the validator stake account.
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.effective_amount = 50;
     stake_account.total_staked_lamports_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
@@ -623,7 +623,7 @@ async fn fail_slash_validator_stake_with_uninitialized_config_account() {
     // And we set 50 tokens to the validator stake account.
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.effective_amount = 50;
     stake_account.total_staked_lamports_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
@@ -724,7 +724,7 @@ async fn fail_slash_validator_stake_with_wrong_config_account() {
     // And we set 100 tokens to the validator stake account.
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.effective_amount = 50;
     stake_account.total_staked_lamports_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
@@ -816,7 +816,7 @@ async fn fail_slash_validator_stake_with_insufficient_total_amount_delegated() {
     // And we set 100 tokens to the validator stake account.
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 100;
+    stake_account.delegation.active_amount = 100;
     stake_account.delegation.effective_amount = 100;
     stake_account.total_staked_lamports_amount = 100;
     account.data = stake_account.try_to_vec().unwrap();
@@ -906,7 +906,7 @@ async fn slash_validator_stake_updating_deactivating_amount() {
     // 25 deactivating).
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 75;
+    stake_account.delegation.active_amount = 75;
     stake_account.delegation.effective_amount = 75;
     stake_account.total_staked_lamports_amount = 75;
     stake_account.delegation.inactive_amount = 25;
@@ -975,7 +975,7 @@ async fn slash_validator_stake_updating_deactivating_amount() {
     // And the slashed stake account has no active/deactivating tokens.
     let account = get_account!(context, stake_manager.stake);
     let stake = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake.delegation.amount, 0);
+    assert_eq!(stake.delegation.active_amount, 0);
     assert_eq!(stake.delegation.deactivating_amount, 0);
     assert_eq!(stake.delegation.inactive_amount, 25);
 }
@@ -1015,7 +1015,7 @@ async fn slash_validator_stake_with_insufficient_stake_amount() {
     // And we set 500 active tokens and 100 inactive.
     let mut account = get_account!(context, stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 500;
+    stake_account.delegation.active_amount = 500;
     stake_account.delegation.effective_amount = 500;
     stake_account.total_staked_lamports_amount = 500;
     stake_account.delegation.inactive_amount = 100;
@@ -1076,7 +1076,7 @@ async fn slash_validator_stake_with_insufficient_stake_amount() {
     // And the slashed stake account has no active tokens (100 inactive).
     let account = get_account!(context, stake_manager.stake);
     let stake = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake.delegation.amount, 0);
+    assert_eq!(stake.delegation.active_amount, 0);
     assert_eq!(stake.delegation.deactivating_amount, 0);
     assert_eq!(stake.delegation.inactive_amount, 100);
 }

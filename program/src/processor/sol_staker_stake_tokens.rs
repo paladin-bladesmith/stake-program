@@ -112,20 +112,20 @@ pub fn process_sol_staker_stake_tokens<'a>(
 
     // Compute staker total & effective stakes.
     require!(amount > 0, StakeError::InvalidAmount);
-    let staker_total = sol_staker_stake
+    let staker_active = sol_staker_stake
         .delegation
-        .amount
+        .active_amount
         .checked_add(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
     let staker_limit =
         calculate_maximum_stake_for_lamports_amount(sol_staker_stake.lamports_amount)?;
-    let staker_effective = std::cmp::min(staker_total, staker_limit);
+    let staker_effective = std::cmp::min(staker_active, staker_limit);
     let effective_delta = staker_effective
         .checked_sub(sol_staker_stake.delegation.effective_amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
     // Update states.
-    sol_staker_stake.delegation.amount = staker_total;
+    sol_staker_stake.delegation.active_amount = staker_active;
     sol_staker_stake.delegation.effective_amount = staker_effective;
     config.token_amount_effective = config
         .token_amount_effective

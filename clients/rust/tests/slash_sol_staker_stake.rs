@@ -67,7 +67,7 @@ async fn slash_sol_staker_stake() {
     .await;
     let mut account = get_account!(context, sol_staker_stake_manager.stake);
     let mut stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.effective_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
@@ -127,7 +127,7 @@ async fn slash_sol_staker_stake() {
     // And the slashed sol staker stake account has no delegated tokens.
     let account = get_account!(context, sol_staker_stake_manager.stake);
     let stake = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake.delegation.amount, 0);
+    assert_eq!(stake.delegation.active_amount, 0);
     assert_eq!(stake.delegation.effective_amount, 0);
 }
 
@@ -169,7 +169,7 @@ async fn fail_slash_sol_staker_stake_with_zero_amount() {
     .await;
     let mut account = get_account!(context, sol_staker_stake_manager.stake);
     let mut stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.effective_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
@@ -344,7 +344,7 @@ async fn fail_slash_sol_staker_stake_with_invalid_slash_authority() {
     .await;
     let mut account = get_account!(context, sol_staker_stake_manager.stake);
     let mut stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.effective_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
@@ -436,7 +436,7 @@ async fn fail_slash_sol_staker_stake_with_incorrect_vault_account() {
     .await;
     let mut account = get_account!(context, sol_staker_stake_manager.stake);
     let mut stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.effective_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
@@ -635,7 +635,7 @@ async fn fail_slash_sol_staker_stake_with_uninitialized_config_account() {
     .await;
     let mut account = get_account!(context, sol_staker_stake_manager.stake);
     let mut stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.effective_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
@@ -739,7 +739,7 @@ async fn fail_slash_validator_stake_with_wrong_config_account() {
     .await;
     let mut account = get_account!(context, sol_staker_stake_manager.stake);
     let mut stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 50;
+    stake_account.delegation.active_amount = 50;
     stake_account.delegation.effective_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
@@ -833,7 +833,7 @@ async fn fail_slash_sol_staker_stake_with_insufficient_total_amount_delegated() 
     .await;
     let mut account = get_account!(context, sol_staker_stake_manager.stake);
     let mut stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 200;
+    stake_account.delegation.active_amount = 200;
     stake_account.delegation.effective_amount = 200;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
@@ -924,7 +924,7 @@ async fn slash_sol_staker_stake_updating_deactivating_amount() {
     .await;
     let mut account = get_account!(context, sol_staker_stake_manager.stake);
     let mut stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 75;
+    stake_account.delegation.active_amount = 75;
     stake_account.delegation.effective_amount = 75;
     stake_account.delegation.inactive_amount = 25;
     stake_account.delegation.deactivating_amount = 25;
@@ -993,7 +993,7 @@ async fn slash_sol_staker_stake_updating_deactivating_amount() {
     // And the slashed sol staker stake account has no active/deactivating tokens.
     let account = get_account!(context, sol_staker_stake_manager.stake);
     let stake = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake.delegation.amount, 0);
+    assert_eq!(stake.delegation.active_amount, 0);
     assert_eq!(stake.delegation.effective_amount, 0);
     assert_eq!(stake.delegation.deactivating_amount, 0);
     assert_eq!(stake.delegation.inactive_amount, 25);
@@ -1037,7 +1037,7 @@ async fn slash_sol_staker_stake_with_insufficient_stake_amount() {
     .await;
     let mut account = get_account!(context, sol_staker_stake_manager.stake);
     let mut stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 500;
+    stake_account.delegation.active_amount = 500;
     stake_account.delegation.effective_amount = 500;
     stake_account.delegation.inactive_amount = 100;
     account.data = stake_account.try_to_vec().unwrap();
@@ -1097,7 +1097,7 @@ async fn slash_sol_staker_stake_with_insufficient_stake_amount() {
     // And the slashed stake account has no active tokens (100 inactive).
     let account = get_account!(context, sol_staker_stake_manager.stake);
     let stake = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake.delegation.amount, 0);
+    assert_eq!(stake.delegation.active_amount, 0);
     assert_eq!(stake.delegation.effective_amount, 0);
     assert_eq!(stake.delegation.deactivating_amount, 0);
     assert_eq!(stake.delegation.inactive_amount, 100);

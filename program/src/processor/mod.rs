@@ -321,7 +321,7 @@ pub(crate) fn harvest(
     let holder_reward = calculate_eligible_rewards(
         holder_rewards.last_accumulated_rewards_per_token,
         delegation.last_seen_holder_rewards_per_token.into(),
-        delegation.amount,
+        delegation.active_amount + delegation.inactive_amount,
     )?;
 
     // Claim both at the same time.
@@ -429,20 +429,20 @@ fn process_slash_for_delegation(args: SlashArgs) -> ProgramResult {
     // - Update all stake values & global effective stake.
 
     // Compute actual slash & new stake numbers.
-    let actual_slash = std::cmp::min(amount, delegation.amount);
-    let total = delegation
-        .amount
+    let actual_slash = std::cmp::min(amount, delegation.active_amount);
+    let active = delegation
+        .active_amount
         .checked_sub(actual_slash)
         .ok_or(ProgramError::ArithmeticOverflow)?;
     let limit = calculate_maximum_stake_for_lamports_amount(lamports_stake)?;
-    let effective = std::cmp::min(total, limit);
+    let effective = std::cmp::min(active, limit);
     let effective_delta = delegation
         .effective_amount
         .checked_sub(effective)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
     // Update stake amounts.
-    delegation.amount = total;
+    delegation.active_amount = active;
     delegation.effective_amount = effective;
     config.token_amount_effective = config
         .token_amount_effective
@@ -450,9 +450,8 @@ fn process_slash_for_delegation(args: SlashArgs) -> ProgramResult {
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
     // Check if we need to downwards adjust deactivating amount.
-    if delegation.deactivating_amount > delegation.amount {
-        delegation.deactivating_amount = delegation.amount;
-        // TODO: Do we need to set deactivation timestamp to none?
+    if delegation.deactivating_amount > delegation.active_amount {
+        delegation.deactivating_amount = delegation.active_amount;
     }
 
     // Burn the tokens from the vault account (if there are tokens to slash).

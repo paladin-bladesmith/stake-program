@@ -1204,7 +1204,11 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "amount",
+            "name": "activeAmount",
+            "type": "u64"
+          },
+          {
+            "name": "inactiveAmount",
             "type": "u64"
           },
           {
@@ -1221,10 +1225,6 @@
           },
           {
             "name": "deactivatingAmount",
-            "type": "u64"
-          },
-          {
-            "name": "inactiveAmount",
             "type": "u64"
           },
           {

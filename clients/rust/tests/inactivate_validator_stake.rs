@@ -53,7 +53,7 @@ async fn inactivate_validator_stake() {
 
     let mut account = get_account!(context, stake_pda);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 100;
+    stake_account.delegation.active_amount = 100;
     stake_account.delegation.effective_amount = 100;
     stake_account.delegation.deactivating_amount = 50;
     stake_account.total_staked_lamports_amount = 100;
@@ -105,7 +105,7 @@ async fn inactivate_validator_stake() {
     // Assert - The inactivation should be successful.
     let account = get_account!(context, stake_pda);
     let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake_account.delegation.amount, 50);
+    assert_eq!(stake_account.delegation.active_amount, 50);
     assert_eq!(stake_account.delegation.effective_amount, 50);
     assert_eq!(stake_account.delegation.deactivating_amount, 0);
     assert_eq!(stake_account.delegation.inactive_amount, 50);
@@ -148,7 +148,7 @@ async fn fail_inactivate_validator_stake_with_no_deactivated_amount() {
     let stake_pda = create_validator_stake(&mut context, &vote, &config).await;
     let mut account = get_account!(context, stake_pda);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 100;
+    stake_account.delegation.active_amount = 100;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_pda, &account.into());
 
@@ -221,7 +221,7 @@ async fn fail_inactivate_validator_stake_with_wrong_config() {
     let stake_pda = create_validator_stake(&mut context, &vote, &config).await;
     let mut account = get_account!(context, stake_pda);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.amount = 100;
+    stake_account.delegation.active_amount = 100;
     stake_account.delegation.effective_amount = 100;
     stake_account.delegation.deactivating_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
@@ -376,7 +376,7 @@ async fn fail_inactivate_validator_stake_with_active_cooldown() {
     let mut account = get_account!(context, stake_pda);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the stake values
-    stake_account.delegation.amount = 100;
+    stake_account.delegation.active_amount = 100;
     stake_account.delegation.deactivating_amount = 50;
 
     let timestamp = context

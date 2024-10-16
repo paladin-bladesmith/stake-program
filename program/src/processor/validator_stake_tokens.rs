@@ -112,20 +112,20 @@ pub fn process_validator_stake_tokens<'a>(
 
     // Compute the new total & effective stakes.
     require!(amount > 0, StakeError::InvalidAmount);
-    let validator_total = stake
+    let validator_active = stake
         .delegation
-        .amount
+        .active_amount
         .checked_add(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
     let validator_limit =
         calculate_maximum_stake_for_lamports_amount(stake.total_staked_lamports_amount)?;
-    let validator_effective = std::cmp::min(validator_total, validator_limit);
+    let validator_effective = std::cmp::min(validator_active, validator_limit);
     let effective_delta = validator_effective
         .checked_sub(stake.delegation.effective_amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
     // Update states.
-    stake.delegation.amount = validator_total;
+    stake.delegation.active_amount = validator_active;
     stake.delegation.effective_amount = validator_effective;
     config.token_amount_effective = config
         .token_amount_effective
