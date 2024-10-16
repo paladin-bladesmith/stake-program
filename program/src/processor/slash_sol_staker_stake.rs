@@ -60,7 +60,6 @@ pub fn process_slash_sol_staker_stake(
         ProgramError::InvalidSeeds,
         "stake",
     );
-    solana_program::msg!("0");
 
     // Harvest rewards & update last claim tracking.
     harvest(
@@ -72,7 +71,6 @@ pub fn process_slash_sol_staker_stake(
         &mut sol_staker_stake.delegation,
         None,
     )?;
-    solana_program::msg!("1");
 
     // config
     // - owner must be the stake program
@@ -90,7 +88,6 @@ pub fn process_slash_sol_staker_stake(
         ProgramError::UninitializedAccount,
         "config",
     );
-    solana_program::msg!("2");
 
     // slash authority
     // - must be a signer
@@ -112,7 +109,6 @@ pub fn process_slash_sol_staker_stake(
         ProgramError::MissingRequiredSignature,
         "stake authority",
     );
-    solana_program::msg!("3");
 
     // vault authority
     // - derivation must match
@@ -133,7 +129,6 @@ pub fn process_slash_sol_staker_stake(
     );
     let vault_data = ctx.accounts.vault.try_borrow_data()?;
     let vault = PodStateWithExtensions::<PodAccount>::unpack(&vault_data)?;
-    solana_program::msg!("4");
 
     // mint
     // - must match the stake vault mint
@@ -149,7 +144,6 @@ pub fn process_slash_sol_staker_stake(
     //
     // This will burn the given amount of tokens from the vault account, and
     // update the stake delegation on the stake and config accounts.
-    solana_program::msg!("5");
     process_slash_for_delegation(SlashArgs {
         config,
         delegation: &mut sol_staker_stake.delegation,
@@ -161,7 +155,6 @@ pub fn process_slash_sol_staker_stake(
         amount,
         signer_seeds: &signer_seeds,
     })?;
-    solana_program::msg!("6");
 
     Ok(())
 }

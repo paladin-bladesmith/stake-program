@@ -75,7 +75,7 @@ export type SolStakerStakeTokensInstruction<
         ? WritableAccount<TAccountVault>
         : TAccountVault,
       TAccountVaultHolderRewards extends string
-        ? WritableAccount<TAccountVaultHolderRewards>
+        ? ReadonlyAccount<TAccountVaultHolderRewards>
         : TAccountVaultHolderRewards,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
@@ -209,7 +209,7 @@ export function getSolStakerStakeTokensInstruction<
     vault: { value: input.vault ?? null, isWritable: true },
     vaultHolderRewards: {
       value: input.vaultHolderRewards ?? null,
-      isWritable: true,
+      isWritable: false,
     },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
   };

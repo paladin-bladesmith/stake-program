@@ -70,7 +70,7 @@ impl SolStakerStakeTokens {
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.vault, false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.vault_holder_rewards,
             false,
         ));
@@ -127,7 +127,7 @@ pub struct SolStakerStakeTokensInstructionArgs {
 ///   4. `[signer]` token_account_authority
 ///   5. `[]` mint
 ///   6. `[writable]` vault
-///   7. `[writable]` vault_holder_rewards
+///   7. `[]` vault_holder_rewards
 ///   8. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
 #[derive(Clone, Debug, Default)]
 pub struct SolStakerStakeTokensBuilder {
@@ -402,7 +402,7 @@ impl<'a, 'b> SolStakerStakeTokensCpi<'a, 'b> {
             *self.vault.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.vault_holder_rewards.key,
             false,
         ));
@@ -462,7 +462,7 @@ impl<'a, 'b> SolStakerStakeTokensCpi<'a, 'b> {
 ///   4. `[signer]` token_account_authority
 ///   5. `[]` mint
 ///   6. `[writable]` vault
-///   7. `[writable]` vault_holder_rewards
+///   7. `[]` vault_holder_rewards
 ///   8. `[]` token_program
 #[derive(Clone, Debug)]
 pub struct SolStakerStakeTokensCpiBuilder<'a, 'b> {

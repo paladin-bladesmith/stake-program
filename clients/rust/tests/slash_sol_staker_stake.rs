@@ -5,7 +5,7 @@ mod setup;
 use borsh::BorshSerialize;
 use paladin_rewards_program_client::accounts::HolderRewards;
 use paladin_stake_program_client::{
-    accounts::{Config, SolStakerStake, ValidatorStake},
+    accounts::{Config, SolStakerStake},
     errors::PaladinStakeProgramError,
     instructions::SlashSolStakerStakeBuilder,
     pdas::{find_sol_staker_stake_pda, find_vault_pda},
@@ -535,10 +535,6 @@ async fn fail_slash_sol_staker_stake_with_uninitialized_stake_account() {
     )
     .await
     .unwrap();
-
-    // And a validator stake account with 100 total tokens staked.
-    let validator_stake_manager =
-        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And an uninitialized sol staker stake account.
     let stake_state = Pubkey::new_unique();
