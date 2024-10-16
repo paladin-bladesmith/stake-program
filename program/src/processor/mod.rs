@@ -338,11 +338,16 @@ pub(crate) fn harvest(
     let holder_reward = calculate_eligible_rewards(
         holder_rewards.last_accumulated_rewards_per_token,
         delegation.last_seen_holder_rewards_per_token.into(),
-        delegation.active_amount + delegation.inactive_amount,
+        delegation
+            .active_amount
+            .checked_add(delegation.inactive_amount)
+            .ok_or(ProgramError::ArithmeticOverflow)?,
     )?;
 
     // Claim both at the same time.
-    let total_reward = staking_reward + holder_reward;
+    let total_reward = staking_reward
+        .checked_add(holder_reward)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
     delegation.last_seen_stake_rewards_per_token = config.accumulated_stake_rewards_per_token;
     delegation.last_seen_holder_rewards_per_token =
         holder_rewards.last_accumulated_rewards_per_token.into();
