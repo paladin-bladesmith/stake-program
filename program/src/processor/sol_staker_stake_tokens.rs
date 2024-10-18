@@ -87,25 +87,20 @@ pub fn process_sol_staker_stake_tokens<'a>(
 
     // vault
     // - must be the token account on the stake config account
-
     require!(
         ctx.accounts.vault.key == &config.vault,
         StakeError::IncorrectVaultAccount,
     );
-
     let vault_data = ctx.accounts.vault.try_borrow_data()?;
-    // unpack to validate the mint
     let vault = PodStateWithExtensions::<PodAccount>::unpack(&vault_data)?;
 
     // mint
     // - must match the stake vault mint
-
     require!(
         &vault.base.mint == ctx.accounts.mint.key,
         StakeError::InvalidMint,
         "mint"
     );
-
     let mint_data = ctx.accounts.mint.try_borrow_data()?;
     let mint = PodStateWithExtensions::<PodMint>::unpack(&mint_data)?;
     let decimals = mint.base.decimals;
@@ -145,5 +140,7 @@ pub fn process_sol_staker_stake_tokens<'a>(
         amount,
         decimals,
         &[],
-    )
+    )?;
+
+    Ok(())
 }
