@@ -60,6 +60,7 @@ pub struct Config {
 impl Config {
     pub const LEN: usize = std::mem::size_of::<Config>();
 
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         authority: OptionalNonZeroPubkey,
         slash_authority: OptionalNonZeroPubkey,
