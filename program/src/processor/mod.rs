@@ -486,7 +486,6 @@ fn process_slash_for_delegation(args: SlashArgs) -> ProgramResult {
         let decimals = mint.base.decimals;
 
         drop(mint_data);
-
         let burn_ix = burn_checked(
             token_program_info.key,
             vault_info.key,
@@ -496,7 +495,6 @@ fn process_slash_for_delegation(args: SlashArgs) -> ProgramResult {
             actual_slash,
             decimals,
         )?;
-
         invoke_signed(
             &burn_ix,
             &[
