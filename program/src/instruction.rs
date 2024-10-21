@@ -442,13 +442,13 @@ pub enum StakeInstruction {
     )]
     #[account(
         3,
-        name = "sol_stake",
-        desc = "SOL stake account"
+        name = "sol_staker_native_stake",
+        desc = "Sol staker native stake"
     )]
     #[account(
         4,
         name = "sysvar_stake_history",
-        desc = "Stake history sysvar"
+        desc = "Sysvar stake history"
     )]
     #[account(
         5,

@@ -82,7 +82,7 @@ async fn initialize_sol_staker_stake() {
         .config(config_manager.config)
         .sol_staker_stake(stake_pda)
         .validator_stake(stake_manager.stake)
-        .sol_stake(stake_state)
+        .sol_staker_native_stake(stake_state)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
 
@@ -172,7 +172,7 @@ async fn fail_initialize_sol_staker_stake_with_initialized_account() {
         .config(config_manager.config)
         .sol_staker_stake(stake_pda)
         .validator_stake(stake_manager.stake)
-        .sol_stake(stake_state)
+        .sol_staker_native_stake(stake_state)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
 
@@ -192,7 +192,7 @@ async fn fail_initialize_sol_staker_stake_with_initialized_account() {
         .config(config_manager.config)
         .sol_staker_stake(stake_pda)
         .validator_stake(stake_manager.stake)
-        .sol_stake(stake_state)
+        .sol_staker_native_stake(stake_state)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
 
@@ -270,7 +270,7 @@ async fn fail_initialize_sol_staker_stake_with_invalid_derivation() {
         .config(config_manager.config)
         .sol_staker_stake(stake_pda)
         .validator_stake(stake_manager.stake)
-        .sol_stake(stake_state)
+        .sol_staker_native_stake(stake_state)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
 
@@ -341,7 +341,7 @@ async fn fail_initialize_stake_with_invalid_stake_state() {
         .config(config_manager.config)
         .sol_staker_stake(stake_pda)
         .validator_stake(stake_manager.stake)
-        .sol_stake(fake_stake_state)
+        .sol_staker_native_stake(fake_stake_state)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
 
@@ -430,7 +430,7 @@ async fn fail_initialize_sol_staker_stake_with_uninitialized_config() {
         .config(config_manager.config)
         .sol_staker_stake(stake_pda)
         .validator_stake(stake_manager.stake)
-        .sol_stake(stake_state)
+        .sol_staker_native_stake(stake_state)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
 
@@ -514,7 +514,7 @@ async fn fail_initialize_sol_staker_stake_with_invalid_sol_stake_view_program() 
         .config(config_manager.config)
         .sol_staker_stake(stake_pda)
         .validator_stake(stake_manager.stake)
-        .sol_stake(stake_state)
+        .sol_staker_native_stake(stake_state)
         .sol_stake_view_program(fake_sol_stake_view_program) // <-- Invalid program
         .instruction();
 

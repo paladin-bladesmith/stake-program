@@ -32,7 +32,7 @@ export type InitializeSolStakerStakeInstruction<
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountSolStakerStake extends string | IAccountMeta<string> = string,
   TAccountValidatorStake extends string | IAccountMeta<string> = string,
-  TAccountSolStake extends string | IAccountMeta<string> = string,
+  TAccountSolStakerNativeStake extends string | IAccountMeta<string> = string,
   TAccountSysvarStakeHistory extends
     | string
     | IAccountMeta<string> = 'SysvarStakeHistory1111111111111111111111111',
@@ -54,9 +54,9 @@ export type InitializeSolStakerStakeInstruction<
       TAccountValidatorStake extends string
         ? WritableAccount<TAccountValidatorStake>
         : TAccountValidatorStake,
-      TAccountSolStake extends string
-        ? ReadonlyAccount<TAccountSolStake>
-        : TAccountSolStake,
+      TAccountSolStakerNativeStake extends string
+        ? ReadonlyAccount<TAccountSolStakerNativeStake>
+        : TAccountSolStakerNativeStake,
       TAccountSysvarStakeHistory extends string
         ? ReadonlyAccount<TAccountSysvarStakeHistory>
         : TAccountSysvarStakeHistory,
@@ -99,7 +99,7 @@ export type InitializeSolStakerStakeInput<
   TAccountConfig extends string = string,
   TAccountSolStakerStake extends string = string,
   TAccountValidatorStake extends string = string,
-  TAccountSolStake extends string = string,
+  TAccountSolStakerNativeStake extends string = string,
   TAccountSysvarStakeHistory extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountSolStakeViewProgram extends string = string,
@@ -110,9 +110,9 @@ export type InitializeSolStakerStakeInput<
   solStakerStake: Address<TAccountSolStakerStake>;
   /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
   validatorStake: Address<TAccountValidatorStake>;
-  /** SOL stake account */
-  solStake: Address<TAccountSolStake>;
-  /** Stake history sysvar */
+  /** Sol staker native stake */
+  solStakerNativeStake: Address<TAccountSolStakerNativeStake>;
+  /** Sysvar stake history */
   sysvarStakeHistory?: Address<TAccountSysvarStakeHistory>;
   /** System program */
   systemProgram?: Address<TAccountSystemProgram>;
@@ -124,7 +124,7 @@ export function getInitializeSolStakerStakeInstruction<
   TAccountConfig extends string,
   TAccountSolStakerStake extends string,
   TAccountValidatorStake extends string,
-  TAccountSolStake extends string,
+  TAccountSolStakerNativeStake extends string,
   TAccountSysvarStakeHistory extends string,
   TAccountSystemProgram extends string,
   TAccountSolStakeViewProgram extends string,
@@ -133,7 +133,7 @@ export function getInitializeSolStakerStakeInstruction<
     TAccountConfig,
     TAccountSolStakerStake,
     TAccountValidatorStake,
-    TAccountSolStake,
+    TAccountSolStakerNativeStake,
     TAccountSysvarStakeHistory,
     TAccountSystemProgram,
     TAccountSolStakeViewProgram
@@ -143,7 +143,7 @@ export function getInitializeSolStakerStakeInstruction<
   TAccountConfig,
   TAccountSolStakerStake,
   TAccountValidatorStake,
-  TAccountSolStake,
+  TAccountSolStakerNativeStake,
   TAccountSysvarStakeHistory,
   TAccountSystemProgram,
   TAccountSolStakeViewProgram
@@ -156,7 +156,10 @@ export function getInitializeSolStakerStakeInstruction<
     config: { value: input.config ?? null, isWritable: false },
     solStakerStake: { value: input.solStakerStake ?? null, isWritable: true },
     validatorStake: { value: input.validatorStake ?? null, isWritable: true },
-    solStake: { value: input.solStake ?? null, isWritable: false },
+    solStakerNativeStake: {
+      value: input.solStakerNativeStake ?? null,
+      isWritable: false,
+    },
     sysvarStakeHistory: {
       value: input.sysvarStakeHistory ?? null,
       isWritable: false,
@@ -188,7 +191,7 @@ export function getInitializeSolStakerStakeInstruction<
       getAccountMeta(accounts.config),
       getAccountMeta(accounts.solStakerStake),
       getAccountMeta(accounts.validatorStake),
-      getAccountMeta(accounts.solStake),
+      getAccountMeta(accounts.solStakerNativeStake),
       getAccountMeta(accounts.sysvarStakeHistory),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.solStakeViewProgram),
@@ -200,7 +203,7 @@ export function getInitializeSolStakerStakeInstruction<
     TAccountConfig,
     TAccountSolStakerStake,
     TAccountValidatorStake,
-    TAccountSolStake,
+    TAccountSolStakerNativeStake,
     TAccountSysvarStakeHistory,
     TAccountSystemProgram,
     TAccountSolStakeViewProgram
@@ -221,9 +224,9 @@ export type ParsedInitializeSolStakerStakeInstruction<
     solStakerStake: TAccountMetas[1];
     /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
     validatorStake: TAccountMetas[2];
-    /** SOL stake account */
-    solStake: TAccountMetas[3];
-    /** Stake history sysvar */
+    /** Sol staker native stake */
+    solStakerNativeStake: TAccountMetas[3];
+    /** Sysvar stake history */
     sysvarStakeHistory: TAccountMetas[4];
     /** System program */
     systemProgram: TAccountMetas[5];
@@ -257,7 +260,7 @@ export function parseInitializeSolStakerStakeInstruction<
       config: getNextAccount(),
       solStakerStake: getNextAccount(),
       validatorStake: getNextAccount(),
-      solStake: getNextAccount(),
+      solStakerNativeStake: getNextAccount(),
       sysvarStakeHistory: getNextAccount(),
       systemProgram: getNextAccount(),
       solStakeViewProgram: getNextAccount(),

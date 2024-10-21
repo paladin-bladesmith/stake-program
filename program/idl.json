@@ -659,11 +659,11 @@
           ]
         },
         {
-          "name": "solStake",
+          "name": "solStakerNativeStake",
           "isMut": false,
           "isSigner": false,
           "docs": [
-            "SOL stake account"
+            "Sol staker native stake"
           ]
         },
         {
@@ -671,7 +671,7 @@
           "isMut": false,
           "isSigner": false,
           "docs": [
-            "Stake history sysvar"
+            "Sysvar stake history"
           ]
         },
         {
