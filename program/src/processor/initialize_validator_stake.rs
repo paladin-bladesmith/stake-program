@@ -18,10 +18,9 @@ use crate::{
 /// accounts, the authority is initialized to the validator vote account's
 /// withdraw authority.
 ///
-/// 0. `[ ]` Stake config account
-/// 1. `[w]` Validator stake account
-///     * PDA seeds: ['stake::state::validator_stake', validator, config]
-/// 2. `[ ]` Validator vote account
+/// 0. `[ ]` Stake config
+/// 1. `[w]` Validator stake
+/// 2. `[ ]` Validator vote
 /// 3. `[ ]` System program
 pub fn process_initialize_validator_stake(
     program_id: &Pubkey,
@@ -30,20 +29,16 @@ pub fn process_initialize_validator_stake(
     // Accounts validation.
 
     // config
-    // - owner must the stake program
+    // - owner must be this program
     // - must be initialized
-
     require!(
         ctx.accounts.config.owner == program_id,
         ProgramError::InvalidAccountOwner,
         "config"
     );
-
     let data = &ctx.accounts.config.try_borrow_data()?;
-
     let config = bytemuck::try_from_bytes::<Config>(data)
         .map_err(|_error| ProgramError::InvalidAccountData)?;
-
     require!(
         config.is_initialized(),
         ProgramError::UninitializedAccount,
@@ -53,21 +48,17 @@ pub fn process_initialize_validator_stake(
     // validator_vote
     // - owner must be the vote program
     // - must be initialized
-
     require!(
         ctx.accounts.validator_vote.owner == &solana_program::vote::program::ID,
         ProgramError::InvalidAccountOwner,
         "validator_vote"
     );
-
     let data = &ctx.accounts.validator_vote.try_borrow_data()?;
-
     require!(
         VoteState::is_correct_size_and_initialized(data),
         ProgramError::InvalidAccountData,
         "validator_vote"
     );
-
     let withdraw_authority = Pubkey::from(*array_ref!(data, 36, 32));
 
     // stake
