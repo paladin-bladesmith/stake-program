@@ -88,7 +88,7 @@ pub fn process_harvest_validator_rewards(
         HarvestAccounts {
             config: ctx.accounts.config,
             vault_holder_rewards: ctx.accounts.vault_holder_rewards,
-            recipient: ctx.accounts.validator_stake_authority,
+            authority: ctx.accounts.validator_stake_authority,
         },
         &mut validator_stake.delegation,
         None,

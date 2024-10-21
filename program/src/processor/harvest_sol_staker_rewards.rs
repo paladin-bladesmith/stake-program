@@ -162,7 +162,7 @@ pub fn process_harvest_sol_staker_rewards(
         HarvestAccounts {
             config: ctx.accounts.config,
             vault_holder_rewards: ctx.accounts.vault_holder_rewards,
-            recipient: ctx.accounts.sol_staker_stake_authority,
+            authority: ctx.accounts.sol_staker_stake_authority,
         },
         &mut sol_staker_stake.delegation,
         match requires_sync {
@@ -182,7 +182,7 @@ pub fn process_harvest_sol_staker_rewards(
             HarvestAccounts {
                 config: ctx.accounts.config,
                 vault_holder_rewards: ctx.accounts.vault_holder_rewards,
-                recipient: ctx.accounts.validator_stake_authority,
+                authority: ctx.accounts.validator_stake_authority,
             },
             &mut validator_stake.delegation,
             None,

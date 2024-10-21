@@ -294,7 +294,7 @@ pub fn unpack_delegation_mut_unchecked(
 pub(crate) struct HarvestAccounts<'a, 'info> {
     pub(crate) config: &'a AccountInfo<'info>,
     pub(crate) vault_holder_rewards: &'a AccountInfo<'info>,
-    pub(crate) recipient: &'a AccountInfo<'info>,
+    pub(crate) authority: &'a AccountInfo<'info>,
 }
 
 pub(crate) fn sync_config_lamports(
@@ -322,6 +322,13 @@ pub(crate) fn harvest(
     delegation: &mut Delegation,
     keeper: Option<&AccountInfo>,
 ) -> ProgramResult {
+    // Provided authority must match expected.
+    require!(
+        accounts.authority.key == &delegation.authority,
+        StakeError::InvalidAuthority,
+        "authority"
+    );
+
     // Sync the config accounts lamports.
     require!(
         accounts.config.owner == program_id,
@@ -394,7 +401,7 @@ pub(crate) fn harvest(
         .checked_sub(keeper_reward)
         .ok_or(ProgramError::ArithmeticOverflow)?;
     let recipient_lamports = accounts
-        .recipient
+        .authority
         .lamports()
         .checked_add(delegator_reward)
         .ok_or(ProgramError::ArithmeticOverflow)?;
@@ -403,7 +410,7 @@ pub(crate) fn harvest(
     config.lamports_last = config_lamports;
     drop(config_data);
     **accounts.config.try_borrow_mut_lamports()? = config_lamports;
-    **accounts.recipient.try_borrow_mut_lamports()? = recipient_lamports;
+    **accounts.authority.try_borrow_mut_lamports()? = recipient_lamports;
 
     Ok(())
 }

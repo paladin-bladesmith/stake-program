@@ -60,7 +60,7 @@ pub fn process_inactivate_validator_stake(
         HarvestAccounts {
             config: ctx.accounts.config,
             vault_holder_rewards: ctx.accounts.vault_holder_rewards,
-            recipient: ctx.accounts.validator_stake_authority,
+            authority: ctx.accounts.validator_stake_authority,
         },
         delegation,
         None,

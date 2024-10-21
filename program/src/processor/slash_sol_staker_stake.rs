@@ -67,7 +67,7 @@ pub fn process_slash_sol_staker_stake(
         HarvestAccounts {
             config: ctx.accounts.config,
             vault_holder_rewards: ctx.accounts.vault_holder_rewards,
-            recipient: ctx.accounts.sol_staker_stake_authority,
+            authority: ctx.accounts.sol_staker_stake_authority,
         },
         &mut sol_staker_stake.delegation,
         None,
