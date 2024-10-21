@@ -293,7 +293,7 @@ pub fn unpack_delegation_mut_uncheked(
 
 pub(crate) struct HarvestAccounts<'a, 'info> {
     pub(crate) config: &'a AccountInfo<'info>,
-    pub(crate) holder_rewards: &'a AccountInfo<'info>,
+    pub(crate) vault_holder_rewards: &'a AccountInfo<'info>,
     pub(crate) recipient: &'a AccountInfo<'info>,
 }
 
@@ -317,11 +317,17 @@ pub(crate) fn sync_config_lamports(
 }
 
 pub(crate) fn harvest(
+    program_id: &Pubkey,
     accounts: HarvestAccounts,
     delegation: &mut Delegation,
     keeper: Option<&AccountInfo>,
 ) -> ProgramResult {
     // Sync the config accounts lamports.
+    require!(
+        accounts.config.owner == program_id,
+        ProgramError::InvalidAccountOwner,
+        "config"
+    );
     let mut config_data = accounts.config.data.borrow_mut();
     let config = unpack_initialized_mut::<Config>(&mut config_data)?;
     sync_config_lamports(accounts.config, config)?;
@@ -334,9 +340,15 @@ pub(crate) fn harvest(
     )?;
 
     // Compute the holder reward.
-    let holder_rewards = HolderRewards::try_from(accounts.holder_rewards)?;
+    let (derivation, _) = HolderRewards::find_pda(&config.vault);
+    require!(
+        accounts.vault_holder_rewards.key == &derivation,
+        ProgramError::InvalidSeeds,
+        "holder rewards",
+    );
+    let vault_holder_rewards = HolderRewards::try_from(accounts.vault_holder_rewards)?;
     let holder_reward = calculate_eligible_rewards(
-        holder_rewards.last_accumulated_rewards_per_token,
+        vault_holder_rewards.last_accumulated_rewards_per_token,
         delegation.last_seen_holder_rewards_per_token.into(),
         delegation
             .active_amount
@@ -349,8 +361,9 @@ pub(crate) fn harvest(
         .checked_add(holder_reward)
         .ok_or(ProgramError::ArithmeticOverflow)?;
     delegation.last_seen_stake_rewards_per_token = config.accumulated_stake_rewards_per_token;
-    delegation.last_seen_holder_rewards_per_token =
-        holder_rewards.last_accumulated_rewards_per_token.into();
+    delegation.last_seen_holder_rewards_per_token = vault_holder_rewards
+        .last_accumulated_rewards_per_token
+        .into();
 
     // Withdraw the lamports from the config account.
     let rent_exempt_minimum = Rent::get()?.minimum_balance(Config::LEN);

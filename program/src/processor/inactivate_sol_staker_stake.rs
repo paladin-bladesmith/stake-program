@@ -22,8 +22,10 @@ use crate::{
 /// NOTE: This instruction is permissionless, so anybody can finish
 /// deactivating someone's tokens, preparing them to be withdrawn.
 ///
-/// 0. `[w]` Stake config account
-/// 1. `[w]` SOL staker stake account
+/// 0. `[w]` Stake config
+/// 1. `[w]` Sol staker stake
+/// 2. `[w]` Sol staker stake authority
+/// 3. `[w]` Vault holder rewards
 pub fn process_inactivate_sol_staker_stake(
     program_id: &Pubkey,
     ctx: Context<InactivateSolStakerStakeAccounts>,
@@ -56,9 +58,10 @@ pub fn process_inactivate_sol_staker_stake(
 
     // Harvest rewards & update last claim tracking.
     harvest(
+        program_id,
         HarvestAccounts {
             config: ctx.accounts.config,
-            holder_rewards: ctx.accounts.vault_holder_rewards,
+            vault_holder_rewards: ctx.accounts.vault_holder_rewards,
             recipient: ctx.accounts.sol_staker_stake_authority,
         },
         delegation,
@@ -66,32 +69,22 @@ pub fn process_inactivate_sol_staker_stake(
     )?;
 
     // config
-    // - owner must be the stake program
-    // - must be initialized
-
-    require!(
-        ctx.accounts.config.owner == program_id,
-        ProgramError::InvalidAccountOwner,
-        "config"
-    );
-
+    // - checks are performed by `harvest()`.
     let data = &mut ctx.accounts.config.try_borrow_mut_data()?;
     let config = bytemuck::try_from_bytes_mut::<Config>(data)
         .map_err(|_error| ProgramError::InvalidAccountData)?;
-
     require!(
         config.is_initialized(),
         ProgramError::UninitializedAccount,
         "config",
     );
 
-    // Inactivates the stake if elegible.
+    // Inactivates the stake if eligible.
     let Some(timestamp) = delegation.deactivation_timestamp else {
         return Err(StakeError::NoDeactivatedTokens.into());
     };
     let inactive_timestamp = config.cooldown_time_seconds.saturating_add(timestamp.get());
     let current_timestamp = Clock::get()?.unix_timestamp as u64;
-
     require!(
         current_timestamp >= inactive_timestamp,
         StakeError::ActiveDeactivationCooldown,

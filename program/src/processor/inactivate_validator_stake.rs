@@ -56,9 +56,10 @@ pub fn process_inactivate_validator_stake(
 
     // Harvest rewards & update last claim tracking.
     harvest(
+        program_id,
         HarvestAccounts {
             config: ctx.accounts.config,
-            holder_rewards: ctx.accounts.vault_holder_rewards,
+            vault_holder_rewards: ctx.accounts.vault_holder_rewards,
             recipient: ctx.accounts.validator_stake_authority,
         },
         delegation,

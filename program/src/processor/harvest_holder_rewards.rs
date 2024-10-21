@@ -95,7 +95,7 @@ pub fn process_harvest_holder_rewards(
         ProgramError::InvalidAccountOwner,
         "holder rewards",
     );
-    let (derivation, _) = HolderRewards::find_pda(ctx.accounts.vault.key);
+    let (derivation, _) = HolderRewards::find_pda(&config.vault);
     require!(
         ctx.accounts.vault_holder_rewards.key == &derivation,
         ProgramError::InvalidSeeds,
