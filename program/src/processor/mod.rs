@@ -237,7 +237,7 @@ pub fn unpack_initialized_mut<T: Pod + IsInitialized>(
 /// This function will validate that the account data is initialized and derivation matches
 /// the expected PDA derivation.
 #[inline]
-pub fn unpack_delegation_mut<'a>(
+pub fn unpack_delegation_mut_checked<'a>(
     stake_data: &'a mut [u8],
     stake: &Pubkey,
     config: &Pubkey,

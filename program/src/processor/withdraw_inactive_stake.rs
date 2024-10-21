@@ -7,7 +7,7 @@ use spl_token_2022::{
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, WithdrawInactiveStakeAccounts},
-    processor::unpack_delegation_mut,
+    processor::unpack_delegation_mut_checked,
     require,
     state::{create_vault_pda, get_vault_pda_signer_seeds, Config},
 };
@@ -68,7 +68,7 @@ pub fn process_withdraw_inactive_stake<'a>(
 
     let stake_data = &mut ctx.accounts.stake.try_borrow_mut_data()?;
     // checks that the stake account is initialized and has the correct derivation
-    let delegation = unpack_delegation_mut(
+    let delegation = unpack_delegation_mut_checked(
         stake_data,
         ctx.accounts.stake.key,
         ctx.accounts.config.key,

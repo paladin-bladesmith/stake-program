@@ -8,7 +8,7 @@ use solana_program::{
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, DeactivateStakeAccounts},
-    processor::unpack_delegation_mut,
+    processor::unpack_delegation_mut_checked,
     require,
     state::{Config, MAX_BASIS_POINTS},
 };
@@ -62,16 +62,13 @@ pub fn process_deactivate_stake(
     // - owner must be the stake program
     // - must be initialized
     // - must have the correct derivation
-
     require!(
         ctx.accounts.stake.owner == program_id,
         ProgramError::InvalidAccountOwner,
         "stake"
     );
-
     let stake_data = &mut ctx.accounts.stake.try_borrow_mut_data()?;
-    // checks that the stake account is initialized and has the correct derivation
-    let delegation = unpack_delegation_mut(
+    let delegation = unpack_delegation_mut_checked(
         stake_data,
         ctx.accounts.stake.key,
         ctx.accounts.config.key,
@@ -81,13 +78,11 @@ pub fn process_deactivate_stake(
     // authority
     // - must be a signer
     // - must match the authority on the stake account
-
     require!(
         ctx.accounts.stake_authority.is_signer,
         ProgramError::MissingRequiredSignature,
         "stake_authority"
     );
-
     require!(
         ctx.accounts.stake_authority.key == &delegation.authority,
         StakeError::InvalidAuthority,
@@ -96,10 +91,9 @@ pub fn process_deactivate_stake(
 
     // Validate the amount.
     require!(
-        delegation.active_amount >= amount,
+        amount <= delegation.active_amount,
         StakeError::InsufficientStakeAmount
     );
-
     let max_deactivation_amount = get_max_deactivation_amount(
         delegation.active_amount,
         config.max_deactivation_basis_points,
@@ -112,14 +106,13 @@ pub fn process_deactivate_stake(
         max_deactivation_amount
     );
 
-    // Deactivate the stake.
-    //
-    // If the stake is already deactivating, this will reset the deactivation.
+    // Deactivate the stake, if the stake is already deactivating this will
+    // reset the deactivation.
     if amount > 0 {
         delegation.deactivating_amount = amount;
         delegation.deactivation_timestamp = NonZeroU64::new(Clock::get()?.unix_timestamp as u64);
     } else {
-        // cancels the deactivation if the amount is 0
+        // Cancels the deactivation if the amount is 0.
         delegation.deactivating_amount = 0;
         delegation.deactivation_timestamp = None;
     }

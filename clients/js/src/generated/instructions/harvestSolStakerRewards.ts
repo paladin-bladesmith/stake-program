@@ -36,7 +36,7 @@ export type HarvestSolStakerRewardsInstruction<
   TAccountSolStakerStakeAuthority extends
     | string
     | IAccountMeta<string> = string,
-  TAccountNativeStake extends string | IAccountMeta<string> = string,
+  TAccountSolStakerNativeStake extends string | IAccountMeta<string> = string,
   TAccountValidatorStake extends string | IAccountMeta<string> = string,
   TAccountValidatorStakeAuthority extends
     | string
@@ -65,9 +65,9 @@ export type HarvestSolStakerRewardsInstruction<
       TAccountSolStakerStakeAuthority extends string
         ? WritableAccount<TAccountSolStakerStakeAuthority>
         : TAccountSolStakerStakeAuthority,
-      TAccountNativeStake extends string
-        ? ReadonlyAccount<TAccountNativeStake>
-        : TAccountNativeStake,
+      TAccountSolStakerNativeStake extends string
+        ? ReadonlyAccount<TAccountSolStakerNativeStake>
+        : TAccountSolStakerNativeStake,
       TAccountValidatorStake extends string
         ? WritableAccount<TAccountValidatorStake>
         : TAccountValidatorStake,
@@ -115,7 +115,7 @@ export type HarvestSolStakerRewardsInput<
   TAccountVaultHolderRewards extends string = string,
   TAccountSolStakerStake extends string = string,
   TAccountSolStakerStakeAuthority extends string = string,
-  TAccountNativeStake extends string = string,
+  TAccountSolStakerNativeStake extends string = string,
   TAccountValidatorStake extends string = string,
   TAccountValidatorStakeAuthority extends string = string,
   TAccountSysvarStakeHistory extends string = string,
@@ -132,7 +132,7 @@ export type HarvestSolStakerRewardsInput<
   /** SOL staker stake authority */
   solStakerStakeAuthority: Address<TAccountSolStakerStakeAuthority>;
   /** Native stake account */
-  nativeStake: Address<TAccountNativeStake>;
+  solStakerNativeStake: Address<TAccountSolStakerNativeStake>;
   /** Validator stake account */
   validatorStake: Address<TAccountValidatorStake>;
   /** Validator stake authority */
@@ -149,7 +149,7 @@ export function getHarvestSolStakerRewardsInstruction<
   TAccountVaultHolderRewards extends string,
   TAccountSolStakerStake extends string,
   TAccountSolStakerStakeAuthority extends string,
-  TAccountNativeStake extends string,
+  TAccountSolStakerNativeStake extends string,
   TAccountValidatorStake extends string,
   TAccountValidatorStakeAuthority extends string,
   TAccountSysvarStakeHistory extends string,
@@ -161,7 +161,7 @@ export function getHarvestSolStakerRewardsInstruction<
     TAccountVaultHolderRewards,
     TAccountSolStakerStake,
     TAccountSolStakerStakeAuthority,
-    TAccountNativeStake,
+    TAccountSolStakerNativeStake,
     TAccountValidatorStake,
     TAccountValidatorStakeAuthority,
     TAccountSysvarStakeHistory,
@@ -174,7 +174,7 @@ export function getHarvestSolStakerRewardsInstruction<
   TAccountVaultHolderRewards,
   TAccountSolStakerStake,
   TAccountSolStakerStakeAuthority,
-  TAccountNativeStake,
+  TAccountSolStakerNativeStake,
   TAccountValidatorStake,
   TAccountValidatorStakeAuthority,
   TAccountSysvarStakeHistory,
@@ -199,7 +199,10 @@ export function getHarvestSolStakerRewardsInstruction<
       value: input.solStakerStakeAuthority ?? null,
       isWritable: true,
     },
-    nativeStake: { value: input.nativeStake ?? null, isWritable: false },
+    solStakerNativeStake: {
+      value: input.solStakerNativeStake ?? null,
+      isWritable: false,
+    },
     validatorStake: { value: input.validatorStake ?? null, isWritable: true },
     validatorStakeAuthority: {
       value: input.validatorStakeAuthority ?? null,
@@ -230,7 +233,7 @@ export function getHarvestSolStakerRewardsInstruction<
       getAccountMeta(accounts.vaultHolderRewards),
       getAccountMeta(accounts.solStakerStake),
       getAccountMeta(accounts.solStakerStakeAuthority),
-      getAccountMeta(accounts.nativeStake),
+      getAccountMeta(accounts.solStakerNativeStake),
       getAccountMeta(accounts.validatorStake),
       getAccountMeta(accounts.validatorStakeAuthority),
       getAccountMeta(accounts.sysvarStakeHistory),
@@ -245,7 +248,7 @@ export function getHarvestSolStakerRewardsInstruction<
     TAccountVaultHolderRewards,
     TAccountSolStakerStake,
     TAccountSolStakerStakeAuthority,
-    TAccountNativeStake,
+    TAccountSolStakerNativeStake,
     TAccountValidatorStake,
     TAccountValidatorStakeAuthority,
     TAccountSysvarStakeHistory,
@@ -272,7 +275,7 @@ export type ParsedHarvestSolStakerRewardsInstruction<
     /** SOL staker stake authority */
     solStakerStakeAuthority: TAccountMetas[4];
     /** Native stake account */
-    nativeStake: TAccountMetas[5];
+    solStakerNativeStake: TAccountMetas[5];
     /** Validator stake account */
     validatorStake: TAccountMetas[6];
     /** Validator stake authority */
@@ -317,7 +320,7 @@ export function parseHarvestSolStakerRewardsInstruction<
       vaultHolderRewards: getNextAccount(),
       solStakerStake: getNextAccount(),
       solStakerStakeAuthority: getNextAccount(),
-      nativeStake: getNextAccount(),
+      solStakerNativeStake: getNextAccount(),
       validatorStake: getNextAccount(),
       validatorStakeAuthority: getNextAccount(),
       sysvarStakeHistory: getNextAccount(),

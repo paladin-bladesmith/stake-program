@@ -561,7 +561,7 @@ pub enum StakeInstruction {
     )]
     #[account(
         5,
-        name = "native_stake",
+        name = "sol_staker_native_stake",
         desc = "Native stake account"
     )]
     #[account(

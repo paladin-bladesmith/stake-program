@@ -49,18 +49,14 @@ pub fn process_initialize_sol_staker_stake(
     // config
     // - owner must the stake program
     // - must be initialized
-
     require!(
         ctx.accounts.config.owner == program_id,
         ProgramError::InvalidAccountOwner,
         "config"
     );
-
     let data = &ctx.accounts.config.try_borrow_data()?;
-
     let config = bytemuck::try_from_bytes::<Config>(data)
         .map_err(|_error| ProgramError::InvalidAccountData)?;
-
     require!(
         config.is_initialized(),
         ProgramError::UninitializedAccount,

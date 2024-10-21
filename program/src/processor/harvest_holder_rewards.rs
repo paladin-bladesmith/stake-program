@@ -29,7 +29,7 @@ use crate::{
 /// the token vault account. For ease of use, be sure to call the
 /// `HarvestRewards` on the vault account before this.
 ///
-/// 0. `[ ]` Config account
+/// 0. `[w]` Config account
 /// 1. `[w]` Vault token account
 /// 2. `[ ]` Holder rewards account for vault token account
 /// 3. `[w]` Vault authority, PDA with seeds `['token-owner', config]`
