@@ -273,7 +273,7 @@ pub fn unpack_delegation_mut_checked<'a>(
 ///
 /// This function will validate that the account data is initialized.
 #[inline]
-pub fn unpack_delegation_mut_uncheked(
+pub fn unpack_delegation_mut_unchecked(
     stake_data: &mut [u8],
 ) -> Result<&mut Delegation, ProgramError> {
     let delegation = match &stake_data[..ArrayDiscriminator::LENGTH] {
