@@ -462,14 +462,6 @@
           "docs": [
             "Validator stake authority"
           ]
-        },
-        {
-          "name": "sysvarStakeHistory",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Stake history sysvar"
-          ]
         }
       ],
       "args": [],

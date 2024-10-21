@@ -323,11 +323,6 @@ pub enum StakeInstruction {
         name = "validator_stake_authority",
         desc = "Validator stake authority"
     )]
-    #[account(
-        4,
-        name = "sysvar_stake_history",
-        desc = "Stake history sysvar"
-    )]
     HarvestValidatorRewards,
 
     /// Slashes a validator stake account for the given amount.

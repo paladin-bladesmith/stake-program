@@ -16,8 +16,9 @@ use crate::{
 /// based on the proportion of total stake.
 ///
 /// 0. `[w]` Config account
-/// 1. `[w]` Validator stake account
-/// 2. `[w]` Stake authority
+/// 1. `[ ]` Vault holder rewards
+/// 2. `[w]` Validator stake
+/// 3. `[w]` Validator stake authority
 pub fn process_harvest_validator_rewards(
     program_id: &Pubkey,
     ctx: Context<HarvestValidatorRewardsAccounts>,
