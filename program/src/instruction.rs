@@ -95,7 +95,7 @@ pub enum StakeInstruction {
     #[account(
         4,
         signer,
-        name = "token_account_authority",
+        name = "source_token_account_authority",
         desc = "Owner or delegate of the token account"
     )]
     #[account(
@@ -495,7 +495,7 @@ pub enum StakeInstruction {
     #[account(
         4,
         signer,
-        name = "token_account_authority",
+        name = "source_token_account_authority",
         desc = "Owner or delegate of the token account"
     )]
     #[account(

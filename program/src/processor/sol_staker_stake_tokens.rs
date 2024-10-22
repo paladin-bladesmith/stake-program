@@ -20,16 +20,14 @@ use crate::{
 /// NOTE: This instruction is used by SOL staker stake accounts. The total amount of staked
 /// tokens is limited to the 1.3 * current amount of SOL staked by the SOL staker.
 ///
-/// 0. `[w]` Stake config account
-/// 1. `[w]` SOL staker stake account
-///          (PDA seeds: ['stake::state::sol_staker_stake', validator, config_account])
-/// 2. `[w]` SOL staker stake authority account
-/// 3. `[w]` Token Account
-/// 4. `[s]` Owner or delegate of the token account
-/// 5. `[ ]` Stake Token Mint
-/// 6. `[w]` Stake Token Vault, to hold all staked tokens
-///          (must be the token account on the stake config account)
-/// 7. `[w]` Stake Token Vault holder rewards
+/// 0. `[w]` Config
+/// 1. `[w]` Sol staker stake
+/// 2. `[w]` Sol staker stake authority
+/// 3. `[w]` Source token account
+/// 4. `[s]` Source token account authority (owner or delegate)
+/// 5. `[ ]` Mint
+/// 6. `[w]` Vault token account
+/// 7. `[w]` Vault holder rewards
 /// 8. `[ ]` Token program
 /// 9. Extra accounts required for the transfer hook
 ///
@@ -88,25 +86,20 @@ pub fn process_sol_staker_stake_tokens<'a>(
 
     // vault
     // - must be the token account on the stake config account
-
     require!(
         ctx.accounts.vault.key == &config.vault,
         StakeError::IncorrectVaultAccount,
     );
-
     let vault_data = ctx.accounts.vault.try_borrow_data()?;
-    // unpack to validate the mint
     let vault = PodStateWithExtensions::<PodAccount>::unpack(&vault_data)?;
 
     // mint
     // - must match the stake vault mint
-
     require!(
         &vault.base.mint == ctx.accounts.mint.key,
         StakeError::InvalidMint,
         "mint"
     );
-
     let mint_data = ctx.accounts.mint.try_borrow_data()?;
     let mint = PodStateWithExtensions::<PodMint>::unpack(&mint_data)?;
     let decimals = mint.base.decimals;
@@ -141,7 +134,7 @@ pub fn process_sol_staker_stake_tokens<'a>(
         ctx.accounts.source_token_account.clone(),
         ctx.accounts.mint.clone(),
         ctx.accounts.vault.clone(),
-        ctx.accounts.token_account_authority.clone(),
+        ctx.accounts.source_token_account_authority.clone(),
         ctx.remaining_accounts,
         amount,
         decimals,

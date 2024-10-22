@@ -813,7 +813,7 @@ async fn fail_harvest_sol_staker_rewards_with_uninitialized_stake_account() {
 
 #[tokio::test]
 async fn harvest_sol_stake_when_deactivating() {
-    let mut program_test = new_program_test();
+    let program_test = new_program_test();
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();
@@ -915,7 +915,7 @@ async fn harvest_sol_stake_when_deactivating() {
 
 #[tokio::test]
 async fn harvest_sol_stake_when_inactive() {
-    let mut program_test = new_program_test();
+    let program_test = new_program_test();
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();
@@ -951,8 +951,6 @@ async fn harvest_sol_stake_when_inactive() {
         &sol_staker_stake_manager.authority,
     )
     .await;
-    let slot = slot + context.genesis_config().epoch_schedule.slots_per_epoch;
-    // context.warp_to_slot(slot).unwrap();
 
     // Ensure the authority is rent exempt.
     context.set_account(
@@ -1018,7 +1016,7 @@ async fn harvest_sol_stake_when_inactive() {
 
 #[tokio::test]
 async fn sync_sol_stake_when_effective() {
-    let mut program_test = new_program_test();
+    let program_test = new_program_test();
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();
@@ -1181,12 +1179,9 @@ async fn sync_sol_stake_when_activating() {
     context.banks_client.process_transaction(tx).await.unwrap();
 
     // Then the SOL amounts are correctly synced (5 SOL staked).
-
     let account = get_account!(context, sol_staker_stake_manager.stake);
     let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-
     assert_eq!(stake_account.lamports_amount, 5_000_000_000);
-
     let account = get_account!(context, validator_stake_manager.stake);
     let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
@@ -1717,11 +1712,6 @@ async fn fail_sync_sol_stake_with_invalid_sol_stake_view_program() {
 #[tokio::test]
 async fn sync_sol_stake_when_sol_stake_redelegated() {
     let mut program_test = new_program_test();
-    let first_vote = add_vote_account(
-        &mut program_test,
-        &Pubkey::new_unique(),
-        &Pubkey::new_unique(),
-    );
     let second_vote = add_vote_account(
         &mut program_test,
         &Pubkey::new_unique(),
@@ -1830,7 +1820,7 @@ async fn sync_sol_stake_when_sol_stake_redelegated() {
 
 #[tokio::test]
 async fn harvest_sync_rewards() {
-    let mut program_test = new_program_test();
+    let program_test = new_program_test();
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();
@@ -1982,7 +1972,7 @@ async fn harvest_sync_rewards() {
 
 #[tokio::test]
 async fn harvest_sync_rewards_wrapped() {
-    let mut program_test = new_program_test();
+    let program_test = new_program_test();
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();
@@ -2145,7 +2135,7 @@ async fn harvest_sync_rewards_wrapped() {
 
 #[tokio::test]
 async fn harvest_sync_rewards_without_rewards() {
-    let mut program_test = new_program_test();
+    let program_test = new_program_test();
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();
@@ -2281,7 +2271,7 @@ async fn harvest_sync_rewards_without_rewards() {
 
 #[tokio::test]
 async fn harvest_sync_rewards_with_closed_sol_stake_account() {
-    let mut program_test = new_program_test();
+    let program_test = new_program_test();
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();
@@ -2442,7 +2432,7 @@ async fn harvest_sync_rewards_with_closed_sol_stake_account() {
 
 #[tokio::test]
 async fn harvest_sync_rewards_with_capped_sync_rewards() {
-    let mut program_test = new_program_test();
+    let program_test = new_program_test();
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();
@@ -2600,7 +2590,7 @@ async fn harvest_sync_rewards_with_capped_sync_rewards() {
 
 #[tokio::test]
 async fn fail_harvest_sync_rewards_with_wrong_sol_stake_account() {
-    let mut program_test = new_program_test();
+    let program_test = new_program_test();
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();
@@ -2697,7 +2687,7 @@ async fn fail_harvest_sync_rewards_with_wrong_sol_stake_account() {
 
 #[tokio::test]
 async fn fail_harvest_sync_rewards_with_wrong_validator_stake_account() {
-    let mut program_test = new_program_test();
+    let program_test = new_program_test();
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();
@@ -2785,7 +2775,7 @@ async fn fail_harvest_sync_rewards_with_wrong_validator_stake_account() {
 
 #[tokio::test]
 async fn fail_harvest_sync_rewards_with_wrong_config_account() {
-    let mut program_test = new_program_test();
+    let program_test = new_program_test();
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();
@@ -2964,7 +2954,7 @@ async fn fail_harvest_sync_rewards_with_invalid_sol_stake_view_program() {
 
 #[tokio::test]
 async fn fail_harvest_sync_rewards_with_wrong_vault_holder_rewards() {
-    let mut program_test = new_program_test();
+    let program_test = new_program_test();
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();

@@ -141,7 +141,7 @@ pub fn process_validator_stake_tokens<'a>(
         ctx.accounts.source_token_account.clone(),
         ctx.accounts.mint.clone(),
         ctx.accounts.vault.clone(),
-        ctx.accounts.token_account_authority.clone(),
+        ctx.accounts.source_token_account_authority.clone(),
         ctx.remaining_accounts,
         amount,
         decimals,

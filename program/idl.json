@@ -135,7 +135,7 @@
           ]
         },
         {
-          "name": "tokenAccountAuthority",
+          "name": "sourceTokenAccountAuthority",
           "isMut": false,
           "isSigner": true,
           "docs": [
@@ -733,7 +733,7 @@
           ]
         },
         {
-          "name": "tokenAccountAuthority",
+          "name": "sourceTokenAccountAuthority",
           "isMut": false,
           "isSigner": true,
           "docs": [
