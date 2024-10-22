@@ -42,8 +42,8 @@ export type SlashValidatorStakeInstruction<
   TAccountSlashAuthority extends string | IAccountMeta<string> = string,
   TAccountVault extends string | IAccountMeta<string> = string,
   TAccountVaultHolderRewards extends string | IAccountMeta<string> = string,
-  TAccountMint extends string | IAccountMeta<string> = string,
   TAccountVaultAuthority extends string | IAccountMeta<string> = string,
+  TAccountMint extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
@@ -71,12 +71,12 @@ export type SlashValidatorStakeInstruction<
       TAccountVaultHolderRewards extends string
         ? ReadonlyAccount<TAccountVaultHolderRewards>
         : TAccountVaultHolderRewards,
-      TAccountMint extends string
-        ? WritableAccount<TAccountMint>
-        : TAccountMint,
       TAccountVaultAuthority extends string
         ? ReadonlyAccount<TAccountVaultAuthority>
         : TAccountVaultAuthority,
+      TAccountMint extends string
+        ? WritableAccount<TAccountMint>
+        : TAccountMint,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
@@ -127,8 +127,8 @@ export type SlashValidatorStakeInput<
   TAccountSlashAuthority extends string = string,
   TAccountVault extends string = string,
   TAccountVaultHolderRewards extends string = string,
-  TAccountMint extends string = string,
   TAccountVaultAuthority extends string = string,
+  TAccountMint extends string = string,
   TAccountTokenProgram extends string = string,
 > = {
   /** Stake config account */
@@ -143,10 +143,10 @@ export type SlashValidatorStakeInput<
   vault: Address<TAccountVault>;
   /** Vault token account */
   vaultHolderRewards: Address<TAccountVaultHolderRewards>;
-  /** Stake Token Mint */
-  mint: Address<TAccountMint>;
   /** Vault authority (pda of `['token-owner', config]`) */
   vaultAuthority: Address<TAccountVaultAuthority>;
+  /** Stake Token Mint */
+  mint: Address<TAccountMint>;
   /** Token program */
   tokenProgram?: Address<TAccountTokenProgram>;
   amount: SlashValidatorStakeInstructionDataArgs['amount'];
@@ -159,8 +159,8 @@ export function getSlashValidatorStakeInstruction<
   TAccountSlashAuthority extends string,
   TAccountVault extends string,
   TAccountVaultHolderRewards extends string,
-  TAccountMint extends string,
   TAccountVaultAuthority extends string,
+  TAccountMint extends string,
   TAccountTokenProgram extends string,
 >(
   input: SlashValidatorStakeInput<
@@ -170,8 +170,8 @@ export function getSlashValidatorStakeInstruction<
     TAccountSlashAuthority,
     TAccountVault,
     TAccountVaultHolderRewards,
-    TAccountMint,
     TAccountVaultAuthority,
+    TAccountMint,
     TAccountTokenProgram
   >
 ): SlashValidatorStakeInstruction<
@@ -182,8 +182,8 @@ export function getSlashValidatorStakeInstruction<
   TAccountSlashAuthority,
   TAccountVault,
   TAccountVaultHolderRewards,
-  TAccountMint,
   TAccountVaultAuthority,
+  TAccountMint,
   TAccountTokenProgram
 > {
   // Program address.
@@ -203,8 +203,8 @@ export function getSlashValidatorStakeInstruction<
       value: input.vaultHolderRewards ?? null,
       isWritable: false,
     },
-    mint: { value: input.mint ?? null, isWritable: true },
     vaultAuthority: { value: input.vaultAuthority ?? null, isWritable: false },
+    mint: { value: input.mint ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -230,8 +230,8 @@ export function getSlashValidatorStakeInstruction<
       getAccountMeta(accounts.slashAuthority),
       getAccountMeta(accounts.vault),
       getAccountMeta(accounts.vaultHolderRewards),
-      getAccountMeta(accounts.mint),
       getAccountMeta(accounts.vaultAuthority),
+      getAccountMeta(accounts.mint),
       getAccountMeta(accounts.tokenProgram),
     ],
     programAddress,
@@ -246,8 +246,8 @@ export function getSlashValidatorStakeInstruction<
     TAccountSlashAuthority,
     TAccountVault,
     TAccountVaultHolderRewards,
-    TAccountMint,
     TAccountVaultAuthority,
+    TAccountMint,
     TAccountTokenProgram
   >;
 
@@ -272,10 +272,10 @@ export type ParsedSlashValidatorStakeInstruction<
     vault: TAccountMetas[4];
     /** Vault token account */
     vaultHolderRewards: TAccountMetas[5];
-    /** Stake Token Mint */
-    mint: TAccountMetas[6];
     /** Vault authority (pda of `['token-owner', config]`) */
-    vaultAuthority: TAccountMetas[7];
+    vaultAuthority: TAccountMetas[6];
+    /** Stake Token Mint */
+    mint: TAccountMetas[7];
     /** Token program */
     tokenProgram: TAccountMetas[8];
   };
@@ -309,8 +309,8 @@ export function parseSlashValidatorStakeInstruction<
       slashAuthority: getNextAccount(),
       vault: getNextAccount(),
       vaultHolderRewards: getNextAccount(),
-      mint: getNextAccount(),
       vaultAuthority: getNextAccount(),
+      mint: getNextAccount(),
       tokenProgram: getNextAccount(),
     },
     data: getSlashValidatorStakeInstructionDataDecoder().decode(

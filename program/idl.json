@@ -522,19 +522,19 @@
           ]
         },
         {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Stake Token Mint"
-          ]
-        },
-        {
           "name": "vaultAuthority",
           "isMut": false,
           "isSigner": false,
           "docs": [
             "Vault authority (pda of `['token-owner', config]`)"
+          ]
+        },
+        {
+          "name": "mint",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Stake Token Mint"
           ]
         },
         {

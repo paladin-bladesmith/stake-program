@@ -22,10 +22,10 @@ pub struct SlashValidatorStake {
     pub vault: solana_program::pubkey::Pubkey,
     /// Vault token account
     pub vault_holder_rewards: solana_program::pubkey::Pubkey,
-    /// Stake Token Mint
-    pub mint: solana_program::pubkey::Pubkey,
     /// Vault authority (pda of `['token-owner', config]`)
     pub vault_authority: solana_program::pubkey::Pubkey,
+    /// Stake Token Mint
+    pub mint: solana_program::pubkey::Pubkey,
     /// Token program
     pub token_program: solana_program::pubkey::Pubkey,
 }
@@ -67,12 +67,12 @@ impl SlashValidatorStake {
             self.vault_holder_rewards,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            self.mint, false,
-        ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.vault_authority,
             false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.mint, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.token_program,
@@ -126,8 +126,8 @@ pub struct SlashValidatorStakeInstructionArgs {
 ///   3. `[signer]` slash_authority
 ///   4. `[writable]` vault
 ///   5. `[]` vault_holder_rewards
-///   6. `[writable]` mint
-///   7. `[]` vault_authority
+///   6. `[]` vault_authority
+///   7. `[writable]` mint
 ///   8. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
 #[derive(Clone, Debug, Default)]
 pub struct SlashValidatorStakeBuilder {
@@ -137,8 +137,8 @@ pub struct SlashValidatorStakeBuilder {
     slash_authority: Option<solana_program::pubkey::Pubkey>,
     vault: Option<solana_program::pubkey::Pubkey>,
     vault_holder_rewards: Option<solana_program::pubkey::Pubkey>,
-    mint: Option<solana_program::pubkey::Pubkey>,
     vault_authority: Option<solana_program::pubkey::Pubkey>,
+    mint: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
     amount: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
@@ -196,12 +196,6 @@ impl SlashValidatorStakeBuilder {
         self.vault_holder_rewards = Some(vault_holder_rewards);
         self
     }
-    /// Stake Token Mint
-    #[inline(always)]
-    pub fn mint(&mut self, mint: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.mint = Some(mint);
-        self
-    }
     /// Vault authority (pda of `['token-owner', config]`)
     #[inline(always)]
     pub fn vault_authority(
@@ -209,6 +203,12 @@ impl SlashValidatorStakeBuilder {
         vault_authority: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
         self.vault_authority = Some(vault_authority);
+        self
+    }
+    /// Stake Token Mint
+    #[inline(always)]
+    pub fn mint(&mut self, mint: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.mint = Some(mint);
         self
     }
     /// `[optional account, default to 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb']`
@@ -254,8 +254,8 @@ impl SlashValidatorStakeBuilder {
             vault_holder_rewards: self
                 .vault_holder_rewards
                 .expect("vault_holder_rewards is not set"),
-            mint: self.mint.expect("mint is not set"),
             vault_authority: self.vault_authority.expect("vault_authority is not set"),
+            mint: self.mint.expect("mint is not set"),
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
                 "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
             )),
@@ -282,10 +282,10 @@ pub struct SlashValidatorStakeCpiAccounts<'a, 'b> {
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
     /// Vault token account
     pub vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Stake Token Mint
-    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// Vault authority (pda of `['token-owner', config]`)
     pub vault_authority: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Stake Token Mint
+    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// Token program
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
@@ -306,10 +306,10 @@ pub struct SlashValidatorStakeCpi<'a, 'b> {
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
     /// Vault token account
     pub vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Stake Token Mint
-    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// Vault authority (pda of `['token-owner', config]`)
     pub vault_authority: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Stake Token Mint
+    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// Token program
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
@@ -330,8 +330,8 @@ impl<'a, 'b> SlashValidatorStakeCpi<'a, 'b> {
             slash_authority: accounts.slash_authority,
             vault: accounts.vault,
             vault_holder_rewards: accounts.vault_holder_rewards,
-            mint: accounts.mint,
             vault_authority: accounts.vault_authority,
+            mint: accounts.mint,
             token_program: accounts.token_program,
             __args: args,
         }
@@ -394,12 +394,12 @@ impl<'a, 'b> SlashValidatorStakeCpi<'a, 'b> {
             *self.vault_holder_rewards.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.mint.key,
-            false,
-        ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.vault_authority.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.mint.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -432,8 +432,8 @@ impl<'a, 'b> SlashValidatorStakeCpi<'a, 'b> {
         account_infos.push(self.slash_authority.clone());
         account_infos.push(self.vault.clone());
         account_infos.push(self.vault_holder_rewards.clone());
-        account_infos.push(self.mint.clone());
         account_infos.push(self.vault_authority.clone());
+        account_infos.push(self.mint.clone());
         account_infos.push(self.token_program.clone());
         remaining_accounts
             .iter()
@@ -457,8 +457,8 @@ impl<'a, 'b> SlashValidatorStakeCpi<'a, 'b> {
 ///   3. `[signer]` slash_authority
 ///   4. `[writable]` vault
 ///   5. `[]` vault_holder_rewards
-///   6. `[writable]` mint
-///   7. `[]` vault_authority
+///   6. `[]` vault_authority
+///   7. `[writable]` mint
 ///   8. `[]` token_program
 #[derive(Clone, Debug)]
 pub struct SlashValidatorStakeCpiBuilder<'a, 'b> {
@@ -475,8 +475,8 @@ impl<'a, 'b> SlashValidatorStakeCpiBuilder<'a, 'b> {
             slash_authority: None,
             vault: None,
             vault_holder_rewards: None,
-            mint: None,
             vault_authority: None,
+            mint: None,
             token_program: None,
             amount: None,
             __remaining_accounts: Vec::new(),
@@ -534,12 +534,6 @@ impl<'a, 'b> SlashValidatorStakeCpiBuilder<'a, 'b> {
         self.instruction.vault_holder_rewards = Some(vault_holder_rewards);
         self
     }
-    /// Stake Token Mint
-    #[inline(always)]
-    pub fn mint(&mut self, mint: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.mint = Some(mint);
-        self
-    }
     /// Vault authority (pda of `['token-owner', config]`)
     #[inline(always)]
     pub fn vault_authority(
@@ -547,6 +541,12 @@ impl<'a, 'b> SlashValidatorStakeCpiBuilder<'a, 'b> {
         vault_authority: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.vault_authority = Some(vault_authority);
+        self
+    }
+    /// Stake Token Mint
+    #[inline(always)]
+    pub fn mint(&mut self, mint: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.mint = Some(mint);
         self
     }
     /// Token program
@@ -634,12 +634,12 @@ impl<'a, 'b> SlashValidatorStakeCpiBuilder<'a, 'b> {
                 .vault_holder_rewards
                 .expect("vault_holder_rewards is not set"),
 
-            mint: self.instruction.mint.expect("mint is not set"),
-
             vault_authority: self
                 .instruction
                 .vault_authority
                 .expect("vault_authority is not set"),
+
+            mint: self.instruction.mint.expect("mint is not set"),
 
             token_program: self
                 .instruction
@@ -663,8 +663,8 @@ struct SlashValidatorStakeCpiBuilderInstruction<'a, 'b> {
     slash_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault_holder_rewards: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     amount: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
