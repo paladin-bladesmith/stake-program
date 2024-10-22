@@ -92,7 +92,7 @@ async fn validator_stake_tokens_simple() {
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
         .source_token_account(rewards_manager.token_account)
-        .token_account_authority(rewards_manager.owner.pubkey())
+        .source_token_account_authority(rewards_manager.owner.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
         .vault_holder_rewards(holder_rewards)
@@ -195,7 +195,7 @@ async fn fail_validator_stake_tokens_with_wrong_vault_account() {
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
         .source_token_account(rewards_manager.token_account)
-        .token_account_authority(rewards_manager.owner.pubkey())
+        .source_token_account_authority(rewards_manager.owner.pubkey())
         .mint(config_manager.mint)
         .vault(wrong_vault.pubkey())
         .vault_holder_rewards(holder_rewards)
@@ -227,8 +227,7 @@ async fn fail_validator_stake_tokens_with_wrong_vault_account() {
         .unwrap_err();
 
     // Then we expect an error.
-
-    assert_custom_error!(err, PaladinStakeProgramError::IncorrectVaultAccount);
+    assert_instruction_error!(err, InstructionError::InvalidSeeds);
 }
 
 #[tokio::test]
@@ -284,7 +283,7 @@ async fn fail_validator_stake_tokens_with_wrong_config_account() {
         .validator_stake_authority(stake_manager.authority.pubkey())
         .vault_holder_rewards(holder_rewards)
         .source_token_account(rewards_manager.token_account)
-        .token_account_authority(rewards_manager.owner.pubkey())
+        .source_token_account_authority(rewards_manager.owner.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
         .token_program(spl_token_2022::ID)
@@ -370,7 +369,7 @@ async fn fail_validator_stake_tokens_with_zero_amount() {
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
         .source_token_account(rewards_manager.token_account)
-        .token_account_authority(rewards_manager.owner.pubkey())
+        .source_token_account_authority(rewards_manager.owner.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
         .vault_holder_rewards(holder_rewards)
@@ -474,7 +473,7 @@ async fn fail_validator_stake_tokens_with_uninitialized_stake_account() {
         .validator_stake(stake_pda)
         .validator_stake_authority(Pubkey::new_unique())
         .source_token_account(rewards_manager.token_account)
-        .token_account_authority(rewards_manager.owner.pubkey())
+        .source_token_account_authority(rewards_manager.owner.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
         .vault_holder_rewards(holder_rewards)
@@ -562,7 +561,7 @@ async fn fail_validator_stake_tokens_without_staked_sol() {
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
         .source_token_account(rewards_manager.token_account)
-        .token_account_authority(rewards_manager.owner.pubkey())
+        .source_token_account_authority(rewards_manager.owner.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
         .vault_holder_rewards(holder_rewards)
@@ -661,7 +660,7 @@ async fn validator_stake_tokens_with_insufficient_staked_sol_effective_capped() 
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
         .source_token_account(rewards_manager.token_account)
-        .token_account_authority(rewards_manager.owner.pubkey())
+        .source_token_account_authority(rewards_manager.owner.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
         .vault_holder_rewards(holder_rewards)

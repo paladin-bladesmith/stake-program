@@ -7,7 +7,7 @@ use crate::{
         accounts::{Context, SetAuthorityAccounts},
         AuthorityType,
     },
-    processor::{unpack_delegation_mut_uncheked, unpack_initialized_mut},
+    processor::{unpack_delegation_mut_unchecked, unpack_initialized_mut},
     require,
     state::Config,
 };
@@ -29,7 +29,6 @@ pub fn process_set_authority(
     // authority
     // - must be a signer
     // - must match the authority on the account (checked in the match statement below)
-
     require!(
         ctx.accounts.authority.is_signer,
         ProgramError::MissingRequiredSignature,
@@ -41,7 +40,6 @@ pub fn process_set_authority(
     // - must be initialized
     // - must have an authority set
     // - current authority must match the signing authority
-
     require!(
         ctx.accounts.account.owner == program_id,
         ProgramError::InvalidAccountOwner,
@@ -49,14 +47,11 @@ pub fn process_set_authority(
     );
 
     let data = &mut ctx.accounts.account.try_borrow_mut_data()?;
-
     match authority_type {
         AuthorityType::Config => {
             let config = unpack_initialized_mut::<Config>(data)?;
-
             let config_authority =
                 Option::<Pubkey>::from(config.authority).ok_or(StakeError::AuthorityNotSet)?;
-
             require!(
                 *ctx.accounts.authority.key == config_authority,
                 StakeError::InvalidAuthority,
@@ -67,10 +62,8 @@ pub fn process_set_authority(
         }
         AuthorityType::Slash => {
             let config = unpack_initialized_mut::<Config>(data)?;
-
             let slash_authority = Option::<Pubkey>::from(config.slash_authority)
                 .ok_or(StakeError::AuthorityNotSet)?;
-
             require!(
                 *ctx.accounts.authority.key == slash_authority,
                 StakeError::InvalidAuthority,
@@ -80,8 +73,7 @@ pub fn process_set_authority(
             config.slash_authority = OptionalNonZeroPubkey(*ctx.accounts.new_authority.key);
         }
         AuthorityType::Stake => {
-            let delegation = unpack_delegation_mut_uncheked(data)?;
-
+            let delegation = unpack_delegation_mut_unchecked(data)?;
             require!(
                 *ctx.accounts.authority.key == delegation.authority,
                 StakeError::InvalidAuthority,

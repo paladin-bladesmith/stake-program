@@ -86,7 +86,7 @@ pub async fn create_sol_staker_stake(
         .config(*config)
         .sol_staker_stake(stake_pda)
         .validator_stake(*validator_stake)
-        .sol_stake(*sol_stake)
+        .sol_staker_native_stake(*sol_stake)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
 

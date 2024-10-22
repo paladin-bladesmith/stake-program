@@ -237,7 +237,7 @@ pub fn unpack_initialized_mut<T: Pod + IsInitialized>(
 /// This function will validate that the account data is initialized and derivation matches
 /// the expected PDA derivation.
 #[inline]
-pub fn unpack_delegation_mut<'a>(
+pub fn unpack_delegation_mut_checked<'a>(
     stake_data: &'a mut [u8],
     stake: &Pubkey,
     config: &Pubkey,
@@ -273,7 +273,7 @@ pub fn unpack_delegation_mut<'a>(
 ///
 /// This function will validate that the account data is initialized.
 #[inline]
-pub fn unpack_delegation_mut_uncheked(
+pub fn unpack_delegation_mut_unchecked(
     stake_data: &mut [u8],
 ) -> Result<&mut Delegation, ProgramError> {
     let delegation = match &stake_data[..ArrayDiscriminator::LENGTH] {
@@ -293,8 +293,8 @@ pub fn unpack_delegation_mut_uncheked(
 
 pub(crate) struct HarvestAccounts<'a, 'info> {
     pub(crate) config: &'a AccountInfo<'info>,
-    pub(crate) holder_rewards: &'a AccountInfo<'info>,
-    pub(crate) recipient: &'a AccountInfo<'info>,
+    pub(crate) vault_holder_rewards: &'a AccountInfo<'info>,
+    pub(crate) authority: &'a AccountInfo<'info>,
 }
 
 pub(crate) fn sync_config_lamports(
@@ -317,11 +317,24 @@ pub(crate) fn sync_config_lamports(
 }
 
 pub(crate) fn harvest(
+    program_id: &Pubkey,
     accounts: HarvestAccounts,
     delegation: &mut Delegation,
     keeper: Option<&AccountInfo>,
 ) -> ProgramResult {
+    // Provided authority must match expected.
+    require!(
+        accounts.authority.key == &delegation.authority,
+        StakeError::InvalidAuthority,
+        "authority"
+    );
+
     // Sync the config accounts lamports.
+    require!(
+        accounts.config.owner == program_id,
+        ProgramError::InvalidAccountOwner,
+        "config"
+    );
     let mut config_data = accounts.config.data.borrow_mut();
     let config = unpack_initialized_mut::<Config>(&mut config_data)?;
     sync_config_lamports(accounts.config, config)?;
@@ -334,9 +347,15 @@ pub(crate) fn harvest(
     )?;
 
     // Compute the holder reward.
-    let holder_rewards = HolderRewards::try_from(accounts.holder_rewards)?;
+    let (derivation, _) = HolderRewards::find_pda(&config.vault);
+    require!(
+        accounts.vault_holder_rewards.key == &derivation,
+        ProgramError::InvalidSeeds,
+        "holder rewards",
+    );
+    let vault_holder_rewards = HolderRewards::try_from(accounts.vault_holder_rewards)?;
     let holder_reward = calculate_eligible_rewards(
-        holder_rewards.last_accumulated_rewards_per_token,
+        vault_holder_rewards.last_accumulated_rewards_per_token,
         delegation.last_seen_holder_rewards_per_token.into(),
         delegation
             .active_amount
@@ -349,8 +368,9 @@ pub(crate) fn harvest(
         .checked_add(holder_reward)
         .ok_or(ProgramError::ArithmeticOverflow)?;
     delegation.last_seen_stake_rewards_per_token = config.accumulated_stake_rewards_per_token;
-    delegation.last_seen_holder_rewards_per_token =
-        holder_rewards.last_accumulated_rewards_per_token.into();
+    delegation.last_seen_holder_rewards_per_token = vault_holder_rewards
+        .last_accumulated_rewards_per_token
+        .into();
 
     // Withdraw the lamports from the config account.
     let rent_exempt_minimum = Rent::get()?.minimum_balance(Config::LEN);
@@ -381,7 +401,7 @@ pub(crate) fn harvest(
         .checked_sub(keeper_reward)
         .ok_or(ProgramError::ArithmeticOverflow)?;
     let recipient_lamports = accounts
-        .recipient
+        .authority
         .lamports()
         .checked_add(delegator_reward)
         .ok_or(ProgramError::ArithmeticOverflow)?;
@@ -390,7 +410,7 @@ pub(crate) fn harvest(
     config.lamports_last = config_lamports;
     drop(config_data);
     **accounts.config.try_borrow_mut_lamports()? = config_lamports;
-    **accounts.recipient.try_borrow_mut_lamports()? = recipient_lamports;
+    **accounts.authority.try_borrow_mut_lamports()? = recipient_lamports;
 
     Ok(())
 }
@@ -473,7 +493,6 @@ fn process_slash_for_delegation(args: SlashArgs) -> ProgramResult {
         let decimals = mint.base.decimals;
 
         drop(mint_data);
-
         let burn_ix = burn_checked(
             token_program_info.key,
             vault_info.key,
@@ -483,7 +502,6 @@ fn process_slash_for_delegation(args: SlashArgs) -> ProgramResult {
             actual_slash,
             decimals,
         )?;
-
         invoke_signed(
             &burn_ix,
             &[

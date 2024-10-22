@@ -31,15 +31,12 @@ async fn initialize_stake_with_validator_vote() {
     .await;
 
     // Given a config account and a validator's vote account.
-
     let config = create_config(&mut context).await;
     let validator = Pubkey::new_unique();
     let validator_vote = create_vote_account(&mut context, &validator, &validator).await;
 
     // When we initialize the stake account.
-
     let (stake_pda, _) = find_validator_stake_pda(&validator_vote, &config);
-
     let transfer_ix = system_instruction::transfer(
         &context.payer.pubkey(),
         &stake_pda,

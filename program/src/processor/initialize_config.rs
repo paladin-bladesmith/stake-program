@@ -25,11 +25,9 @@ const VALID_VAULT_TOKEN_EXTENSIONS: &[ExtensionType] = &[
 ///
 /// ### Accounts:
 ///
-///   0. `[w]` Stake config account
-///   1. `[ ]` Slash authority
-///   2. `[ ]` Config authority
-///   3. `[ ]` Stake token mint
-///   4. `[ ]` Stake vault token account
+///   0. `[w]` Stake config
+///   1. `[ ]` Mint
+///   2. `[ ]` Vault
 pub fn process_initialize_config(
     program_id: &Pubkey,
     ctx: Context<InitializeConfigAccounts>,
@@ -41,15 +39,13 @@ pub fn process_initialize_config(
 ) -> ProgramResult {
     // Accounts validation.
 
-    // 1. mint
-    // - must be initialized
+    // mint
+    // - must be initialized (checked by unpack)
     // - have rewards transfer hook
-
     let mint_data = ctx.accounts.mint.try_borrow_data()?;
-    // unpack checks if the mint is initialized
     let mint = PodStateWithExtensions::<PodMint>::unpack(&mint_data)?;
 
-    // ensure the mint is configured with the expected `TransferHook` extension
+    // Ensure the mint is configured with the expected `TransferHook` extension.
     if let Ok(transfer_hook) = mint.get_extension::<TransferHook>() {
         let hook_program_id: Option<Pubkey> = transfer_hook.program_id.into();
 
@@ -64,15 +60,15 @@ pub fn process_initialize_config(
         return err!(StakeError::MissingTransferHook);
     }
 
-    // 2. vault (token account)
-    // - must be initialized
+    // vault (token account)
+    // - must be initialized (checked by unpack)
     // - have the vault signer (PDA) as owner
-    // - no close authority or delegate
+    // - no close authority
+    // - no delegate
     // - no other extension apart from `ImmutableOwner` and `TransferHookAccount`
     // - have the correct mint
     // - amount equal to 0
     let vault_data = ctx.accounts.vault.try_borrow_data()?;
-    // unpack checks if the token account is initialized
     let vault = PodStateWithExtensions::<PodAccount>::unpack(&vault_data)?;
     let (vault_signer, signer_bump) = find_vault_pda(ctx.accounts.config.key, program_id);
     require!(
@@ -105,12 +101,11 @@ pub fn process_initialize_config(
         StakeError::InvalidMint,
         "vault"
     );
-
     let amount: u64 = vault.base.amount.into();
     require!(amount == 0, StakeError::AmountGreaterThanZero, "vault");
 
-    // 3. config
-    // - owner must be stake program
+    // config
+    // - owner must be this program
     // - have the correct length
     // - be uninitialized
     let mut data = ctx.accounts.config.try_borrow_mut_data()?;

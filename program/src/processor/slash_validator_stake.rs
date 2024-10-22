@@ -20,13 +20,15 @@ use crate::{
 /// Burns the given amount of tokens from the vault account, and reduces the
 /// amount in the stake account.
 ///
-/// 0. `[w]` Config account
-/// 1. `[w]` Validator stake account
-/// 2. `[s]` Slash authority
-/// 3. `[w]` Vault token account
-/// 4. `[w]` Stake Token Mint
-/// 5. `[ ]` Vault authority, PDA with seeds `['token-owner', stake_config]`
-/// 6. `[ ]` Token program
+/// 0. `[w]` Config
+/// 1. `[w]` Validator stake
+/// 2. `[w]` Validator stake authority
+/// 3. `[s]` Slash authority
+/// 4. `[w]` Vault token account
+/// 5. `[ ]` Vault holder rewards
+/// 7. `[ ]` Vault authority
+/// 6. `[w]` Stake token mint
+/// 8. `[ ]` Token program
 ///
 /// Instruction data: amount of tokens to slash.
 pub fn process_slash_validator_stake(
@@ -61,10 +63,11 @@ pub fn process_slash_validator_stake(
 
     // Harvest rewards & update last claim tracking.
     harvest(
+        program_id,
         HarvestAccounts {
             config: ctx.accounts.config,
-            holder_rewards: ctx.accounts.vault_holder_rewards,
-            recipient: ctx.accounts.validator_stake_authority,
+            vault_holder_rewards: ctx.accounts.vault_holder_rewards,
+            authority: ctx.accounts.validator_stake_authority,
         },
         &mut validator_stake.delegation,
         None,
@@ -73,17 +76,14 @@ pub fn process_slash_validator_stake(
     // config
     // - owner must be the stake program
     // - must be initialized
-
     require!(
         ctx.accounts.config.owner == program_id,
         ProgramError::InvalidAccountOwner,
         "config"
     );
-
     let mut config_data = ctx.accounts.config.try_borrow_mut_data()?;
     let config = bytemuck::try_from_bytes_mut::<Config>(&mut config_data)
         .map_err(|_error| ProgramError::InvalidAccountData)?;
-
     require!(
         config.is_initialized(),
         ProgramError::UninitializedAccount,
@@ -96,7 +96,6 @@ pub fn process_slash_validator_stake(
     //
     // When there is no slash authority set, the stake account cannot be slashed and
     // an error is returned.
-
     if let Some(slash_authority) = Option::<Pubkey>::from(config.slash_authority) {
         require!(
             ctx.accounts.slash_authority.key == &slash_authority,
@@ -106,7 +105,6 @@ pub fn process_slash_validator_stake(
     } else {
         return err!(StakeError::AuthorityNotSet, "slash authority");
     }
-
     require!(
         ctx.accounts.slash_authority.is_signer,
         ProgramError::MissingRequiredSignature,
@@ -115,43 +113,34 @@ pub fn process_slash_validator_stake(
 
     // vault authority
     // - derivation must match
-
     let signer_bump = [config.vault_authority_bump];
     let derivation = create_vault_pda(ctx.accounts.config.key, &signer_bump, program_id)?;
-
     require!(
         ctx.accounts.vault_authority.key == &derivation,
         StakeError::InvalidAuthority,
         "vault authority",
     );
-
     let signer_seeds = get_vault_pda_signer_seeds(ctx.accounts.config.key, &signer_bump);
 
     // vault
     // - must be the token account on the stake config account
-
     require!(
         ctx.accounts.vault.key == &config.vault,
         StakeError::IncorrectVaultAccount,
     );
-
     let vault_data = ctx.accounts.vault.try_borrow_data()?;
-    // unpack to validate the mint
     let vault = PodStateWithExtensions::<PodAccount>::unpack(&vault_data)?;
 
     // mint
     // - must match the stake vault mint
-
     require!(
         &vault.base.mint == ctx.accounts.mint.key,
         StakeError::InvalidMint,
         "mint"
     );
 
-    drop(vault_data);
-
     // Process the slash for the stake delegation.
-
+    drop(vault_data);
     process_slash_for_delegation(SlashArgs {
         config,
         delegation: &mut validator_stake.delegation,

@@ -95,7 +95,7 @@ pub enum StakeInstruction {
     #[account(
         4,
         signer,
-        name = "token_account_authority",
+        name = "source_token_account_authority",
         desc = "Owner or delegate of the token account"
     )]
     #[account(
@@ -323,11 +323,6 @@ pub enum StakeInstruction {
         name = "validator_stake_authority",
         desc = "Validator stake authority"
     )]
-    #[account(
-        4,
-        name = "sysvar_stake_history",
-        desc = "Stake history sysvar"
-    )]
     HarvestValidatorRewards,
 
     /// Slashes a validator stake account for the given amount.
@@ -373,14 +368,14 @@ pub enum StakeInstruction {
     )]
     #[account(
         6,
-        writable,
-        name = "mint",
-        desc = "Stake Token Mint"
+        name = "vault_authority",
+        desc = "Vault authority (pda of `['token-owner', config]`)"
     )]
     #[account(
         7,
-        name = "vault_authority",
-        desc = "Vault authority (pda of `['token-owner', config]`)"
+        writable,
+        name = "mint",
+        desc = "Stake Token Mint"
     )]
     #[account(
         8,
@@ -447,13 +442,13 @@ pub enum StakeInstruction {
     )]
     #[account(
         3,
-        name = "sol_stake",
-        desc = "SOL stake account"
+        name = "sol_staker_native_stake",
+        desc = "Sol staker native stake"
     )]
     #[account(
         4,
         name = "sysvar_stake_history",
-        desc = "Stake history sysvar"
+        desc = "Sysvar stake history"
     )]
     #[account(
         5,
@@ -500,7 +495,7 @@ pub enum StakeInstruction {
     #[account(
         4,
         signer,
-        name = "token_account_authority",
+        name = "source_token_account_authority",
         desc = "Owner or delegate of the token account"
     )]
     #[account(
@@ -561,7 +556,7 @@ pub enum StakeInstruction {
     )]
     #[account(
         5,
-        name = "native_stake",
+        name = "sol_staker_native_stake",
         desc = "Native stake account"
     )]
     #[account(

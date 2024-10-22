@@ -21,14 +21,14 @@ use crate::{
 /// amount in the stake account.
 ///
 /// 0. `[w]` Config
-/// 1. `[w]` SOL staker stake
-/// 1. `[w]` SOL staker stake authority
+/// 1. `[w]` Sol staker stake
+/// 1. `[w]` Sol staker stake authority
 /// 3. `[s]` Slash authority
-/// 4. `[w]` Stake Token Mint
+/// 4. `[w]` Stake token mint
 /// 5. `[w]` Vault token account
 /// 6. `[ ]` Vault holder rewards
-/// 7. `[ ]` Vault authority, PDA with seeds `['token-owner', stake_config]`
-/// 8. `[ ]` SPL Token program
+/// 7. `[ ]` Vault authority
+/// 8. `[ ]` Token program
 ///
 /// Instruction data: amount of tokens to slash.
 pub fn process_slash_sol_staker_stake(
@@ -63,10 +63,11 @@ pub fn process_slash_sol_staker_stake(
 
     // Harvest rewards & update last claim tracking.
     harvest(
+        program_id,
         HarvestAccounts {
             config: ctx.accounts.config,
-            holder_rewards: ctx.accounts.vault_holder_rewards,
-            recipient: ctx.accounts.sol_staker_stake_authority,
+            vault_holder_rewards: ctx.accounts.vault_holder_rewards,
+            authority: ctx.accounts.sol_staker_stake_authority,
         },
         &mut sol_staker_stake.delegation,
         None,
@@ -138,12 +139,11 @@ pub fn process_slash_sol_staker_stake(
         "mint"
     );
 
-    drop(vault_data);
-
     // Process the slash for the stake delegation.
     //
     // This will burn the given amount of tokens from the vault account, and
     // update the stake delegation on the stake and config accounts.
+    drop(vault_data);
     process_slash_for_delegation(SlashArgs {
         config,
         delegation: &mut sol_staker_stake.delegation,

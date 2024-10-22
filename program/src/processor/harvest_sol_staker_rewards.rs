@@ -24,15 +24,16 @@ use crate::{
 /// staking rewards are held in a separate account, they must be distributed
 /// based on the proportion of total stake.
 ///
-/// 0. `[w]` Config account
-/// 1. `[w]` Vault authority
-/// 2. `[w]` Staker PAL stake account
-/// 3. `[w]` Staker authority
-/// 4. `[ ]` Staker native stake account
-/// 5. `[w]` Validator stake account
-/// 6. `[w]` Validator stake authority
-/// 7. `[ ]` Stake history sysvar
-/// 8. `[ ]` Paladin SOL stake view program
+/// 0. `[ ]` Paladin SOL stake view program
+/// 1. `[w]` Config account
+/// 2. `[w]` Vault holder rewards
+/// 3. `[w]` Sol staker stake
+/// 4. `[w]` Sol staker stake authority
+/// 5. `[ ]` Sol staker native stake
+/// 6. `[w]` Validator stake
+/// 7. `[w]` Validator stake authority
+/// 8. `[ ]` Sysvar stake history
+/// 9. `[w]?` Keeper recipient
 pub fn process_harvest_sol_staker_rewards(
     program_id: &Pubkey,
     ctx: Context<HarvestSolStakerRewardsAccounts>,
@@ -63,7 +64,6 @@ pub fn process_harvest_sol_staker_rewards(
         ProgramError::InvalidAccountOwner,
         "sol staker stake"
     );
-
     let mut sol_staker_stake_data = ctx.accounts.sol_staker_stake.try_borrow_mut_data()?;
     let sol_staker_stake = unpack_initialized_mut::<SolStakerStake>(&mut sol_staker_stake_data)?;
     let (derivation, _) = find_sol_staker_stake_pda(
@@ -88,7 +88,7 @@ pub fn process_harvest_sol_staker_rewards(
     // Native stake.
     // - Must match the PAL staker specified stake account.
     require!(
-        ctx.accounts.native_stake.key == &sol_staker_stake.sol_stake,
+        ctx.accounts.sol_staker_native_stake.key == &sol_staker_stake.sol_stake,
         StakeError::IncorrectSolStakeAccount,
         "sol stake"
     );
@@ -103,7 +103,6 @@ pub fn process_harvest_sol_staker_rewards(
         ProgramError::InvalidAccountOwner,
         "validator stake"
     );
-
     // validator vote must match the SOL staker stake state account's validator vote
     // (validation done on the derivation of the expected address)
     let (derivation, _) = find_validator_stake_pda(
@@ -138,7 +137,7 @@ pub fn process_harvest_sol_staker_rewards(
 
     // Compute the latest native stake for this staker.
     GetStakeActivatingAndDeactivatingCpiBuilder::new(ctx.accounts.sol_stake_view_program)
-        .stake(ctx.accounts.native_stake)
+        .stake(ctx.accounts.sol_staker_native_stake)
         .stake_history(ctx.accounts.sysvar_stake_history)
         .invoke()?;
     let (_, return_data) = get_return_data().ok_or(ProgramError::InvalidAccountData)?;
@@ -159,10 +158,11 @@ pub fn process_harvest_sol_staker_rewards(
 
     // Harvest the staker.
     harvest(
+        program_id,
         HarvestAccounts {
             config: ctx.accounts.config,
-            holder_rewards: ctx.accounts.vault_holder_rewards,
-            recipient: ctx.accounts.sol_staker_stake_authority,
+            vault_holder_rewards: ctx.accounts.vault_holder_rewards,
+            authority: ctx.accounts.sol_staker_stake_authority,
         },
         &mut sol_staker_stake.delegation,
         match requires_sync {
@@ -178,10 +178,11 @@ pub fn process_harvest_sol_staker_rewards(
     if requires_sync {
         // Harvest the validator.
         harvest(
+            program_id,
             HarvestAccounts {
                 config: ctx.accounts.config,
-                holder_rewards: ctx.accounts.vault_holder_rewards,
-                recipient: ctx.accounts.validator_stake_authority,
+                vault_holder_rewards: ctx.accounts.vault_holder_rewards,
+                authority: ctx.accounts.validator_stake_authority,
             },
             &mut validator_stake.delegation,
             None,

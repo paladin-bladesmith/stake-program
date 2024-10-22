@@ -20,17 +20,16 @@ use crate::{
 /// NOTE: This instruction is used by validator stake accounts. The total amount of effective
 /// staked tokens is limited to the 1.3 * current amount of SOL staked to the validator.
 ///
-/// 0. `[w]` Stake config account
-/// 1. `[w]` Validator stake account
-///          (PDA seeds: ['stake::state::validator_stake', validator, config_account])
-/// 2. `[w]` Validator stake authority account
-/// 3. `[w]` Token Account
-/// 4. `[s]` Owner or delegate of the token account
-/// 5. `[ ]` Stake Token Mint
-/// 6. `[w]` Stake Token Vault, to hold all staked tokens
-///          (must be the token account on the stake config account)
-/// 7. `[ ]` Token program
-/// 8. Extra accounts required for the transfer hook
+/// 0. `[w]` Config
+/// 1. `[w]` Validator stake
+/// 2. `[w]` Validator stake authority
+/// 3. `[w]` Source token account
+/// 4. `[s]` Source token authority (owner or delegate)
+/// 5. `[ ]` Mint
+/// 6. `[w]` Vault
+/// 7. `[w]` Vault holder rewards
+/// 8. `[ ]` Token program
+/// 9. Extra accounts required for the transfer hook
 ///
 /// Instruction data: amount of tokens to stake, as a little-endian `u64`.
 pub fn process_validator_stake_tokens<'a>(
@@ -64,10 +63,11 @@ pub fn process_validator_stake_tokens<'a>(
 
     // Harvest rewards & update last claim tracking.
     harvest(
+        program_id,
         HarvestAccounts {
             config: ctx.accounts.config,
-            holder_rewards: ctx.accounts.vault_holder_rewards,
-            recipient: ctx.accounts.validator_stake_authority,
+            vault_holder_rewards: ctx.accounts.vault_holder_rewards,
+            authority: ctx.accounts.validator_stake_authority,
         },
         &mut stake.delegation,
         None,
@@ -140,7 +140,7 @@ pub fn process_validator_stake_tokens<'a>(
         ctx.accounts.source_token_account.clone(),
         ctx.accounts.mint.clone(),
         ctx.accounts.vault.clone(),
-        ctx.accounts.token_account_authority.clone(),
+        ctx.accounts.source_token_account_authority.clone(),
         ctx.remaining_accounts,
         amount,
         decimals,

@@ -21,7 +21,7 @@ pub struct HarvestSolStakerRewards {
     /// SOL staker stake authority
     pub sol_staker_stake_authority: solana_program::pubkey::Pubkey,
     /// Native stake account
-    pub native_stake: solana_program::pubkey::Pubkey,
+    pub sol_staker_native_stake: solana_program::pubkey::Pubkey,
     /// Validator stake account
     pub validator_stake: solana_program::pubkey::Pubkey,
     /// Validator stake authority
@@ -63,7 +63,7 @@ impl HarvestSolStakerRewards {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.native_stake,
+            self.sol_staker_native_stake,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -128,7 +128,7 @@ impl Default for HarvestSolStakerRewardsInstructionData {
 ///   2. `[]` vault_holder_rewards
 ///   3. `[writable]` sol_staker_stake
 ///   4. `[writable]` sol_staker_stake_authority
-///   5. `[]` native_stake
+///   5. `[]` sol_staker_native_stake
 ///   6. `[writable]` validator_stake
 ///   7. `[writable]` validator_stake_authority
 ///   8. `[optional]` sysvar_stake_history (default to `SysvarStakeHistory1111111111111111111111111`)
@@ -140,7 +140,7 @@ pub struct HarvestSolStakerRewardsBuilder {
     vault_holder_rewards: Option<solana_program::pubkey::Pubkey>,
     sol_staker_stake: Option<solana_program::pubkey::Pubkey>,
     sol_staker_stake_authority: Option<solana_program::pubkey::Pubkey>,
-    native_stake: Option<solana_program::pubkey::Pubkey>,
+    sol_staker_native_stake: Option<solana_program::pubkey::Pubkey>,
     validator_stake: Option<solana_program::pubkey::Pubkey>,
     validator_stake_authority: Option<solana_program::pubkey::Pubkey>,
     sysvar_stake_history: Option<solana_program::pubkey::Pubkey>,
@@ -196,8 +196,11 @@ impl HarvestSolStakerRewardsBuilder {
     }
     /// Native stake account
     #[inline(always)]
-    pub fn native_stake(&mut self, native_stake: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.native_stake = Some(native_stake);
+    pub fn sol_staker_native_stake(
+        &mut self,
+        sol_staker_native_stake: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.sol_staker_native_stake = Some(sol_staker_native_stake);
         self
     }
     /// Validator stake account
@@ -270,7 +273,9 @@ impl HarvestSolStakerRewardsBuilder {
             sol_staker_stake_authority: self
                 .sol_staker_stake_authority
                 .expect("sol_staker_stake_authority is not set"),
-            native_stake: self.native_stake.expect("native_stake is not set"),
+            sol_staker_native_stake: self
+                .sol_staker_native_stake
+                .expect("sol_staker_native_stake is not set"),
             validator_stake: self.validator_stake.expect("validator_stake is not set"),
             validator_stake_authority: self
                 .validator_stake_authority
@@ -298,7 +303,7 @@ pub struct HarvestSolStakerRewardsCpiAccounts<'a, 'b> {
     /// SOL staker stake authority
     pub sol_staker_stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Native stake account
-    pub native_stake: &'b solana_program::account_info::AccountInfo<'a>,
+    pub sol_staker_native_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Validator stake account
     pub validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Validator stake authority
@@ -324,7 +329,7 @@ pub struct HarvestSolStakerRewardsCpi<'a, 'b> {
     /// SOL staker stake authority
     pub sol_staker_stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Native stake account
-    pub native_stake: &'b solana_program::account_info::AccountInfo<'a>,
+    pub sol_staker_native_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Validator stake account
     pub validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Validator stake authority
@@ -347,7 +352,7 @@ impl<'a, 'b> HarvestSolStakerRewardsCpi<'a, 'b> {
             vault_holder_rewards: accounts.vault_holder_rewards,
             sol_staker_stake: accounts.sol_staker_stake,
             sol_staker_stake_authority: accounts.sol_staker_stake_authority,
-            native_stake: accounts.native_stake,
+            sol_staker_native_stake: accounts.sol_staker_native_stake,
             validator_stake: accounts.validator_stake,
             validator_stake_authority: accounts.validator_stake_authority,
             sysvar_stake_history: accounts.sysvar_stake_history,
@@ -409,7 +414,7 @@ impl<'a, 'b> HarvestSolStakerRewardsCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.native_stake.key,
+            *self.sol_staker_native_stake.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -458,7 +463,7 @@ impl<'a, 'b> HarvestSolStakerRewardsCpi<'a, 'b> {
         account_infos.push(self.vault_holder_rewards.clone());
         account_infos.push(self.sol_staker_stake.clone());
         account_infos.push(self.sol_staker_stake_authority.clone());
-        account_infos.push(self.native_stake.clone());
+        account_infos.push(self.sol_staker_native_stake.clone());
         account_infos.push(self.validator_stake.clone());
         account_infos.push(self.validator_stake_authority.clone());
         account_infos.push(self.sysvar_stake_history.clone());
@@ -486,7 +491,7 @@ impl<'a, 'b> HarvestSolStakerRewardsCpi<'a, 'b> {
 ///   2. `[]` vault_holder_rewards
 ///   3. `[writable]` sol_staker_stake
 ///   4. `[writable]` sol_staker_stake_authority
-///   5. `[]` native_stake
+///   5. `[]` sol_staker_native_stake
 ///   6. `[writable]` validator_stake
 ///   7. `[writable]` validator_stake_authority
 ///   8. `[]` sysvar_stake_history
@@ -505,7 +510,7 @@ impl<'a, 'b> HarvestSolStakerRewardsCpiBuilder<'a, 'b> {
             vault_holder_rewards: None,
             sol_staker_stake: None,
             sol_staker_stake_authority: None,
-            native_stake: None,
+            sol_staker_native_stake: None,
             validator_stake: None,
             validator_stake_authority: None,
             sysvar_stake_history: None,
@@ -561,11 +566,11 @@ impl<'a, 'b> HarvestSolStakerRewardsCpiBuilder<'a, 'b> {
     }
     /// Native stake account
     #[inline(always)]
-    pub fn native_stake(
+    pub fn sol_staker_native_stake(
         &mut self,
-        native_stake: &'b solana_program::account_info::AccountInfo<'a>,
+        sol_staker_native_stake: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.native_stake = Some(native_stake);
+        self.instruction.sol_staker_native_stake = Some(sol_staker_native_stake);
         self
     }
     /// Validator stake account
@@ -671,10 +676,10 @@ impl<'a, 'b> HarvestSolStakerRewardsCpiBuilder<'a, 'b> {
                 .sol_staker_stake_authority
                 .expect("sol_staker_stake_authority is not set"),
 
-            native_stake: self
+            sol_staker_native_stake: self
                 .instruction
-                .native_stake
-                .expect("native_stake is not set"),
+                .sol_staker_native_stake
+                .expect("sol_staker_native_stake is not set"),
 
             validator_stake: self
                 .instruction
@@ -708,7 +713,7 @@ struct HarvestSolStakerRewardsCpiBuilderInstruction<'a, 'b> {
     vault_holder_rewards: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     sol_staker_stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     sol_staker_stake_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    native_stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    sol_staker_native_stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     validator_stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     validator_stake_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     sysvar_stake_history: Option<&'b solana_program::account_info::AccountInfo<'a>>,

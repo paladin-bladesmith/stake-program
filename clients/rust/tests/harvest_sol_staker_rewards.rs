@@ -123,7 +123,7 @@ async fn harvest_sol_staker_rewards() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -251,7 +251,7 @@ async fn harvest_sol_staker_rewards_wrapped() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -362,7 +362,7 @@ async fn harvest_sol_staker_rewards_with_no_rewards_available() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -474,7 +474,7 @@ async fn harvest_sol_staker_rewards_after_harvesting() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -573,7 +573,7 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_authority() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(fake_authority) // <- wrong authority
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -684,7 +684,7 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_config_account() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -790,7 +790,7 @@ async fn fail_harvest_sol_staker_rewards_with_uninitialized_stake_account() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -813,12 +813,7 @@ async fn fail_harvest_sol_staker_rewards_with_uninitialized_stake_account() {
 
 #[tokio::test]
 async fn harvest_sol_stake_when_deactivating() {
-    let mut program_test = new_program_test();
-    let vote = add_vote_account(
-        &mut program_test,
-        &Pubkey::new_unique(),
-        &Pubkey::new_unique(),
-    );
+    let program_test = new_program_test();
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();
@@ -826,7 +821,7 @@ async fn harvest_sol_stake_when_deactivating() {
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
     let config_manager = ConfigManager::new(&mut context).await;
     let validator_stake_manager =
-        ValidatorStakeManager::new_with_vote(&mut context, &config_manager.config, vote).await;
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
     let sol_staker_stake_manager = SolStakerStakeManager::new(
         &mut context,
         &config_manager.config,
@@ -837,22 +832,15 @@ async fn harvest_sol_stake_when_deactivating() {
     .await;
 
     // And the SOL staker stake and validator stake accounts are correctly synced.
-
     let account = get_account!(context, sol_staker_stake_manager.stake);
     let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-
     assert_eq!(stake_account.lamports_amount, 5_000_000_000);
-
     let account = get_account!(context, validator_stake_manager.stake);
     let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
         validator_stake_account.total_staked_lamports_amount,
         5_000_000_000
     );
-
-    // And we wait for the stake to be effective.
-    let slot = slot + context.genesis_config().epoch_schedule.slots_per_epoch;
-    context.warp_to_slot(slot).unwrap();
 
     // And we deactivate the stake.
     deactivate_stake_account(
@@ -901,7 +889,7 @@ async fn harvest_sol_stake_when_deactivating() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -927,21 +915,15 @@ async fn harvest_sol_stake_when_deactivating() {
 
 #[tokio::test]
 async fn harvest_sol_stake_when_inactive() {
-    let mut program_test = new_program_test();
-    let vote = add_vote_account(
-        &mut program_test,
-        &Pubkey::new_unique(),
-        &Pubkey::new_unique(),
-    );
+    let program_test = new_program_test();
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
-
     let config_manager = ConfigManager::new(&mut context).await;
     let validator_stake_manager =
-        ValidatorStakeManager::new_with_vote(&mut context, &config_manager.config, vote).await;
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
     let sol_staker_stake_manager = SolStakerStakeManager::new(
         &mut context,
         &config_manager.config,
@@ -952,12 +934,9 @@ async fn harvest_sol_stake_when_inactive() {
     .await;
 
     // And the SOL staker stake and validator stake accounts are correctly synced.
-
     let account = get_account!(context, sol_staker_stake_manager.stake);
     let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-
     assert_eq!(stake_account.lamports_amount, 5_000_000_000);
-
     let account = get_account!(context, validator_stake_manager.stake);
     let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
@@ -965,19 +944,13 @@ async fn harvest_sol_stake_when_inactive() {
         5_000_000_000
     );
 
-    // And we deactivate the stake and wait for the deactivation to take effect.
-    let slot = slot + context.genesis_config().epoch_schedule.slots_per_epoch;
-    context.warp_to_slot(slot).unwrap();
-
+    // Deactivate the stake account.
     deactivate_stake_account(
         &mut context,
         &stake_account.sol_stake,
         &sol_staker_stake_manager.authority,
     )
     .await;
-
-    let slot = slot + context.genesis_config().epoch_schedule.slots_per_epoch;
-    context.warp_to_slot(slot).unwrap();
 
     // Ensure the authority is rent exempt.
     context.set_account(
@@ -1018,7 +991,7 @@ async fn harvest_sol_stake_when_inactive() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -1033,12 +1006,9 @@ async fn harvest_sol_stake_when_inactive() {
     context.banks_client.process_transaction(tx).await.unwrap();
 
     // Then the SOL amounts are correctly synced (0 SOL staked).
-
     let account = get_account!(context, sol_staker_stake_manager.stake);
     let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-
     assert_eq!(stake_account.lamports_amount, 0);
-
     let account = get_account!(context, validator_stake_manager.stake);
     let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(validator_stake_account.total_staked_lamports_amount, 0);
@@ -1046,21 +1016,15 @@ async fn harvest_sol_stake_when_inactive() {
 
 #[tokio::test]
 async fn sync_sol_stake_when_effective() {
-    let mut program_test = new_program_test();
-    let vote = add_vote_account(
-        &mut program_test,
-        &Pubkey::new_unique(),
-        &Pubkey::new_unique(),
-    );
+    let program_test = new_program_test();
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
-
     let config_manager = ConfigManager::new(&mut context).await;
     let validator_stake_manager =
-        ValidatorStakeManager::new_with_vote(&mut context, &config_manager.config, vote).await;
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
     let sol_staker_stake_manager = SolStakerStakeManager::new(
         &mut context,
         &config_manager.config,
@@ -1071,23 +1035,15 @@ async fn sync_sol_stake_when_effective() {
     .await;
 
     // And the SOL staker stake and validator stake accounts are correctly synced.
-
     let account = get_account!(context, sol_staker_stake_manager.stake);
     let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-
     assert_eq!(stake_account.lamports_amount, 5_000_000_000);
-
     let account = get_account!(context, validator_stake_manager.stake);
     let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
         validator_stake_account.total_staked_lamports_amount,
         5_000_000_000
     );
-
-    // And we wait until the stake is effective.
-
-    let slot = slot + context.genesis_config().epoch_schedule.slots_per_epoch;
-    context.warp_to_slot(slot).unwrap();
 
     // Ensure the authority is rent exempt.
     context.set_account(
@@ -1127,7 +1083,7 @@ async fn sync_sol_stake_when_effective() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -1142,12 +1098,9 @@ async fn sync_sol_stake_when_effective() {
     context.banks_client.process_transaction(tx).await.unwrap();
 
     // Then the SOL amounts are correctly synced (5 SOL staked).
-
     let account = get_account!(context, sol_staker_stake_manager.stake);
     let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-
     assert_eq!(stake_account.lamports_amount, 5_000_000_000);
-
     let account = get_account!(context, validator_stake_manager.stake);
     let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
@@ -1211,7 +1164,7 @@ async fn sync_sol_stake_when_activating() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -1226,12 +1179,9 @@ async fn sync_sol_stake_when_activating() {
     context.banks_client.process_transaction(tx).await.unwrap();
 
     // Then the SOL amounts are correctly synced (5 SOL staked).
-
     let account = get_account!(context, sol_staker_stake_manager.stake);
     let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-
     assert_eq!(stake_account.lamports_amount, 5_000_000_000);
-
     let account = get_account!(context, validator_stake_manager.stake);
     let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
@@ -1299,7 +1249,7 @@ async fn fail_sync_sol_stake_with_wrong_config_account() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -1389,7 +1339,7 @@ async fn fail_sync_sol_stake_with_wrong_sol_stake_account() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(another_sol_stake.pubkey())
+        .sol_staker_native_stake(another_sol_stake.pubkey())
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -1472,7 +1422,7 @@ async fn fail_sync_sol_stake_with_wrong_validator_stake() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(another_validator_stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -1561,7 +1511,7 @@ async fn fail_sync_sol_stake_with_uninitialized_config() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -1650,7 +1600,7 @@ async fn fail_sync_sol_stake_with_uninitialized_validator_stake() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -1737,7 +1687,7 @@ async fn fail_sync_sol_stake_with_invalid_sol_stake_view_program() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(fake_sol_stake_view_program) // <- fake sol stake view program
@@ -1762,11 +1712,6 @@ async fn fail_sync_sol_stake_with_invalid_sol_stake_view_program() {
 #[tokio::test]
 async fn sync_sol_stake_when_sol_stake_redelegated() {
     let mut program_test = new_program_test();
-    let first_vote = add_vote_account(
-        &mut program_test,
-        &Pubkey::new_unique(),
-        &Pubkey::new_unique(),
-    );
     let second_vote = add_vote_account(
         &mut program_test,
         &Pubkey::new_unique(),
@@ -1778,11 +1723,9 @@ async fn sync_sol_stake_when_sol_stake_redelegated() {
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked
     // with the first vote account.
-
     let config_manager = ConfigManager::new(&mut context).await;
     let validator_stake_manager =
-        ValidatorStakeManager::new_with_vote(&mut context, &config_manager.config, first_vote)
-            .await;
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
     let sol_staker_stake_manager = SolStakerStakeManager::new(
         &mut context,
         &config_manager.config,
@@ -1795,29 +1738,13 @@ async fn sync_sol_stake_when_sol_stake_redelegated() {
     // And the SOL staker stake and validator stake accounts are correctly synced.
     let account = get_account!(context, sol_staker_stake_manager.stake);
     let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-
     assert_eq!(stake_account.lamports_amount, 5_000_000_000);
-
     let account = get_account!(context, validator_stake_manager.stake);
     let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
         validator_stake_account.total_staked_lamports_amount,
         5_000_000_000
     );
-
-    // And we deactivate the stake and wait for the deactivation to take effect.
-    let slot = slot + context.genesis_config().epoch_schedule.slots_per_epoch;
-    context.warp_to_slot(slot).unwrap();
-
-    deactivate_stake_account(
-        &mut context,
-        &stake_account.sol_stake,
-        &sol_staker_stake_manager.authority,
-    )
-    .await;
-
-    let slot = slot + context.genesis_config().epoch_schedule.slots_per_epoch;
-    context.warp_to_slot(slot).unwrap();
 
     // And we delegate the stake to a second vote account.
     delegate_stake_account(
@@ -1868,7 +1795,7 @@ async fn sync_sol_stake_when_sol_stake_redelegated() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -1883,12 +1810,9 @@ async fn sync_sol_stake_when_sol_stake_redelegated() {
     context.banks_client.process_transaction(tx).await.unwrap();
 
     // Then the SOL amounts are correctly synced (0 SOL staked).
-
     let account = get_account!(context, sol_staker_stake_manager.stake);
     let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-
     assert_eq!(stake_account.lamports_amount, 0);
-
     let account = get_account!(context, validator_stake_manager.stake);
     let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(validator_stake_account.total_staked_lamports_amount, 0);
@@ -1896,12 +1820,7 @@ async fn sync_sol_stake_when_sol_stake_redelegated() {
 
 #[tokio::test]
 async fn harvest_sync_rewards() {
-    let mut program_test = new_program_test();
-    let vote = add_vote_account(
-        &mut program_test,
-        &Pubkey::new_unique(),
-        &Pubkey::new_unique(),
-    );
+    let program_test = new_program_test();
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();
@@ -1911,7 +1830,7 @@ async fn harvest_sync_rewards() {
     // default sync_rewards_lamports = 1_000_000 (0.001 SOL)
     let config_manager = ConfigManager::new(&mut context).await;
     let validator_stake_manager =
-        ValidatorStakeManager::new_with_vote(&mut context, &config_manager.config, vote).await;
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
     let sol_staker_stake_manager = SolStakerStakeManager::new(
         &mut context,
         &config_manager.config,
@@ -2009,7 +1928,7 @@ async fn harvest_sync_rewards() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -2053,12 +1972,7 @@ async fn harvest_sync_rewards() {
 
 #[tokio::test]
 async fn harvest_sync_rewards_wrapped() {
-    let mut program_test = new_program_test();
-    let vote = add_vote_account(
-        &mut program_test,
-        &Pubkey::new_unique(),
-        &Pubkey::new_unique(),
-    );
+    let program_test = new_program_test();
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();
@@ -2068,7 +1982,7 @@ async fn harvest_sync_rewards_wrapped() {
     // default sync_rewards_lamports = 1_000_000 (0.001 SOL)
     let config_manager = ConfigManager::new(&mut context).await;
     let validator_stake_manager =
-        ValidatorStakeManager::new_with_vote(&mut context, &config_manager.config, vote).await;
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
     let sol_staker_stake_manager = SolStakerStakeManager::new(
         &mut context,
         &config_manager.config,
@@ -2170,7 +2084,7 @@ async fn harvest_sync_rewards_wrapped() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -2221,12 +2135,7 @@ async fn harvest_sync_rewards_wrapped() {
 
 #[tokio::test]
 async fn harvest_sync_rewards_without_rewards() {
-    let mut program_test = new_program_test();
-    let vote = add_vote_account(
-        &mut program_test,
-        &Pubkey::new_unique(),
-        &Pubkey::new_unique(),
-    );
+    let program_test = new_program_test();
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();
@@ -2236,7 +2145,7 @@ async fn harvest_sync_rewards_without_rewards() {
     // default sync_rewards_lamports = 1_000_000 (0.001 SOL)
     let config_manager = ConfigManager::new(&mut context).await;
     let validator_stake_manager =
-        ValidatorStakeManager::new_with_vote(&mut context, &config_manager.config, vote).await;
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
     let sol_staker_stake_manager = SolStakerStakeManager::new(
         &mut context,
         &config_manager.config,
@@ -2324,7 +2233,7 @@ async fn harvest_sync_rewards_without_rewards() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -2362,12 +2271,7 @@ async fn harvest_sync_rewards_without_rewards() {
 
 #[tokio::test]
 async fn harvest_sync_rewards_with_closed_sol_stake_account() {
-    let mut program_test = new_program_test();
-    let vote = add_vote_account(
-        &mut program_test,
-        &Pubkey::new_unique(),
-        &Pubkey::new_unique(),
-    );
+    let program_test = new_program_test();
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();
@@ -2377,7 +2281,7 @@ async fn harvest_sync_rewards_with_closed_sol_stake_account() {
     // default sync_rewards_lamports = 1_000_000 (0.001 SOL)
     let config_manager = ConfigManager::new(&mut context).await;
     let validator_stake_manager =
-        ValidatorStakeManager::new_with_vote(&mut context, &config_manager.config, vote).await;
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
     let sol_staker_stake_manager = SolStakerStakeManager::new(
         &mut context,
         &config_manager.config,
@@ -2477,7 +2381,7 @@ async fn harvest_sync_rewards_with_closed_sol_stake_account() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -2528,22 +2432,15 @@ async fn harvest_sync_rewards_with_closed_sol_stake_account() {
 
 #[tokio::test]
 async fn harvest_sync_rewards_with_capped_sync_rewards() {
-    let mut program_test = new_program_test();
-    let vote = add_vote_account(
-        &mut program_test,
-        &Pubkey::new_unique(),
-        &Pubkey::new_unique(),
-    );
+    let program_test = new_program_test();
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();
 
     // Given a config, validator stake and sol staker stake accounts with 1 SOL staked.
-
-    // sync_rewards_lamports = 1_300_000_001
     let config_manager = ConfigManager::with_args(&mut context, 1, 500, 1_300_000_001).await;
     let validator_stake_manager =
-        ValidatorStakeManager::new_with_vote(&mut context, &config_manager.config, vote).await;
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
     let sol_staker_stake_manager = SolStakerStakeManager::new(
         &mut context,
         &config_manager.config,
@@ -2642,7 +2539,7 @@ async fn harvest_sync_rewards_with_capped_sync_rewards() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -2693,12 +2590,7 @@ async fn harvest_sync_rewards_with_capped_sync_rewards() {
 
 #[tokio::test]
 async fn fail_harvest_sync_rewards_with_wrong_sol_stake_account() {
-    let mut program_test = new_program_test();
-    let vote = add_vote_account(
-        &mut program_test,
-        &Pubkey::new_unique(),
-        &Pubkey::new_unique(),
-    );
+    let program_test = new_program_test();
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();
@@ -2708,7 +2600,7 @@ async fn fail_harvest_sync_rewards_with_wrong_sol_stake_account() {
     // default sync_rewards_lamports = 1_000_000 (0.001 SOL)
     let config_manager = ConfigManager::new(&mut context).await;
     let validator_stake_manager =
-        ValidatorStakeManager::new_with_vote(&mut context, &config_manager.config, vote).await;
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
     let sol_staker_stake_manager = SolStakerStakeManager::new(
         &mut context,
         &config_manager.config,
@@ -2771,7 +2663,7 @@ async fn fail_harvest_sync_rewards_with_wrong_sol_stake_account() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(another_sol_stake.pubkey()) // <- wrong SOL stake account
+        .sol_staker_native_stake(another_sol_stake.pubkey()) // <- wrong SOL stake account
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -2795,12 +2687,7 @@ async fn fail_harvest_sync_rewards_with_wrong_sol_stake_account() {
 
 #[tokio::test]
 async fn fail_harvest_sync_rewards_with_wrong_validator_stake_account() {
-    let mut program_test = new_program_test();
-    let vote = add_vote_account(
-        &mut program_test,
-        &Pubkey::new_unique(),
-        &Pubkey::new_unique(),
-    );
+    let program_test = new_program_test();
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();
@@ -2810,7 +2697,7 @@ async fn fail_harvest_sync_rewards_with_wrong_validator_stake_account() {
     // default sync_rewards_lamports = 1_000_000 (0.001 SOL)
     let config_manager = ConfigManager::new(&mut context).await;
     let validator_stake_manager =
-        ValidatorStakeManager::new_with_vote(&mut context, &config_manager.config, vote).await;
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
     let sol_staker_stake_manager = SolStakerStakeManager::new(
         &mut context,
         &config_manager.config,
@@ -2864,7 +2751,7 @@ async fn fail_harvest_sync_rewards_with_wrong_validator_stake_account() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(another_validator_stake) // <- wrong validator stake account
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -2888,12 +2775,7 @@ async fn fail_harvest_sync_rewards_with_wrong_validator_stake_account() {
 
 #[tokio::test]
 async fn fail_harvest_sync_rewards_with_wrong_config_account() {
-    let mut program_test = new_program_test();
-    let vote = add_vote_account(
-        &mut program_test,
-        &Pubkey::new_unique(),
-        &Pubkey::new_unique(),
-    );
+    let program_test = new_program_test();
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();
@@ -2903,7 +2785,7 @@ async fn fail_harvest_sync_rewards_with_wrong_config_account() {
     // default sync_rewards_lamports = 1_000_000 (0.001 SOL)
     let config_manager = ConfigManager::new(&mut context).await;
     let validator_stake_manager =
-        ValidatorStakeManager::new_with_vote(&mut context, &config_manager.config, vote).await;
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
     let sol_staker_stake_manager = SolStakerStakeManager::new(
         &mut context,
         &config_manager.config,
@@ -2956,7 +2838,7 @@ async fn fail_harvest_sync_rewards_with_wrong_config_account() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
@@ -2988,11 +2870,6 @@ async fn fail_harvest_sync_rewards_with_invalid_sol_stake_view_program() {
         fake_sol_stake_view_program,
         None,
     );
-    let vote = add_vote_account(
-        &mut program_test,
-        &Pubkey::new_unique(),
-        &Pubkey::new_unique(),
-    );
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();
@@ -3002,7 +2879,7 @@ async fn fail_harvest_sync_rewards_with_invalid_sol_stake_view_program() {
     // default sync_rewards_lamports = 1_000_000 (0.001 SOL)
     let config_manager = ConfigManager::new(&mut context).await;
     let validator_stake_manager =
-        ValidatorStakeManager::new_with_vote(&mut context, &config_manager.config, vote).await;
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
     let sol_staker_stake_manager = SolStakerStakeManager::new(
         &mut context,
         &config_manager.config,
@@ -3052,7 +2929,7 @@ async fn fail_harvest_sync_rewards_with_invalid_sol_stake_view_program() {
         .vault_holder_rewards(holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(fake_sol_stake_view_program) // <- invalid sol stake view program
@@ -3077,12 +2954,7 @@ async fn fail_harvest_sync_rewards_with_invalid_sol_stake_view_program() {
 
 #[tokio::test]
 async fn fail_harvest_sync_rewards_with_wrong_vault_holder_rewards() {
-    let mut program_test = new_program_test();
-    let vote = add_vote_account(
-        &mut program_test,
-        &Pubkey::new_unique(),
-        &Pubkey::new_unique(),
-    );
+    let program_test = new_program_test();
     let mut context = program_test.start_with_context().await;
     let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
     context.warp_to_slot(slot).unwrap();
@@ -3090,7 +2962,7 @@ async fn fail_harvest_sync_rewards_with_wrong_vault_holder_rewards() {
     // Given a config, validator stake and sol staker stake accounts with 1 SOL staked.
     let config_manager = ConfigManager::new(&mut context).await;
     let validator_stake_manager =
-        ValidatorStakeManager::new_with_vote(&mut context, &config_manager.config, vote).await;
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
     let sol_staker_stake_manager = SolStakerStakeManager::new(
         &mut context,
         &config_manager.config,
@@ -3158,7 +3030,7 @@ async fn fail_harvest_sync_rewards_with_wrong_vault_holder_rewards() {
         .vault_holder_rewards(wrong_holder_rewards)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .native_stake(sol_staker_stake_manager.sol_stake)
+        .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)

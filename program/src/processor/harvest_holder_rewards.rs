@@ -29,7 +29,7 @@ use crate::{
 /// the token vault account. For ease of use, be sure to call the
 /// `HarvestRewards` on the vault account before this.
 ///
-/// 0. `[ ]` Config account
+/// 0. `[w]` Config account
 /// 1. `[w]` Vault token account
 /// 2. `[ ]` Holder rewards account for vault token account
 /// 3. `[w]` Vault authority, PDA with seeds `['token-owner', config]`
@@ -95,7 +95,7 @@ pub fn process_harvest_holder_rewards(
         ProgramError::InvalidAccountOwner,
         "holder rewards",
     );
-    let (derivation, _) = HolderRewards::find_pda(ctx.accounts.vault.key);
+    let (derivation, _) = HolderRewards::find_pda(&config.vault);
     require!(
         ctx.accounts.vault_holder_rewards.key == &derivation,
         ProgramError::InvalidSeeds,

@@ -40,7 +40,9 @@ export type ValidatorStakeTokensInstruction<
     | string
     | IAccountMeta<string> = string,
   TAccountSourceTokenAccount extends string | IAccountMeta<string> = string,
-  TAccountTokenAccountAuthority extends string | IAccountMeta<string> = string,
+  TAccountSourceTokenAccountAuthority extends
+    | string
+    | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountVault extends string | IAccountMeta<string> = string,
   TAccountVaultHolderRewards extends string | IAccountMeta<string> = string,
@@ -64,10 +66,10 @@ export type ValidatorStakeTokensInstruction<
       TAccountSourceTokenAccount extends string
         ? WritableAccount<TAccountSourceTokenAccount>
         : TAccountSourceTokenAccount,
-      TAccountTokenAccountAuthority extends string
-        ? ReadonlySignerAccount<TAccountTokenAccountAuthority> &
-            IAccountSignerMeta<TAccountTokenAccountAuthority>
-        : TAccountTokenAccountAuthority,
+      TAccountSourceTokenAccountAuthority extends string
+        ? ReadonlySignerAccount<TAccountSourceTokenAccountAuthority> &
+            IAccountSignerMeta<TAccountSourceTokenAccountAuthority>
+        : TAccountSourceTokenAccountAuthority,
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
@@ -125,7 +127,7 @@ export type ValidatorStakeTokensInput<
   TAccountValidatorStake extends string = string,
   TAccountValidatorStakeAuthority extends string = string,
   TAccountSourceTokenAccount extends string = string,
-  TAccountTokenAccountAuthority extends string = string,
+  TAccountSourceTokenAccountAuthority extends string = string,
   TAccountMint extends string = string,
   TAccountVault extends string = string,
   TAccountVaultHolderRewards extends string = string,
@@ -140,7 +142,7 @@ export type ValidatorStakeTokensInput<
   /** Token account */
   sourceTokenAccount: Address<TAccountSourceTokenAccount>;
   /** Owner or delegate of the token account */
-  tokenAccountAuthority: TransactionSigner<TAccountTokenAccountAuthority>;
+  sourceTokenAccountAuthority: TransactionSigner<TAccountSourceTokenAccountAuthority>;
   /** Stake Token Mint */
   mint: Address<TAccountMint>;
   /** Stake token Vault */
@@ -157,7 +159,7 @@ export function getValidatorStakeTokensInstruction<
   TAccountValidatorStake extends string,
   TAccountValidatorStakeAuthority extends string,
   TAccountSourceTokenAccount extends string,
-  TAccountTokenAccountAuthority extends string,
+  TAccountSourceTokenAccountAuthority extends string,
   TAccountMint extends string,
   TAccountVault extends string,
   TAccountVaultHolderRewards extends string,
@@ -168,7 +170,7 @@ export function getValidatorStakeTokensInstruction<
     TAccountValidatorStake,
     TAccountValidatorStakeAuthority,
     TAccountSourceTokenAccount,
-    TAccountTokenAccountAuthority,
+    TAccountSourceTokenAccountAuthority,
     TAccountMint,
     TAccountVault,
     TAccountVaultHolderRewards,
@@ -180,7 +182,7 @@ export function getValidatorStakeTokensInstruction<
   TAccountValidatorStake,
   TAccountValidatorStakeAuthority,
   TAccountSourceTokenAccount,
-  TAccountTokenAccountAuthority,
+  TAccountSourceTokenAccountAuthority,
   TAccountMint,
   TAccountVault,
   TAccountVaultHolderRewards,
@@ -201,8 +203,8 @@ export function getValidatorStakeTokensInstruction<
       value: input.sourceTokenAccount ?? null,
       isWritable: true,
     },
-    tokenAccountAuthority: {
-      value: input.tokenAccountAuthority ?? null,
+    sourceTokenAccountAuthority: {
+      value: input.sourceTokenAccountAuthority ?? null,
       isWritable: false,
     },
     mint: { value: input.mint ?? null, isWritable: false },
@@ -234,7 +236,7 @@ export function getValidatorStakeTokensInstruction<
       getAccountMeta(accounts.validatorStake),
       getAccountMeta(accounts.validatorStakeAuthority),
       getAccountMeta(accounts.sourceTokenAccount),
-      getAccountMeta(accounts.tokenAccountAuthority),
+      getAccountMeta(accounts.sourceTokenAccountAuthority),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.vault),
       getAccountMeta(accounts.vaultHolderRewards),
@@ -250,7 +252,7 @@ export function getValidatorStakeTokensInstruction<
     TAccountValidatorStake,
     TAccountValidatorStakeAuthority,
     TAccountSourceTokenAccount,
-    TAccountTokenAccountAuthority,
+    TAccountSourceTokenAccountAuthority,
     TAccountMint,
     TAccountVault,
     TAccountVaultHolderRewards,
@@ -275,7 +277,7 @@ export type ParsedValidatorStakeTokensInstruction<
     /** Token account */
     sourceTokenAccount: TAccountMetas[3];
     /** Owner or delegate of the token account */
-    tokenAccountAuthority: TAccountMetas[4];
+    sourceTokenAccountAuthority: TAccountMetas[4];
     /** Stake Token Mint */
     mint: TAccountMetas[5];
     /** Stake token Vault */
@@ -313,7 +315,7 @@ export function parseValidatorStakeTokensInstruction<
       validatorStake: getNextAccount(),
       validatorStakeAuthority: getNextAccount(),
       sourceTokenAccount: getNextAccount(),
-      tokenAccountAuthority: getNextAccount(),
+      sourceTokenAccountAuthority: getNextAccount(),
       mint: getNextAccount(),
       vault: getNextAccount(),
       vaultHolderRewards: getNextAccount(),
