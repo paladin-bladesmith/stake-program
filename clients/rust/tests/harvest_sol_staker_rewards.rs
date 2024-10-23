@@ -126,6 +126,8 @@ async fn harvest_sol_staker_rewards() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
 
@@ -254,6 +256,8 @@ async fn harvest_sol_staker_rewards_wrapped() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
 
@@ -365,6 +369,8 @@ async fn harvest_sol_staker_rewards_with_no_rewards_available() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
 
@@ -477,6 +483,8 @@ async fn harvest_sol_staker_rewards_after_harvesting() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
@@ -576,6 +584,8 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_authority() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
 
@@ -687,6 +697,8 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_config_account() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
@@ -793,6 +805,8 @@ async fn fail_harvest_sol_staker_rewards_with_uninitialized_stake_account() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
@@ -889,6 +903,8 @@ async fn harvest_sol_stake_when_deactivating() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .keeper_recipient(Some(keeper))
         .instruction();
@@ -988,6 +1004,8 @@ async fn harvest_sol_stake_when_inactive() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .keeper_recipient(Some(keeper))
         .instruction();
@@ -1077,6 +1095,8 @@ async fn sync_sol_stake_when_effective() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .keeper_recipient(Some(keeper))
         .instruction();
@@ -1158,6 +1178,8 @@ async fn sync_sol_stake_when_activating() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .keeper_recipient(Some(keeper))
         .instruction();
@@ -1243,6 +1265,8 @@ async fn fail_sync_sol_stake_with_wrong_config_account() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .keeper_recipient(Some(keeper))
         .instruction();
@@ -1333,6 +1357,8 @@ async fn fail_sync_sol_stake_with_wrong_sol_stake_account() {
         .sol_staker_native_stake(another_sol_stake.pubkey())
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .keeper_recipient(Some(keeper))
         .instruction();
@@ -1416,6 +1442,8 @@ async fn fail_sync_sol_stake_with_wrong_validator_stake() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(another_validator_stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .keeper_recipient(Some(keeper))
         .instruction();
@@ -1505,6 +1533,8 @@ async fn fail_sync_sol_stake_with_uninitialized_config() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .keeper_recipient(Some(keeper))
         .instruction();
@@ -1594,6 +1624,8 @@ async fn fail_sync_sol_stake_with_uninitialized_validator_stake() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .keeper_recipient(Some(keeper))
         .instruction();
@@ -1678,6 +1710,8 @@ async fn fail_sync_sol_stake_with_invalid_sol_stake_view_program() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(fake_sol_stake_view_program) // <- fake sol stake view program
         .keeper_recipient(Some(keeper))
         .instruction();
@@ -1698,7 +1732,7 @@ async fn fail_sync_sol_stake_with_invalid_sol_stake_view_program() {
 }
 
 #[tokio::test]
-async fn sync_sol_stake_when_sol_stake_redelegated() {
+async fn sync_sol_stake_sol_stake_redelegate_to_non_pal() {
     let mut context = setup(&[]).await;
     let second_vote = add_vote_account(&mut context, &Pubkey::new_unique(), &Pubkey::new_unique());
 
@@ -1787,6 +1821,14 @@ async fn sync_sol_stake_when_sol_stake_redelegated() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(
+            paladin_stake_program_client::pdas::find_validator_stake_pda(
+                &second_vote,
+                &config_manager.config,
+            )
+            .0,
+        )
+        .current_validator_stake_authority(Pubkey::new_unique())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .keeper_recipient(Some(keeper))
         .instruction();
@@ -1916,6 +1958,8 @@ async fn harvest_sync_rewards_base() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .keeper_recipient(Some(keeper))
         .instruction();
@@ -2069,6 +2113,8 @@ async fn harvest_sync_rewards_wrapped() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .keeper_recipient(Some(keeper))
         .instruction();
@@ -2215,6 +2261,8 @@ async fn harvest_sync_rewards_without_rewards() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .keeper_recipient(Some(keeper))
         .instruction();
@@ -2360,6 +2408,8 @@ async fn harvest_sync_rewards_with_closed_sol_stake_account() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .keeper_recipient(Some(keeper))
         .instruction();
@@ -2515,6 +2565,8 @@ async fn harvest_sync_rewards_with_capped_sync_rewards() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .keeper_recipient(Some(keeper))
         .instruction();
@@ -2636,6 +2688,8 @@ async fn fail_harvest_sync_rewards_with_wrong_sol_stake_account() {
         .sol_staker_native_stake(another_sol_stake.pubkey()) // <- wrong SOL stake account
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .keeper_recipient(Some(keeper))
         .instruction();
@@ -2925,6 +2979,8 @@ async fn fail_harvest_sync_rewards_with_wrong_config_account() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .keeper_recipient(Some(keeper))
         .instruction();
@@ -3011,6 +3067,8 @@ async fn fail_harvest_sync_rewards_with_invalid_sol_stake_view_program() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(fake_sol_stake_view_program) // <- invalid sol stake view program
         .keeper_recipient(Some(keeper))
         .instruction();
@@ -3109,6 +3167,8 @@ async fn fail_harvest_sync_rewards_with_wrong_vault_holder_rewards() {
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
         .previous_validator_stake(validator_stake_manager.stake)
         .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .keeper_recipient(Some(keeper))
         .instruction();

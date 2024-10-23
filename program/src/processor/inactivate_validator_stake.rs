@@ -30,6 +30,17 @@ pub fn process_inactivate_validator_stake(
 ) -> ProgramResult {
     // Account validation.
 
+    // config
+    // - owner must be the stake program
+    // - must be initialized
+    require!(
+        ctx.accounts.config.owner == program_id,
+        ProgramError::InvalidAccountOwner,
+        "config"
+    );
+    let mut config = ctx.accounts.config.data.borrow_mut();
+    let config = unpack_initialized_mut::<Config>(&mut config)?;
+
     // stake
     // - owner must be the stake program
     // - must be a ValidatorStake account
@@ -56,32 +67,15 @@ pub fn process_inactivate_validator_stake(
 
     // Harvest rewards & update last claim tracking.
     harvest(
-        program_id,
         HarvestAccounts {
             config: ctx.accounts.config,
             vault_holder_rewards: ctx.accounts.vault_holder_rewards,
             authority: ctx.accounts.validator_stake_authority,
         },
+        config,
         delegation,
         None,
     )?;
-
-    // config
-    // - owner must be the stake program
-    // - must be initialized
-    require!(
-        ctx.accounts.config.owner == program_id,
-        ProgramError::InvalidAccountOwner,
-        "config"
-    );
-    let data = &mut ctx.accounts.config.try_borrow_mut_data()?;
-    let config = bytemuck::try_from_bytes_mut::<Config>(data)
-        .map_err(|_error| ProgramError::InvalidAccountData)?;
-    require!(
-        config.is_initialized(),
-        ProgramError::UninitializedAccount,
-        "config",
-    );
 
     // Inactivates the stake if eligible.
     let Some(timestamp) = delegation.deactivation_timestamp else {

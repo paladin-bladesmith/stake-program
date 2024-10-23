@@ -11,7 +11,7 @@ use solana_program::{
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, HarvestSolStakerRewardsAccounts},
-    processor::{harvest, unpack_initialized, unpack_initialized_mut, HarvestAccounts},
+    processor::{harvest, sync_effective, unpack_initialized_mut, HarvestAccounts},
     require,
     state::{
         find_sol_staker_stake_pda, find_validator_stake_pda, Config, SolStakerStake, ValidatorStake,
@@ -48,12 +48,8 @@ pub fn process_harvest_sol_staker_rewards(
         ProgramError::InvalidAccountOwner,
         "config"
     );
-    let vault_key = {
-        let config = ctx.accounts.config.data.borrow();
-        let config = unpack_initialized::<Config>(&config)?;
-
-        config.vault
-    };
+    let mut config = ctx.accounts.config.data.borrow_mut();
+    let config = unpack_initialized_mut::<Config>(&mut config)?;
 
     // sol staker stake
     // - owner must be the stake program
@@ -123,7 +119,7 @@ pub fn process_harvest_sol_staker_rewards(
 
     // Holder rewards.
     // - Must be derived from the vault account.
-    let derivation = HolderRewards::find_pda(&vault_key).0;
+    let derivation = HolderRewards::find_pda(&config.vault).0;
     require!(
         ctx.accounts.vault_holder_rewards.key == &derivation,
         ProgramError::InvalidSeeds,
@@ -148,18 +144,18 @@ pub fn process_harvest_sol_staker_rewards(
         bytemuck::try_from_bytes::<GetStakeActivatingAndDeactivatingReturnData>(&return_data)
             .map_err(|_error| ProgramError::InvalidAccountData)?;
     let current_delegation = stake_state_data.delegated_vote.get();
-    let stake_amount = stake_state_data.effective.into();
+    let mut stake_amount = stake_state_data.effective.into();
     let requires_sync = stake_amount != sol_staker_stake.lamports_amount
         || current_delegation != Some(sol_staker_stake.delegation.validator_vote);
 
     // Harvest the staker.
     harvest(
-        program_id,
         HarvestAccounts {
             config: ctx.accounts.config,
             vault_holder_rewards: ctx.accounts.vault_holder_rewards,
             authority: ctx.accounts.sol_staker_stake_authority,
         },
+        config,
         &mut sol_staker_stake.delegation,
         match requires_sync {
             true => Some(
@@ -178,13 +174,14 @@ pub fn process_harvest_sol_staker_rewards(
 
     // If the user has a previous delegation, their old stake is removed.
     if sol_staker_stake.delegation.validator_vote != Pubkey::default() {
+        // Harvest the previous validator to flush rewards before we update their stake.
         harvest(
-            program_id,
             HarvestAccounts {
                 config: ctx.accounts.config,
                 vault_holder_rewards: ctx.accounts.vault_holder_rewards,
                 authority: ctx.accounts.previous_validator_stake_authority,
             },
+            config,
             &mut previous_validator_stake.delegation,
             None,
         )?;
@@ -194,6 +191,13 @@ pub fn process_harvest_sol_staker_rewards(
             .total_staked_lamports_amount
             .checked_sub(sol_staker_stake.lamports_amount)
             .ok_or(ProgramError::ArithmeticOverflow)?;
+
+        // Update the validator's effective stake.
+        sync_effective(
+            config,
+            &mut previous_validator_stake.delegation,
+            previous_validator_stake.total_staked_lamports_amount,
+        )?;
     } else {
         assert_eq!(sol_staker_stake.lamports_amount, 0);
     }
@@ -206,11 +210,6 @@ pub fn process_harvest_sol_staker_rewards(
         //   and config accounts)
         // - must be initialized
         // - must belong to the validator the staker is currently delegated to
-        require!(
-            ctx.accounts.current_validator_stake.owner == program_id,
-            ProgramError::InvalidAccountOwner,
-            "validator stake"
-        );
         let (derivation, _) =
             find_validator_stake_pda(&current_delegation, ctx.accounts.config.key, program_id);
         require!(
@@ -218,28 +217,34 @@ pub fn process_harvest_sol_staker_rewards(
             ProgramError::InvalidSeeds,
             "current validator stake",
         );
-        let mut current_validator_data =
-            ctx.accounts.current_validator_stake.try_borrow_mut_data()?;
-        let current_validator_stake =
-            unpack_initialized_mut::<ValidatorStake>(&mut current_validator_data)?;
 
-        // Harvest the current validator.
-        harvest(
-            program_id,
-            HarvestAccounts {
-                config: ctx.accounts.config,
-                vault_holder_rewards: ctx.accounts.vault_holder_rewards,
-                authority: ctx.accounts.current_validator_stake_authority,
-            },
-            &mut current_validator_stake.delegation,
-            None,
-        )?;
+        // Only credit the stake to the new validator if it's a paladin-enabled validator.
+        if ctx.accounts.current_validator_stake.owner == program_id {
+            let mut current_validator_data =
+                ctx.accounts.current_validator_stake.try_borrow_mut_data()?;
+            let current_validator_stake =
+                unpack_initialized_mut::<ValidatorStake>(&mut current_validator_data)?;
 
-        // Add the user's stake to the current validator.
-        current_validator_stake.total_staked_lamports_amount = current_validator_stake
-            .total_staked_lamports_amount
-            .checked_add(stake_amount)
-            .ok_or(ProgramError::ArithmeticOverflow)?;
+            // Harvest the current validator.
+            harvest(
+                HarvestAccounts {
+                    config: ctx.accounts.config,
+                    vault_holder_rewards: ctx.accounts.vault_holder_rewards,
+                    authority: ctx.accounts.current_validator_stake_authority,
+                },
+                config,
+                &mut current_validator_stake.delegation,
+                None,
+            )?;
+
+            // Add the user's stake to the current validator.
+            current_validator_stake.total_staked_lamports_amount = current_validator_stake
+                .total_staked_lamports_amount
+                .checked_add(stake_amount)
+                .ok_or(ProgramError::ArithmeticOverflow)?;
+        } else {
+            stake_amount = 0;
+        }
     }
 
     // Finally, the user's stake is updated.
