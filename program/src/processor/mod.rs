@@ -442,6 +442,12 @@ fn process_slash_for_delegation(args: SlashArgs) -> ProgramResult {
         amount,
     } = args;
 
+    require!(
+        token_program_info.key == &spl_token_2022::ID,
+        ProgramError::IncorrectProgramId,
+        "token program"
+    );
+
     // Update the stake amount on both stake and config accounts:
     //
     //   1. the amount slashed is taken from the stake amount (this includes
