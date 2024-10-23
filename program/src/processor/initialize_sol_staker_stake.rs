@@ -163,9 +163,7 @@ pub fn process_initialize_sol_staker_stake(
         *ctx.accounts.sol_staker_native_stake.key,
         validator_vote,
     );
-    stake.lamports_amount = u64::from(stake_state_data.activating)
-        .checked_add(stake_state_data.effective.into())
-        .ok_or(ProgramError::ArithmeticOverflow)?;
+    stake.lamports_amount = stake_state_data.effective.into();
 
     // Update the validator stake account to increment the total SOL staked.
     validator_stake.total_staked_lamports_amount = validator_stake
