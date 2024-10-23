@@ -175,7 +175,7 @@ async fn withdraw_inactive_stake_with_validator_stake() {
 
 #[tokio::test]
 async fn withdraw_inactive_stake_with_sol_staker_stake() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config and stake accounts.
 
@@ -440,7 +440,7 @@ async fn fail_withdraw_inactive_stake_with_validator_stake_without_inactive_stak
 
 #[tokio::test]
 async fn fail_withdraw_inactive_stake_with_sol_staker_stake_without_inactive_stake() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config and stake accounts.
 

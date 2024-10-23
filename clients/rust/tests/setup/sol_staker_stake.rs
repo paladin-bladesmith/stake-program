@@ -51,7 +51,6 @@ impl SolStakerStakeManager {
         }
 
         // create the sol staker stake account
-
         let stake =
             create_sol_staker_stake(context, &stake_state.pubkey(), validator_stake, config).await;
 

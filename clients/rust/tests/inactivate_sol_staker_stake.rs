@@ -27,10 +27,9 @@ use solana_sdk::{
     transaction::Transaction,
 };
 
-#[ignore = "Need to fix warping"]
 #[tokio::test]
-async fn inactivate_sol_staker_stake() {
-    let mut context = setup().await;
+async fn inactivate_sol_staker_stake_base() {
+    let mut context = setup(&[]).await;
     let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account (total amount delegated = 100).
@@ -127,7 +126,7 @@ async fn inactivate_sol_staker_stake() {
 
 #[tokio::test]
 async fn fail_inactivate_sol_staker_stake_with_no_deactivated_amount() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
     let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account (total amount delegated = 100).
@@ -201,7 +200,7 @@ async fn fail_inactivate_sol_staker_stake_with_no_deactivated_amount() {
 
 #[tokio::test]
 async fn fail_inactivate_sol_staker_stake_with_wrong_config() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
     let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account (total amount delegated = 100).
@@ -289,7 +288,7 @@ async fn fail_inactivate_sol_staker_stake_with_wrong_config() {
 
 #[tokio::test]
 async fn fail_inactivate_sol_stake_stake_with_uninitialized_stake_account() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
     let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config and validator stake accounts.
@@ -354,7 +353,7 @@ async fn fail_inactivate_sol_stake_stake_with_uninitialized_stake_account() {
 
 #[tokio::test]
 async fn fail_inactivate_sol_staker_stake_with_active_cooldown() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
     let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account (total amount delegated = 100).

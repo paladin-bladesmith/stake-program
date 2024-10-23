@@ -494,7 +494,7 @@ async fn fail_set_authority_on_validator_stake_with_invalid_authority() {
 
 #[tokio::test]
 async fn set_authority_on_sol_staker_stake() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and SOL staker stake accounts.
 
@@ -538,7 +538,7 @@ async fn set_authority_on_sol_staker_stake() {
 
 #[tokio::test]
 async fn fail_set_authority_on_sol_staker_stake_with_invalid_authority() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and SOL staker stake accounts.
 

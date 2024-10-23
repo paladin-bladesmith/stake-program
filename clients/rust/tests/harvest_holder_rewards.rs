@@ -1041,7 +1041,7 @@ async fn fail_harvest_holder_rewards_with_wrong_config() {
 
 #[tokio::test]
 async fn sol_staker_stake_harvest_holder_rewards() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
     let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account with 100 staked amount.
@@ -1171,7 +1171,7 @@ async fn sol_staker_stake_harvest_holder_rewards() {
 
 #[tokio::test]
 async fn sol_staker_stake_harvest_holder_rewards_with_no_rewards_available() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
     let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account with 100 staked amount.
@@ -1275,7 +1275,7 @@ async fn sol_staker_stake_harvest_holder_rewards_with_no_rewards_available() {
 
 #[tokio::test]
 async fn sol_staker_stake_harvest_holder_rewards_after_harvesting() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
     let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account with 100 staked amount.
@@ -1421,7 +1421,7 @@ async fn sol_staker_stake_harvest_holder_rewards_after_harvesting() {
 
 #[tokio::test]
 async fn sol_staker_stake_fail_harvest_holder_rewards_with_wrong_authority() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config account with 100 staked amount.
     let config_manager = ConfigManager::new(&mut context).await;

@@ -27,7 +27,7 @@ use spl_token_2022::{extension::StateWithExtensions, state::Account};
 
 #[tokio::test]
 async fn sol_staker_stake_tokens_simple() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -124,7 +124,7 @@ async fn sol_staker_stake_tokens_simple() {
 
 #[tokio::test]
 async fn fail_sol_staker_stake_tokens_with_wrong_vault_account() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -218,7 +218,7 @@ async fn fail_sol_staker_stake_tokens_with_wrong_vault_account() {
 
 #[tokio::test]
 async fn fail_sol_staker_stake_tokens_with_wrong_config_account() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -305,7 +305,7 @@ async fn fail_sol_staker_stake_tokens_with_wrong_config_account() {
 
 #[tokio::test]
 async fn fail_sol_staker_stake_tokens_with_zero_amount() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -389,7 +389,7 @@ async fn fail_sol_staker_stake_tokens_with_zero_amount() {
 
 #[tokio::test]
 async fn fail_sol_staker_stake_tokens_with_uninitialized_stake_account() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -484,7 +484,7 @@ async fn fail_sol_staker_stake_tokens_with_uninitialized_stake_account() {
 
 #[tokio::test]
 async fn sol_staker_stake_tokens_with_insufficient_staked_sol_reduces_effective() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
     let config_manager = ConfigManager::new(&mut context).await;
