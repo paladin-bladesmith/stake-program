@@ -30,6 +30,7 @@ use solana_sdk::{
     transaction::Transaction,
 };
 
+#[ignore = "Blocked by program-test warp bug"]
 #[tokio::test]
 async fn harvest_sol_staker_rewards() {
     let mut context = setup().await;
@@ -150,6 +151,7 @@ async fn harvest_sol_staker_rewards() {
     );
 }
 
+#[ignore = "Blocked by program-test warp bug"]
 #[tokio::test]
 async fn harvest_sol_staker_rewards_wrapped() {
     let mut context = setup().await;
@@ -277,6 +279,7 @@ async fn harvest_sol_staker_rewards_wrapped() {
     );
 }
 
+#[ignore = "Blocked by program-test warp bug"]
 #[tokio::test]
 async fn harvest_sol_staker_rewards_with_no_rewards_available() {
     let mut context = setup().await;
@@ -384,6 +387,7 @@ async fn harvest_sol_staker_rewards_with_no_rewards_available() {
     assert_eq!(account.lamports, expected_config_lamports);
 }
 
+#[ignore = "Blocked by program-test warp bug"]
 #[tokio::test]
 async fn harvest_sol_staker_rewards_after_harvesting() {
     let mut context = setup().await;
@@ -811,6 +815,7 @@ async fn fail_harvest_sol_staker_rewards_with_uninitialized_stake_account() {
     assert_instruction_error!(err, InstructionError::UninitializedAccount);
 }
 
+#[ignore = "Blocked by program-test warp bug"]
 #[tokio::test]
 async fn harvest_sol_stake_when_deactivating() {
     let program_test = new_program_test();
@@ -913,6 +918,7 @@ async fn harvest_sol_stake_when_deactivating() {
     assert_eq!(validator_stake_account.total_staked_lamports_amount, 0);
 }
 
+#[ignore = "Blocked by program-test warp bug"]
 #[tokio::test]
 async fn harvest_sol_stake_when_inactive() {
     let program_test = new_program_test();
@@ -1014,6 +1020,7 @@ async fn harvest_sol_stake_when_inactive() {
     assert_eq!(validator_stake_account.total_staked_lamports_amount, 0);
 }
 
+#[ignore = "Blocked by program-test warp bug"]
 #[tokio::test]
 async fn sync_sol_stake_when_effective() {
     let program_test = new_program_test();
@@ -1109,6 +1116,7 @@ async fn sync_sol_stake_when_effective() {
     );
 }
 
+#[ignore = "Blocked by program-test warp bug"]
 #[tokio::test]
 async fn sync_sol_stake_when_activating() {
     let mut context = setup().await;
@@ -1709,6 +1717,7 @@ async fn fail_sync_sol_stake_with_invalid_sol_stake_view_program() {
     assert_instruction_error!(err, InstructionError::IncorrectProgramId);
 }
 
+#[ignore = "Blocked by program-test warp bug"]
 #[tokio::test]
 async fn sync_sol_stake_when_sol_stake_redelegated() {
     let mut program_test = new_program_test();
@@ -1818,6 +1827,7 @@ async fn sync_sol_stake_when_sol_stake_redelegated() {
     assert_eq!(validator_stake_account.total_staked_lamports_amount, 0);
 }
 
+#[ignore = "Blocked by program-test warp bug"]
 #[tokio::test]
 async fn harvest_sync_rewards() {
     let program_test = new_program_test();
@@ -1970,6 +1980,7 @@ async fn harvest_sync_rewards() {
     );
 }
 
+#[ignore = "Blocked by program-test warp bug"]
 #[tokio::test]
 async fn harvest_sync_rewards_wrapped() {
     let program_test = new_program_test();
@@ -2133,6 +2144,7 @@ async fn harvest_sync_rewards_wrapped() {
     );
 }
 
+#[ignore = "Blocked by program-test warp bug"]
 #[tokio::test]
 async fn harvest_sync_rewards_without_rewards() {
     let program_test = new_program_test();
@@ -2269,6 +2281,7 @@ async fn harvest_sync_rewards_without_rewards() {
     assert_eq!(account.lamports, expected_config_lamports);
 }
 
+#[ignore = "Blocked by program-test warp bug"]
 #[tokio::test]
 async fn harvest_sync_rewards_with_closed_sol_stake_account() {
     let program_test = new_program_test();
@@ -2430,6 +2443,7 @@ async fn harvest_sync_rewards_with_closed_sol_stake_account() {
     );
 }
 
+#[ignore = "Blocked by program-test warp bug"]
 #[tokio::test]
 async fn harvest_sync_rewards_with_capped_sync_rewards() {
     let program_test = new_program_test();
