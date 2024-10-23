@@ -48,10 +48,14 @@ impl SolStakerStakeManager {
         if amount > 0 {
             delegate_stake_account(context, &stake_state.pubkey(), validator_vote, &authority)
                 .await;
+
+            // Warp to ensure stake activates.
+            let root = context.banks_client.get_root_slot().await.unwrap();
+            let slots_per_epoch = context.genesis_config().epoch_schedule.slots_per_epoch;
+            context.warp_to_slot(root + slots_per_epoch).unwrap();
         }
 
         // create the sol staker stake account
-
         let stake =
             create_sol_staker_stake(context, &stake_state.pubkey(), validator_stake, config).await;
 

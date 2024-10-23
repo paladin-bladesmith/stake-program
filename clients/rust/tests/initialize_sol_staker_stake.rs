@@ -41,16 +41,13 @@ async fn initialize_sol_staker_stake() {
     let mut context = program_test.start_with_context().await;
 
     // Given a config and a validator stake accounts.
-
     let config_manager = ConfigManager::new(&mut context).await;
     let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we create a SOL stake account.
-
     let stake_state = Keypair::new();
     let stake_amount = 1_000_000_000;
     let withdrawer = Keypair::new();
-
     create_stake_account(
         &mut context,
         &stake_state,
@@ -59,14 +56,12 @@ async fn initialize_sol_staker_stake() {
         stake_amount,
     )
     .await;
-
     let stake_state = stake_state.pubkey();
     delegate_stake_account(&mut context, &stake_state, &stake_manager.vote, &withdrawer).await;
+    context.warp_to_epoch(10).unwrap();
 
     // When we initialize the SOL staker stake account.
-
     let (stake_pda, _) = find_sol_staker_stake_pda(&stake_state, &config_manager.config);
-
     let transfer_ix = system_instruction::transfer(
         &context.payer.pubkey(),
         &stake_pda,
@@ -77,7 +72,6 @@ async fn initialize_sol_staker_stake() {
             .unwrap()
             .minimum_balance(SolStakerStake::LEN),
     );
-
     let initialize_ix = InitializeSolStakerStakeBuilder::new()
         .config(config_manager.config)
         .sol_staker_stake(stake_pda)
@@ -85,7 +79,6 @@ async fn initialize_sol_staker_stake() {
         .sol_staker_native_stake(stake_state)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
-
     let tx = Transaction::new_signed_with_payer(
         &[transfer_ix, initialize_ix],
         Some(&context.payer.pubkey()),
@@ -95,10 +88,8 @@ async fn initialize_sol_staker_stake() {
     context.banks_client.process_transaction(tx).await.unwrap();
 
     // Then an account was created with the correct data.
-
     let account = get_account!(context, stake_pda);
     assert_eq!(account.data.len(), SolStakerStake::LEN);
-
     let account_data = account.data.as_ref();
     let stake_account = SolStakerStake::from_bytes(account_data).unwrap();
     assert_eq!(stake_account.delegation.validator_vote, stake_manager.vote);
@@ -107,7 +98,6 @@ async fn initialize_sol_staker_stake() {
     assert_eq!(stake_account.lamports_amount, 1_000_000_000);
 
     // And the validator stake account was updated.
-
     let account = get_account!(context, stake_manager.stake);
     let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
