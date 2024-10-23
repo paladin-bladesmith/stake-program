@@ -13,14 +13,14 @@ use setup::{
     calculate_stake_rewards_per_token,
     config::{create_config, ConfigManager},
     harvest::setup_keeper,
-    new_program_test, setup,
+    setup,
     sol_staker_stake::SolStakerStakeManager,
     stake::{create_stake_account, deactivate_stake_account, delegate_stake_account},
     validator_stake::ValidatorStakeManager,
     vote::add_vote_account,
     SWAD,
 };
-use solana_program_test::tokio;
+use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
     account::{Account, AccountSharedData},
     instruction::InstructionError,
@@ -32,7 +32,7 @@ use solana_sdk::{
 
 #[tokio::test]
 async fn harvest_sol_staker_rewards() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config account with 26 lamports rewards and 130 staked amount.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -152,7 +152,7 @@ async fn harvest_sol_staker_rewards() {
 
 #[tokio::test]
 async fn harvest_sol_staker_rewards_wrapped() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config account with 26 lamports rewards and 130 staked amount.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -279,7 +279,7 @@ async fn harvest_sol_staker_rewards_wrapped() {
 
 #[tokio::test]
 async fn harvest_sol_staker_rewards_with_no_rewards_available() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config account with no rewards and 130 staked amount.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -386,7 +386,7 @@ async fn harvest_sol_staker_rewards_with_no_rewards_available() {
 
 #[tokio::test]
 async fn harvest_sol_staker_rewards_after_harvesting() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config account with 26 lamports rewards and 130 staked amount.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -497,7 +497,7 @@ async fn harvest_sol_staker_rewards_after_harvesting() {
 
 #[tokio::test]
 async fn fail_harvest_sol_staker_rewards_with_wrong_authority() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config account with 26 lamports rewards and 130 staked amount.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -597,7 +597,7 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_authority() {
 
 #[tokio::test]
 async fn fail_harvest_sol_staker_rewards_with_wrong_config_account() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config account with 26 lamports rewards and 130 staked amount.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -707,7 +707,7 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_config_account() {
 
 #[tokio::test]
 async fn fail_harvest_sol_staker_rewards_with_uninitialized_stake_account() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config account with 26 lamports rewards and 130 staked amount.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -813,10 +813,7 @@ async fn fail_harvest_sol_staker_rewards_with_uninitialized_stake_account() {
 
 #[tokio::test]
 async fn harvest_sol_stake_when_deactivating() {
-    let program_test = new_program_test();
-    let mut context = program_test.start_with_context().await;
-    let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
-    context.warp_to_slot(slot).unwrap();
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -915,10 +912,7 @@ async fn harvest_sol_stake_when_deactivating() {
 
 #[tokio::test]
 async fn harvest_sol_stake_when_inactive() {
-    let program_test = new_program_test();
-    let mut context = program_test.start_with_context().await;
-    let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
-    context.warp_to_slot(slot).unwrap();
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -1016,10 +1010,7 @@ async fn harvest_sol_stake_when_inactive() {
 
 #[tokio::test]
 async fn sync_sol_stake_when_effective() {
-    let program_test = new_program_test();
-    let mut context = program_test.start_with_context().await;
-    let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
-    context.warp_to_slot(slot).unwrap();
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -1111,7 +1102,7 @@ async fn sync_sol_stake_when_effective() {
 
 #[tokio::test]
 async fn sync_sol_stake_when_activating() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -1192,7 +1183,7 @@ async fn sync_sol_stake_when_activating() {
 
 #[tokio::test]
 async fn fail_sync_sol_stake_with_wrong_config_account() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -1273,7 +1264,7 @@ async fn fail_sync_sol_stake_with_wrong_config_account() {
 
 #[tokio::test]
 async fn fail_sync_sol_stake_with_wrong_sol_stake_account() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -1363,7 +1354,7 @@ async fn fail_sync_sol_stake_with_wrong_sol_stake_account() {
 
 #[tokio::test]
 async fn fail_sync_sol_stake_with_wrong_validator_stake() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -1446,7 +1437,7 @@ async fn fail_sync_sol_stake_with_wrong_validator_stake() {
 
 #[tokio::test]
 async fn fail_sync_sol_stake_with_uninitialized_config() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -1535,7 +1526,7 @@ async fn fail_sync_sol_stake_with_uninitialized_config() {
 
 #[tokio::test]
 async fn fail_sync_sol_stake_with_uninitialized_validator_stake() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -1625,15 +1616,12 @@ async fn fail_sync_sol_stake_with_uninitialized_validator_stake() {
 
 #[tokio::test]
 async fn fail_sync_sol_stake_with_invalid_sol_stake_view_program() {
-    let mut program_test = new_program_test();
-    // add a "fake" sol stake view program
     let fake_sol_stake_view_program = Pubkey::new_unique();
-    program_test.add_program(
+    let mut context = setup(&[(
         "paladin_sol_stake_view_program",
         fake_sol_stake_view_program,
-        None,
-    );
-    let mut context = program_test.start_with_context().await;
+    )])
+    .await;
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -1711,15 +1699,8 @@ async fn fail_sync_sol_stake_with_invalid_sol_stake_view_program() {
 
 #[tokio::test]
 async fn sync_sol_stake_when_sol_stake_redelegated() {
-    let mut program_test = new_program_test();
-    let second_vote = add_vote_account(
-        &mut program_test,
-        &Pubkey::new_unique(),
-        &Pubkey::new_unique(),
-    );
-    let mut context = program_test.start_with_context().await;
-    let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
-    context.warp_to_slot(slot).unwrap();
+    let mut context = setup(&[]).await;
+    let second_vote = add_vote_account(&mut context, &Pubkey::new_unique(), &Pubkey::new_unique());
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked
     // with the first vote account.
@@ -1745,6 +1726,14 @@ async fn sync_sol_stake_when_sol_stake_redelegated() {
         validator_stake_account.total_staked_lamports_amount,
         5_000_000_000
     );
+
+    // Deactivate the stake.
+    deactivate_stake_account(
+        &mut context,
+        &sol_staker_stake_manager.sol_stake,
+        &sol_staker_stake_manager.authority,
+    )
+    .await;
 
     // And we delegate the stake to a second vote account.
     delegate_stake_account(
@@ -1819,11 +1808,8 @@ async fn sync_sol_stake_when_sol_stake_redelegated() {
 }
 
 #[tokio::test]
-async fn harvest_sync_rewards() {
-    let program_test = new_program_test();
-    let mut context = program_test.start_with_context().await;
-    let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
-    context.warp_to_slot(slot).unwrap();
+async fn harvest_sync_rewards_base() {
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and sol staker stake accounts with 1 SOL staked.
 
@@ -1881,7 +1867,6 @@ async fn harvest_sync_rewards() {
     );
 
     // And we deactivate the stake.
-
     deactivate_stake_account(
         &mut context,
         &stake_account.sol_stake,
@@ -1972,10 +1957,7 @@ async fn harvest_sync_rewards() {
 
 #[tokio::test]
 async fn harvest_sync_rewards_wrapped() {
-    let program_test = new_program_test();
-    let mut context = program_test.start_with_context().await;
-    let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
-    context.warp_to_slot(slot).unwrap();
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and sol staker stake accounts with 1 SOL staked.
 
@@ -2135,10 +2117,7 @@ async fn harvest_sync_rewards_wrapped() {
 
 #[tokio::test]
 async fn harvest_sync_rewards_without_rewards() {
-    let program_test = new_program_test();
-    let mut context = program_test.start_with_context().await;
-    let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
-    context.warp_to_slot(slot).unwrap();
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and sol staker stake accounts with 1 SOL staked.
 
@@ -2271,10 +2250,7 @@ async fn harvest_sync_rewards_without_rewards() {
 
 #[tokio::test]
 async fn harvest_sync_rewards_with_closed_sol_stake_account() {
-    let program_test = new_program_test();
-    let mut context = program_test.start_with_context().await;
-    let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
-    context.warp_to_slot(slot).unwrap();
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and sol staker stake accounts with 1 SOL staked.
 
@@ -2432,10 +2408,7 @@ async fn harvest_sync_rewards_with_closed_sol_stake_account() {
 
 #[tokio::test]
 async fn harvest_sync_rewards_with_capped_sync_rewards() {
-    let program_test = new_program_test();
-    let mut context = program_test.start_with_context().await;
-    let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
-    context.warp_to_slot(slot).unwrap();
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and sol staker stake accounts with 1 SOL staked.
     let config_manager = ConfigManager::with_args(&mut context, 1, 500, 1_300_000_001).await;
@@ -2590,10 +2563,7 @@ async fn harvest_sync_rewards_with_capped_sync_rewards() {
 
 #[tokio::test]
 async fn fail_harvest_sync_rewards_with_wrong_sol_stake_account() {
-    let program_test = new_program_test();
-    let mut context = program_test.start_with_context().await;
-    let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
-    context.warp_to_slot(slot).unwrap();
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and sol staker stake accounts with 1 SOL staked.
 
@@ -2687,10 +2657,7 @@ async fn fail_harvest_sync_rewards_with_wrong_sol_stake_account() {
 
 #[tokio::test]
 async fn fail_harvest_sync_rewards_with_wrong_validator_stake_account() {
-    let program_test = new_program_test();
-    let mut context = program_test.start_with_context().await;
-    let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
-    context.warp_to_slot(slot).unwrap();
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and sol staker stake accounts with 1 SOL staked.
 
@@ -2775,10 +2742,7 @@ async fn fail_harvest_sync_rewards_with_wrong_validator_stake_account() {
 
 #[tokio::test]
 async fn fail_harvest_sync_rewards_with_wrong_config_account() {
-    let program_test = new_program_test();
-    let mut context = program_test.start_with_context().await;
-    let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
-    context.warp_to_slot(slot).unwrap();
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and sol staker stake accounts with 1 SOL staked.
 
@@ -2862,17 +2826,12 @@ async fn fail_harvest_sync_rewards_with_wrong_config_account() {
 
 #[tokio::test]
 async fn fail_harvest_sync_rewards_with_invalid_sol_stake_view_program() {
-    let mut program_test = new_program_test();
-    // add a "fake" sol stake view program
     let fake_sol_stake_view_program = Pubkey::new_unique();
-    program_test.add_program(
+    let mut context = setup(&[(
         "paladin_sol_stake_view_program",
         fake_sol_stake_view_program,
-        None,
-    );
-    let mut context = program_test.start_with_context().await;
-    let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
-    context.warp_to_slot(slot).unwrap();
+    )])
+    .await;
 
     // Given a config, validator stake and sol staker stake accounts with 1 SOL staked.
 
@@ -2954,10 +2913,7 @@ async fn fail_harvest_sync_rewards_with_invalid_sol_stake_view_program() {
 
 #[tokio::test]
 async fn fail_harvest_sync_rewards_with_wrong_vault_holder_rewards() {
-    let program_test = new_program_test();
-    let mut context = program_test.start_with_context().await;
-    let slot = context.genesis_config().epoch_schedule.first_normal_slot + 1;
-    context.warp_to_slot(slot).unwrap();
+    let mut context = setup(&[]).await;
 
     // Given a config, validator stake and sol staker stake accounts with 1 SOL staked.
     let config_manager = ConfigManager::new(&mut context).await;

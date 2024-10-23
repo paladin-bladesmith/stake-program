@@ -31,7 +31,7 @@ use spl_token_2022::extension::StateWithExtensions;
 
 #[tokio::test]
 async fn slash_sol_staker_stake() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
     let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account with 100 delegated tokens on its vault.
@@ -133,7 +133,7 @@ async fn slash_sol_staker_stake() {
 
 #[tokio::test]
 async fn fail_slash_sol_staker_stake_with_zero_amount() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
     let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account with 100 delegated tokens on its vault.
@@ -224,7 +224,7 @@ async fn fail_slash_sol_staker_stake_with_zero_amount() {
 
 #[tokio::test]
 async fn slash_sol_staker_stake_with_no_staked_amount() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
     let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account with 100 delegated tokens on its vault.
@@ -308,7 +308,7 @@ async fn slash_sol_staker_stake_with_no_staked_amount() {
 
 #[tokio::test]
 async fn fail_slash_sol_staker_stake_with_invalid_slash_authority() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
     let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account with 100 delegated tokens on its vault.
@@ -400,7 +400,7 @@ async fn fail_slash_sol_staker_stake_with_invalid_slash_authority() {
 
 #[tokio::test]
 async fn fail_slash_sol_staker_stake_with_incorrect_vault_account() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
     let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account with 100 delegated tokens on its vault.
@@ -515,7 +515,7 @@ async fn fail_slash_sol_staker_stake_with_incorrect_vault_account() {
 
 #[tokio::test]
 async fn fail_slash_sol_staker_stake_with_uninitialized_stake_account() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
     let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account with 100 delegated tokens on its vault.
@@ -599,7 +599,7 @@ async fn fail_slash_sol_staker_stake_with_uninitialized_stake_account() {
 
 #[tokio::test]
 async fn fail_slash_sol_staker_stake_with_uninitialized_config_account() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
     let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account with 100 delegated tokens on its vault.
@@ -703,7 +703,7 @@ async fn fail_slash_sol_staker_stake_with_uninitialized_config_account() {
 
 #[tokio::test]
 async fn fail_slash_validator_stake_with_wrong_config_account() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
     let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account with 100 delegated tokens on its vault.
@@ -797,7 +797,7 @@ async fn fail_slash_validator_stake_with_wrong_config_account() {
 
 #[tokio::test]
 async fn fail_slash_sol_staker_stake_with_insufficient_total_amount_delegated() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
     let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account with 100 delegated tokens on its vault.
@@ -888,7 +888,7 @@ async fn fail_slash_sol_staker_stake_with_insufficient_total_amount_delegated() 
 
 #[tokio::test]
 async fn slash_sol_staker_stake_updating_deactivating_amount() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
     let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account with 75 delegated tokens on its vault.
@@ -1001,7 +1001,7 @@ async fn slash_sol_staker_stake_updating_deactivating_amount() {
 
 #[tokio::test]
 async fn slash_sol_staker_stake_with_insufficient_stake_amount() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
     let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account with 900 delegated tokens on its vault.

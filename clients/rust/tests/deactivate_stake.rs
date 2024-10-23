@@ -568,7 +568,7 @@ async fn fail_deactivate_stake_with_uninitialized_config_account() {
 
 #[tokio::test]
 async fn sol_staker_stake_deactivate_stake() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config account and a validator's vote account.
 
@@ -633,7 +633,7 @@ async fn sol_staker_stake_deactivate_stake() {
 
 #[tokio::test]
 async fn sol_staker_stake_deactivate_stake_with_active_deactivation() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config account and a validator's vote account.
 
@@ -735,7 +735,7 @@ async fn sol_staker_stake_deactivate_stake_with_active_deactivation() {
 
 #[tokio::test]
 async fn fail_sol_staker_stake_deactivate_stake_with_amount_greater_than_stake_amount() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config account and a validator's vote account.
 
@@ -803,7 +803,7 @@ async fn fail_sol_staker_stake_deactivate_stake_with_amount_greater_than_stake_a
 
 #[tokio::test]
 async fn fail_sol_staker_stake_deactivate_stake_with_maximum_deactivation_amount_exceeded() {
-    let mut context = setup().await;
+    let mut context = setup(&[]).await;
 
     // Given a config account and a validator's vote account.
 

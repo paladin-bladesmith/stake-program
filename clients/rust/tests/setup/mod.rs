@@ -21,7 +21,7 @@ pub const REWARDS_PER_TOKEN_SCALING_FACTOR: u128 = 1_000_000_000_000_000_000;
 
 pub const SWAD: u64 = 10u64.pow(9);
 
-pub fn new_program_test() -> ProgramTest {
+pub async fn setup(program_overrides: &[(&'static str, Pubkey)]) -> ProgramTestContext {
     let mut program_test = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -37,12 +37,17 @@ pub fn new_program_test() -> ProgramTest {
         paladin_sol_stake_view_program_client::ID,
         None,
     );
-    program_test
-}
 
-pub async fn setup() -> ProgramTestContext {
-    let program_test = new_program_test();
-    program_test.start_with_context().await
+    for (name, program_id) in program_overrides {
+        program_test.add_program(name, *program_id, None);
+    }
+
+    let mut context = program_test.start_with_context().await;
+    context
+        .warp_to_slot(context.genesis_config().epoch_schedule.first_normal_slot + 1)
+        .unwrap();
+
+    context
 }
 
 #[macro_export]

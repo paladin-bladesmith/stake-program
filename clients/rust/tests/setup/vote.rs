@@ -46,18 +46,16 @@ pub async fn create_vote_account_with_program_id(
 }
 
 pub fn add_vote_account(
-    program_test: &mut ProgramTest,
+    context: &mut ProgramTestContext,
     node: &Pubkey,
     authority: &Pubkey,
 ) -> Pubkey {
     let vote = Pubkey::new_unique();
-
     let mut vote_state = VoteState::new_rand_for_tests(*node, 0);
     vote_state.authorized_withdrawer = *authority;
 
     let mut data = vec![0; VoteState::size_of()];
     VoteState::serialize(&VoteStateVersions::new_current(vote_state), &mut data).unwrap();
-
     let vote_account = Account {
         lamports: 5_000_000_000, // 5 SOL
         data,
@@ -65,7 +63,7 @@ pub fn add_vote_account(
         executable: false,
         rent_epoch: Epoch::default(),
     };
+    context.set_account(&vote, &vote_account.into());
 
-    program_test.add_account(vote, vote_account);
     vote
 }
