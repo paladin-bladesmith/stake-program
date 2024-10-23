@@ -31,9 +31,6 @@ use solana_sdk::{
 async fn inactivate_sol_staker_stake_base() {
     let mut context = setup(&[]).await;
     let rent = context.banks_client.get_rent().await.unwrap();
-    let schedule = context.genesis_config().epoch_schedule.clone();
-    let slot = schedule.first_normal_slot + 1;
-    context.warp_to_slot(slot).unwrap();
 
     // Given a config account (total amount delegated = 100).
     let config_manager = ConfigManager::new(&mut context).await;

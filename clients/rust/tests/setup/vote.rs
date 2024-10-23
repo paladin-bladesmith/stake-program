@@ -1,7 +1,7 @@
 #![cfg(feature = "test-sbf")]
 #![allow(dead_code)]
 
-use solana_program_test::{ProgramTest, ProgramTestContext};
+use solana_program_test::ProgramTestContext;
 use solana_sdk::{
     account::Account,
     clock::Epoch,

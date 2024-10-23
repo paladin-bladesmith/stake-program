@@ -58,7 +58,6 @@ async fn initialize_sol_staker_stake() {
     .await;
     let stake_state = stake_state.pubkey();
     delegate_stake_account(&mut context, &stake_state, &stake_manager.vote, &withdrawer).await;
-    context.warp_to_epoch(10).unwrap();
 
     // When we initialize the SOL staker stake account.
     let (stake_pda, _) = find_sol_staker_stake_pda(&stake_state, &config_manager.config);

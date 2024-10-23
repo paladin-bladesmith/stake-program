@@ -20,7 +20,7 @@ use setup::{
     vote::add_vote_account,
     SWAD,
 };
-use solana_program_test::{tokio, ProgramTest};
+use solana_program_test::tokio;
 use solana_sdk::{
     account::{Account, AccountSharedData},
     instruction::InstructionError,
