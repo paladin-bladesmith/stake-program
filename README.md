@@ -28,11 +28,11 @@ The program makes use of three types of accounts to track staked amounts and man
 ### `Config`
 
 The `Config` account tracks the total amount of staked tokens and holds the parameters for the staking system:
-* `authority`: Authority that can modify any elements in the config.
-* `slash authority`: Optional authority that can slash any stake account.
-* `cooldown time seconds`: After a deactivation, defines the number of seconds that must pass before the stake is inactive and able to be withdrawn.
-* `sync rewards lamports`: Lamports amount paid as a reward for syncing a SOL stake account.
-* `maximum deactivation basis points`: The maximum proportion that can be deactivated at once, given as basis points (`1 / 10000`).
+- `authority`: Authority that can modify any elements in the config.
+- `slash authority`: Optional authority that can slash any stake account.
+- `cooldown time seconds`: After a deactivation, defines the number of seconds that must pass before the stake is inactive and able to be withdrawn.
+- `sync rewards lamports`: Lamports amount paid as a reward for syncing a SOL stake account.
+- `maximum deactivation basis points`: The maximum proportion that can be deactivated at once, given as basis points (`1 / 10000`).
 
 Each `Config` account is associated with a particular mint account, determined by the mint of its `vault` token account. The `vault` token account holds all the staked tokens and it is controlled by the `vault authority` of the `Config` account.
 
@@ -45,7 +45,6 @@ The `SolStakerStake` accounts hold the delegation information of individual SOL 
 
 The maximum amount of tokens that a SOL staker is allowed to stake is currently proportional to the amount of SOL staked, given by `1.3 * SOL amount staked`.
 
-
 ### `ValidatorStake`
 
 The `ValidatorStake` accounts hold the delegation information for the tokens staked by a validator. It also tracks the total amount of SOL and tokens staked by its stakers.
@@ -54,33 +53,33 @@ The total amount of SOL staked on a validator is used to determine that maximum 
 
 ## 📋 Instructions
 
-- [`DeactivateStake`](#deactivatestake)
-- [`DistributeRewards`](#distributerewards)
-- [`InactivateSolStakerStake`](#inactivatesolstakerstake)
-- [`InactivateValidatorStake`](#inactivatevalidatorstake)
-- [`InitializeConfig`](#initializeconfig)
-- [`InitializeSolStakerStake`](#initializesolstakerstake)
-- [`InitializeValidatorStake`](#initializevalidatorstake)
-- [`HarvestHolderRewards`](#harvestholderrewards)
-- [`HarvestSolStakerRewards`](#harvestsolstakerrewards)
-- [`HarvestSyncRewards`](#harvestsyncrewards)
-- [`HarvestValidatorRewards`](#harvestvalidatorrewards)
-- [`SetAuthority`](#setauthority)
-- [`SlashSolStakerStake`](#slashsolstakerstake)
-- [`SlashValidatorStake`](#slashvalidatorstake)
-- [`SolStakerStakeTokens`](#solstakerstaketokens)
-- [`SyncSolStake`](#syncsolstake)
-- [`UpdateConfig`](#updateconfig)
-- [`ValidatorStakeTokens`](#validatorstaketokens)
-- [`WithdrawInactiveStake`](#withdrawinactivestake)
+- [Paladin Stake Program](#paladin-stake-program)
+  - [Overview](#overview)
+  - [🗂️ Accounts](#️-accounts)
+    - [`Config`](#config)
+    - [`SolStakerStake`](#solstakerstake)
+    - [`ValidatorStake`](#validatorstake)
+  - [📋 Instructions](#-instructions)
+    - [`DeactivateStake`](#deactivatestake)
+    - [`InactivateSolStakerStake`](#inactivatesolstakerstake)
+    - [`InactivateValidatorStake`](#inactivatevalidatorstake)
+    - [`InitializeConfig`](#initializeconfig)
+    - [`InitializeSolStakerStake`](#initializesolstakerstake)
+    - [`InitializeValidatorStake`](#initializevalidatorstake)
+    - [`HarvestHolderRewards`](#harvestholderrewards)
+    - [`HarvestSolStakerRewards`](#harvestsolstakerrewards)
+    - [`HarvestValidatorRewards`](#harvestvalidatorrewards)
+    - [`SetAuthority`](#setauthority)
+    - [`SlashSolStakerStake`](#slashsolstakerstake)
+    - [`SlashValidatorStake`](#slashvalidatorstake)
+    - [`SolStakerStakeTokens`](#solstakerstaketokens)
+    - [`UpdateConfig`](#updateconfig)
+    - [`ValidatorStakeTokens`](#validatorstaketokens)
+    - [`WithdrawInactiveStake`](#withdrawinactivestake)
 
 ### `DeactivateStake`
 
 Deactivate staked tokens for a stake delegation, either `ValidatorStake` or `SolStakerStake`. Only one deactivation may be in-flight at once, so if this is called with an active deactivation, it will succeed, but reset the amount and timestamp. An active deactivation can be cancelled by executing this instruction with a `0` (zero) amount.
-
-### `DistributeRewards`
-
-Moves SOL rewards to the `Config` and updates the stake rewards total. This intruction increments the staking rewards on the system.
 
 ### `InactivateSolStakerStake`
 
@@ -116,7 +115,7 @@ Initializes `ValidatorStake` account data for a validator. This instruction can 
 The `ValidatorStake` serves two purposes on the staking system: (1) it allows individual staker (`SolStakerStake` account) to stake tokens on the system; and (2) it allows validators to stake tokens on the system. Each validator tracks the SOL amount staked on the network of its stakers, which in turn determines the amount of tokens that a validator and its stakers are allowed to stake.
 
 > [!NOTE]
->  Anybody can create the stake account for a validator. For new accounts, the authority is initialized to the validator vote account's withdraw authority.
+> Anybody can create the stake account for a validator. For new accounts, the authority is initialized to the validator vote account's withdraw authority.
 
 ### `HarvestHolderRewards`
 
@@ -125,15 +124,6 @@ Harvests holder SOL rewards earned by the given stake account. This instruction 
 ### `HarvestSolStakerRewards`
 
 Harvests staker SOL rewards earned by the given SOL staker stake account.
-
-### `HarvestSyncRewards`
-
-Harvest the rewards from syncing the SOL stake balance with a validator and SOL staker stake accounts.
-
-The staking system requires the SOL staked amount to be up to date with the `StakeState` network delegation amount. This instruction is used to sync their amounts, rewarding the address that executes the instrution.
-
-> [!NOTE]
-> This is a permissionless instruction, anybody can sync the balance of a SOL stake account. Rewards are only paid when the balances are out-of-sync.
 
 ### `HarvestValidatorRewards`
 
@@ -154,13 +144,6 @@ Slashes a `ValidatorStake` account for the given amount. Burns the given amount 
 ### `SolStakerStakeTokens`
 
 Stakes tokens with the given config. This instruction is used by SOL staker stake accounts. The total amount of staked tokens is limited to the `1.3 * current amount of SOL` staked by the SOL staker.
-
-### `SyncSolStake`
-
-Sync the SOL stake balance with a validator and SOL staker stake accounts.
-
-> [!NOTE]
-> This is a permissionless instruction. Anybody can sync the balance of a SOL stake account.
 
 ### `UpdateConfig`
 
