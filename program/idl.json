@@ -836,7 +836,7 @@
           ]
         },
         {
-          "name": "validatorStake",
+          "name": "previousValidatorStake",
           "isMut": true,
           "isSigner": false,
           "docs": [
@@ -844,7 +844,23 @@
           ]
         },
         {
-          "name": "validatorStakeAuthority",
+          "name": "previousValidatorStakeAuthority",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Validator stake authority"
+          ]
+        },
+        {
+          "name": "currentValidatorStake",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Validator stake account"
+          ]
+        },
+        {
+          "name": "currentValidatorStakeAuthority",
           "isMut": true,
           "isSigner": false,
           "docs": [

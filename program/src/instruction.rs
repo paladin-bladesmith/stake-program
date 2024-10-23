@@ -562,22 +562,34 @@ pub enum StakeInstruction {
     #[account(
         6,
         writable,
-        name = "validator_stake",
+        name = "previous_validator_stake",
         desc = "Validator stake account"
     )]
     #[account(
         7,
         writable,
-        name = "validator_stake_authority",
+        name = "previous_validator_stake_authority",
         desc = "Validator stake authority"
     )]
     #[account(
         8,
+        writable,
+        name = "current_validator_stake",
+        desc = "Validator stake account"
+    )]
+    #[account(
+        9,
+        writable,
+        name = "current_validator_stake_authority",
+        desc = "Validator stake authority"
+    )]
+    #[account(
+        10,
         name = "sysvar_stake_history",
         desc = "Stake history sysvar"
     )]
     #[account(
-        9,
+        11,
         optional,
         writable,
         name = "keeper_recipient",
