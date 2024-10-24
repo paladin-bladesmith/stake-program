@@ -1863,6 +1863,9 @@ async fn sync_sol_stake_sol_stake_redelegate_to_non_pal() {
     let account = get_account!(context, validator_stake_manager.stake);
     let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(validator_stake_account.total_staked_lamports_amount, 0);
+    let config = get_account!(context, config_manager.config);
+    let config = Config::from_bytes(&config.data).unwrap();
+    assert_eq!(config.token_amount_effective, 0);
 }
 
 #[tokio::test]
