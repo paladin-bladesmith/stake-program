@@ -40,13 +40,6 @@ pub struct Config {
     /// Last seen lamports balance, used to track rewards that were sent between syncs.
     pub lamports_last: u64,
 
-    /// The latest accumulated holder rewards per token.
-    ///
-    /// This is tracked in the config to avoid needing to pass the vault holders
-    /// account to various instructions. It also lets us ensure the lamports are
-    /// already in the config else a user claim could revert.
-    pub accumulated_holder_rewards_per_token: PodU128,
-
     /// The current stake rewards per token exchange rate.
     ///
     /// Stored as a `u128`, which includes a scaling factor of `1e18` to

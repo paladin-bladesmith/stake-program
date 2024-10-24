@@ -101,7 +101,6 @@ async fn initialize_config_with_mint_and_token() {
     let account = get_account!(context, config.pubkey());
     assert_eq!(account.data.len(), Config::LEN);
     let config = Config::from_bytes(&account.data).unwrap();
-    assert_eq!(config.accumulated_holder_rewards_per_token, 0);
     assert_eq!(config.accumulated_stake_rewards_per_token, 0);
     assert_eq!(config.token_amount_effective, 0);
 }

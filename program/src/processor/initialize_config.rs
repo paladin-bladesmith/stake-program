@@ -144,7 +144,6 @@ pub fn process_initialize_config(
         cooldown_time_seconds,
         token_amount_effective: 0,
         lamports_last: ctx.accounts.config.lamports(),
-        accumulated_holder_rewards_per_token: 0.into(),
         accumulated_stake_rewards_per_token: 0.into(),
         max_deactivation_basis_points,
         sync_rewards_lamports,

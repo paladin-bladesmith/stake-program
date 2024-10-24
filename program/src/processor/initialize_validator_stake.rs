@@ -116,8 +116,10 @@ pub fn process_initialize_validator_stake(
             inactive_amount: 0,
             authority: withdraw_authority,
             validator_vote: *ctx.accounts.validator_vote.key,
-            last_seen_holder_rewards_per_token: config.accumulated_holder_rewards_per_token,
-            last_seen_stake_rewards_per_token: config.accumulated_stake_rewards_per_token,
+            // NB: Will be set on the first stake.
+            last_seen_holder_rewards_per_token: 0.into(),
+            // NB: Will be set on the first stake.
+            last_seen_stake_rewards_per_token: 0.into(),
         },
         total_staked_lamports_amount: 0,
     };

@@ -169,8 +169,10 @@ pub fn process_initialize_sol_staker_stake(
             inactive_amount: 0,
             authority: withdrawer,
             validator_vote,
-            last_seen_holder_rewards_per_token: config.accumulated_holder_rewards_per_token,
-            last_seen_stake_rewards_per_token: config.accumulated_stake_rewards_per_token,
+            // NB: Will be set on the first stake.
+            last_seen_holder_rewards_per_token: 0.into(),
+            // NB: Will be set on the first stake.
+            last_seen_stake_rewards_per_token: 0.into(),
         },
         lamports_amount: stake_state_data.effective.into(),
         sol_stake: *ctx.accounts.sol_staker_native_stake.key,
