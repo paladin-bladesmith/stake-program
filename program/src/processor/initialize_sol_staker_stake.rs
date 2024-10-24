@@ -9,6 +9,7 @@ use solana_program::{
     pubkey::Pubkey,
     system_instruction,
 };
+use spl_discriminator::SplDiscriminate;
 
 use crate::{
     err,
@@ -18,7 +19,7 @@ use crate::{
     require,
     state::{
         find_sol_staker_stake_pda, find_validator_stake_pda, get_sol_staker_stake_pda_signer_seeds,
-        Config, SolStakerStake, ValidatorStake,
+        Config, Delegation, SolStakerStake, ValidatorStake,
     },
 };
 
@@ -158,12 +159,24 @@ pub fn process_initialize_sol_staker_stake(
     // Initialize the SOL staker stake account.
     let mut data = ctx.accounts.sol_staker_stake.try_borrow_mut_data()?;
     let stake = bytemuck::from_bytes_mut::<SolStakerStake>(&mut data);
-    *stake = SolStakerStake::new(
-        withdrawer,
-        *ctx.accounts.sol_staker_native_stake.key,
-        validator_vote,
-    );
-    stake.lamports_amount = stake_state_data.effective.into();
+    *stake = SolStakerStake {
+        _discriminator: SolStakerStake::SPL_DISCRIMINATOR.into(),
+        delegation: Delegation {
+            active_amount: 0,
+            effective_amount: 0,
+            deactivation_timestamp: None,
+            deactivating_amount: 0,
+            inactive_amount: 0,
+            authority: withdrawer,
+            validator_vote,
+            // NB: Will be set on the first stake.
+            last_seen_holder_rewards_per_token: 0.into(),
+            // NB: Will be set on the first stake.
+            last_seen_stake_rewards_per_token: 0.into(),
+        },
+        lamports_amount: stake_state_data.effective.into(),
+        sol_stake: *ctx.accounts.sol_staker_native_stake.key,
+    };
 
     // Update the validator stake account to increment the total SOL staked.
     validator_stake.total_staked_lamports_amount = validator_stake

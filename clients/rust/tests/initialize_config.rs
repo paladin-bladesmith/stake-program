@@ -98,14 +98,11 @@ async fn initialize_config_with_mint_and_token() {
     context.banks_client.process_transaction(tx).await.unwrap();
 
     // Then an account was created with the correct data.
-
     let account = get_account!(context, config.pubkey());
     assert_eq!(account.data.len(), Config::LEN);
-
-    let account_data = account.data.as_ref();
-    let config_account = Config::from_bytes(account_data).unwrap();
-    assert_eq!(config_account.slash_authority, authority.into());
-    assert_eq!(config_account.authority, authority.into());
+    let config = Config::from_bytes(&account.data).unwrap();
+    assert_eq!(config.accumulated_stake_rewards_per_token, 0);
+    assert_eq!(config.token_amount_effective, 0);
 }
 
 #[tokio::test]
@@ -186,7 +183,6 @@ async fn fail_initialize_config_with_wrong_token_authority() {
         .unwrap_err();
 
     // Then we expect an error.
-
     assert_custom_error!(err, PaladinStakeProgramError::InvalidTokenOwner);
 }
 

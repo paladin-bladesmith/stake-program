@@ -6521,8 +6521,3 @@ dependencies = [
  "cc",
  "pkg-config",
 ]
-
-[[patch.unused]]
-name = "solana-runtime-transaction"
-version = "2.0.13"
-source = "git+https://github.com/OliverNChalk/agave?rev=3918eb47b0eaaf63ab0d38b27bb96735352ea6a5#3918eb47b0eaaf63ab0d38b27bb96735352ea6a5"

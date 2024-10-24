@@ -2,6 +2,7 @@
 
 mod setup;
 
+use borsh::BorshSerialize;
 use paladin_stake_program_client::{
     accounts::{Config, ValidatorStake},
     instructions::InitializeValidatorStakeBuilder,
@@ -63,14 +64,23 @@ async fn initialize_stake_with_validator_vote() {
     context.banks_client.process_transaction(tx).await.unwrap();
 
     // Then an account was created with the correct data.
-
     let account = get_account!(context, stake_pda);
     assert_eq!(account.data.len(), ValidatorStake::LEN);
-
     let account_data = account.data.as_ref();
     let stake_account = ValidatorStake::from_bytes(account_data).unwrap();
     assert_eq!(stake_account.delegation.validator_vote, validator_vote);
     assert_eq!(stake_account.delegation.authority, validator);
+    assert_eq!(stake_account.delegation.active_amount, 0);
+    assert_eq!(stake_account.delegation.inactive_amount, 0);
+    assert_eq!(stake_account.delegation.effective_amount, 0);
+    assert_eq!(
+        stake_account.delegation.last_seen_holder_rewards_per_token,
+        0
+    );
+    assert_eq!(
+        stake_account.delegation.last_seen_stake_rewards_per_token,
+        0
+    );
 }
 
 #[tokio::test]

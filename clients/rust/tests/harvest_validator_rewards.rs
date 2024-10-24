@@ -51,16 +51,6 @@ async fn harvest_validator_rewards() {
     let config_manager = ConfigManager::new(&mut context).await;
     let config = config_manager.config;
 
-    let mut account = get_account!(context, config);
-    let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the total amount delegated
-    config_account.token_amount_effective = 130;
-    config_account.accumulated_stake_rewards_per_token = calculate_stake_rewards_per_token(26, 130);
-    account.lamports += 26;
-    config_account.lamports_last = account.lamports;
-    account.data = config_account.try_to_vec().unwrap();
-    context.set_account(&config, &account.into());
-
     // And a validator stake account wiht a 65 staked amount.
 
     let validator_stake_manager = ValidatorStakeManager::new(&mut context, &config).await;
@@ -116,6 +106,17 @@ async fn harvest_validator_rewards() {
             ..Default::default()
         }),
     );
+
+    // Accrue some global rewards.
+    let mut account = get_account!(context, config);
+    let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
+    // "manually" set the total amount delegated
+    config_account.token_amount_effective = 130;
+    config_account.accumulated_stake_rewards_per_token = calculate_stake_rewards_per_token(26, 130);
+    account.lamports += 26;
+    config_account.lamports_last = account.lamports;
+    account.data = config_account.try_to_vec().unwrap();
+    context.set_account(&config, &account.into());
 
     let harvest_stake_rewards_ix = HarvestValidatorRewardsBuilder::new()
         .config(config)

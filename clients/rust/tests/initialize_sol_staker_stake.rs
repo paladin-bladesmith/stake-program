@@ -2,6 +2,7 @@
 
 mod setup;
 
+use borsh::BorshSerialize;
 use paladin_stake_program_client::{
     accounts::{Config, SolStakerStake, ValidatorStake},
     instructions::InitializeSolStakerStakeBuilder,
@@ -86,13 +87,24 @@ async fn initialize_sol_staker_stake() {
     );
     context.banks_client.process_transaction(tx).await.unwrap();
 
-    // Then an account was created with the correct data.
+    // Assert - Key properties about the new account.
     let account = get_account!(context, stake_pda);
     assert_eq!(account.data.len(), SolStakerStake::LEN);
     let account_data = account.data.as_ref();
     let stake_account = SolStakerStake::from_bytes(account_data).unwrap();
     assert_eq!(stake_account.delegation.validator_vote, stake_manager.vote);
     assert_eq!(stake_account.delegation.authority, withdrawer.pubkey());
+    assert_eq!(stake_account.delegation.active_amount, 0);
+    assert_eq!(stake_account.delegation.inactive_amount, 0);
+    assert_eq!(stake_account.delegation.effective_amount, 0);
+    assert_eq!(
+        stake_account.delegation.last_seen_holder_rewards_per_token,
+        0
+    );
+    assert_eq!(
+        stake_account.delegation.last_seen_stake_rewards_per_token,
+        0
+    );
     assert_eq!(stake_account.sol_stake, stake_state);
     assert_eq!(stake_account.lamports_amount, 1_000_000_000);
 
