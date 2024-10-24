@@ -89,34 +89,6 @@ pub fn process_harvest_sol_staker_rewards(
         "sol stake"
     );
 
-    // Previous validator.
-    // - owner must be the stake program
-    // - must have the correct derivation (validates both the validator vote
-    //   and config accounts)
-    // - must be initialized
-    // - must belong to the validator the staker was previously delegated to
-    require!(
-        ctx.accounts.previous_validator_stake.owner == program_id,
-        ProgramError::InvalidAccountOwner,
-        "validator stake"
-    );
-    let (derivation, _) = find_validator_stake_pda(
-        &sol_staker_stake.delegation.validator_vote,
-        ctx.accounts.config.key,
-        program_id,
-    );
-    require!(
-        ctx.accounts.previous_validator_stake.key == &derivation,
-        ProgramError::InvalidSeeds,
-        "previous validator stake",
-    );
-    let mut previous_validator_data = ctx
-        .accounts
-        .previous_validator_stake
-        .try_borrow_mut_data()?;
-    let previous_validator_stake =
-        unpack_initialized_mut::<ValidatorStake>(&mut previous_validator_data)?;
-
     // Holder rewards.
     // - Must be derived from the vault account.
     let derivation = HolderRewards::find_pda(&config.vault).0;
@@ -143,10 +115,10 @@ pub fn process_harvest_sol_staker_rewards(
     let stake_state_data =
         bytemuck::try_from_bytes::<GetStakeActivatingAndDeactivatingReturnData>(&return_data)
             .map_err(|_error| ProgramError::InvalidAccountData)?;
-    let current_delegation = stake_state_data.delegated_vote.get();
-    let mut stake_amount = stake_state_data.effective.into();
-    let requires_sync = stake_amount != sol_staker_stake.lamports_amount
-        || current_delegation != Some(sol_staker_stake.delegation.validator_vote);
+    let current_delegation = stake_state_data.delegated_vote.get().unwrap_or_default();
+    let mut current_stake = stake_state_data.effective.into();
+    let requires_sync = current_stake != sol_staker_stake.lamports_amount
+        || current_delegation != sol_staker_stake.delegation.validator_vote;
 
     // Harvest the staker.
     harvest(
@@ -174,6 +146,34 @@ pub fn process_harvest_sol_staker_rewards(
 
     // If the user has a previous delegation, their old stake is removed.
     if sol_staker_stake.delegation.validator_vote != Pubkey::default() {
+        // Previous validator.
+        // - owner must be the stake program
+        // - must have the correct derivation (validates both the validator vote
+        //   and config accounts)
+        // - must be initialized
+        // - must belong to the validator the staker was previously delegated to
+        require!(
+            ctx.accounts.previous_validator_stake.owner == program_id,
+            ProgramError::InvalidAccountOwner,
+            "validator stake"
+        );
+        let (derivation, _) = find_validator_stake_pda(
+            &sol_staker_stake.delegation.validator_vote,
+            ctx.accounts.config.key,
+            program_id,
+        );
+        require!(
+            ctx.accounts.previous_validator_stake.key == &derivation,
+            ProgramError::InvalidSeeds,
+            "previous validator stake",
+        );
+        let mut previous_validator_data = ctx
+            .accounts
+            .previous_validator_stake
+            .try_borrow_mut_data()?;
+        let previous_validator_stake =
+            unpack_initialized_mut::<ValidatorStake>(&mut previous_validator_data)?;
+
         // Harvest the previous validator to flush rewards before we update their stake.
         harvest(
             HarvestAccounts {
@@ -203,7 +203,7 @@ pub fn process_harvest_sol_staker_rewards(
     }
 
     // If the user has a current delegation, their new stake is added here.
-    if let Some(current_delegation) = current_delegation {
+    if current_delegation != Pubkey::default() {
         // Current validator.
         // - owner must be the stake program
         // - must have the correct derivation (validates both the validator vote
@@ -240,15 +240,17 @@ pub fn process_harvest_sol_staker_rewards(
             // Add the user's stake to the current validator.
             current_validator_stake.total_staked_lamports_amount = current_validator_stake
                 .total_staked_lamports_amount
-                .checked_add(stake_amount)
+                .checked_add(current_stake)
                 .ok_or(ProgramError::ArithmeticOverflow)?;
         } else {
-            stake_amount = 0;
+            current_stake = 0;
         }
     }
 
     // Finally, the user's stake is updated.
-    sol_staker_stake.lamports_amount = stake_amount;
+    sol_staker_stake.lamports_amount = current_stake;
+    sol_staker_stake.delegation.validator_vote = current_delegation;
+    sync_effective(config, &mut sol_staker_stake.delegation, current_stake)?;
 
     Ok(())
 }

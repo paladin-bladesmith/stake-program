@@ -1433,6 +1433,14 @@ async fn fail_sync_sol_stake_with_wrong_validator_stake() {
         .into(),
     );
 
+    // Deactivate the stake.
+    deactivate_stake_account(
+        &mut context,
+        &sol_staker_stake_manager.sol_stake,
+        &sol_staker_stake_manager.authority,
+    )
+    .await;
+
     // When we try to sync with the wrong validator stake account.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config_manager.config)
@@ -1614,6 +1622,14 @@ async fn fail_sync_sol_stake_with_uninitialized_validator_stake() {
         }
         .into(),
     );
+
+    // Deactivate the stake.
+    deactivate_stake_account(
+        &mut context,
+        &sol_staker_stake_manager.sol_stake,
+        &sol_staker_stake_manager.authority,
+    )
+    .await;
 
     // When we try to sync with a unitialized validator stake account.
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
