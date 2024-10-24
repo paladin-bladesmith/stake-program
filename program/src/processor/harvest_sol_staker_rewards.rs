@@ -242,6 +242,13 @@ pub fn process_harvest_sol_staker_rewards(
                 .total_staked_lamports_amount
                 .checked_add(current_stake)
                 .ok_or(ProgramError::ArithmeticOverflow)?;
+
+            // Update the validator's effective stake.
+            sync_effective(
+                config,
+                &mut current_validator_stake.delegation,
+                current_validator_stake.total_staked_lamports_amount,
+            )?;
         } else {
             current_stake = 0;
         }
