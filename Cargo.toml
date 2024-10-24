@@ -22,7 +22,6 @@ solana-program = { git = "https://github.com/OliverNChalk/agave", rev = "3918eb4
 solana-program-runtime = { git = "https://github.com/OliverNChalk/agave", rev = "3918eb47b0eaaf63ab0d38b27bb96735352ea6a5" }
 solana-quic-client = { git = "https://github.com/OliverNChalk/agave", rev = "3918eb47b0eaaf63ab0d38b27bb96735352ea6a5" }
 solana-runtime = { git = "https://github.com/OliverNChalk/agave", rev = "3918eb47b0eaaf63ab0d38b27bb96735352ea6a5" }
-solana-runtime-transaction = { git = "https://github.com/OliverNChalk/agave", rev = "3918eb47b0eaaf63ab0d38b27bb96735352ea6a5" }
 solana-sdk = { git = "https://github.com/OliverNChalk/agave", rev = "3918eb47b0eaaf63ab0d38b27bb96735352ea6a5" }
 solana-send-transaction-service = { git = "https://github.com/OliverNChalk/agave", rev = "3918eb47b0eaaf63ab0d38b27bb96735352ea6a5" }
 solana-stake-program = { git = "https://github.com/OliverNChalk/agave", rev = "3918eb47b0eaaf63ab0d38b27bb96735352ea6a5" }

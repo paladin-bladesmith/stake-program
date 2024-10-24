@@ -1069,6 +1069,12 @@
             "type": "u64"
           },
           {
+            "name": "accumulatedHolderRewardsPerToken",
+            "type": {
+              "defined": "PodU128"
+            }
+          },
+          {
             "name": "accumulatedStakeRewardsPerToken",
             "type": {
               "defined": "PodU128"

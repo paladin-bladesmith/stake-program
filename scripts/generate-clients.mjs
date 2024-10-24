@@ -99,6 +99,7 @@ kinobi.update(
         const names = [
           "lastSeenHolderRewardsPerToken",
           "lastSeenStakeRewardsPerToken",
+          "accumulatedHolderRewardsPerToken",
           "accumulatedStakeRewardsPerToken",
         ];
         return (
@@ -208,7 +209,7 @@ kinobi.update(
 kinobi.update(
   k.updateAccountsVisitor({
     config: {
-      size: 160,
+      size: 176,
     },
     validatorStake: {
       size: 152,
