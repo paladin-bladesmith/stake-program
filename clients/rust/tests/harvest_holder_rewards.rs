@@ -1129,8 +1129,10 @@ async fn sol_staker_stake_harvest_holder_rewards() {
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
-        .validator_stake(validator_stake_manager.stake)
-        .validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .previous_validator_stake(validator_stake_manager.stake)
+        .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
@@ -1245,8 +1247,10 @@ async fn sol_staker_stake_harvest_holder_rewards_with_no_rewards_available() {
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
-        .validator_stake(validator_stake_manager.stake)
-        .validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .previous_validator_stake(validator_stake_manager.stake)
+        .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
@@ -1354,8 +1358,10 @@ async fn sol_staker_stake_harvest_holder_rewards_after_harvesting() {
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
-        .validator_stake(validator_stake_manager.stake)
-        .validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .previous_validator_stake(validator_stake_manager.stake)
+        .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
@@ -1387,8 +1393,10 @@ async fn sol_staker_stake_harvest_holder_rewards_after_harvesting() {
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
-        .validator_stake(validator_stake_manager.stake)
-        .validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .previous_validator_stake(validator_stake_manager.stake)
+        .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
@@ -1500,8 +1508,10 @@ async fn sol_staker_stake_fail_harvest_holder_rewards_with_wrong_authority() {
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(fake_authority.pubkey())
         .sol_staker_native_stake(sol_staker_stake_manager.sol_stake)
-        .validator_stake(validator_stake_manager.stake)
-        .validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .previous_validator_stake(validator_stake_manager.stake)
+        .previous_validator_stake_authority(validator_stake_manager.authority.pubkey())
+        .current_validator_stake(validator_stake_manager.stake)
+        .current_validator_stake_authority(validator_stake_manager.authority.pubkey())
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
     let tx = Transaction::new_signed_with_payer(

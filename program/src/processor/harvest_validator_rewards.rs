@@ -4,7 +4,7 @@ use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pub
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, HarvestValidatorRewardsAccounts},
-    processor::{harvest, unpack_initialized, unpack_initialized_mut, HarvestAccounts},
+    processor::{harvest, unpack_initialized_mut, HarvestAccounts},
     require,
     state::{find_validator_stake_pda, Config, ValidatorStake},
 };
@@ -33,12 +33,8 @@ pub fn process_harvest_validator_rewards(
         ProgramError::InvalidAccountOwner,
         "config"
     );
-    let vault_key = {
-        let config = ctx.accounts.config.data.borrow();
-        let config = unpack_initialized::<Config>(&config)?;
-
-        config.vault
-    };
+    let mut config = ctx.accounts.config.data.borrow_mut();
+    let config = unpack_initialized_mut::<Config>(&mut config)?;
 
     // stake
     // - owner must be the stake program
@@ -49,16 +45,13 @@ pub fn process_harvest_validator_rewards(
         ProgramError::InvalidAccountOwner,
         "validator stake"
     );
-
     let mut stake_data = ctx.accounts.validator_stake.try_borrow_mut_data()?;
     let validator_stake = unpack_initialized_mut::<ValidatorStake>(&mut stake_data)?;
-
     let (derivation, _) = find_validator_stake_pda(
         &validator_stake.delegation.validator_vote,
         ctx.accounts.config.key,
         program_id,
     );
-
     require!(
         ctx.accounts.validator_stake.key == &derivation,
         ProgramError::InvalidSeeds,
@@ -75,7 +68,7 @@ pub fn process_harvest_validator_rewards(
 
     // Holder rewards.
     // - Must be derived from the vault account.
-    let derivation = HolderRewards::find_pda(&vault_key).0;
+    let derivation = HolderRewards::find_pda(&config.vault).0;
     require!(
         ctx.accounts.vault_holder_rewards.key == &derivation,
         ProgramError::InvalidSeeds,
@@ -84,12 +77,12 @@ pub fn process_harvest_validator_rewards(
 
     // Process the harvest.
     harvest(
-        program_id,
         HarvestAccounts {
             config: ctx.accounts.config,
             vault_holder_rewards: ctx.accounts.vault_holder_rewards,
             authority: ctx.accounts.validator_stake_authority,
         },
+        config,
         &mut validator_stake.delegation,
         None,
     )?;

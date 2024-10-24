@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use bytemuck::Pod;
 use paladin_rewards_program_client::accounts::HolderRewards;
 use solana_program::{
@@ -317,8 +319,8 @@ pub(crate) fn sync_config_lamports(
 }
 
 pub(crate) fn harvest(
-    program_id: &Pubkey,
     accounts: HarvestAccounts,
+    config_state: &mut Config,
     delegation: &mut Delegation,
     keeper: Option<&AccountInfo>,
 ) -> ProgramResult {
@@ -330,24 +332,17 @@ pub(crate) fn harvest(
     );
 
     // Sync the config accounts lamports.
-    require!(
-        accounts.config.owner == program_id,
-        ProgramError::InvalidAccountOwner,
-        "config"
-    );
-    let mut config_data = accounts.config.data.borrow_mut();
-    let config = unpack_initialized_mut::<Config>(&mut config_data)?;
-    sync_config_lamports(accounts.config, config)?;
+    sync_config_lamports(accounts.config, config_state)?;
 
     // Compute the staking rewards.
     let staking_reward = calculate_eligible_rewards(
-        config.accumulated_stake_rewards_per_token.into(),
+        config_state.accumulated_stake_rewards_per_token.into(),
         delegation.last_seen_stake_rewards_per_token.into(),
         delegation.effective_amount,
     )?;
 
     // Compute the holder reward.
-    let (derivation, _) = HolderRewards::find_pda(&config.vault);
+    let (derivation, _) = HolderRewards::find_pda(&config_state.vault);
     require!(
         accounts.vault_holder_rewards.key == &derivation,
         ProgramError::InvalidSeeds,
@@ -367,7 +362,7 @@ pub(crate) fn harvest(
     let total_reward = staking_reward
         .checked_add(holder_reward)
         .ok_or(ProgramError::ArithmeticOverflow)?;
-    delegation.last_seen_stake_rewards_per_token = config.accumulated_stake_rewards_per_token;
+    delegation.last_seen_stake_rewards_per_token = config_state.accumulated_stake_rewards_per_token;
     delegation.last_seen_holder_rewards_per_token = vault_holder_rewards
         .last_accumulated_rewards_per_token
         .into();
@@ -384,7 +379,7 @@ pub(crate) fn harvest(
     // Pay the keeper first, if one is set.
     let keeper_reward = match keeper {
         Some(keeper) => {
-            let keeper_reward = std::cmp::min(total_reward, config.sync_rewards_lamports);
+            let keeper_reward = std::cmp::min(total_reward, config_state.sync_rewards_lamports);
             let keeper_lamports = keeper
                 .try_borrow_lamports()?
                 .checked_add(keeper_reward)
@@ -407,10 +402,37 @@ pub(crate) fn harvest(
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
     // Update the lamport amounts.
-    config.lamports_last = config_lamports;
-    drop(config_data);
+    config_state.lamports_last = config_lamports;
     **accounts.config.try_borrow_mut_lamports()? = config_lamports;
     **accounts.authority.try_borrow_mut_lamports()? = recipient_lamports;
+
+    Ok(())
+}
+
+pub(crate) fn sync_effective(
+    config: &mut Config,
+    delegation: &mut Delegation,
+    lamports_stake: u64,
+) -> ProgramResult {
+    let limit = calculate_maximum_stake_for_lamports_amount(lamports_stake)?;
+    let staker_effective = std::cmp::min(delegation.active_amount, limit);
+    let effective_delta = match staker_effective.cmp(&delegation.effective_amount) {
+        Ordering::Greater => staker_effective
+            .checked_sub(delegation.effective_amount)
+            .ok_or(ProgramError::ArithmeticOverflow)?,
+        Ordering::Equal => 0,
+        Ordering::Less => delegation
+            .effective_amount
+            .checked_sub(staker_effective)
+            .ok_or(ProgramError::ArithmeticOverflow)?,
+    };
+
+    // Update states.
+    delegation.effective_amount = staker_effective;
+    config.token_amount_effective = config
+        .token_amount_effective
+        .checked_add(effective_delta)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
 
     Ok(())
 }

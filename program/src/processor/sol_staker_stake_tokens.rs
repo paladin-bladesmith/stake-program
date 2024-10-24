@@ -39,6 +39,17 @@ pub fn process_sol_staker_stake_tokens<'a>(
 ) -> ProgramResult {
     // Account validation.
 
+    // config
+    // - owner must be the stake program
+    // - must be initialized
+    require!(
+        ctx.accounts.config.owner == program_id,
+        ProgramError::InvalidAccountOwner,
+        "config"
+    );
+    let mut config = ctx.accounts.config.data.borrow_mut();
+    let config = unpack_initialized_mut::<Config>(&mut config)?;
+
     // sol staker stake
     // - owner must be the stake program
     // - must be initialized
@@ -63,26 +74,15 @@ pub fn process_sol_staker_stake_tokens<'a>(
 
     // Harvest rewards & update last claim tracking.
     harvest(
-        program_id,
         HarvestAccounts {
             config: ctx.accounts.config,
             vault_holder_rewards: ctx.accounts.vault_holder_rewards,
             authority: ctx.accounts.sol_staker_stake_authority,
         },
+        config,
         &mut sol_staker_stake.delegation,
         None,
     )?;
-
-    // config
-    // - owner must be the stake program
-    // - must be initialized
-    require!(
-        ctx.accounts.config.owner == program_id,
-        ProgramError::InvalidAccountOwner,
-        "config"
-    );
-    let mut config_data = ctx.accounts.config.try_borrow_mut_data()?;
-    let config = unpack_initialized_mut::<Config>(&mut config_data)?;
 
     // vault
     // - must be the token account on the stake config account
