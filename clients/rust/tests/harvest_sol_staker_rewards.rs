@@ -38,14 +38,6 @@ async fn harvest_sol_staker_rewards() {
     let config_manager = ConfigManager::new(&mut context).await;
     let config = config_manager.config;
 
-    let mut account = get_account!(context, config);
-    let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.accumulated_stake_rewards_per_token = calculate_stake_rewards_per_token(26, 130);
-    account.lamports += 26 * SWAD;
-    config_account.lamports_last = account.lamports;
-    account.data = config_account.try_to_vec().unwrap();
-    context.set_account(&config, &account.into());
-
     // And a validator stake and sol staker stake accounts with 65 staked tokens.
     let validator_stake_manager = ValidatorStakeManager::new(&mut context, &config).await;
     let sol_staker_stake_manager = SolStakerStakeManager::new(
@@ -118,6 +110,15 @@ async fn harvest_sol_staker_rewards() {
         }),
     );
 
+    // Accrue some global rewards.
+    let mut account = get_account!(context, config);
+    let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
+    config_account.accumulated_stake_rewards_per_token = calculate_stake_rewards_per_token(26, 130);
+    account.lamports += 26 * SWAD;
+    config_account.lamports_last = account.lamports;
+    account.data = config_account.try_to_vec().unwrap();
+    context.set_account(&config, &account.into());
+
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config)
         .vault_holder_rewards(holder_rewards)
@@ -159,20 +160,6 @@ async fn harvest_sol_staker_rewards_wrapped() {
     // Given a config account with 26 lamports rewards and 130 staked amount.
     let config_manager = ConfigManager::new(&mut context).await;
     let config = config_manager.config;
-
-    let mut account = get_account!(context, config);
-    let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    // "manually" set the total amount delegated
-    config_account.token_amount_effective = 130 * SWAD;
-    // Set the config account's current rewards per token, simulating a
-    // scenario where the rate has wrapped around `u128::MAX`.
-    // If the holder's last seen rate is `u128::MAX`, the calculation should
-    // still work with wrapped math.
-    config_account.accumulated_stake_rewards_per_token = calculate_stake_rewards_per_token(26, 130);
-    account.lamports += 26 * SWAD;
-    config_account.lamports_last = account.lamports;
-    account.data = config_account.try_to_vec().unwrap();
-    context.set_account(&config, &account.into());
 
     // And a validator stake and sol staker stake accounts with 65 staked tokens.
 
@@ -247,6 +234,21 @@ async fn harvest_sol_staker_rewards_wrapped() {
             ..Default::default()
         }),
     );
+
+    // Accrue some global rewards.
+    let mut account = get_account!(context, config);
+    let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
+    // "manually" set the total amount delegated
+    config_account.token_amount_effective = 130 * SWAD;
+    // Set the config account's current rewards per token, simulating a
+    // scenario where the rate has wrapped around `u128::MAX`.
+    // If the holder's last seen rate is `u128::MAX`, the calculation should
+    // still work with wrapped math.
+    config_account.accumulated_stake_rewards_per_token = calculate_stake_rewards_per_token(26, 130);
+    account.lamports += 26 * SWAD;
+    config_account.lamports_last = account.lamports;
+    account.data = config_account.try_to_vec().unwrap();
+    context.set_account(&config, &account.into());
 
     let harvest_stake_rewards_ix = HarvestSolStakerRewardsBuilder::new()
         .config(config)

@@ -2,6 +2,7 @@
 
 mod setup;
 
+use borsh::BorshSerialize;
 use paladin_stake_program_client::{
     accounts::{Config, ValidatorStake},
     instructions::InitializeValidatorStakeBuilder,
@@ -102,6 +103,7 @@ async fn initialize_stake_with_validator_vote_sets_last_seen() {
     let mut config_state = Config::from_bytes(&mut config_account.data).unwrap();
     config_state.accumulated_holder_rewards_per_token = 100;
     config_state.accumulated_stake_rewards_per_token = 250;
+    config_account.data = config_state.try_to_vec().unwrap();
     context.set_account(&config, &config_account.into());
 
     // When we initialize the stake account.

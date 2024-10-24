@@ -2,7 +2,6 @@ use bytemuck::{Pod, Zeroable};
 use shank::ShankAccount;
 use solana_program::{program_pack::IsInitialized, pubkey::Pubkey};
 use spl_discriminator::SplDiscriminate;
-use spl_pod::primitives::PodU128;
 
 use super::Delegation;
 
@@ -25,7 +24,7 @@ pub struct SolStakerStake {
     ///
     /// Note that the value of the discriminator is different than the prefix seed
     /// `"stake::state::sol_staker_stake"` used to derive the PDA address.
-    discriminator: [u8; 8],
+    pub _discriminator: [u8; 8],
 
     /// Delegation values for the stake account.
     pub delegation: Delegation,
@@ -47,27 +46,7 @@ impl SolStakerStake {
     /// `SolStakerStake::SPL_DISCRIMINATOR_SLICE` or not.
     #[inline(always)]
     pub fn is_initialized(&self) -> bool {
-        self.discriminator.as_slice() == SolStakerStake::SPL_DISCRIMINATOR_SLICE
-    }
-
-    /// Creates a new `SolStakerStake`.
-    pub fn new(authority: Pubkey, stake_state: Pubkey, validator_vote: Pubkey) -> Self {
-        Self {
-            discriminator: SolStakerStake::SPL_DISCRIMINATOR.into(),
-            delegation: Delegation {
-                active_amount: u64::default(),
-                effective_amount: u64::default(),
-                deactivation_timestamp: Option::default(),
-                deactivating_amount: u64::default(),
-                inactive_amount: u64::default(),
-                authority,
-                validator_vote,
-                last_seen_holder_rewards_per_token: PodU128::default(),
-                last_seen_stake_rewards_per_token: PodU128::default(),
-            },
-            lamports_amount: u64::default(),
-            sol_stake: stake_state,
-        }
+        self._discriminator.as_slice() == SolStakerStake::SPL_DISCRIMINATOR_SLICE
     }
 }
 

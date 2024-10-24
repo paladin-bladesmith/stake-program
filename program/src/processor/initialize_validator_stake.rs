@@ -3,12 +3,14 @@ use solana_program::{
     entrypoint::ProgramResult, program::invoke_signed, program_error::ProgramError, pubkey::Pubkey,
     system_instruction, vote::state::VoteState,
 };
+use spl_discriminator::SplDiscriminate;
 
 use crate::{
     instruction::accounts::{Context, InitializeValidatorStakeAccounts},
     require,
     state::{
-        find_validator_stake_pda, get_validator_stake_pda_signer_seeds, Config, ValidatorStake,
+        find_validator_stake_pda, get_validator_stake_pda_signer_seeds, Config, Delegation,
+        ValidatorStake,
     },
 };
 
@@ -104,7 +106,21 @@ pub fn process_initialize_validator_stake(
     // Initialize the stake account.
     let mut data = ctx.accounts.validator_stake.try_borrow_mut_data()?;
     let validator_stake = bytemuck::from_bytes_mut::<ValidatorStake>(&mut data);
-    *validator_stake = ValidatorStake::new(withdraw_authority, *ctx.accounts.validator_vote.key);
+    *validator_stake = ValidatorStake {
+        _discriminator: ValidatorStake::SPL_DISCRIMINATOR.into(),
+        delegation: Delegation {
+            active_amount: 0,
+            effective_amount: 0,
+            deactivation_timestamp: None,
+            deactivating_amount: 0,
+            inactive_amount: 0,
+            authority: withdraw_authority,
+            validator_vote: *ctx.accounts.validator_vote.key,
+            last_seen_holder_rewards_per_token: config.accumulated_holder_rewards_per_token,
+            last_seen_stake_rewards_per_token: config.accumulated_stake_rewards_per_token,
+        },
+        total_staked_lamports_amount: 0,
+    };
 
     Ok(())
 }

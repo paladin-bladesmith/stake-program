@@ -2,8 +2,7 @@
 
 mod setup;
 
-use expect_test::expect;
-use paladin_rewards_program_client::accounts::HolderRewards;
+use borsh::BorshSerialize;
 use paladin_stake_program_client::{
     accounts::{Config, SolStakerStake, ValidatorStake},
     instructions::InitializeSolStakerStakeBuilder,
@@ -151,11 +150,12 @@ async fn initialize_sol_staker_stake_sets_last_seen() {
     let stake_state = stake_state.pubkey();
     delegate_stake_account(&mut context, &stake_state, &stake_manager.vote, &withdrawer).await;
 
-    // Set the accumulated stake rewards per token.
+    // Set the accumulated holder & stake rewards per token.
     let mut config = get_account!(context, config_manager.config);
     let mut config_state = Config::from_bytes(&mut config.data).unwrap();
     config_state.accumulated_holder_rewards_per_token = 100;
     config_state.accumulated_stake_rewards_per_token = 250;
+    config.data = config_state.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &config.into());
 
     // When we initialize the SOL staker stake account.

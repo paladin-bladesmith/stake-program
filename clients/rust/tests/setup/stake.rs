@@ -85,6 +85,5 @@ pub async fn deactivate_stake_account(
 async fn warp_to_next_epoch(context: &mut ProgramTestContext) {
     let root = context.banks_client.get_root_slot().await.unwrap();
     let slots_per_epoch = context.genesis_config().epoch_schedule.slots_per_epoch;
-    println!("WARPING: {root} -> {}", root + slots_per_epoch);
     context.warp_to_slot(root + slots_per_epoch).unwrap();
 }
