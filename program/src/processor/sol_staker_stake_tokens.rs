@@ -7,12 +7,9 @@ use spl_token_2022::{
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, SolStakerStakeTokensAccounts},
-    processor::{harvest, unpack_initialized_mut, HarvestAccounts},
+    processor::{harvest, sync_effective, unpack_initialized_mut, HarvestAccounts},
     require,
-    state::{
-        calculate_maximum_stake_for_lamports_amount, find_sol_staker_stake_pda, Config,
-        SolStakerStake,
-    },
+    state::{find_sol_staker_stake_pda, Config, SolStakerStake},
 };
 
 /// Stakes tokens with the given config.
@@ -111,20 +108,14 @@ pub fn process_sol_staker_stake_tokens<'a>(
         .active_amount
         .checked_add(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
-    let staker_limit =
-        calculate_maximum_stake_for_lamports_amount(sol_staker_stake.lamports_amount)?;
-    let staker_effective = std::cmp::min(staker_active, staker_limit);
-    let effective_delta = staker_effective
-        .checked_sub(sol_staker_stake.delegation.effective_amount)
-        .ok_or(ProgramError::ArithmeticOverflow)?;
 
     // Update states.
     sol_staker_stake.delegation.active_amount = staker_active;
-    sol_staker_stake.delegation.effective_amount = staker_effective;
-    config.token_amount_effective = config
-        .token_amount_effective
-        .checked_add(effective_delta)
-        .ok_or(ProgramError::ArithmeticOverflow)?;
+    sync_effective(
+        config,
+        &mut sol_staker_stake.delegation,
+        sol_staker_stake.lamports_amount,
+    )?;
 
     // Transfer the tokens to the vault (stakes them).
     drop(mint_data);

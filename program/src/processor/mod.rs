@@ -1,5 +1,3 @@
-use std::cmp::Ordering;
-
 use bytemuck::Pod;
 use paladin_rewards_program_client::accounts::HolderRewards;
 use solana_program::{
@@ -416,23 +414,15 @@ pub(crate) fn sync_effective(
 ) -> ProgramResult {
     let limit = calculate_maximum_stake_for_lamports_amount(lamports_stake)?;
     let staker_effective = std::cmp::min(delegation.active_amount, limit);
-    let effective_delta = match staker_effective.cmp(&delegation.effective_amount) {
-        Ordering::Greater => staker_effective
-            .checked_sub(delegation.effective_amount)
-            .ok_or(ProgramError::ArithmeticOverflow)?,
-        Ordering::Equal => 0,
-        Ordering::Less => delegation
-            .effective_amount
-            .checked_sub(staker_effective)
-            .ok_or(ProgramError::ArithmeticOverflow)?,
-    };
 
     // Update states.
-    delegation.effective_amount = staker_effective;
     config.token_amount_effective = config
         .token_amount_effective
-        .checked_add(effective_delta)
+        .checked_sub(delegation.effective_amount)
+        .ok_or(ProgramError::ArithmeticOverflow)?
+        .checked_add(staker_effective)
         .ok_or(ProgramError::ArithmeticOverflow)?;
+    delegation.effective_amount = staker_effective;
 
     Ok(())
 }

@@ -6,12 +6,9 @@ use solana_program::{
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, InactivateValidatorStakeAccounts},
-    processor::{harvest, unpack_initialized_mut, HarvestAccounts},
+    processor::{harvest, sync_effective, unpack_initialized_mut, HarvestAccounts},
     require,
-    state::{
-        calculate_maximum_stake_for_lamports_amount, find_validator_stake_pda, Config,
-        ValidatorStake,
-    },
+    state::{find_validator_stake_pda, Config, ValidatorStake},
 };
 
 /// Move tokens from deactivating to inactive.
@@ -52,9 +49,9 @@ pub fn process_inactivate_validator_stake(
         "stake"
     );
     let stake_data = &mut ctx.accounts.validator_stake.try_borrow_mut_data()?;
-    let stake = unpack_initialized_mut::<ValidatorStake>(stake_data)?;
+    let validator_stake = unpack_initialized_mut::<ValidatorStake>(stake_data)?;
     let (derivation, _) = find_validator_stake_pda(
-        &stake.delegation.validator_vote,
+        &validator_stake.delegation.validator_vote,
         ctx.accounts.config.key,
         program_id,
     );
@@ -63,7 +60,7 @@ pub fn process_inactivate_validator_stake(
         ProgramError::InvalidSeeds,
         "stake",
     );
-    let delegation = &mut stake.delegation;
+    let delegation = &mut validator_stake.delegation;
 
     // Harvest rewards & update last claim tracking.
     harvest(
@@ -102,24 +99,17 @@ pub fn process_inactivate_validator_stake(
         .inactive_amount
         .checked_add(delegation.deactivating_amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
-    let validator_limit =
-        calculate_maximum_stake_for_lamports_amount(stake.total_staked_lamports_amount)?;
-    let validator_effective = std::cmp::min(validator_active, validator_limit);
-    let effective_delta = delegation
-        .effective_amount
-        .checked_sub(validator_effective)
-        .ok_or(ProgramError::ArithmeticOverflow)?;
 
     // Update the state values.
     delegation.active_amount = validator_active;
-    delegation.effective_amount = validator_effective;
     delegation.deactivating_amount = 0;
     delegation.deactivation_timestamp = None;
     delegation.inactive_amount = validator_inactive;
-    config.token_amount_effective = config
-        .token_amount_effective
-        .checked_sub(effective_delta)
-        .ok_or(ProgramError::ArithmeticOverflow)?;
+    sync_effective(
+        config,
+        &mut validator_stake.delegation,
+        validator_stake.total_staked_lamports_amount,
+    )?;
 
     Ok(())
 }
