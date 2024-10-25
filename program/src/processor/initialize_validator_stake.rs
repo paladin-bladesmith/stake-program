@@ -39,8 +39,8 @@ pub fn process_initialize_validator_stake(
         "config"
     );
     let data = &ctx.accounts.config.try_borrow_data()?;
-    let config = bytemuck::try_from_bytes::<Config>(data)
-        .map_err(|_error| ProgramError::InvalidAccountData)?;
+    let config =
+        bytemuck::try_from_bytes::<Config>(data).map_err(|_| ProgramError::InvalidAccountData)?;
     require!(
         config.is_initialized(),
         ProgramError::UninitializedAccount,

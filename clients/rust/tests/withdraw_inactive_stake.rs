@@ -3,6 +3,7 @@
 mod setup;
 
 use borsh::BorshSerialize;
+use paladin_rewards_program_client::accounts::HolderRewards;
 use paladin_stake_program_client::{
     accounts::{Config, SolStakerStake, ValidatorStake},
     errors::PaladinStakeProgramError,
@@ -43,6 +44,7 @@ async fn withdraw_inactive_stake_with_validator_stake() {
         None,
     );
     let mut context = program_test.start_with_context().await;
+    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config and stake accounts.
 
@@ -109,18 +111,35 @@ async fn withdraw_inactive_stake_with_validator_stake() {
     )
     .await;
 
-    // When we withdraw the inactive amount from the stake account.
-
+    // And we create the holder rewards account for the vault account.
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
+    let vault_holder_rewards_state = HolderRewards {
+        last_accumulated_rewards_per_token: 0,
+        unharvested_rewards: 0,
+        padding: 0,
+    };
+    context.set_account(
+        &vault_holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
     let (vault_authority, _) = find_vault_pda(&config_manager.config);
 
     let mut withdraw_ix = WithdrawInactiveStakeBuilder::new()
         .config(config_manager.config)
         .stake(stake_manager.stake)
         .vault(config_manager.vault)
+        .vault_holder_rewards(vault_holder_rewards)
+        .vault_authority(vault_authority)
         .destination_token_account(destination)
         .mint(config_manager.mint)
         .stake_authority(stake_manager.authority.pubkey())
-        .vault_authority(vault_authority)
         .token_program(spl_token_2022::ID)
         .amount(50) // <- withdraw 50 tokens
         .instruction();
@@ -176,6 +195,7 @@ async fn withdraw_inactive_stake_with_validator_stake() {
 #[tokio::test]
 async fn withdraw_inactive_stake_with_sol_staker_stake() {
     let mut context = setup(&[]).await;
+    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config and stake accounts.
 
@@ -251,18 +271,35 @@ async fn withdraw_inactive_stake_with_sol_staker_stake() {
     )
     .await;
 
-    // When we withdraw the inactive amount from the sol staker stake account.
-
+    // And we create the holder rewards account for the vault account.
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
+    let vault_holder_rewards_state = HolderRewards {
+        last_accumulated_rewards_per_token: 0,
+        unharvested_rewards: 0,
+        padding: 0,
+    };
+    context.set_account(
+        &vault_holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
     let (vault_authority, _) = find_vault_pda(&config_manager.config);
 
     let mut withdraw_ix = WithdrawInactiveStakeBuilder::new()
         .config(config_manager.config)
         .stake(sol_staker_stake_manager.stake)
         .vault(config_manager.vault)
+        .vault_holder_rewards(vault_holder_rewards)
+        .vault_authority(vault_authority)
         .destination_token_account(destination)
         .mint(config_manager.mint)
         .stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .vault_authority(vault_authority)
         .token_program(spl_token_2022::ID)
         .amount(50) // <- withdraw 50 tokens
         .instruction();
@@ -328,6 +365,7 @@ async fn fail_withdraw_inactive_stake_with_validator_stake_without_inactive_stak
         None,
     );
     let mut context = program_test.start_with_context().await;
+    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config and stake accounts.
 
@@ -393,18 +431,35 @@ async fn fail_withdraw_inactive_stake_with_validator_stake_without_inactive_stak
     )
     .await;
 
-    // When we try to withdraw the non-exitent inactive amount from the stake account.
-
+    // And we create the holder rewards account for the vault account.
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
+    let vault_holder_rewards_state = HolderRewards {
+        last_accumulated_rewards_per_token: 0,
+        unharvested_rewards: 0,
+        padding: 0,
+    };
+    context.set_account(
+        &vault_holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
     let (vault_authority, _) = find_vault_pda(&config_manager.config);
 
     let mut withdraw_ix = WithdrawInactiveStakeBuilder::new()
         .config(config_manager.config)
         .stake(stake_manager.stake)
         .vault(config_manager.vault)
+        .vault_holder_rewards(vault_holder_rewards)
+        .vault_authority(vault_authority)
         .destination_token_account(destination)
         .mint(config_manager.mint)
         .stake_authority(stake_manager.authority.pubkey())
-        .vault_authority(vault_authority)
         .token_program(spl_token_2022::ID)
         .amount(50) // <- withdraw 50 tokens
         .instruction();
@@ -441,6 +496,7 @@ async fn fail_withdraw_inactive_stake_with_validator_stake_without_inactive_stak
 #[tokio::test]
 async fn fail_withdraw_inactive_stake_with_sol_staker_stake_without_inactive_stake() {
     let mut context = setup(&[]).await;
+    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config and stake accounts.
 
@@ -515,18 +571,35 @@ async fn fail_withdraw_inactive_stake_with_sol_staker_stake_without_inactive_sta
     )
     .await;
 
-    // When we try to withdraw the non-exitent inactive amount from the stake account.
-
+    // And we create the holder rewards account for the vault account.
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
+    let vault_holder_rewards_state = HolderRewards {
+        last_accumulated_rewards_per_token: 0,
+        unharvested_rewards: 0,
+        padding: 0,
+    };
+    context.set_account(
+        &vault_holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
     let (vault_authority, _) = find_vault_pda(&config_manager.config);
 
     let mut withdraw_ix = WithdrawInactiveStakeBuilder::new()
         .config(config_manager.config)
         .stake(sol_staker_stake_manager.stake)
         .vault(config_manager.vault)
+        .vault_holder_rewards(vault_holder_rewards)
+        .vault_authority(vault_authority)
         .destination_token_account(destination)
         .mint(config_manager.mint)
         .stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .vault_authority(vault_authority)
         .token_program(spl_token_2022::ID)
         .amount(50) // <- withdraw 50 tokens
         .instruction();
@@ -573,6 +646,7 @@ async fn fail_withdraw_inactive_stake_with_invalid_stake_authority() {
         None,
     );
     let mut context = program_test.start_with_context().await;
+    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config and stake accounts.
 
@@ -659,8 +733,24 @@ async fn fail_withdraw_inactive_stake_with_invalid_stake_authority() {
     )
     .await;
 
-    // When we try to withdraw the inactive amount from the stake account
-    // with the wrong stake authority.
+    // And we create the holder rewards account for the vault account.
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
+    let vault_holder_rewards_state = HolderRewards {
+        last_accumulated_rewards_per_token: 0,
+        unharvested_rewards: 0,
+        padding: 0,
+    };
+    context.set_account(
+        &vault_holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
 
     let fake_stake_authority = Keypair::new();
     let (vault_authority, _) = find_vault_pda(&config_manager.config);
@@ -669,10 +759,11 @@ async fn fail_withdraw_inactive_stake_with_invalid_stake_authority() {
         .config(config_manager.config)
         .stake(stake_manager.stake)
         .vault(config_manager.vault)
+        .vault_holder_rewards(config_manager.vault)
+        .vault_authority(vault_authority)
         .destination_token_account(destination)
         .mint(config_manager.mint)
         .stake_authority(fake_stake_authority.pubkey())
-        .vault_authority(vault_authority)
         .token_program(spl_token_2022::ID)
         .amount(50) // <- withdraw 50 tokens
         .instruction();
@@ -719,6 +810,7 @@ async fn fail_withdraw_inactive_stake_with_uninitialized_stake_account() {
         None,
     );
     let mut context = program_test.start_with_context().await;
+    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config and stake accounts.
 
@@ -788,18 +880,36 @@ async fn fail_withdraw_inactive_stake_with_uninitialized_stake_account() {
     )
     .await;
 
-    // When we try to withdraw from the uninitialized stake account.
-
+    // And we create the holder rewards account for the vault account.
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
+    let vault_holder_rewards_state = HolderRewards {
+        last_accumulated_rewards_per_token: 0,
+        unharvested_rewards: 0,
+        padding: 0,
+    };
+    context.set_account(
+        &vault_holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
     let (vault_authority, _) = find_vault_pda(&config_manager.config);
 
+    // When we try to withdraw from the uninitialized stake account.
     let mut withdraw_ix = WithdrawInactiveStakeBuilder::new()
         .config(config_manager.config)
         .stake(stake)
         .vault(config_manager.vault)
+        .vault_holder_rewards(vault_holder_rewards)
+        .vault_authority(vault_authority)
         .destination_token_account(destination)
         .mint(config_manager.mint)
         .stake_authority(config_manager.authority.pubkey())
-        .vault_authority(vault_authority)
         .token_program(spl_token_2022::ID)
         .amount(50)
         .instruction();
@@ -846,6 +956,7 @@ async fn fail_withdraw_inactive_stake_with_uninitialized_config_account() {
         None,
     );
     let mut context = program_test.start_with_context().await;
+    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config and stake accounts.
 
@@ -924,18 +1035,36 @@ async fn fail_withdraw_inactive_stake_with_uninitialized_config_account() {
         }),
     );
 
-    // When we try to withdraw from the uninitialized stake account.
-
+    // And we create the holder rewards account for the vault account.
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
+    let vault_holder_rewards_state = HolderRewards {
+        last_accumulated_rewards_per_token: 0,
+        unharvested_rewards: 0,
+        padding: 0,
+    };
+    context.set_account(
+        &vault_holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
     let (vault_authority, _) = find_vault_pda(&config_manager.config);
 
+    // When we try to withdraw from the uninitialized stake account.
     let mut withdraw_ix = WithdrawInactiveStakeBuilder::new()
         .config(config_manager.config)
         .stake(stake_manager.stake)
         .vault(config_manager.vault)
+        .vault_holder_rewards(vault_holder_rewards)
+        .vault_authority(vault_authority)
         .destination_token_account(destination)
         .mint(config_manager.mint)
         .stake_authority(stake_manager.authority.pubkey())
-        .vault_authority(vault_authority)
         .token_program(spl_token_2022::ID)
         .amount(50) // <- withdraw 50 tokens
         .instruction();
@@ -982,6 +1111,7 @@ async fn fail_withdraw_inactive_stake_with_wrong_config_account() {
         None,
     );
     let mut context = program_test.start_with_context().await;
+    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config and stake accounts.
 
@@ -1049,21 +1179,38 @@ async fn fail_withdraw_inactive_stake_with_wrong_config_account() {
     .await;
 
     // And we create a new config account.
-
     let another_config_manager = ConfigManager::new(&mut context).await;
 
+    // And we create the holder rewards account for the vault account.
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
+    let vault_holder_rewards_state = HolderRewards {
+        last_accumulated_rewards_per_token: 0,
+        unharvested_rewards: 0,
+        padding: 0,
+    };
+    context.set_account(
+        &vault_holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+    let (vault_authority, _) = find_vault_pda(&config_manager.config);
+
     // When we try to withdraw using the wrong config account.
-
-    let (vault_authority, _) = find_vault_pda(&another_config_manager.config);
-
     let mut withdraw_ix = WithdrawInactiveStakeBuilder::new()
         .config(another_config_manager.config)
         .stake(stake_manager.stake)
         .vault(another_config_manager.vault)
+        .vault_holder_rewards(vault_holder_rewards)
+        .vault_authority(vault_authority)
         .destination_token_account(destination)
         .mint(config_manager.mint)
         .stake_authority(stake_manager.authority.pubkey())
-        .vault_authority(vault_authority)
         .token_program(spl_token_2022::ID)
         .amount(50)
         .instruction();
@@ -1110,6 +1257,7 @@ async fn fail_withdraw_inactive_stake_with_wrong_mint() {
         None,
     );
     let mut context = program_test.start_with_context().await;
+    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config and stake accounts.
 
@@ -1187,18 +1335,36 @@ async fn fail_withdraw_inactive_stake_with_wrong_mint() {
     )
     .await;
 
-    // When we try to withdraw using the wrong mint account.
-
+    // And we create the holder rewards account for the vault account.
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
+    let vault_holder_rewards_state = HolderRewards {
+        last_accumulated_rewards_per_token: 0,
+        unharvested_rewards: 0,
+        padding: 0,
+    };
+    context.set_account(
+        &vault_holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
     let (vault_authority, _) = find_vault_pda(&config_manager.config);
 
+    // When we try to withdraw using the wrong mint account.
     let mut withdraw_ix = WithdrawInactiveStakeBuilder::new()
         .config(config_manager.config)
         .stake(stake_manager.stake)
         .vault(config_manager.vault)
+        .vault_holder_rewards(vault_holder_rewards)
+        .vault_authority(vault_authority)
         .destination_token_account(destination)
         .mint(another_config_manager.mint) // <- wrong mint
         .stake_authority(stake_manager.authority.pubkey())
-        .vault_authority(vault_authority)
         .token_program(spl_token_2022::ID)
         .amount(50)
         .instruction();
@@ -1245,6 +1411,7 @@ async fn fail_withdraw_inactive_stake_with_wrong_vault_account() {
         None,
     );
     let mut context = program_test.start_with_context().await;
+    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config and stake accounts.
 
@@ -1324,18 +1491,36 @@ async fn fail_withdraw_inactive_stake_with_wrong_vault_account() {
     )
     .await;
 
-    // When we try to withdraw using the wrong (fake) vault account.
-
+    // And we create the holder rewards account for the vault account.
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
+    let vault_holder_rewards_state = HolderRewards {
+        last_accumulated_rewards_per_token: 0,
+        unharvested_rewards: 0,
+        padding: 0,
+    };
+    context.set_account(
+        &vault_holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
     let (vault_authority, _) = find_vault_pda(&config_manager.config);
 
+    // When we try to withdraw using the wrong (fake) vault account.
     let mut withdraw_ix = WithdrawInactiveStakeBuilder::new()
         .config(config_manager.config)
         .stake(stake_manager.stake)
         .vault(wrong_vault.pubkey()) // <- wrong vault
+        .vault_holder_rewards(vault_holder_rewards)
+        .vault_authority(vault_authority)
         .destination_token_account(destination)
         .mint(config_manager.mint)
         .stake_authority(stake_manager.authority.pubkey())
-        .vault_authority(vault_authority)
         .token_program(spl_token_2022::ID)
         .amount(50)
         .instruction();
@@ -1370,6 +1555,140 @@ async fn fail_withdraw_inactive_stake_with_wrong_vault_account() {
 }
 
 #[tokio::test]
+async fn fail_withdraw_inactive_stake_with_wrong_vault_holder_rewards() {
+    let mut program_test = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    );
+    program_test.add_program(
+        "paladin_rewards_program",
+        paladin_rewards_program_client::ID,
+        None,
+    );
+    let mut context = program_test.start_with_context().await;
+
+    // Given a config and stake accounts.
+    let config_manager = ConfigManager::new(&mut context).await;
+    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
+
+    // And we set total amount delegated = 100 on the config account.
+    let mut account = get_account!(context, config_manager.config);
+    let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
+    config_account.token_amount_effective = 100;
+    // "manually" update the config account data
+    account.data = config_account.try_to_vec().unwrap();
+    context.set_account(&config_manager.config, &account.into());
+
+    mint_to(
+        &mut context,
+        &config_manager.mint,
+        &config_manager.mint_authority,
+        &config_manager.vault,
+        100,
+        0,
+    )
+    .await
+    .unwrap();
+
+    // And we set the amount = 50 and inactive_account = 50 on the stake account.
+
+    let mut account = get_account!(context, stake_manager.stake);
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
+    // "manually" set the stake values
+    stake_account.delegation.active_amount = 50;
+    stake_account.delegation.inactive_amount = 50;
+    // "manually" update the stake account data
+    account.data = stake_account.try_to_vec().unwrap();
+    context.set_account(&stake_manager.stake, &account.into());
+
+    // And we create the holder rewards account for the vault and destination accounts.
+
+    let rewards_manager = RewardsManager::new(
+        &mut context,
+        &config_manager.mint,
+        &config_manager.mint_authority,
+    )
+    .await;
+
+    let owner = context.payer.pubkey();
+    let destination =
+        create_associated_token_account(&mut context, &owner, &config_manager.mint).await;
+
+    create_holder_rewards(
+        &mut context,
+        &rewards_manager.pool,
+        &config_manager.mint,
+        &destination,
+    )
+    .await;
+
+    // And we create a fake vault token account.
+
+    let wrong_vault = Keypair::new();
+    create_token_account(
+        &mut context,
+        &config_manager.authority.pubkey(),
+        &wrong_vault,
+        &config_manager.mint,
+        TOKEN_ACCOUNT_EXTENSIONS,
+    )
+    .await
+    .unwrap();
+
+    let wrong_holder_rewards = create_holder_rewards(
+        &mut context,
+        &rewards_manager.pool,
+        &config_manager.mint,
+        &wrong_vault.pubkey(),
+    )
+    .await;
+
+    let (vault_authority, _) = find_vault_pda(&config_manager.config);
+
+    // When we try to withdraw using the wrong (fake) vault account.
+    let mut withdraw_ix = WithdrawInactiveStakeBuilder::new()
+        .config(config_manager.config)
+        .stake(stake_manager.stake)
+        .vault(config_manager.vault)
+        .vault_holder_rewards(wrong_holder_rewards) // <- wrong vault holder rewards
+        .vault_authority(vault_authority)
+        .destination_token_account(destination)
+        .mint(config_manager.mint)
+        .stake_authority(stake_manager.authority.pubkey())
+        .token_program(spl_token_2022::ID)
+        .amount(50)
+        .instruction();
+
+    add_extra_account_metas_for_transfer(
+        &mut context,
+        &mut withdraw_ix,
+        &paladin_rewards_program_client::ID,
+        &config_manager.vault,
+        &config_manager.mint,
+        &destination,
+        &vault_authority,
+        50,
+    )
+    .await;
+
+    let tx = Transaction::new_signed_with_payer(
+        &[withdraw_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, &stake_manager.authority],
+        context.last_blockhash,
+    );
+    let err = context
+        .banks_client
+        .process_transaction(tx)
+        .await
+        .unwrap_err();
+
+    // Then we expect an error.
+    assert_instruction_error!(err, InstructionError::InvalidSeeds);
+}
+
+#[tokio::test]
 async fn fail_withdraw_inactive_stake_with_vault_as_destination() {
     let mut program_test = ProgramTest::new(
         "paladin_stake_program",
@@ -1382,6 +1701,7 @@ async fn fail_withdraw_inactive_stake_with_vault_as_destination() {
         None,
     );
     let mut context = program_test.start_with_context().await;
+    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config and stake accounts.
 
@@ -1440,18 +1760,36 @@ async fn fail_withdraw_inactive_stake_with_vault_as_destination() {
     )
     .await;
 
-    // When we try to withdraw using the vault as destination.
-
+    // And we create the holder rewards account for the vault account.
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
+    let vault_holder_rewards_state = HolderRewards {
+        last_accumulated_rewards_per_token: 0,
+        unharvested_rewards: 0,
+        padding: 0,
+    };
+    context.set_account(
+        &vault_holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
     let (vault_authority, _) = find_vault_pda(&config_manager.config);
 
+    // When we try to withdraw using the vault as destination.
     let mut withdraw_ix = WithdrawInactiveStakeBuilder::new()
         .config(config_manager.config)
         .stake(stake_manager.stake)
         .vault(config_manager.vault)
+        .vault_holder_rewards(vault_holder_rewards)
+        .vault_authority(vault_authority)
         .destination_token_account(config_manager.vault) // <- vault as destination
         .mint(config_manager.mint)
         .stake_authority(stake_manager.authority.pubkey())
-        .vault_authority(vault_authority)
         .token_program(spl_token_2022::ID)
         .amount(50)
         .instruction();
@@ -1481,6 +1819,5 @@ async fn fail_withdraw_inactive_stake_with_vault_as_destination() {
         .unwrap_err();
 
     // Then we expect an error.
-
     assert_custom_error!(err, PaladinStakeProgramError::InvalidDestinationAccount);
 }

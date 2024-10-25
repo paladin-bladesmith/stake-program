@@ -287,6 +287,14 @@
           ]
         },
         {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Stake Token Mint"
+          ]
+        },
+        {
           "name": "vault",
           "isMut": true,
           "isSigner": false,
@@ -295,11 +303,19 @@
           ]
         },
         {
-          "name": "mint",
+          "name": "vaultHolderRewards",
           "isMut": false,
           "isSigner": false,
           "docs": [
-            "Stake Token Mint"
+            "Vault holder rewards"
+          ]
+        },
+        {
+          "name": "vaultAuthority",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Vault authority (pda of `['token-owner', config]`)"
           ]
         },
         {
@@ -316,14 +332,6 @@
           "isSigner": true,
           "docs": [
             "Stake authority"
-          ]
-        },
-        {
-          "name": "vaultAuthority",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Vault authority (pda of `['token-owner', config]`)"
           ]
         },
         {

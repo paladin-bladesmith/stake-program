@@ -58,7 +58,7 @@ pub fn process_inactivate_validator_stake(
     require!(
         ctx.accounts.validator_stake.key == &derivation,
         ProgramError::InvalidSeeds,
-        "stake",
+        "validator stake",
     );
     let delegation = &mut validator_stake.delegation;
 
@@ -80,7 +80,6 @@ pub fn process_inactivate_validator_stake(
     };
     let inactive_timestamp = config.cooldown_time_seconds.saturating_add(timestamp.get());
     let current_timestamp = Clock::get()?.unix_timestamp as u64;
-
     require!(
         current_timestamp >= inactive_timestamp,
         StakeError::ActiveDeactivationCooldown,
