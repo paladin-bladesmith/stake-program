@@ -24,16 +24,18 @@ use crate::{
 /// staking rewards are held in a separate account, they must be distributed
 /// based on the proportion of total stake.
 ///
-/// 0. `[ ]` Paladin SOL stake view program
+/// 0. `[ ]` Sol stake view program
 /// 1. `[w]` Config account
 /// 2. `[w]` Vault holder rewards
 /// 3. `[w]` Sol staker stake
 /// 4. `[w]` Sol staker stake authority
 /// 5. `[ ]` Sol staker native stake
-/// 6. `[w]` Validator stake
-/// 7. `[w]` Validator stake authority
-/// 8. `[ ]` Sysvar stake history
-/// 9. `[w]?` Keeper recipient
+/// 6. `[w]` Previous validator stake
+/// 7. `[w]` Previous validator stake authority
+/// 8. `[w]` Current validator stake
+/// 9. `[w]` Current validator stake authority
+/// 10. `[ ]` Sysvar stake history
+/// 11. `[w]?` Keeper recipient
 pub fn process_harvest_sol_staker_rewards(
     program_id: &Pubkey,
     ctx: Context<HarvestSolStakerRewardsAccounts>,
@@ -115,7 +117,7 @@ pub fn process_harvest_sol_staker_rewards(
     let stake_state_data =
         bytemuck::try_from_bytes::<GetStakeActivatingAndDeactivatingReturnData>(&return_data)
             .map_err(|_error| ProgramError::InvalidAccountData)?;
-    let current_delegation = stake_state_data.delegated_vote.get().unwrap_or_default();
+    let mut current_delegation = stake_state_data.delegated_vote.get().unwrap_or_default();
     let mut current_stake = stake_state_data.effective.into();
     let requires_sync = current_stake != sol_staker_stake.lamports_amount
         || current_delegation != sol_staker_stake.delegation.validator_vote;
@@ -250,6 +252,7 @@ pub fn process_harvest_sol_staker_rewards(
                 current_validator_stake.total_staked_lamports_amount,
             )?;
         } else {
+            current_delegation = Pubkey::default();
             current_stake = 0;
         }
     }
