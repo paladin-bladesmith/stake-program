@@ -12,7 +12,7 @@ use spl_token_2022::{
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, HarvestHolderRewardsAccounts},
-    processor::sync_config_lamports,
+    processor::{sync_config_lamports, unpack_initialized_mut},
     require,
     state::{get_vault_pda_signer_seeds, Config},
 };
@@ -30,12 +30,14 @@ use crate::{
 /// `HarvestRewards` on the vault account before this.
 ///
 /// 0. `[w]` Config account
-/// 1. `[w]` Vault token account
-/// 2. `[ ]` Holder rewards account for vault token account
-/// 3. `[w]` Vault authority, PDA with seeds `['token-owner', config]`
-/// 4. `[ ]` Stake token mint
-/// 5. `[ ]` Token program
-/// 6. `[ ]` System program
+/// 1. `[w]` Holder rewards pool
+/// 2. `[w]` Vault token account
+/// 3. `[w]` Vault holder rewards
+/// 4. `[w]` Vault authority
+/// 5. `[ ]` Stake token mint
+/// 6. `[ ]` Token program
+/// 7. `[ ]` Paladin rewards program
+/// 8. `[ ]` System program
 pub fn process_harvest_holder_rewards(
     program_id: &Pubkey,
     ctx: Context<HarvestHolderRewardsAccounts>,
@@ -51,13 +53,7 @@ pub fn process_harvest_holder_rewards(
         "config"
     );
     let mut config_data = ctx.accounts.config.try_borrow_mut_data()?;
-    let config = bytemuck::try_from_bytes_mut::<Config>(&mut config_data)
-        .map_err(|_error| ProgramError::InvalidAccountData)?;
-    require!(
-        config.is_initialized(),
-        ProgramError::UninitializedAccount,
-        "config",
-    );
+    let config = unpack_initialized_mut::<Config>(&mut config_data)?;
 
     // vault
     // - must be the token account on the stake config account
@@ -143,9 +139,8 @@ pub fn process_harvest_holder_rewards(
     )?;
 
     // Update the configs last seen lamports again.
-    let mut config_data = ctx.accounts.config.try_borrow_mut_data()?;
-    let config = bytemuck::try_from_bytes_mut::<Config>(&mut config_data)
-        .map_err(|_error| ProgramError::InvalidAccountData)?;
+    let mut config = ctx.accounts.config.try_borrow_mut_data()?;
+    let config = unpack_initialized_mut::<Config>(&mut config)?;
     config.lamports_last = ctx.accounts.config.lamports();
 
     Ok(())
