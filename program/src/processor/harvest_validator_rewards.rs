@@ -45,8 +45,8 @@ pub fn process_harvest_validator_rewards(
         ProgramError::InvalidAccountOwner,
         "validator stake"
     );
-    let mut stake_data = ctx.accounts.validator_stake.try_borrow_mut_data()?;
-    let validator_stake = unpack_initialized_mut::<ValidatorStake>(&mut stake_data)?;
+    let mut validator_stake_data = ctx.accounts.validator_stake.try_borrow_mut_data()?;
+    let validator_stake = unpack_initialized_mut::<ValidatorStake>(&mut validator_stake_data)?;
     let (derivation, _) = find_validator_stake_pda(
         &validator_stake.delegation.validator_vote,
         ctx.accounts.config.key,
