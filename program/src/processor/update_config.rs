@@ -7,6 +7,7 @@ use crate::{
         accounts::{Context, UpdateConfigAccounts},
         ConfigField,
     },
+    processor::unpack_initialized_mut,
     require,
     state::{Config, MAX_BASIS_POINTS},
 };
@@ -25,21 +26,15 @@ pub fn process_update_config(
     // Accounts validation.
 
     // config
-    // - owner must the stake program
+    // - owner must be the stake program
     // - must be initialized
     require!(
         ctx.accounts.config.owner == program_id,
         ProgramError::InvalidAccountOwner,
         "config"
     );
-    let data = &mut ctx.accounts.config.try_borrow_mut_data()?;
-    let config = bytemuck::try_from_bytes_mut::<Config>(data)
-        .map_err(|_error| ProgramError::InvalidAccountData)?;
-    require!(
-        config.is_initialized(),
-        ProgramError::UninitializedAccount,
-        "config"
-    );
+    let mut config = ctx.accounts.config.try_borrow_mut_data()?;
+    let config = unpack_initialized_mut::<Config>(&mut config)?;
 
     let authority: Option<Pubkey> = config.authority.into();
     if let Some(authority) = authority {
