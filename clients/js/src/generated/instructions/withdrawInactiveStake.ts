@@ -36,13 +36,14 @@ export type WithdrawInactiveStakeInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountStake extends string | IAccountMeta<string> = string,
-  TAccountVault extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
+  TAccountVault extends string | IAccountMeta<string> = string,
+  TAccountVaultHolderRewards extends string | IAccountMeta<string> = string,
+  TAccountVaultAuthority extends string | IAccountMeta<string> = string,
   TAccountDestinationTokenAccount extends
     | string
     | IAccountMeta<string> = string,
   TAccountStakeAuthority extends string | IAccountMeta<string> = string,
-  TAccountVaultAuthority extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
@@ -57,12 +58,18 @@ export type WithdrawInactiveStakeInstruction<
       TAccountStake extends string
         ? WritableAccount<TAccountStake>
         : TAccountStake,
-      TAccountVault extends string
-        ? WritableAccount<TAccountVault>
-        : TAccountVault,
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
+      TAccountVault extends string
+        ? WritableAccount<TAccountVault>
+        : TAccountVault,
+      TAccountVaultHolderRewards extends string
+        ? ReadonlyAccount<TAccountVaultHolderRewards>
+        : TAccountVaultHolderRewards,
+      TAccountVaultAuthority extends string
+        ? ReadonlyAccount<TAccountVaultAuthority>
+        : TAccountVaultAuthority,
       TAccountDestinationTokenAccount extends string
         ? WritableAccount<TAccountDestinationTokenAccount>
         : TAccountDestinationTokenAccount,
@@ -70,9 +77,6 @@ export type WithdrawInactiveStakeInstruction<
         ? ReadonlySignerAccount<TAccountStakeAuthority> &
             IAccountSignerMeta<TAccountStakeAuthority>
         : TAccountStakeAuthority,
-      TAccountVaultAuthority extends string
-        ? ReadonlyAccount<TAccountVaultAuthority>
-        : TAccountVaultAuthority,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
@@ -119,27 +123,30 @@ export function getWithdrawInactiveStakeInstructionDataCodec(): Codec<
 export type WithdrawInactiveStakeInput<
   TAccountConfig extends string = string,
   TAccountStake extends string = string,
-  TAccountVault extends string = string,
   TAccountMint extends string = string,
+  TAccountVault extends string = string,
+  TAccountVaultHolderRewards extends string = string,
+  TAccountVaultAuthority extends string = string,
   TAccountDestinationTokenAccount extends string = string,
   TAccountStakeAuthority extends string = string,
-  TAccountVaultAuthority extends string = string,
   TAccountTokenProgram extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
   /** Validator or SOL staker stake account */
   stake: Address<TAccountStake>;
-  /** Vault token account */
-  vault: Address<TAccountVault>;
   /** Stake Token Mint */
   mint: Address<TAccountMint>;
+  /** Vault token account */
+  vault: Address<TAccountVault>;
+  /** Vault holder rewards */
+  vaultHolderRewards: Address<TAccountVaultHolderRewards>;
+  /** Vault authority (pda of `['token-owner', config]`) */
+  vaultAuthority: Address<TAccountVaultAuthority>;
   /** Destination token account */
   destinationTokenAccount: Address<TAccountDestinationTokenAccount>;
   /** Stake authority */
   stakeAuthority: TransactionSigner<TAccountStakeAuthority>;
-  /** Vault authority (pda of `['token-owner', config]`) */
-  vaultAuthority: Address<TAccountVaultAuthority>;
   /** Token program */
   tokenProgram?: Address<TAccountTokenProgram>;
   amount: WithdrawInactiveStakeInstructionDataArgs['amount'];
@@ -148,32 +155,35 @@ export type WithdrawInactiveStakeInput<
 export function getWithdrawInactiveStakeInstruction<
   TAccountConfig extends string,
   TAccountStake extends string,
-  TAccountVault extends string,
   TAccountMint extends string,
+  TAccountVault extends string,
+  TAccountVaultHolderRewards extends string,
+  TAccountVaultAuthority extends string,
   TAccountDestinationTokenAccount extends string,
   TAccountStakeAuthority extends string,
-  TAccountVaultAuthority extends string,
   TAccountTokenProgram extends string,
 >(
   input: WithdrawInactiveStakeInput<
     TAccountConfig,
     TAccountStake,
-    TAccountVault,
     TAccountMint,
+    TAccountVault,
+    TAccountVaultHolderRewards,
+    TAccountVaultAuthority,
     TAccountDestinationTokenAccount,
     TAccountStakeAuthority,
-    TAccountVaultAuthority,
     TAccountTokenProgram
   >
 ): WithdrawInactiveStakeInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountStake,
-  TAccountVault,
   TAccountMint,
+  TAccountVault,
+  TAccountVaultHolderRewards,
+  TAccountVaultAuthority,
   TAccountDestinationTokenAccount,
   TAccountStakeAuthority,
-  TAccountVaultAuthority,
   TAccountTokenProgram
 > {
   // Program address.
@@ -183,14 +193,18 @@ export function getWithdrawInactiveStakeInstruction<
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
     stake: { value: input.stake ?? null, isWritable: true },
-    vault: { value: input.vault ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
+    vault: { value: input.vault ?? null, isWritable: true },
+    vaultHolderRewards: {
+      value: input.vaultHolderRewards ?? null,
+      isWritable: false,
+    },
+    vaultAuthority: { value: input.vaultAuthority ?? null, isWritable: false },
     destinationTokenAccount: {
       value: input.destinationTokenAccount ?? null,
       isWritable: true,
     },
     stakeAuthority: { value: input.stakeAuthority ?? null, isWritable: false },
-    vaultAuthority: { value: input.vaultAuthority ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -212,11 +226,12 @@ export function getWithdrawInactiveStakeInstruction<
     accounts: [
       getAccountMeta(accounts.config),
       getAccountMeta(accounts.stake),
-      getAccountMeta(accounts.vault),
       getAccountMeta(accounts.mint),
+      getAccountMeta(accounts.vault),
+      getAccountMeta(accounts.vaultHolderRewards),
+      getAccountMeta(accounts.vaultAuthority),
       getAccountMeta(accounts.destinationTokenAccount),
       getAccountMeta(accounts.stakeAuthority),
-      getAccountMeta(accounts.vaultAuthority),
       getAccountMeta(accounts.tokenProgram),
     ],
     programAddress,
@@ -227,11 +242,12 @@ export function getWithdrawInactiveStakeInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountStake,
-    TAccountVault,
     TAccountMint,
+    TAccountVault,
+    TAccountVaultHolderRewards,
+    TAccountVaultAuthority,
     TAccountDestinationTokenAccount,
     TAccountStakeAuthority,
-    TAccountVaultAuthority,
     TAccountTokenProgram
   >;
 
@@ -248,18 +264,20 @@ export type ParsedWithdrawInactiveStakeInstruction<
     config: TAccountMetas[0];
     /** Validator or SOL staker stake account */
     stake: TAccountMetas[1];
-    /** Vault token account */
-    vault: TAccountMetas[2];
     /** Stake Token Mint */
-    mint: TAccountMetas[3];
-    /** Destination token account */
-    destinationTokenAccount: TAccountMetas[4];
-    /** Stake authority */
-    stakeAuthority: TAccountMetas[5];
+    mint: TAccountMetas[2];
+    /** Vault token account */
+    vault: TAccountMetas[3];
+    /** Vault holder rewards */
+    vaultHolderRewards: TAccountMetas[4];
     /** Vault authority (pda of `['token-owner', config]`) */
-    vaultAuthority: TAccountMetas[6];
+    vaultAuthority: TAccountMetas[5];
+    /** Destination token account */
+    destinationTokenAccount: TAccountMetas[6];
+    /** Stake authority */
+    stakeAuthority: TAccountMetas[7];
     /** Token program */
-    tokenProgram: TAccountMetas[7];
+    tokenProgram: TAccountMetas[8];
   };
   data: WithdrawInactiveStakeInstructionData;
 };
@@ -272,7 +290,7 @@ export function parseWithdrawInactiveStakeInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedWithdrawInactiveStakeInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 8) {
+  if (instruction.accounts.length < 9) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -287,11 +305,12 @@ export function parseWithdrawInactiveStakeInstruction<
     accounts: {
       config: getNextAccount(),
       stake: getNextAccount(),
-      vault: getNextAccount(),
       mint: getNextAccount(),
+      vault: getNextAccount(),
+      vaultHolderRewards: getNextAccount(),
+      vaultAuthority: getNextAccount(),
       destinationTokenAccount: getNextAccount(),
       stakeAuthority: getNextAccount(),
-      vaultAuthority: getNextAccount(),
       tokenProgram: getNextAccount(),
     },
     data: getWithdrawInactiveStakeInstructionDataDecoder().decode(

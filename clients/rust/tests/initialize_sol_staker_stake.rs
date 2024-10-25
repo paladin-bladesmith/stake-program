@@ -2,7 +2,6 @@
 
 mod setup;
 
-use borsh::BorshSerialize;
 use paladin_stake_program_client::{
     accounts::{Config, SolStakerStake, ValidatorStake},
     instructions::InitializeSolStakerStakeBuilder,

@@ -14,16 +14,18 @@ pub struct WithdrawInactiveStake {
     pub config: solana_program::pubkey::Pubkey,
     /// Validator or SOL staker stake account
     pub stake: solana_program::pubkey::Pubkey,
-    /// Vault token account
-    pub vault: solana_program::pubkey::Pubkey,
     /// Stake Token Mint
     pub mint: solana_program::pubkey::Pubkey,
+    /// Vault token account
+    pub vault: solana_program::pubkey::Pubkey,
+    /// Vault holder rewards
+    pub vault_holder_rewards: solana_program::pubkey::Pubkey,
+    /// Vault authority (pda of `['token-owner', config]`)
+    pub vault_authority: solana_program::pubkey::Pubkey,
     /// Destination token account
     pub destination_token_account: solana_program::pubkey::Pubkey,
     /// Stake authority
     pub stake_authority: solana_program::pubkey::Pubkey,
-    /// Vault authority (pda of `['token-owner', config]`)
-    pub vault_authority: solana_program::pubkey::Pubkey,
     /// Token program
     pub token_program: solana_program::pubkey::Pubkey,
 }
@@ -41,7 +43,7 @@ impl WithdrawInactiveStake {
         args: WithdrawInactiveStakeInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(8 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.config,
             false,
@@ -49,11 +51,19 @@ impl WithdrawInactiveStake {
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.stake, false,
         ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.mint, false,
+        ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.vault, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.mint, false,
+            self.vault_holder_rewards,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.vault_authority,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.destination_token_account,
@@ -62,10 +72,6 @@ impl WithdrawInactiveStake {
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.stake_authority,
             true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.vault_authority,
-            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.token_program,
@@ -115,21 +121,23 @@ pub struct WithdrawInactiveStakeInstructionArgs {
 ///
 ///   0. `[writable]` config
 ///   1. `[writable]` stake
-///   2. `[writable]` vault
-///   3. `[]` mint
-///   4. `[writable]` destination_token_account
-///   5. `[signer]` stake_authority
-///   6. `[]` vault_authority
-///   7. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
+///   2. `[]` mint
+///   3. `[writable]` vault
+///   4. `[]` vault_holder_rewards
+///   5. `[]` vault_authority
+///   6. `[writable]` destination_token_account
+///   7. `[signer]` stake_authority
+///   8. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
 #[derive(Clone, Debug, Default)]
 pub struct WithdrawInactiveStakeBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
     stake: Option<solana_program::pubkey::Pubkey>,
-    vault: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
+    vault: Option<solana_program::pubkey::Pubkey>,
+    vault_holder_rewards: Option<solana_program::pubkey::Pubkey>,
+    vault_authority: Option<solana_program::pubkey::Pubkey>,
     destination_token_account: Option<solana_program::pubkey::Pubkey>,
     stake_authority: Option<solana_program::pubkey::Pubkey>,
-    vault_authority: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
     amount: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
@@ -151,16 +159,34 @@ impl WithdrawInactiveStakeBuilder {
         self.stake = Some(stake);
         self
     }
+    /// Stake Token Mint
+    #[inline(always)]
+    pub fn mint(&mut self, mint: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.mint = Some(mint);
+        self
+    }
     /// Vault token account
     #[inline(always)]
     pub fn vault(&mut self, vault: solana_program::pubkey::Pubkey) -> &mut Self {
         self.vault = Some(vault);
         self
     }
-    /// Stake Token Mint
+    /// Vault holder rewards
     #[inline(always)]
-    pub fn mint(&mut self, mint: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.mint = Some(mint);
+    pub fn vault_holder_rewards(
+        &mut self,
+        vault_holder_rewards: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.vault_holder_rewards = Some(vault_holder_rewards);
+        self
+    }
+    /// Vault authority (pda of `['token-owner', config]`)
+    #[inline(always)]
+    pub fn vault_authority(
+        &mut self,
+        vault_authority: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.vault_authority = Some(vault_authority);
         self
     }
     /// Destination token account
@@ -179,15 +205,6 @@ impl WithdrawInactiveStakeBuilder {
         stake_authority: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
         self.stake_authority = Some(stake_authority);
-        self
-    }
-    /// Vault authority (pda of `['token-owner', config]`)
-    #[inline(always)]
-    pub fn vault_authority(
-        &mut self,
-        vault_authority: solana_program::pubkey::Pubkey,
-    ) -> &mut Self {
-        self.vault_authority = Some(vault_authority);
         self
     }
     /// `[optional account, default to 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb']`
@@ -225,13 +242,16 @@ impl WithdrawInactiveStakeBuilder {
         let accounts = WithdrawInactiveStake {
             config: self.config.expect("config is not set"),
             stake: self.stake.expect("stake is not set"),
-            vault: self.vault.expect("vault is not set"),
             mint: self.mint.expect("mint is not set"),
+            vault: self.vault.expect("vault is not set"),
+            vault_holder_rewards: self
+                .vault_holder_rewards
+                .expect("vault_holder_rewards is not set"),
+            vault_authority: self.vault_authority.expect("vault_authority is not set"),
             destination_token_account: self
                 .destination_token_account
                 .expect("destination_token_account is not set"),
             stake_authority: self.stake_authority.expect("stake_authority is not set"),
-            vault_authority: self.vault_authority.expect("vault_authority is not set"),
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
                 "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
             )),
@@ -250,16 +270,18 @@ pub struct WithdrawInactiveStakeCpiAccounts<'a, 'b> {
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
     /// Validator or SOL staker stake account
     pub stake: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Vault token account
-    pub vault: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake Token Mint
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Vault token account
+    pub vault: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Vault holder rewards
+    pub vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Vault authority (pda of `['token-owner', config]`)
+    pub vault_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Destination token account
     pub destination_token_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake authority
     pub stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Vault authority (pda of `['token-owner', config]`)
-    pub vault_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Token program
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
@@ -272,16 +294,18 @@ pub struct WithdrawInactiveStakeCpi<'a, 'b> {
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
     /// Validator or SOL staker stake account
     pub stake: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Vault token account
-    pub vault: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake Token Mint
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Vault token account
+    pub vault: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Vault holder rewards
+    pub vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Vault authority (pda of `['token-owner', config]`)
+    pub vault_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Destination token account
     pub destination_token_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake authority
     pub stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Vault authority (pda of `['token-owner', config]`)
-    pub vault_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Token program
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
@@ -298,11 +322,12 @@ impl<'a, 'b> WithdrawInactiveStakeCpi<'a, 'b> {
             __program: program,
             config: accounts.config,
             stake: accounts.stake,
-            vault: accounts.vault,
             mint: accounts.mint,
+            vault: accounts.vault,
+            vault_holder_rewards: accounts.vault_holder_rewards,
+            vault_authority: accounts.vault_authority,
             destination_token_account: accounts.destination_token_account,
             stake_authority: accounts.stake_authority,
-            vault_authority: accounts.vault_authority,
             token_program: accounts.token_program,
             __args: args,
         }
@@ -340,7 +365,7 @@ impl<'a, 'b> WithdrawInactiveStakeCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(8 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.config.key,
             false,
@@ -349,12 +374,20 @@ impl<'a, 'b> WithdrawInactiveStakeCpi<'a, 'b> {
             *self.stake.key,
             false,
         ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.mint.key,
+            false,
+        ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.vault.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.mint.key,
+            *self.vault_holder_rewards.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.vault_authority.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -364,10 +397,6 @@ impl<'a, 'b> WithdrawInactiveStakeCpi<'a, 'b> {
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.stake_authority.key,
             true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.vault_authority.key,
-            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.token_program.key,
@@ -391,15 +420,16 @@ impl<'a, 'b> WithdrawInactiveStakeCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(8 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(9 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.config.clone());
         account_infos.push(self.stake.clone());
-        account_infos.push(self.vault.clone());
         account_infos.push(self.mint.clone());
+        account_infos.push(self.vault.clone());
+        account_infos.push(self.vault_holder_rewards.clone());
+        account_infos.push(self.vault_authority.clone());
         account_infos.push(self.destination_token_account.clone());
         account_infos.push(self.stake_authority.clone());
-        account_infos.push(self.vault_authority.clone());
         account_infos.push(self.token_program.clone());
         remaining_accounts
             .iter()
@@ -419,12 +449,13 @@ impl<'a, 'b> WithdrawInactiveStakeCpi<'a, 'b> {
 ///
 ///   0. `[writable]` config
 ///   1. `[writable]` stake
-///   2. `[writable]` vault
-///   3. `[]` mint
-///   4. `[writable]` destination_token_account
-///   5. `[signer]` stake_authority
-///   6. `[]` vault_authority
-///   7. `[]` token_program
+///   2. `[]` mint
+///   3. `[writable]` vault
+///   4. `[]` vault_holder_rewards
+///   5. `[]` vault_authority
+///   6. `[writable]` destination_token_account
+///   7. `[signer]` stake_authority
+///   8. `[]` token_program
 #[derive(Clone, Debug)]
 pub struct WithdrawInactiveStakeCpiBuilder<'a, 'b> {
     instruction: Box<WithdrawInactiveStakeCpiBuilderInstruction<'a, 'b>>,
@@ -436,11 +467,12 @@ impl<'a, 'b> WithdrawInactiveStakeCpiBuilder<'a, 'b> {
             __program: program,
             config: None,
             stake: None,
-            vault: None,
             mint: None,
+            vault: None,
+            vault_holder_rewards: None,
+            vault_authority: None,
             destination_token_account: None,
             stake_authority: None,
-            vault_authority: None,
             token_program: None,
             amount: None,
             __remaining_accounts: Vec::new(),
@@ -462,16 +494,34 @@ impl<'a, 'b> WithdrawInactiveStakeCpiBuilder<'a, 'b> {
         self.instruction.stake = Some(stake);
         self
     }
+    /// Stake Token Mint
+    #[inline(always)]
+    pub fn mint(&mut self, mint: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.mint = Some(mint);
+        self
+    }
     /// Vault token account
     #[inline(always)]
     pub fn vault(&mut self, vault: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.vault = Some(vault);
         self
     }
-    /// Stake Token Mint
+    /// Vault holder rewards
     #[inline(always)]
-    pub fn mint(&mut self, mint: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.mint = Some(mint);
+    pub fn vault_holder_rewards(
+        &mut self,
+        vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.vault_holder_rewards = Some(vault_holder_rewards);
+        self
+    }
+    /// Vault authority (pda of `['token-owner', config]`)
+    #[inline(always)]
+    pub fn vault_authority(
+        &mut self,
+        vault_authority: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.vault_authority = Some(vault_authority);
         self
     }
     /// Destination token account
@@ -490,15 +540,6 @@ impl<'a, 'b> WithdrawInactiveStakeCpiBuilder<'a, 'b> {
         stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.stake_authority = Some(stake_authority);
-        self
-    }
-    /// Vault authority (pda of `['token-owner', config]`)
-    #[inline(always)]
-    pub fn vault_authority(
-        &mut self,
-        vault_authority: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.vault_authority = Some(vault_authority);
         self
     }
     /// Token program
@@ -566,9 +607,19 @@ impl<'a, 'b> WithdrawInactiveStakeCpiBuilder<'a, 'b> {
 
             stake: self.instruction.stake.expect("stake is not set"),
 
+            mint: self.instruction.mint.expect("mint is not set"),
+
             vault: self.instruction.vault.expect("vault is not set"),
 
-            mint: self.instruction.mint.expect("mint is not set"),
+            vault_holder_rewards: self
+                .instruction
+                .vault_holder_rewards
+                .expect("vault_holder_rewards is not set"),
+
+            vault_authority: self
+                .instruction
+                .vault_authority
+                .expect("vault_authority is not set"),
 
             destination_token_account: self
                 .instruction
@@ -579,11 +630,6 @@ impl<'a, 'b> WithdrawInactiveStakeCpiBuilder<'a, 'b> {
                 .instruction
                 .stake_authority
                 .expect("stake_authority is not set"),
-
-            vault_authority: self
-                .instruction
-                .vault_authority
-                .expect("vault_authority is not set"),
 
             token_program: self
                 .instruction
@@ -603,11 +649,12 @@ struct WithdrawInactiveStakeCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    vault_holder_rewards: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    vault_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     destination_token_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     stake_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    vault_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     amount: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
