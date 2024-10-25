@@ -6,12 +6,9 @@ use solana_program::{
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, InactivateSolStakerStakeAccounts},
-    processor::{harvest, unpack_initialized_mut, HarvestAccounts},
+    processor::{harvest, sync_effective, unpack_initialized_mut, HarvestAccounts},
     require,
-    state::{
-        calculate_maximum_stake_for_lamports_amount, find_sol_staker_stake_pda, Config,
-        SolStakerStake,
-    },
+    state::{find_sol_staker_stake_pda, Config, SolStakerStake},
 };
 
 /// Move tokens from deactivating to inactive.
@@ -63,7 +60,7 @@ pub fn process_inactivate_sol_staker_stake(
     require!(
         ctx.accounts.sol_staker_stake.key == &derivation,
         ProgramError::InvalidSeeds,
-        "stake",
+        "sol staker stake",
     );
     let delegation = &mut sol_staker_stake.delegation;
 
@@ -103,24 +100,13 @@ pub fn process_inactivate_sol_staker_stake(
         .inactive_amount
         .checked_add(delegation.deactivating_amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
-    let staker_limit =
-        calculate_maximum_stake_for_lamports_amount(sol_staker_stake.lamports_amount)?;
-    let staker_effective = std::cmp::min(staker_active, staker_limit);
-    let effective_delta = delegation
-        .effective_amount
-        .checked_sub(staker_effective)
-        .ok_or(ProgramError::ArithmeticOverflow)?;
 
     // Update the state values.
     delegation.active_amount = staker_active;
-    delegation.effective_amount = staker_effective;
     delegation.deactivating_amount = 0;
     delegation.deactivation_timestamp = None;
     delegation.inactive_amount = staker_inactive;
-    config.token_amount_effective = config
-        .token_amount_effective
-        .checked_sub(effective_delta)
-        .ok_or(ProgramError::ArithmeticOverflow)?;
+    sync_effective(config, delegation, sol_staker_stake.lamports_amount)?;
 
     Ok(())
 }

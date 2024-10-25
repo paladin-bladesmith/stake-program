@@ -15,7 +15,7 @@ use crate::{
     err,
     error::StakeError,
     instruction::accounts::{Context, InitializeSolStakerStakeAccounts},
-    processor::unpack_initialized_mut,
+    processor::{unpack_initialized, unpack_initialized_mut},
     require,
     state::{
         find_sol_staker_stake_pda, find_validator_stake_pda, get_sol_staker_stake_pda_signer_seeds,
@@ -53,14 +53,9 @@ pub fn process_initialize_sol_staker_stake(
         ProgramError::InvalidAccountOwner,
         "config"
     );
-    let data = &ctx.accounts.config.try_borrow_data()?;
-    let config = bytemuck::try_from_bytes::<Config>(data)
-        .map_err(|_error| ProgramError::InvalidAccountData)?;
-    require!(
-        config.is_initialized(),
-        ProgramError::UninitializedAccount,
-        "config"
-    );
+    let config = ctx.accounts.config.try_borrow_data()?;
+    let config = unpack_initialized::<Config>(&config)?;
+    assert!(config.is_initialized());
 
     // stake state (validated by the SOL Stake View program)
     // - must have a delegation

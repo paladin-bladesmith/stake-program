@@ -7,7 +7,7 @@ use spl_token_2022::{
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, WithdrawInactiveStakeAccounts},
-    processor::unpack_delegation_mut_checked,
+    processor::{harvest, unpack_delegation_mut_checked, unpack_initialized_mut, HarvestAccounts},
     require,
     state::{create_vault_pda, get_vault_pda_signer_seeds, Config},
 };
@@ -43,14 +43,9 @@ pub fn process_withdraw_inactive_stake<'a>(
         ProgramError::InvalidAccountOwner,
         "config"
     );
-    let mut config_data = ctx.accounts.config.try_borrow_mut_data()?;
-    let config = bytemuck::try_from_bytes_mut::<Config>(&mut config_data)
-        .map_err(|_error| ProgramError::InvalidAccountData)?;
-    require!(
-        config.is_initialized(),
-        ProgramError::UninitializedAccount,
-        "config",
-    );
+    let mut config = ctx.accounts.config.try_borrow_mut_data()?;
+    let config = unpack_initialized_mut::<Config>(&mut config)?;
+    assert!(config.is_initialized());
 
     // stake
     // - owner must be the stake program
@@ -118,6 +113,18 @@ pub fn process_withdraw_inactive_stake<'a>(
     let mint_data = ctx.accounts.mint.try_borrow_data()?;
     let mint = PodStateWithExtensions::<PodMint>::unpack(&mint_data)?;
     let decimals = mint.base.decimals;
+
+    // Harvest any pending rewards before updating amounts.
+    harvest(
+        HarvestAccounts {
+            config: ctx.accounts.config,
+            vault_holder_rewards: ctx.accounts.vault_holder_rewards,
+            authority: ctx.accounts.stake_authority,
+        },
+        config,
+        delegation,
+        None,
+    )?;
 
     // Update the config and stake account data.
     require!(
