@@ -31,11 +31,27 @@ impl SolStakerStakeManager {
         validator_vote: &Pubkey,
         amount: u64,
     ) -> Self {
+        Self::new_with_authority(
+            context,
+            config,
+            validator_stake,
+            validator_vote,
+            Keypair::new(),
+            amount,
+        )
+        .await
+    }
+
+    pub async fn new_with_authority(
+        context: &mut ProgramTestContext,
+        config: &Pubkey,
+        validator_stake: &Pubkey,
+        validator_vote: &Pubkey,
+        authority: Keypair,
+        amount: u64,
+    ) -> Self {
         // create the SOL stake and delegation
-
         let stake_state = Keypair::new();
-        let authority = Keypair::new();
-
         create_stake_account(
             context,
             &stake_state,

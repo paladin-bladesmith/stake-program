@@ -18,6 +18,7 @@ export * from './initializeValidatorStake';
 export * from './setAuthority';
 export * from './slashSolStakerStake';
 export * from './slashValidatorStake';
+export * from './solStakerMoveTokens';
 export * from './solStakerStakeTokens';
 export * from './updateConfig';
 export * from './validatorStakeTokens';

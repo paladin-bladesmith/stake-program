@@ -721,7 +721,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+            "SOL staker stake account"
           ]
         },
         {
@@ -1026,6 +1026,61 @@
       "discriminant": {
         "type": "u8",
         "value": 15
+      }
+    },
+    {
+      "name": "SolStakerMoveTokens",
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Staking config"
+          ]
+        },
+        {
+          "name": "vaultHolderRewards",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Vault holder rewards"
+          ]
+        },
+        {
+          "name": "solStakerAuthority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "Sol staker authority"
+          ]
+        },
+        {
+          "name": "sourceSolStakerStake",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Source sol staker stake"
+          ]
+        },
+        {
+          "name": "destinationSolStakerStake",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Destination sol staker stake"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 16
       }
     }
   ],
