@@ -2,12 +2,11 @@
 
 use borsh::BorshSerialize;
 use paladin_stake_program_client::accounts::Config;
+use paladin_stake_program_client::accounts::SolStakerStake;
 use paladin_stake_program_client::errors::PaladinStakeProgramError;
 use paladin_stake_program_client::instructions::{
-    SolStakerMoveTokensInstructionArgs, SolStakerUpdateAuthority,
-    SolStakerUpdateAuthorityInstructionArgs,
+    SolStakerUpdateAuthority, SolStakerUpdateAuthorityInstructionArgs,
 };
-use paladin_stake_program_client::{accounts::SolStakerStake, instructions::SolStakerMoveTokens};
 use setup::validator_stake::ValidatorStakeManager;
 use setup::{config::ConfigManager, sol_staker_stake::SolStakerStakeManager};
 use solana_program_test::tokio;
@@ -15,7 +14,6 @@ use solana_sdk::instruction::InstructionError;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
-use solana_sdk::stake::instruction::StakeError;
 use solana_sdk::transaction::Transaction;
 
 mod setup;
