@@ -29,7 +29,7 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export type MoveSolStakerStakeInstruction<
+export type SolStakerMoveTokensInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountVaultHolderRewards extends string | IAccountMeta<string> = string,
@@ -62,14 +62,14 @@ export type MoveSolStakerStakeInstruction<
     ]
   >;
 
-export type MoveSolStakerStakeInstructionData = {
+export type SolStakerMoveTokensInstructionData = {
   discriminator: number;
   args: bigint;
 };
 
-export type MoveSolStakerStakeInstructionDataArgs = { args: number | bigint };
+export type SolStakerMoveTokensInstructionDataArgs = { args: number | bigint };
 
-export function getMoveSolStakerStakeInstructionDataEncoder(): Encoder<MoveSolStakerStakeInstructionDataArgs> {
+export function getSolStakerMoveTokensInstructionDataEncoder(): Encoder<SolStakerMoveTokensInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
@@ -79,24 +79,24 @@ export function getMoveSolStakerStakeInstructionDataEncoder(): Encoder<MoveSolSt
   );
 }
 
-export function getMoveSolStakerStakeInstructionDataDecoder(): Decoder<MoveSolStakerStakeInstructionData> {
+export function getSolStakerMoveTokensInstructionDataDecoder(): Decoder<SolStakerMoveTokensInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
     ['args', getU64Decoder()],
   ]);
 }
 
-export function getMoveSolStakerStakeInstructionDataCodec(): Codec<
-  MoveSolStakerStakeInstructionDataArgs,
-  MoveSolStakerStakeInstructionData
+export function getSolStakerMoveTokensInstructionDataCodec(): Codec<
+  SolStakerMoveTokensInstructionDataArgs,
+  SolStakerMoveTokensInstructionData
 > {
   return combineCodec(
-    getMoveSolStakerStakeInstructionDataEncoder(),
-    getMoveSolStakerStakeInstructionDataDecoder()
+    getSolStakerMoveTokensInstructionDataEncoder(),
+    getSolStakerMoveTokensInstructionDataDecoder()
   );
 }
 
-export type MoveSolStakerStakeInput<
+export type SolStakerMoveTokensInput<
   TAccountConfig extends string = string,
   TAccountVaultHolderRewards extends string = string,
   TAccountSolStakerAuthority extends string = string,
@@ -113,24 +113,24 @@ export type MoveSolStakerStakeInput<
   sourceSolStakerStake: Address<TAccountSourceSolStakerStake>;
   /** Destination sol staker stake */
   destinationSolStakerStake: Address<TAccountDestinationSolStakerStake>;
-  args: MoveSolStakerStakeInstructionDataArgs['args'];
+  args: SolStakerMoveTokensInstructionDataArgs['args'];
 };
 
-export function getMoveSolStakerStakeInstruction<
+export function getSolStakerMoveTokensInstruction<
   TAccountConfig extends string,
   TAccountVaultHolderRewards extends string,
   TAccountSolStakerAuthority extends string,
   TAccountSourceSolStakerStake extends string,
   TAccountDestinationSolStakerStake extends string,
 >(
-  input: MoveSolStakerStakeInput<
+  input: SolStakerMoveTokensInput<
     TAccountConfig,
     TAccountVaultHolderRewards,
     TAccountSolStakerAuthority,
     TAccountSourceSolStakerStake,
     TAccountDestinationSolStakerStake
   >
-): MoveSolStakerStakeInstruction<
+): SolStakerMoveTokensInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountVaultHolderRewards,
@@ -179,10 +179,10 @@ export function getMoveSolStakerStakeInstruction<
       getAccountMeta(accounts.destinationSolStakerStake),
     ],
     programAddress,
-    data: getMoveSolStakerStakeInstructionDataEncoder().encode(
-      args as MoveSolStakerStakeInstructionDataArgs
+    data: getSolStakerMoveTokensInstructionDataEncoder().encode(
+      args as SolStakerMoveTokensInstructionDataArgs
     ),
-  } as MoveSolStakerStakeInstruction<
+  } as SolStakerMoveTokensInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountVaultHolderRewards,
@@ -194,7 +194,7 @@ export function getMoveSolStakerStakeInstruction<
   return instruction;
 }
 
-export type ParsedMoveSolStakerStakeInstruction<
+export type ParsedSolStakerMoveTokensInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
@@ -211,17 +211,17 @@ export type ParsedMoveSolStakerStakeInstruction<
     /** Destination sol staker stake */
     destinationSolStakerStake: TAccountMetas[4];
   };
-  data: MoveSolStakerStakeInstructionData;
+  data: SolStakerMoveTokensInstructionData;
 };
 
-export function parseMoveSolStakerStakeInstruction<
+export function parseSolStakerMoveTokensInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedMoveSolStakerStakeInstruction<TProgram, TAccountMetas> {
+): ParsedSolStakerMoveTokensInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 5) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -241,7 +241,7 @@ export function parseMoveSolStakerStakeInstruction<
       sourceSolStakerStake: getNextAccount(),
       destinationSolStakerStake: getNextAccount(),
     },
-    data: getMoveSolStakerStakeInstructionDataDecoder().decode(
+    data: getSolStakerMoveTokensInstructionDataDecoder().decode(
       instruction.data
     ),
   };

@@ -1029,7 +1029,7 @@
       }
     },
     {
-      "name": "MoveSolStakerStake",
+      "name": "SolStakerMoveTokens",
       "accounts": [
         {
           "name": "config",

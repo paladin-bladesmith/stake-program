@@ -1,15 +1,15 @@
 use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey};
 
 use crate::{
-    instruction::accounts::{Context, MoveSolStakerStakeAccounts},
+    instruction::accounts::{Context, SolStakerMoveTokensAccounts},
     processor::{harvest, sync_effective, unpack_initialized_mut, HarvestAccounts},
     require,
     state::{find_sol_staker_stake_pda, Config, SolStakerStake},
 };
 
-pub(crate) fn process_move_sol_staker_stake(
+pub(crate) fn process_sol_staker_move_tokens(
     program_id: &Pubkey,
-    ctx: Context<MoveSolStakerStakeAccounts>,
+    ctx: Context<SolStakerMoveTokensAccounts>,
     amount: u64,
 ) -> ProgramResult {
     // Config

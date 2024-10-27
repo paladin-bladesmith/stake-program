@@ -9,7 +9,7 @@ use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 
 /// Accounts.
-pub struct MoveSolStakerStake {
+pub struct SolStakerMoveTokens {
     /// Staking config
     pub config: solana_program::pubkey::Pubkey,
     /// Vault holder rewards
@@ -22,17 +22,17 @@ pub struct MoveSolStakerStake {
     pub destination_sol_staker_stake: solana_program::pubkey::Pubkey,
 }
 
-impl MoveSolStakerStake {
+impl SolStakerMoveTokens {
     pub fn instruction(
         &self,
-        args: MoveSolStakerStakeInstructionArgs,
+        args: SolStakerMoveTokensInstructionArgs,
     ) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(args, &[])
     }
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        args: MoveSolStakerStakeInstructionArgs,
+        args: SolStakerMoveTokensInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
@@ -57,7 +57,7 @@ impl MoveSolStakerStake {
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = MoveSolStakerStakeInstructionData::new()
+        let mut data = SolStakerMoveTokensInstructionData::new()
             .try_to_vec()
             .unwrap();
         let mut args = args.try_to_vec().unwrap();
@@ -72,17 +72,17 @@ impl MoveSolStakerStake {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct MoveSolStakerStakeInstructionData {
+pub struct SolStakerMoveTokensInstructionData {
     discriminator: u8,
 }
 
-impl MoveSolStakerStakeInstructionData {
+impl SolStakerMoveTokensInstructionData {
     pub fn new() -> Self {
         Self { discriminator: 16 }
     }
 }
 
-impl Default for MoveSolStakerStakeInstructionData {
+impl Default for SolStakerMoveTokensInstructionData {
     fn default() -> Self {
         Self::new()
     }
@@ -90,11 +90,11 @@ impl Default for MoveSolStakerStakeInstructionData {
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct MoveSolStakerStakeInstructionArgs {
+pub struct SolStakerMoveTokensInstructionArgs {
     pub args: u64,
 }
 
-/// Instruction builder for `MoveSolStakerStake`.
+/// Instruction builder for `SolStakerMoveTokens`.
 ///
 /// ### Accounts:
 ///
@@ -104,7 +104,7 @@ pub struct MoveSolStakerStakeInstructionArgs {
 ///   3. `[writable]` source_sol_staker_stake
 ///   4. `[writable]` destination_sol_staker_stake
 #[derive(Clone, Debug, Default)]
-pub struct MoveSolStakerStakeBuilder {
+pub struct SolStakerMoveTokensBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
     vault_holder_rewards: Option<solana_program::pubkey::Pubkey>,
     sol_staker_authority: Option<solana_program::pubkey::Pubkey>,
@@ -114,7 +114,7 @@ pub struct MoveSolStakerStakeBuilder {
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl MoveSolStakerStakeBuilder {
+impl SolStakerMoveTokensBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -185,7 +185,7 @@ impl MoveSolStakerStakeBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = MoveSolStakerStake {
+        let accounts = SolStakerMoveTokens {
             config: self.config.expect("config is not set"),
             vault_holder_rewards: self
                 .vault_holder_rewards
@@ -200,7 +200,7 @@ impl MoveSolStakerStakeBuilder {
                 .destination_sol_staker_stake
                 .expect("destination_sol_staker_stake is not set"),
         };
-        let args = MoveSolStakerStakeInstructionArgs {
+        let args = SolStakerMoveTokensInstructionArgs {
             args: self.args.clone().expect("args is not set"),
         };
 
@@ -208,8 +208,8 @@ impl MoveSolStakerStakeBuilder {
     }
 }
 
-/// `move_sol_staker_stake` CPI accounts.
-pub struct MoveSolStakerStakeCpiAccounts<'a, 'b> {
+/// `sol_staker_move_tokens` CPI accounts.
+pub struct SolStakerMoveTokensCpiAccounts<'a, 'b> {
     /// Staking config
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
     /// Vault holder rewards
@@ -222,8 +222,8 @@ pub struct MoveSolStakerStakeCpiAccounts<'a, 'b> {
     pub destination_sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `move_sol_staker_stake` CPI instruction.
-pub struct MoveSolStakerStakeCpi<'a, 'b> {
+/// `sol_staker_move_tokens` CPI instruction.
+pub struct SolStakerMoveTokensCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// Staking config
@@ -237,14 +237,14 @@ pub struct MoveSolStakerStakeCpi<'a, 'b> {
     /// Destination sol staker stake
     pub destination_sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
-    pub __args: MoveSolStakerStakeInstructionArgs,
+    pub __args: SolStakerMoveTokensInstructionArgs,
 }
 
-impl<'a, 'b> MoveSolStakerStakeCpi<'a, 'b> {
+impl<'a, 'b> SolStakerMoveTokensCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: MoveSolStakerStakeCpiAccounts<'a, 'b>,
-        args: MoveSolStakerStakeInstructionArgs,
+        accounts: SolStakerMoveTokensCpiAccounts<'a, 'b>,
+        args: SolStakerMoveTokensInstructionArgs,
     ) -> Self {
         Self {
             __program: program,
@@ -317,7 +317,7 @@ impl<'a, 'b> MoveSolStakerStakeCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = MoveSolStakerStakeInstructionData::new()
+        let mut data = SolStakerMoveTokensInstructionData::new()
             .try_to_vec()
             .unwrap();
         let mut args = self.__args.try_to_vec().unwrap();
@@ -347,7 +347,7 @@ impl<'a, 'b> MoveSolStakerStakeCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `MoveSolStakerStake` via CPI.
+/// Instruction builder for `SolStakerMoveTokens` via CPI.
 ///
 /// ### Accounts:
 ///
@@ -357,13 +357,13 @@ impl<'a, 'b> MoveSolStakerStakeCpi<'a, 'b> {
 ///   3. `[writable]` source_sol_staker_stake
 ///   4. `[writable]` destination_sol_staker_stake
 #[derive(Clone, Debug)]
-pub struct MoveSolStakerStakeCpiBuilder<'a, 'b> {
-    instruction: Box<MoveSolStakerStakeCpiBuilderInstruction<'a, 'b>>,
+pub struct SolStakerMoveTokensCpiBuilder<'a, 'b> {
+    instruction: Box<SolStakerMoveTokensCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> MoveSolStakerStakeCpiBuilder<'a, 'b> {
+impl<'a, 'b> SolStakerMoveTokensCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(MoveSolStakerStakeCpiBuilderInstruction {
+        let instruction = Box::new(SolStakerMoveTokensCpiBuilderInstruction {
             __program: program,
             config: None,
             vault_holder_rewards: None,
@@ -466,10 +466,10 @@ impl<'a, 'b> MoveSolStakerStakeCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let args = MoveSolStakerStakeInstructionArgs {
+        let args = SolStakerMoveTokensInstructionArgs {
             args: self.instruction.args.clone().expect("args is not set"),
         };
-        let instruction = MoveSolStakerStakeCpi {
+        let instruction = SolStakerMoveTokensCpi {
             __program: self.instruction.__program,
 
             config: self.instruction.config.expect("config is not set"),
@@ -503,7 +503,7 @@ impl<'a, 'b> MoveSolStakerStakeCpiBuilder<'a, 'b> {
 }
 
 #[derive(Clone, Debug)]
-struct MoveSolStakerStakeCpiBuilderInstruction<'a, 'b> {
+struct SolStakerMoveTokensCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault_holder_rewards: Option<&'b solana_program::account_info::AccountInfo<'a>>,

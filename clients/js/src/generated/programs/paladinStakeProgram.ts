@@ -17,10 +17,10 @@ import {
   type ParsedInitializeConfigInstruction,
   type ParsedInitializeSolStakerStakeInstruction,
   type ParsedInitializeValidatorStakeInstruction,
-  type ParsedMoveSolStakerStakeInstruction,
   type ParsedSetAuthorityInstruction,
   type ParsedSlashSolStakerStakeInstruction,
   type ParsedSlashValidatorStakeInstruction,
+  type ParsedSolStakerMoveTokensInstruction,
   type ParsedSolStakerStakeTokensInstruction,
   type ParsedUpdateConfigInstruction,
   type ParsedValidatorStakeTokensInstruction,
@@ -53,7 +53,7 @@ export enum PaladinStakeProgramInstruction {
   HarvestSolStakerRewards,
   InactivateSolStakerStake,
   SlashSolStakerStake,
-  MoveSolStakerStake,
+  SolStakerMoveTokens,
 }
 
 export function identifyPaladinStakeProgramInstruction(
@@ -110,7 +110,7 @@ export function identifyPaladinStakeProgramInstruction(
     return PaladinStakeProgramInstruction.SlashSolStakerStake;
   }
   if (containsBytes(data, getU8Encoder().encode(16), 0)) {
-    return PaladinStakeProgramInstruction.MoveSolStakerStake;
+    return PaladinStakeProgramInstruction.SolStakerMoveTokens;
   }
   throw new Error(
     'The provided instruction could not be identified as a paladinStakeProgram instruction.'
@@ -169,5 +169,5 @@ export type ParsedPaladinStakeProgramInstruction<
       instructionType: PaladinStakeProgramInstruction.SlashSolStakerStake;
     } & ParsedSlashSolStakerStakeInstruction<TProgram>)
   | ({
-      instructionType: PaladinStakeProgramInstruction.MoveSolStakerStake;
-    } & ParsedMoveSolStakerStakeInstruction<TProgram>);
+      instructionType: PaladinStakeProgramInstruction.SolStakerMoveTokens;
+    } & ParsedSolStakerMoveTokensInstruction<TProgram>);
