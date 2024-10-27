@@ -1082,6 +1082,45 @@
         "type": "u8",
         "value": 16
       }
+    },
+    {
+      "name": "SolStakerUpdateAuthority",
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Config"
+          ]
+        },
+        {
+          "name": "configAuthority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "Config authority"
+          ]
+        },
+        {
+          "name": "solStakerStake",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Sol staker stake"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "newAuthority",
+          "type": "publicKey"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 17
+      }
     }
   ],
   "accounts": [

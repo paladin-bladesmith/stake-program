@@ -17,8 +17,9 @@ use crate::{
             InactivateValidatorStakeAccounts, InitializeConfigAccounts,
             InitializeSolStakerStakeAccounts, InitializeValidatorStakeAccounts,
             SetAuthorityAccounts, SlashSolStakerStakeAccounts, SlashValidatorStakeAccounts,
-            SolStakerMoveTokensAccounts, SolStakerStakeTokensAccounts, UpdateConfigAccounts,
-            ValidatorStakeTokensAccounts, WithdrawInactiveStakeAccounts,
+            SolStakerMoveTokensAccounts, SolStakerStakeTokensAccounts,
+            SolStakerUpdateAuthorityAccounts, UpdateConfigAccounts, ValidatorStakeTokensAccounts,
+            WithdrawInactiveStakeAccounts,
         },
         StakeInstruction,
     },
@@ -43,6 +44,7 @@ mod slash_sol_staker_stake;
 mod slash_validator_stake;
 mod sol_staker_move_tokens;
 mod sol_staker_stake_tokens;
+mod sol_staker_update_authority;
 mod update_config;
 mod validator_stake_tokens;
 mod withdraw_inactive_stake;
@@ -193,6 +195,14 @@ pub fn process_instruction<'a>(
                 program_id,
                 SolStakerMoveTokensAccounts::context(accounts)?,
                 amount,
+            )
+        }
+        StakeInstruction::SolStakerUpdateAuthority { new_authority } => {
+            msg!("Instruction: SolStakerUpdateAuthority");
+            sol_staker_update_authority::process_sol_staker_update_authority(
+                program_id,
+                SolStakerUpdateAuthorityAccounts::context(accounts)?,
+                new_authority,
             )
         }
     }
