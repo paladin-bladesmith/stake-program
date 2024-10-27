@@ -1,6 +1,7 @@
 use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey};
 
 use crate::{
+    error::StakeError,
     instruction::accounts::{Context, SolStakerMoveTokensAccounts},
     processor::{harvest, sync_effective, unpack_initialized_mut, HarvestAccounts},
     require,
@@ -23,6 +24,15 @@ pub(crate) fn process_sol_staker_move_tokens(
     let mut config = ctx.accounts.config.data.borrow_mut();
     let config = unpack_initialized_mut::<Config>(&mut config)?;
 
+    // Sol staker authority.
+    // - Must be signer.
+    // - Must be authority on both stake accounts.
+    require!(
+        ctx.accounts.sol_staker_authority.is_signer,
+        ProgramError::MissingRequiredSignature,
+        "sol staker authority"
+    );
+
     // Source sol staker stake
     // - Owner must be the stake program.
     // - Must be initialized.
@@ -30,7 +40,7 @@ pub(crate) fn process_sol_staker_move_tokens(
     require!(
         ctx.accounts.source_sol_staker_stake.owner == program_id,
         ProgramError::InvalidAccountOwner,
-        "sol staker stake"
+        "source sol staker stake"
     );
     let mut source_sol_staker_stake_data =
         ctx.accounts.source_sol_staker_stake.try_borrow_mut_data()?;
@@ -45,6 +55,11 @@ pub(crate) fn process_sol_staker_move_tokens(
         ctx.accounts.source_sol_staker_stake.key == &derivation,
         ProgramError::InvalidSeeds,
         "source sol staker stake",
+    );
+    require!(
+        &source_sol_staker_stake.delegation.authority == ctx.accounts.sol_staker_authority.key,
+        StakeError::InvalidAuthority,
+        "sol staker authority"
     );
 
     harvest(
@@ -81,7 +96,7 @@ pub(crate) fn process_sol_staker_move_tokens(
     require!(
         ctx.accounts.destination_sol_staker_stake.key == &derivation,
         ProgramError::InvalidSeeds,
-        "sol staker stake",
+        "destination sol staker stake",
     );
 
     harvest(
