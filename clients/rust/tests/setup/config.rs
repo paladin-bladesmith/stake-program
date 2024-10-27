@@ -1,12 +1,13 @@
 #![cfg(feature = "test-sbf")]
 #![allow(dead_code)]
 
+use paladin_rewards_program_client::accounts::HolderRewards;
 use paladin_stake_program_client::{
     accounts::Config, instructions::InitializeConfigBuilder, pdas::find_vault_pda,
 };
 use solana_program_test::ProgramTestContext;
 use solana_sdk::{
-    pubkey::Pubkey, signature::Keypair, signer::Signer, system_instruction,
+    account::Account, pubkey::Pubkey, signature::Keypair, signer::Signer, system_instruction,
     transaction::Transaction,
 };
 
@@ -23,6 +24,8 @@ pub struct ConfigManager {
     pub mint_authority: Keypair,
     // Vault token account.
     pub vault: Pubkey,
+    // Vault token account.
+    pub vault_holder_rewards: Pubkey,
 }
 
 impl ConfigManager {
@@ -39,16 +42,16 @@ impl ConfigManager {
         max_deactivation_basis_points: u16,
         sync_rewards_lamports: u64,
     ) -> Self {
-        let mut manager = Self {
+        let mut manager = ConfigManager {
             config: Pubkey::default(),
             authority: Keypair::new(),
             mint: Pubkey::default(),
             mint_authority: Keypair::new(),
             vault: Pubkey::default(),
+            vault_holder_rewards: Pubkey::default(),
         };
 
-        // creates the mint
-
+        // Creates the mint.
         let mint = Keypair::new();
         create_mint(
             context,
@@ -60,14 +63,11 @@ impl ConfigManager {
         )
         .await
         .unwrap();
-
         manager.mint = mint.pubkey();
 
-        // creates the valut (token account)
-
+        // Create the vault token account.
         let config = Keypair::new();
         let vault = Keypair::new();
-
         create_token_account(
             context,
             &find_vault_pda(&config.pubkey()).0,
@@ -77,11 +77,30 @@ impl ConfigManager {
         )
         .await
         .unwrap();
-
         manager.vault = vault.pubkey();
 
-        // initializes the config
+        // Create the holder rewards account for the vault.
+        let rent = context.banks_client.get_rent().await.unwrap();
+        let vault_holder_rewards = HolderRewards::find_pda(&vault.pubkey()).0;
+        context.set_account(
+            &vault_holder_rewards,
+            &Account {
+                lamports: rent.minimum_balance(HolderRewards::LEN),
+                data: borsh::to_vec(&HolderRewards {
+                    last_accumulated_rewards_per_token: 0,
+                    unharvested_rewards: 0,
+                    padding: 0,
+                })
+                .unwrap(),
+                owner: paladin_rewards_program_client::ID,
+                executable: false,
+                rent_epoch: 0,
+            }
+            .into(),
+        );
+        manager.vault_holder_rewards = vault_holder_rewards;
 
+        // Initializes the config.
         let create_ix = system_instruction::create_account(
             &context.payer.pubkey(),
             &config.pubkey(),
@@ -94,7 +113,6 @@ impl ConfigManager {
             Config::LEN as u64,
             &paladin_stake_program_client::ID,
         );
-
         let initialize_ix = InitializeConfigBuilder::new()
             .config(config.pubkey())
             .config_authority(manager.authority.pubkey())

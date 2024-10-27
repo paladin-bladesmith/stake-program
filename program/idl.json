@@ -1033,7 +1033,7 @@
       "accounts": [
         {
           "name": "config",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false,
           "docs": [
             "Staking config"
@@ -1049,8 +1049,8 @@
         },
         {
           "name": "solStakerAuthority",
-          "isMut": true,
-          "isSigner": false,
+          "isMut": false,
+          "isSigner": true,
           "docs": [
             "Sol staker authority"
           ]
@@ -1074,7 +1074,7 @@
       ],
       "args": [
         {
-          "name": "args",
+          "name": "amount",
           "type": "u64"
         }
       ],

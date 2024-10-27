@@ -36,7 +36,7 @@ impl SolStakerMoveTokens {
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             self.config,
             false,
         ));
@@ -44,9 +44,9 @@ impl SolStakerMoveTokens {
             self.vault_holder_rewards,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.sol_staker_authority,
-            false,
+            true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.source_sol_staker_stake,
@@ -91,16 +91,16 @@ impl Default for SolStakerMoveTokensInstructionData {
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SolStakerMoveTokensInstructionArgs {
-    pub args: u64,
+    pub amount: u64,
 }
 
 /// Instruction builder for `SolStakerMoveTokens`.
 ///
 /// ### Accounts:
 ///
-///   0. `[]` config
+///   0. `[writable]` config
 ///   1. `[]` vault_holder_rewards
-///   2. `[writable]` sol_staker_authority
+///   2. `[signer]` sol_staker_authority
 ///   3. `[writable]` source_sol_staker_stake
 ///   4. `[writable]` destination_sol_staker_stake
 #[derive(Clone, Debug, Default)]
@@ -110,7 +110,7 @@ pub struct SolStakerMoveTokensBuilder {
     sol_staker_authority: Option<solana_program::pubkey::Pubkey>,
     source_sol_staker_stake: Option<solana_program::pubkey::Pubkey>,
     destination_sol_staker_stake: Option<solana_program::pubkey::Pubkey>,
-    args: Option<u64>,
+    amount: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -161,8 +161,8 @@ impl SolStakerMoveTokensBuilder {
         self
     }
     #[inline(always)]
-    pub fn args(&mut self, args: u64) -> &mut Self {
-        self.args = Some(args);
+    pub fn amount(&mut self, amount: u64) -> &mut Self {
+        self.amount = Some(amount);
         self
     }
     /// Add an aditional account to the instruction.
@@ -201,7 +201,7 @@ impl SolStakerMoveTokensBuilder {
                 .expect("destination_sol_staker_stake is not set"),
         };
         let args = SolStakerMoveTokensInstructionArgs {
-            args: self.args.clone().expect("args is not set"),
+            amount: self.amount.clone().expect("amount is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -290,7 +290,7 @@ impl<'a, 'b> SolStakerMoveTokensCpi<'a, 'b> {
         )],
     ) -> solana_program::entrypoint::ProgramResult {
         let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             *self.config.key,
             false,
         ));
@@ -298,9 +298,9 @@ impl<'a, 'b> SolStakerMoveTokensCpi<'a, 'b> {
             *self.vault_holder_rewards.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.sol_staker_authority.key,
-            false,
+            true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.source_sol_staker_stake.key,
@@ -351,9 +351,9 @@ impl<'a, 'b> SolStakerMoveTokensCpi<'a, 'b> {
 ///
 /// ### Accounts:
 ///
-///   0. `[]` config
+///   0. `[writable]` config
 ///   1. `[]` vault_holder_rewards
-///   2. `[writable]` sol_staker_authority
+///   2. `[signer]` sol_staker_authority
 ///   3. `[writable]` source_sol_staker_stake
 ///   4. `[writable]` destination_sol_staker_stake
 #[derive(Clone, Debug)]
@@ -370,7 +370,7 @@ impl<'a, 'b> SolStakerMoveTokensCpiBuilder<'a, 'b> {
             sol_staker_authority: None,
             source_sol_staker_stake: None,
             destination_sol_staker_stake: None,
-            args: None,
+            amount: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -421,8 +421,8 @@ impl<'a, 'b> SolStakerMoveTokensCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn args(&mut self, args: u64) -> &mut Self {
-        self.instruction.args = Some(args);
+    pub fn amount(&mut self, amount: u64) -> &mut Self {
+        self.instruction.amount = Some(amount);
         self
     }
     /// Add an additional account to the instruction.
@@ -467,7 +467,7 @@ impl<'a, 'b> SolStakerMoveTokensCpiBuilder<'a, 'b> {
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
         let args = SolStakerMoveTokensInstructionArgs {
-            args: self.instruction.args.clone().expect("args is not set"),
+            amount: self.instruction.amount.clone().expect("amount is not set"),
         };
         let instruction = SolStakerMoveTokensCpi {
             __program: self.instruction.__program,
@@ -510,7 +510,7 @@ struct SolStakerMoveTokensCpiBuilderInstruction<'a, 'b> {
     sol_staker_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     source_sol_staker_stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     destination_sol_staker_stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    args: Option<u64>,
+    amount: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

@@ -696,6 +696,7 @@ pub enum StakeInstruction {
     /// Moves staked PAL between two stake accounts controlled by the same authority.
     #[account(
         0,
+        writable,
         name = "config",
         desc = "Staking config"
     )]
@@ -706,7 +707,7 @@ pub enum StakeInstruction {
     )]
     #[account(
         2,
-        writable,
+        signer,
         name = "sol_staker_authority",
         desc = "Sol staker authority"
     )]
@@ -722,7 +723,7 @@ pub enum StakeInstruction {
         name = "destination_sol_staker_stake",
         desc = "Destination sol staker stake"
     )]
-    SolStakerMoveTokens(u64),
+    SolStakerMoveTokens { amount: u64 },
 }
 
 impl StakeInstruction {
@@ -817,7 +818,7 @@ impl StakeInstruction {
                 data.extend_from_slice(&amount.to_le_bytes());
                 data
             }
-            StakeInstruction::SolStakerMoveTokens(amount) => {
+            StakeInstruction::SolStakerMoveTokens { amount } => {
                 let mut data = Vec::with_capacity(9);
                 data.push(16);
                 data.extend_from_slice(&amount.to_le_bytes());
@@ -928,7 +929,7 @@ impl StakeInstruction {
             Some((&16, rest)) if rest.len() == 8 => {
                 let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
 
-                Ok(StakeInstruction::SolStakerMoveTokens(amount))
+                Ok(StakeInstruction::SolStakerMoveTokens { amount })
             }
             _ => Err(ProgramError::InvalidInstructionData),
         }

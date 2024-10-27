@@ -187,7 +187,7 @@ pub fn process_instruction<'a>(
                 amount,
             )
         }
-        StakeInstruction::SolStakerMoveTokens(amount) => {
+        StakeInstruction::SolStakerMoveTokens { amount } => {
             msg!("Instruction: MoveSolStakerStake");
             sol_staker_move_tokens::process_sol_staker_move_tokens(
                 program_id,

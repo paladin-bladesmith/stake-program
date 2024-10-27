@@ -20,10 +20,13 @@ import {
   type Decoder,
   type Encoder,
   type IAccountMeta,
+  type IAccountSignerMeta,
   type IInstruction,
   type IInstructionWithAccounts,
   type IInstructionWithData,
   type ReadonlyAccount,
+  type ReadonlySignerAccount,
+  type TransactionSigner,
   type WritableAccount,
 } from '@solana/web3.js';
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
@@ -44,13 +47,14 @@ export type SolStakerMoveTokensInstruction<
   IInstructionWithAccounts<
     [
       TAccountConfig extends string
-        ? ReadonlyAccount<TAccountConfig>
+        ? WritableAccount<TAccountConfig>
         : TAccountConfig,
       TAccountVaultHolderRewards extends string
         ? ReadonlyAccount<TAccountVaultHolderRewards>
         : TAccountVaultHolderRewards,
       TAccountSolStakerAuthority extends string
-        ? WritableAccount<TAccountSolStakerAuthority>
+        ? ReadonlySignerAccount<TAccountSolStakerAuthority> &
+            IAccountSignerMeta<TAccountSolStakerAuthority>
         : TAccountSolStakerAuthority,
       TAccountSourceSolStakerStake extends string
         ? WritableAccount<TAccountSourceSolStakerStake>
@@ -64,16 +68,18 @@ export type SolStakerMoveTokensInstruction<
 
 export type SolStakerMoveTokensInstructionData = {
   discriminator: number;
-  args: bigint;
+  amount: bigint;
 };
 
-export type SolStakerMoveTokensInstructionDataArgs = { args: number | bigint };
+export type SolStakerMoveTokensInstructionDataArgs = {
+  amount: number | bigint;
+};
 
 export function getSolStakerMoveTokensInstructionDataEncoder(): Encoder<SolStakerMoveTokensInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
-      ['args', getU64Encoder()],
+      ['amount', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: 16 })
   );
@@ -82,7 +88,7 @@ export function getSolStakerMoveTokensInstructionDataEncoder(): Encoder<SolStake
 export function getSolStakerMoveTokensInstructionDataDecoder(): Decoder<SolStakerMoveTokensInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
-    ['args', getU64Decoder()],
+    ['amount', getU64Decoder()],
   ]);
 }
 
@@ -108,12 +114,12 @@ export type SolStakerMoveTokensInput<
   /** Vault holder rewards */
   vaultHolderRewards: Address<TAccountVaultHolderRewards>;
   /** Sol staker authority */
-  solStakerAuthority: Address<TAccountSolStakerAuthority>;
+  solStakerAuthority: TransactionSigner<TAccountSolStakerAuthority>;
   /** Source sol staker stake */
   sourceSolStakerStake: Address<TAccountSourceSolStakerStake>;
   /** Destination sol staker stake */
   destinationSolStakerStake: Address<TAccountDestinationSolStakerStake>;
-  args: SolStakerMoveTokensInstructionDataArgs['args'];
+  amount: SolStakerMoveTokensInstructionDataArgs['amount'];
 };
 
 export function getSolStakerMoveTokensInstruction<
@@ -143,14 +149,14 @@ export function getSolStakerMoveTokensInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    config: { value: input.config ?? null, isWritable: false },
+    config: { value: input.config ?? null, isWritable: true },
     vaultHolderRewards: {
       value: input.vaultHolderRewards ?? null,
       isWritable: false,
     },
     solStakerAuthority: {
       value: input.solStakerAuthority ?? null,
-      isWritable: true,
+      isWritable: false,
     },
     sourceSolStakerStake: {
       value: input.sourceSolStakerStake ?? null,
