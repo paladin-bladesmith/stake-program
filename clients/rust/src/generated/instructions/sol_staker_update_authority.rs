@@ -39,7 +39,7 @@ impl SolStakerUpdateAuthority {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.config_authority,
-            false,
+            true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.sol_staker_stake,
@@ -88,7 +88,7 @@ pub struct SolStakerUpdateAuthorityInstructionArgs {
 /// ### Accounts:
 ///
 ///   0. `[]` config
-///   1. `[]` config_authority
+///   1. `[signer]` config_authority
 ///   2. `[writable]` sol_staker_stake
 #[derive(Clone, Debug, Default)]
 pub struct SolStakerUpdateAuthorityBuilder {
@@ -246,7 +246,7 @@ impl<'a, 'b> SolStakerUpdateAuthorityCpi<'a, 'b> {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.config_authority.key,
-            false,
+            true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.sol_staker_stake.key,
@@ -292,7 +292,7 @@ impl<'a, 'b> SolStakerUpdateAuthorityCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[]` config
-///   1. `[]` config_authority
+///   1. `[signer]` config_authority
 ///   2. `[writable]` sol_staker_stake
 #[derive(Clone, Debug)]
 pub struct SolStakerUpdateAuthorityCpiBuilder<'a, 'b> {

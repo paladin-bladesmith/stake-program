@@ -1097,7 +1097,7 @@
         {
           "name": "configAuthority",
           "isMut": false,
-          "isSigner": false,
+          "isSigner": true,
           "docs": [
             "Config authority"
           ]

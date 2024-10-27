@@ -20,10 +20,13 @@ import {
   type Decoder,
   type Encoder,
   type IAccountMeta,
+  type IAccountSignerMeta,
   type IInstruction,
   type IInstructionWithAccounts,
   type IInstructionWithData,
   type ReadonlyAccount,
+  type ReadonlySignerAccount,
+  type TransactionSigner,
   type WritableAccount,
 } from '@solana/web3.js';
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
@@ -43,7 +46,8 @@ export type SolStakerUpdateAuthorityInstruction<
         ? ReadonlyAccount<TAccountConfig>
         : TAccountConfig,
       TAccountConfigAuthority extends string
-        ? ReadonlyAccount<TAccountConfigAuthority>
+        ? ReadonlySignerAccount<TAccountConfigAuthority> &
+            IAccountSignerMeta<TAccountConfigAuthority>
         : TAccountConfigAuthority,
       TAccountSolStakerStake extends string
         ? WritableAccount<TAccountSolStakerStake>
@@ -96,7 +100,7 @@ export type SolStakerUpdateAuthorityInput<
   /** Config */
   config: Address<TAccountConfig>;
   /** Config authority */
-  configAuthority: Address<TAccountConfigAuthority>;
+  configAuthority: TransactionSigner<TAccountConfigAuthority>;
   /** Sol staker stake */
   solStakerStake: Address<TAccountSolStakerStake>;
   newAuthority: SolStakerUpdateAuthorityInstructionDataArgs['newAuthority'];
