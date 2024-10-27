@@ -20,6 +20,7 @@ export * from './slashSolStakerStake';
 export * from './slashValidatorStake';
 export * from './solStakerMoveTokens';
 export * from './solStakerStakeTokens';
+export * from './solStakerUpdateAuthority';
 export * from './updateConfig';
 export * from './validatorStakeTokens';
 export * from './withdrawInactiveStake';

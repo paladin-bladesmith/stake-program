@@ -724,6 +724,28 @@ pub enum StakeInstruction {
         desc = "Destination sol staker stake"
     )]
     SolStakerMoveTokens { amount: u64 },
+
+    /// Updates the authority on a staker account.
+    ///
+    /// Only callable by governance.
+    #[account(
+        0,
+        name = "config",
+        desc = "Config"
+    )]
+    #[account(
+        1,
+        signer,
+        name = "config_authority",
+        desc = "Config authority"
+    )]
+    #[account(
+        2,
+        writable,
+        name = "sol_staker_stake",
+        desc = "Sol staker stake"
+    )]
+    SolStakerUpdateAuthority { new_authority: Pubkey },
 }
 
 impl StakeInstruction {
@@ -822,6 +844,12 @@ impl StakeInstruction {
                 let mut data = Vec::with_capacity(9);
                 data.push(16);
                 data.extend_from_slice(&amount.to_le_bytes());
+                data
+            }
+            StakeInstruction::SolStakerUpdateAuthority { new_authority } => {
+                let mut data = Vec::with_capacity(33);
+                data.push(17);
+                data.extend_from_slice(&new_authority.to_bytes());
                 data
             }
         }
@@ -930,6 +958,12 @@ impl StakeInstruction {
                 let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
 
                 Ok(StakeInstruction::SolStakerMoveTokens { amount })
+            }
+            // 17 - SolStakerMoveTokens: u64 (8)
+            Some((&17, rest)) if rest.len() == 32 => {
+                let new_authority = Pubkey::new_from_array(*array_ref![rest, 0, 32]);
+
+                Ok(StakeInstruction::SolStakerUpdateAuthority { new_authority })
             }
             _ => Err(ProgramError::InvalidInstructionData),
         }
