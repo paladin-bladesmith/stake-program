@@ -16,9 +16,9 @@ use crate::{
             HarvestValidatorRewardsAccounts, InactivateSolStakerStakeAccounts,
             InactivateValidatorStakeAccounts, InitializeConfigAccounts,
             InitializeSolStakerStakeAccounts, InitializeValidatorStakeAccounts,
-            SetAuthorityAccounts, SlashSolStakerStakeAccounts, SlashValidatorStakeAccounts,
-            SolStakerStakeTokensAccounts, UpdateConfigAccounts, ValidatorStakeTokensAccounts,
-            WithdrawInactiveStakeAccounts,
+            MoveSolStakerStakeAccounts, SetAuthorityAccounts, SlashSolStakerStakeAccounts,
+            SlashValidatorStakeAccounts, SolStakerStakeTokensAccounts, UpdateConfigAccounts,
+            ValidatorStakeTokensAccounts, WithdrawInactiveStakeAccounts,
         },
         StakeInstruction,
     },
@@ -38,6 +38,7 @@ mod inactivate_validator_stake;
 mod initialize_config;
 mod initialize_sol_staker_stake;
 mod initialize_validator_stake;
+mod move_sol_staker_stake;
 mod set_authority;
 mod slash_sol_staker_stake;
 mod slash_validator_stake;
@@ -183,6 +184,14 @@ pub fn process_instruction<'a>(
             slash_sol_staker_stake::process_slash_sol_staker_stake(
                 program_id,
                 SlashSolStakerStakeAccounts::context(accounts)?,
+                amount,
+            )
+        }
+        StakeInstruction::MoveSolStakerStake(amount) => {
+            msg!("Instruction: MoveSolStakerStake");
+            move_sol_staker_stake::process_move_sol_staker_stake(
+                program_id,
+                MoveSolStakerStakeAccounts::context(accounts)?,
                 amount,
             )
         }

@@ -482,7 +482,7 @@ pub enum StakeInstruction {
         1,
         writable,
         name = "sol_staker_stake",
-        desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+        desc = "SOL staker stake account"
     )]
     #[account(
         2,
@@ -692,6 +692,37 @@ pub enum StakeInstruction {
         desc = "Token program"
     )]
     SlashSolStakerStake(u64),
+
+    /// Moves staked SOL between two stake accounts controlled by the same authority.
+    #[account(
+        0,
+        name = "config",
+        desc = "Staking config"
+    )]
+    #[account(
+        1,
+        name = "vault_holder_rewards",
+        desc = "Vault holder rewards"
+    )]
+    #[account(
+        2,
+        writable,
+        name = "sol_staker_authority",
+        desc = "Sol staker authority"
+    )]
+    #[account(
+        3,
+        writable,
+        name = "source_sol_staker_stake",
+        desc = "Source sol staker stake"
+    )]
+    #[account(
+        4,
+        writable,
+        name = "destination_sol_staker_stake",
+        desc = "Destination sol staker stake"
+    )]
+    MoveSolStakerStake(u64),
 }
 
 impl StakeInstruction {
@@ -783,6 +814,12 @@ impl StakeInstruction {
             StakeInstruction::SlashSolStakerStake(amount) => {
                 let mut data = Vec::with_capacity(9);
                 data.push(15);
+                data.extend_from_slice(&amount.to_le_bytes());
+                data
+            }
+            StakeInstruction::MoveSolStakerStake(amount) => {
+                let mut data = Vec::with_capacity(9);
+                data.push(16);
                 data.extend_from_slice(&amount.to_le_bytes());
                 data
             }
@@ -886,6 +923,12 @@ impl StakeInstruction {
                 let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
 
                 Ok(StakeInstruction::SlashSolStakerStake(amount))
+            }
+            // 16 - MoveSolStakerStake: u64 (8)
+            Some((&16, rest)) if rest.len() == 8 => {
+                let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
+
+                Ok(StakeInstruction::MoveSolStakerStake(amount))
             }
             _ => Err(ProgramError::InvalidInstructionData),
         }
