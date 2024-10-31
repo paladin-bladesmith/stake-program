@@ -7,7 +7,6 @@
 
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
-use solana_program::pubkey::Pubkey;
 
 /// Accounts.
 pub struct SolStakerUpdateAuthority {
@@ -17,22 +16,20 @@ pub struct SolStakerUpdateAuthority {
     pub config_authority: solana_program::pubkey::Pubkey,
     /// Sol staker stake
     pub sol_staker_stake: solana_program::pubkey::Pubkey,
+    /// Sol staker authority override
+    pub sol_staker_authority_override: solana_program::pubkey::Pubkey,
 }
 
 impl SolStakerUpdateAuthority {
-    pub fn instruction(
-        &self,
-        args: SolStakerUpdateAuthorityInstructionArgs,
-    ) -> solana_program::instruction::Instruction {
-        self.instruction_with_remaining_accounts(args, &[])
+    pub fn instruction(&self) -> solana_program::instruction::Instruction {
+        self.instruction_with_remaining_accounts(&[])
     }
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        args: SolStakerUpdateAuthorityInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.config,
             false,
@@ -45,12 +42,14 @@ impl SolStakerUpdateAuthority {
             self.sol_staker_stake,
             false,
         ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.sol_staker_authority_override,
+            false,
+        ));
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = SolStakerUpdateAuthorityInstructionData::new()
+        let data = SolStakerUpdateAuthorityInstructionData::new()
             .try_to_vec()
             .unwrap();
-        let mut args = args.try_to_vec().unwrap();
-        data.append(&mut args);
 
         solana_program::instruction::Instruction {
             program_id: crate::PALADIN_STAKE_PROGRAM_ID,
@@ -77,12 +76,6 @@ impl Default for SolStakerUpdateAuthorityInstructionData {
     }
 }
 
-#[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct SolStakerUpdateAuthorityInstructionArgs {
-    pub new_authority: Pubkey,
-}
-
 /// Instruction builder for `SolStakerUpdateAuthority`.
 ///
 /// ### Accounts:
@@ -90,12 +83,13 @@ pub struct SolStakerUpdateAuthorityInstructionArgs {
 ///   0. `[]` config
 ///   1. `[signer]` config_authority
 ///   2. `[writable]` sol_staker_stake
+///   3. `[]` sol_staker_authority_override
 #[derive(Clone, Debug, Default)]
 pub struct SolStakerUpdateAuthorityBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
     config_authority: Option<solana_program::pubkey::Pubkey>,
     sol_staker_stake: Option<solana_program::pubkey::Pubkey>,
-    new_authority: Option<Pubkey>,
+    sol_staker_authority_override: Option<solana_program::pubkey::Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -127,9 +121,13 @@ impl SolStakerUpdateAuthorityBuilder {
         self.sol_staker_stake = Some(sol_staker_stake);
         self
     }
+    /// Sol staker authority override
     #[inline(always)]
-    pub fn new_authority(&mut self, new_authority: Pubkey) -> &mut Self {
-        self.new_authority = Some(new_authority);
+    pub fn sol_staker_authority_override(
+        &mut self,
+        sol_staker_authority_override: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.sol_staker_authority_override = Some(sol_staker_authority_override);
         self
     }
     /// Add an aditional account to the instruction.
@@ -156,15 +154,12 @@ impl SolStakerUpdateAuthorityBuilder {
             config: self.config.expect("config is not set"),
             config_authority: self.config_authority.expect("config_authority is not set"),
             sol_staker_stake: self.sol_staker_stake.expect("sol_staker_stake is not set"),
-        };
-        let args = SolStakerUpdateAuthorityInstructionArgs {
-            new_authority: self
-                .new_authority
-                .clone()
-                .expect("new_authority is not set"),
+            sol_staker_authority_override: self
+                .sol_staker_authority_override
+                .expect("sol_staker_authority_override is not set"),
         };
 
-        accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
+        accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)
     }
 }
 
@@ -176,6 +171,8 @@ pub struct SolStakerUpdateAuthorityCpiAccounts<'a, 'b> {
     pub config_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Sol staker stake
     pub sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Sol staker authority override
+    pub sol_staker_authority_override: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `sol_staker_update_authority` CPI instruction.
@@ -188,22 +185,21 @@ pub struct SolStakerUpdateAuthorityCpi<'a, 'b> {
     pub config_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Sol staker stake
     pub sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The arguments for the instruction.
-    pub __args: SolStakerUpdateAuthorityInstructionArgs,
+    /// Sol staker authority override
+    pub sol_staker_authority_override: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 impl<'a, 'b> SolStakerUpdateAuthorityCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
         accounts: SolStakerUpdateAuthorityCpiAccounts<'a, 'b>,
-        args: SolStakerUpdateAuthorityInstructionArgs,
     ) -> Self {
         Self {
             __program: program,
             config: accounts.config,
             config_authority: accounts.config_authority,
             sol_staker_stake: accounts.sol_staker_stake,
-            __args: args,
+            sol_staker_authority_override: accounts.sol_staker_authority_override,
         }
     }
     #[inline(always)]
@@ -239,7 +235,7 @@ impl<'a, 'b> SolStakerUpdateAuthorityCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.config.key,
             false,
@@ -252,6 +248,10 @@ impl<'a, 'b> SolStakerUpdateAuthorityCpi<'a, 'b> {
             *self.sol_staker_stake.key,
             false,
         ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.sol_staker_authority_override.key,
+            false,
+        ));
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -259,22 +259,21 @@ impl<'a, 'b> SolStakerUpdateAuthorityCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = SolStakerUpdateAuthorityInstructionData::new()
+        let data = SolStakerUpdateAuthorityInstructionData::new()
             .try_to_vec()
             .unwrap();
-        let mut args = self.__args.try_to_vec().unwrap();
-        data.append(&mut args);
 
         let instruction = solana_program::instruction::Instruction {
             program_id: crate::PALADIN_STAKE_PROGRAM_ID,
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(3 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(4 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.config.clone());
         account_infos.push(self.config_authority.clone());
         account_infos.push(self.sol_staker_stake.clone());
+        account_infos.push(self.sol_staker_authority_override.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -294,6 +293,7 @@ impl<'a, 'b> SolStakerUpdateAuthorityCpi<'a, 'b> {
 ///   0. `[]` config
 ///   1. `[signer]` config_authority
 ///   2. `[writable]` sol_staker_stake
+///   3. `[]` sol_staker_authority_override
 #[derive(Clone, Debug)]
 pub struct SolStakerUpdateAuthorityCpiBuilder<'a, 'b> {
     instruction: Box<SolStakerUpdateAuthorityCpiBuilderInstruction<'a, 'b>>,
@@ -306,7 +306,7 @@ impl<'a, 'b> SolStakerUpdateAuthorityCpiBuilder<'a, 'b> {
             config: None,
             config_authority: None,
             sol_staker_stake: None,
-            new_authority: None,
+            sol_staker_authority_override: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -338,9 +338,13 @@ impl<'a, 'b> SolStakerUpdateAuthorityCpiBuilder<'a, 'b> {
         self.instruction.sol_staker_stake = Some(sol_staker_stake);
         self
     }
+    /// Sol staker authority override
     #[inline(always)]
-    pub fn new_authority(&mut self, new_authority: Pubkey) -> &mut Self {
-        self.instruction.new_authority = Some(new_authority);
+    pub fn sol_staker_authority_override(
+        &mut self,
+        sol_staker_authority_override: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.sol_staker_authority_override = Some(sol_staker_authority_override);
         self
     }
     /// Add an additional account to the instruction.
@@ -384,13 +388,6 @@ impl<'a, 'b> SolStakerUpdateAuthorityCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let args = SolStakerUpdateAuthorityInstructionArgs {
-            new_authority: self
-                .instruction
-                .new_authority
-                .clone()
-                .expect("new_authority is not set"),
-        };
         let instruction = SolStakerUpdateAuthorityCpi {
             __program: self.instruction.__program,
 
@@ -405,7 +402,11 @@ impl<'a, 'b> SolStakerUpdateAuthorityCpiBuilder<'a, 'b> {
                 .instruction
                 .sol_staker_stake
                 .expect("sol_staker_stake is not set"),
-            __args: args,
+
+            sol_staker_authority_override: self
+                .instruction
+                .sol_staker_authority_override
+                .expect("sol_staker_authority_override is not set"),
         };
         instruction.invoke_signed_with_remaining_accounts(
             signers_seeds,
@@ -420,7 +421,7 @@ struct SolStakerUpdateAuthorityCpiBuilderInstruction<'a, 'b> {
     config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     config_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     sol_staker_stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    new_authority: Option<Pubkey>,
+    sol_staker_authority_override: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

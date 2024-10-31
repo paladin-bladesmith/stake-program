@@ -725,9 +725,7 @@ pub enum StakeInstruction {
     )]
     SolStakerMoveTokens { amount: u64 },
 
-    /// Updates the authority on a staker account.
-    ///
-    /// Only callable by governance.
+    /// Aligns the authority on the account with the override authority.
     #[account(
         0,
         name = "config",
@@ -745,8 +743,13 @@ pub enum StakeInstruction {
         name = "sol_staker_stake",
         desc = "Sol staker stake"
     )]
-    SolStakerUpdateAuthority { new_authority: Pubkey },
-    /// Overrides a user's authority (intended for stake pools).
+    #[account(
+        3,
+        name = "sol_staker_authority_override",
+        desc = "Sol staker authority override"
+    )]
+    SolStakerUpdateAuthority,
+    /// Globally overrides a given authority (intended for stake pools).
     ///
     /// Only callable by governance.
     #[account(
@@ -873,12 +876,7 @@ impl StakeInstruction {
                 data.extend_from_slice(&amount.to_le_bytes());
                 data
             }
-            StakeInstruction::SolStakerUpdateAuthority { new_authority } => {
-                let mut data = Vec::with_capacity(33);
-                data.push(17);
-                data.extend_from_slice(&new_authority.to_bytes());
-                data
-            }
+            StakeInstruction::SolStakerUpdateAuthority => vec![17],
             StakeInstruction::SolStakerSetAuthorityOverride {
                 authority_original,
                 authority_override,
@@ -996,12 +994,9 @@ impl StakeInstruction {
 
                 Ok(StakeInstruction::SolStakerMoveTokens { amount })
             }
-            // 17 - SolStakerMoveTokens: u64 (8)
-            Some((&17, rest)) if rest.len() == 32 => {
-                let new_authority = Pubkey::new_from_array(*array_ref![rest, 0, 32]);
-
-                Ok(StakeInstruction::SolStakerUpdateAuthority { new_authority })
-            }
+            // 17
+            Some((&17, _)) => Ok(StakeInstruction::SolStakerUpdateAuthority),
+            // 18 - SolStakerSetAuthorityOverride: Pubkey (32), Pubkey (32)
             Some((&18, rest)) if rest.len() == 64 => {
                 let authority_original = Pubkey::new_from_array(*array_ref![rest, 0, 32]);
                 let authority_override = Pubkey::new_from_array(*array_ref![rest, 32, 32]);

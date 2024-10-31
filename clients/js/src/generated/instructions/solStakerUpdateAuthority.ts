@@ -8,8 +8,6 @@
 
 import {
   combineCodec,
-  getAddressDecoder,
-  getAddressEncoder,
   getStructDecoder,
   getStructEncoder,
   getU8Decoder,
@@ -37,6 +35,9 @@ export type SolStakerUpdateAuthorityInstruction<
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountConfigAuthority extends string | IAccountMeta<string> = string,
   TAccountSolStakerStake extends string | IAccountMeta<string> = string,
+  TAccountSolStakerAuthorityOverride extends
+    | string
+    | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -52,34 +53,26 @@ export type SolStakerUpdateAuthorityInstruction<
       TAccountSolStakerStake extends string
         ? WritableAccount<TAccountSolStakerStake>
         : TAccountSolStakerStake,
+      TAccountSolStakerAuthorityOverride extends string
+        ? ReadonlyAccount<TAccountSolStakerAuthorityOverride>
+        : TAccountSolStakerAuthorityOverride,
       ...TRemainingAccounts,
     ]
   >;
 
-export type SolStakerUpdateAuthorityInstructionData = {
-  discriminator: number;
-  newAuthority: Address;
-};
+export type SolStakerUpdateAuthorityInstructionData = { discriminator: number };
 
-export type SolStakerUpdateAuthorityInstructionDataArgs = {
-  newAuthority: Address;
-};
+export type SolStakerUpdateAuthorityInstructionDataArgs = {};
 
 export function getSolStakerUpdateAuthorityInstructionDataEncoder(): Encoder<SolStakerUpdateAuthorityInstructionDataArgs> {
   return transformEncoder(
-    getStructEncoder([
-      ['discriminator', getU8Encoder()],
-      ['newAuthority', getAddressEncoder()],
-    ]),
+    getStructEncoder([['discriminator', getU8Encoder()]]),
     (value) => ({ ...value, discriminator: 17 })
   );
 }
 
 export function getSolStakerUpdateAuthorityInstructionDataDecoder(): Decoder<SolStakerUpdateAuthorityInstructionData> {
-  return getStructDecoder([
-    ['discriminator', getU8Decoder()],
-    ['newAuthority', getAddressDecoder()],
-  ]);
+  return getStructDecoder([['discriminator', getU8Decoder()]]);
 }
 
 export function getSolStakerUpdateAuthorityInstructionDataCodec(): Codec<
@@ -96,6 +89,7 @@ export type SolStakerUpdateAuthorityInput<
   TAccountConfig extends string = string,
   TAccountConfigAuthority extends string = string,
   TAccountSolStakerStake extends string = string,
+  TAccountSolStakerAuthorityOverride extends string = string,
 > = {
   /** Config */
   config: Address<TAccountConfig>;
@@ -103,24 +97,28 @@ export type SolStakerUpdateAuthorityInput<
   configAuthority: TransactionSigner<TAccountConfigAuthority>;
   /** Sol staker stake */
   solStakerStake: Address<TAccountSolStakerStake>;
-  newAuthority: SolStakerUpdateAuthorityInstructionDataArgs['newAuthority'];
+  /** Sol staker authority override */
+  solStakerAuthorityOverride: Address<TAccountSolStakerAuthorityOverride>;
 };
 
 export function getSolStakerUpdateAuthorityInstruction<
   TAccountConfig extends string,
   TAccountConfigAuthority extends string,
   TAccountSolStakerStake extends string,
+  TAccountSolStakerAuthorityOverride extends string,
 >(
   input: SolStakerUpdateAuthorityInput<
     TAccountConfig,
     TAccountConfigAuthority,
-    TAccountSolStakerStake
+    TAccountSolStakerStake,
+    TAccountSolStakerAuthorityOverride
   >
 ): SolStakerUpdateAuthorityInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountConfigAuthority,
-  TAccountSolStakerStake
+  TAccountSolStakerStake,
+  TAccountSolStakerAuthorityOverride
 > {
   // Program address.
   const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
@@ -133,14 +131,15 @@ export function getSolStakerUpdateAuthorityInstruction<
       isWritable: false,
     },
     solStakerStake: { value: input.solStakerStake ?? null, isWritable: true },
+    solStakerAuthorityOverride: {
+      value: input.solStakerAuthorityOverride ?? null,
+      isWritable: false,
+    },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
     ResolvedAccount
   >;
-
-  // Original args.
-  const args = { ...input };
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -148,16 +147,16 @@ export function getSolStakerUpdateAuthorityInstruction<
       getAccountMeta(accounts.config),
       getAccountMeta(accounts.configAuthority),
       getAccountMeta(accounts.solStakerStake),
+      getAccountMeta(accounts.solStakerAuthorityOverride),
     ],
     programAddress,
-    data: getSolStakerUpdateAuthorityInstructionDataEncoder().encode(
-      args as SolStakerUpdateAuthorityInstructionDataArgs
-    ),
+    data: getSolStakerUpdateAuthorityInstructionDataEncoder().encode({}),
   } as SolStakerUpdateAuthorityInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountConfigAuthority,
-    TAccountSolStakerStake
+    TAccountSolStakerStake,
+    TAccountSolStakerAuthorityOverride
   >;
 
   return instruction;
@@ -175,6 +174,8 @@ export type ParsedSolStakerUpdateAuthorityInstruction<
     configAuthority: TAccountMetas[1];
     /** Sol staker stake */
     solStakerStake: TAccountMetas[2];
+    /** Sol staker authority override */
+    solStakerAuthorityOverride: TAccountMetas[3];
   };
   data: SolStakerUpdateAuthorityInstructionData;
 };
@@ -187,7 +188,7 @@ export function parseSolStakerUpdateAuthorityInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedSolStakerUpdateAuthorityInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 3) {
+  if (instruction.accounts.length < 4) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -203,6 +204,7 @@ export function parseSolStakerUpdateAuthorityInstruction<
       config: getNextAccount(),
       configAuthority: getNextAccount(),
       solStakerStake: getNextAccount(),
+      solStakerAuthorityOverride: getNextAccount(),
     },
     data: getSolStakerUpdateAuthorityInstructionDataDecoder().decode(
       instruction.data

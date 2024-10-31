@@ -1109,14 +1109,17 @@
           "docs": [
             "Sol staker stake"
           ]
-        }
-      ],
-      "args": [
+        },
         {
-          "name": "newAuthority",
-          "type": "publicKey"
+          "name": "solStakerAuthorityOverride",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Sol staker authority override"
+          ]
         }
       ],
+      "args": [],
       "discriminant": {
         "type": "u8",
         "value": 17

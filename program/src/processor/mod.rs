@@ -198,12 +198,11 @@ pub fn process_instruction<'a>(
                 amount,
             )
         }
-        StakeInstruction::SolStakerUpdateAuthority { new_authority } => {
+        StakeInstruction::SolStakerUpdateAuthority => {
             msg!("Instruction: SolStakerUpdateAuthority");
             sol_staker_update_authority::process_sol_staker_update_authority(
                 program_id,
                 SolStakerUpdateAuthorityAccounts::context(accounts)?,
-                new_authority,
             )
         }
         StakeInstruction::SolStakerSetAuthorityOverride {
