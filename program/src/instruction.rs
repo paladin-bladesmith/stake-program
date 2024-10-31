@@ -746,6 +746,33 @@ pub enum StakeInstruction {
         desc = "Sol staker stake"
     )]
     SolStakerUpdateAuthority { new_authority: Pubkey },
+    /// Overrides a user's authority (intended for stake pools).
+    ///
+    /// Only callable by governance.
+    #[account(
+        0,
+        name = "config",
+        desc = "Config"
+    )]
+    #[account(
+        1,
+        signer,
+        name = "config_authority",
+        desc = "Config authority"
+    )]
+    #[account(
+        2,
+        writable,
+        name = "sol_staker_authority_override",
+        desc = "Sol staker authority override"
+    )]
+    #[account(
+        3,
+        optional,
+        name = "system_program",
+        desc = "System program"
+    )]
+    SolStakerSetAuthorityOverride { authority_original: Pubkey, authority_override: Pubkey },
 }
 
 impl StakeInstruction {
@@ -850,6 +877,16 @@ impl StakeInstruction {
                 let mut data = Vec::with_capacity(33);
                 data.push(17);
                 data.extend_from_slice(&new_authority.to_bytes());
+                data
+            }
+            StakeInstruction::SolStakerSetAuthorityOverride {
+                authority_original,
+                authority_override,
+            } => {
+                let mut data = Vec::with_capacity(65);
+                data.push(18);
+                data.extend_from_slice(&authority_original.to_bytes());
+                data.extend_from_slice(&authority_override.to_bytes());
                 data
             }
         }
@@ -964,6 +1001,15 @@ impl StakeInstruction {
                 let new_authority = Pubkey::new_from_array(*array_ref![rest, 0, 32]);
 
                 Ok(StakeInstruction::SolStakerUpdateAuthority { new_authority })
+            }
+            Some((&18, rest)) if rest.len() == 64 => {
+                let authority_original = Pubkey::new_from_array(*array_ref![rest, 0, 32]);
+                let authority_override = Pubkey::new_from_array(*array_ref![rest, 32, 32]);
+
+                Ok(StakeInstruction::SolStakerSetAuthorityOverride {
+                    authority_original,
+                    authority_override,
+                })
             }
             _ => Err(ProgramError::InvalidInstructionData),
         }

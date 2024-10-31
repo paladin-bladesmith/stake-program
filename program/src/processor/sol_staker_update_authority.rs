@@ -44,6 +44,7 @@ pub(crate) fn process_sol_staker_update_authority(
     );
 
     // Sol staker stake.
+    // - Must be owned by this program.
     require!(
         ctx.accounts.sol_staker_stake.owner == program_id,
         ProgramError::InvalidAccountOwner,

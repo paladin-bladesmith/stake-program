@@ -64,6 +64,22 @@ pub fn find_sol_staker_stake_pda(
 }
 
 #[inline(always)]
+pub fn find_sol_staker_authority_override_pda(
+    original_authority: &Pubkey,
+    config: &Pubkey,
+    program_id: &Pubkey,
+) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &[
+            "stake::state::sol_staker_authority_override".as_bytes(),
+            original_authority.as_ref(),
+            config.as_ref(),
+        ],
+        program_id,
+    )
+}
+
+#[inline(always)]
 pub fn find_validator_stake_pda(
     validator_vote: &Pubkey,
     config: &Pubkey,
