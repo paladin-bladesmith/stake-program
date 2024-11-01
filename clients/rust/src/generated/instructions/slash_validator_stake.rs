@@ -12,7 +12,7 @@ use borsh::BorshSerialize;
 pub struct SlashValidatorStake {
     /// Stake config account
     pub config: solana_program::pubkey::Pubkey,
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Validator stake account
     pub validator_stake: solana_program::pubkey::Pubkey,
     /// Validator stake authority account
     pub validator_stake_authority: solana_program::pubkey::Pubkey,
@@ -22,7 +22,7 @@ pub struct SlashValidatorStake {
     pub vault: solana_program::pubkey::Pubkey,
     /// Vault token account
     pub vault_holder_rewards: solana_program::pubkey::Pubkey,
-    /// Vault authority (pda of `['token-owner', config]`)
+    /// Vault authority
     pub vault_authority: solana_program::pubkey::Pubkey,
     /// Stake Token Mint
     pub mint: solana_program::pubkey::Pubkey,
@@ -154,7 +154,7 @@ impl SlashValidatorStakeBuilder {
         self.config = Some(config);
         self
     }
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Validator stake account
     #[inline(always)]
     pub fn validator_stake(
         &mut self,
@@ -196,7 +196,7 @@ impl SlashValidatorStakeBuilder {
         self.vault_holder_rewards = Some(vault_holder_rewards);
         self
     }
-    /// Vault authority (pda of `['token-owner', config]`)
+    /// Vault authority
     #[inline(always)]
     pub fn vault_authority(
         &mut self,
@@ -272,7 +272,7 @@ impl SlashValidatorStakeBuilder {
 pub struct SlashValidatorStakeCpiAccounts<'a, 'b> {
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Validator stake account
     pub validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Validator stake authority account
     pub validator_stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
@@ -282,7 +282,7 @@ pub struct SlashValidatorStakeCpiAccounts<'a, 'b> {
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
     /// Vault token account
     pub vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Vault authority (pda of `['token-owner', config]`)
+    /// Vault authority
     pub vault_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake Token Mint
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
@@ -296,7 +296,7 @@ pub struct SlashValidatorStakeCpi<'a, 'b> {
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Validator stake account
     pub validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Validator stake authority account
     pub validator_stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
@@ -306,7 +306,7 @@ pub struct SlashValidatorStakeCpi<'a, 'b> {
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
     /// Vault token account
     pub vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Vault authority (pda of `['token-owner', config]`)
+    /// Vault authority
     pub vault_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake Token Mint
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
@@ -492,7 +492,7 @@ impl<'a, 'b> SlashValidatorStakeCpiBuilder<'a, 'b> {
         self.instruction.config = Some(config);
         self
     }
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Validator stake account
     #[inline(always)]
     pub fn validator_stake(
         &mut self,
@@ -534,7 +534,7 @@ impl<'a, 'b> SlashValidatorStakeCpiBuilder<'a, 'b> {
         self.instruction.vault_holder_rewards = Some(vault_holder_rewards);
         self
     }
-    /// Vault authority (pda of `['token-owner', config]`)
+    /// Vault authority
     #[inline(always)]
     pub fn vault_authority(
         &mut self,

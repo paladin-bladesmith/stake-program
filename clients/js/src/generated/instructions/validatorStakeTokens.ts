@@ -135,9 +135,9 @@ export type ValidatorStakeTokensInput<
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
-  /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
+  /** Validator stake account */
   validatorStake: Address<TAccountValidatorStake>;
-  /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
+  /** Validator stake account */
   validatorStakeAuthority: Address<TAccountValidatorStakeAuthority>;
   /** Token account */
   sourceTokenAccount: Address<TAccountSourceTokenAccount>;
@@ -270,9 +270,9 @@ export type ParsedValidatorStakeTokensInstruction<
   accounts: {
     /** Stake config account */
     config: TAccountMetas[0];
-    /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
+    /** Validator stake account */
     validatorStake: TAccountMetas[1];
-    /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
+    /** Validator stake account */
     validatorStakeAuthority: TAccountMetas[2];
     /** Token account */
     sourceTokenAccount: TAccountMetas[3];

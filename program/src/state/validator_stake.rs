@@ -13,7 +13,7 @@ use super::Delegation;
 ///   * `total_staked_sol_amount - total_staked_pal_amount`
 #[repr(C)]
 #[derive(Clone, Copy, Default, Pod, ShankAccount, SplDiscriminate, Zeroable)]
-#[discriminator_hash_input("stake::state::validator_stake")]
+#[discriminator_hash_input("validator_stake")]
 pub struct ValidatorStake {
     /// Account discriminator.
     ///

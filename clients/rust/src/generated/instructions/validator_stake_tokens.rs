@@ -12,9 +12,9 @@ use borsh::BorshSerialize;
 pub struct ValidatorStakeTokens {
     /// Stake config account
     pub config: solana_program::pubkey::Pubkey,
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Validator stake account
     pub validator_stake: solana_program::pubkey::Pubkey,
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Validator stake account
     pub validator_stake_authority: solana_program::pubkey::Pubkey,
     /// Token account
     pub source_token_account: solana_program::pubkey::Pubkey,
@@ -154,7 +154,7 @@ impl ValidatorStakeTokensBuilder {
         self.config = Some(config);
         self
     }
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Validator stake account
     #[inline(always)]
     pub fn validator_stake(
         &mut self,
@@ -163,7 +163,7 @@ impl ValidatorStakeTokensBuilder {
         self.validator_stake = Some(validator_stake);
         self
     }
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Validator stake account
     #[inline(always)]
     pub fn validator_stake_authority(
         &mut self,
@@ -276,9 +276,9 @@ impl ValidatorStakeTokensBuilder {
 pub struct ValidatorStakeTokensCpiAccounts<'a, 'b> {
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Validator stake account
     pub validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Validator stake account
     pub validator_stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Token account
     pub source_token_account: &'b solana_program::account_info::AccountInfo<'a>,
@@ -300,9 +300,9 @@ pub struct ValidatorStakeTokensCpi<'a, 'b> {
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Validator stake account
     pub validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Validator stake account
     pub validator_stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Token account
     pub source_token_account: &'b solana_program::account_info::AccountInfo<'a>,
@@ -496,7 +496,7 @@ impl<'a, 'b> ValidatorStakeTokensCpiBuilder<'a, 'b> {
         self.instruction.config = Some(config);
         self
     }
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Validator stake account
     #[inline(always)]
     pub fn validator_stake(
         &mut self,
@@ -505,7 +505,7 @@ impl<'a, 'b> ValidatorStakeTokensCpiBuilder<'a, 'b> {
         self.instruction.validator_stake = Some(validator_stake);
         self
     }
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Validator stake account
     #[inline(always)]
     pub fn validator_stake_authority(
         &mut self,

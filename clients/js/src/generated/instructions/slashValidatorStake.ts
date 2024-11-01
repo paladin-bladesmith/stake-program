@@ -133,7 +133,7 @@ export type SlashValidatorStakeInput<
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
-  /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
+  /** Validator stake account */
   validatorStake: Address<TAccountValidatorStake>;
   /** Validator stake authority account */
   validatorStakeAuthority: Address<TAccountValidatorStakeAuthority>;
@@ -143,7 +143,7 @@ export type SlashValidatorStakeInput<
   vault: Address<TAccountVault>;
   /** Vault token account */
   vaultHolderRewards: Address<TAccountVaultHolderRewards>;
-  /** Vault authority (pda of `['token-owner', config]`) */
+  /** Vault authority */
   vaultAuthority: Address<TAccountVaultAuthority>;
   /** Stake Token Mint */
   mint: Address<TAccountMint>;
@@ -262,7 +262,7 @@ export type ParsedSlashValidatorStakeInstruction<
   accounts: {
     /** Stake config account */
     config: TAccountMetas[0];
-    /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
+    /** Validator stake account */
     validatorStake: TAccountMetas[1];
     /** Validator stake authority account */
     validatorStakeAuthority: TAccountMetas[2];
@@ -272,7 +272,7 @@ export type ParsedSlashValidatorStakeInstruction<
     vault: TAccountMetas[4];
     /** Vault token account */
     vaultHolderRewards: TAccountMetas[5];
-    /** Vault authority (pda of `['token-owner', config]`) */
+    /** Vault authority */
     vaultAuthority: TAccountMetas[6];
     /** Stake Token Mint */
     mint: TAccountMetas[7];

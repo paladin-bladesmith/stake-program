@@ -89,7 +89,7 @@ export type InitializeValidatorStakeInput<
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
-  /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
+  /** Validator stake account */
   validatorStake: Address<TAccountValidatorStake>;
   /** Validator vote account */
   validatorVote: Address<TAccountValidatorVote>;
@@ -166,7 +166,7 @@ export type ParsedInitializeValidatorStakeInstruction<
   accounts: {
     /** Stake config account */
     config: TAccountMetas[0];
-    /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
+    /** Validator stake account */
     validatorStake: TAccountMetas[1];
     /** Validator vote account */
     validatorVote: TAccountMetas[2];

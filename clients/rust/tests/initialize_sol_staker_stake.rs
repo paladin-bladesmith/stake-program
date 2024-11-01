@@ -27,7 +27,7 @@ use solana_sdk::{
 };
 
 #[tokio::test]
-async fn initialize_sol_staker_stake() {
+async fn initialize_sol_staker_stake_base() {
     let mut program_test = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -42,7 +42,8 @@ async fn initialize_sol_staker_stake() {
 
     // Given a config and a validator stake accounts.
     let config_manager = ConfigManager::new(&mut context).await;
-    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
+    let validator_stake_manager =
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we create a SOL stake account.
     let stake_state = Keypair::new();
@@ -57,7 +58,13 @@ async fn initialize_sol_staker_stake() {
     )
     .await;
     let stake_state = stake_state.pubkey();
-    delegate_stake_account(&mut context, &stake_state, &stake_manager.vote, &withdrawer).await;
+    delegate_stake_account(
+        &mut context,
+        &stake_state,
+        &validator_stake_manager.vote,
+        &withdrawer,
+    )
+    .await;
 
     // When we initialize the SOL staker stake account.
     let (stake_pda, _) = find_sol_staker_stake_pda(&stake_state, &config_manager.config);
@@ -75,13 +82,9 @@ async fn initialize_sol_staker_stake() {
         .config(config_manager.config)
         .sol_staker_stake(stake_pda)
         .sol_staker_authority_override(
-            find_sol_staker_authority_override_pda(
-                &stake_manager.authority.pubkey(),
-                &config_manager.config,
-            )
-            .0,
+            find_sol_staker_authority_override_pda(&withdrawer.pubkey(), &config_manager.config).0,
         )
-        .validator_stake(stake_manager.stake)
+        .validator_stake(validator_stake_manager.stake)
         .sol_staker_native_stake(stake_state)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
@@ -98,7 +101,10 @@ async fn initialize_sol_staker_stake() {
     assert_eq!(account.data.len(), SolStakerStake::LEN);
     let account_data = account.data.as_ref();
     let stake_account = SolStakerStake::from_bytes(account_data).unwrap();
-    assert_eq!(stake_account.delegation.validator_vote, stake_manager.vote);
+    assert_eq!(
+        stake_account.delegation.validator_vote,
+        validator_stake_manager.vote
+    );
     assert_eq!(stake_account.delegation.authority, withdrawer.pubkey());
     assert_eq!(stake_account.delegation.active_amount, 0);
     assert_eq!(stake_account.delegation.inactive_amount, 0);
@@ -115,7 +121,7 @@ async fn initialize_sol_staker_stake() {
     assert_eq!(stake_account.lamports_amount, 1_000_000_000);
 
     // And the validator stake account was updated.
-    let account = get_account!(context, stake_manager.stake);
+    let account = get_account!(context, validator_stake_manager.stake);
     let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
         validator_stake_account.total_staked_lamports_amount,
@@ -141,7 +147,6 @@ async fn fail_initialize_sol_staker_stake_with_initialized_account() {
     let config_manager = ConfigManager::new(&mut context).await;
     let validator_stake_manager =
         ValidatorStakeManager::new(&mut context, &config_manager.config).await;
-    println!("{:?}", get_account!(context, validator_stake_manager.stake));
 
     // And we create a SOL stake account.
     let stake_state = Keypair::new();
@@ -181,11 +186,7 @@ async fn fail_initialize_sol_staker_stake_with_initialized_account() {
         .config(config_manager.config)
         .sol_staker_stake(stake_pda)
         .sol_staker_authority_override(
-            find_sol_staker_authority_override_pda(
-                &validator_stake_manager.authority.pubkey(),
-                &config_manager.config,
-            )
-            .0,
+            find_sol_staker_authority_override_pda(&withdrawer.pubkey(), &config_manager.config).0,
         )
         .validator_stake(validator_stake_manager.stake)
         .sol_staker_native_stake(stake_state)
@@ -251,7 +252,8 @@ async fn fail_initialize_sol_staker_stake_with_invalid_derivation() {
     // Given a config and a validator stake accounts.
 
     let config_manager = ConfigManager::new(&mut context).await;
-    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
+    let validator_stake_manager =
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we create a SOL stake account.
 
@@ -269,7 +271,13 @@ async fn fail_initialize_sol_staker_stake_with_invalid_derivation() {
     .await;
 
     let stake_state = stake_state.pubkey();
-    delegate_stake_account(&mut context, &stake_state, &stake_manager.vote, &withdrawer).await;
+    delegate_stake_account(
+        &mut context,
+        &stake_state,
+        &validator_stake_manager.vote,
+        &withdrawer,
+    )
+    .await;
 
     // When we try to initialize the SOL staker stake account with the wrong derivation
     // (different address as the stake state account).
@@ -291,13 +299,9 @@ async fn fail_initialize_sol_staker_stake_with_invalid_derivation() {
         .config(config_manager.config)
         .sol_staker_stake(stake_pda)
         .sol_staker_authority_override(
-            find_sol_staker_authority_override_pda(
-                &stake_manager.authority.pubkey(),
-                &config_manager.config,
-            )
-            .0,
+            find_sol_staker_authority_override_pda(&withdrawer.pubkey(), &config_manager.config).0,
         )
-        .validator_stake(stake_manager.stake)
+        .validator_stake(validator_stake_manager.stake)
         .sol_staker_native_stake(stake_state)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
@@ -336,7 +340,8 @@ async fn fail_initialize_stake_with_invalid_stake_state() {
     // Given a config and a validator stake accounts.
 
     let config_manager = ConfigManager::new(&mut context).await;
-    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
+    let validator_stake_manager =
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we create an invalid SOL stake account.
 
@@ -351,9 +356,7 @@ async fn fail_initialize_stake_with_invalid_stake_state() {
     );
 
     // When we try initialize the SOL staker stake account with an invalid stake state account.
-
     let (stake_pda, _) = find_sol_staker_stake_pda(&fake_stake_state, &config_manager.config);
-
     let transfer_ix = system_instruction::transfer(
         &context.payer.pubkey(),
         &stake_pda,
@@ -364,22 +367,16 @@ async fn fail_initialize_stake_with_invalid_stake_state() {
             .unwrap()
             .minimum_balance(SolStakerStake::LEN),
     );
-
     let initialize_ix = InitializeSolStakerStakeBuilder::new()
         .config(config_manager.config)
         .sol_staker_stake(stake_pda)
         .sol_staker_authority_override(
-            find_sol_staker_authority_override_pda(
-                &stake_manager.authority.pubkey(),
-                &config_manager.config,
-            )
-            .0,
+            find_sol_staker_authority_override_pda(&Pubkey::new_unique(), &config_manager.config).0,
         )
-        .validator_stake(stake_manager.stake)
+        .validator_stake(validator_stake_manager.stake)
         .sol_staker_native_stake(fake_stake_state)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
-
     let tx = Transaction::new_signed_with_payer(
         &[transfer_ix, initialize_ix],
         Some(&context.payer.pubkey()),
@@ -414,7 +411,8 @@ async fn fail_initialize_sol_staker_stake_with_uninitialized_config() {
     // Given a config and a validator stake accounts.
 
     let config_manager = ConfigManager::new(&mut context).await;
-    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
+    let validator_stake_manager =
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we create a SOL stake account.
 
@@ -432,7 +430,13 @@ async fn fail_initialize_sol_staker_stake_with_uninitialized_config() {
     .await;
 
     let stake_state = stake_state.pubkey();
-    delegate_stake_account(&mut context, &stake_state, &stake_manager.vote, &withdrawer).await;
+    delegate_stake_account(
+        &mut context,
+        &stake_state,
+        &validator_stake_manager.vote,
+        &withdrawer,
+    )
+    .await;
 
     // And we uninitialize the config account.
 
@@ -462,20 +466,9 @@ async fn fail_initialize_sol_staker_stake_with_uninitialized_config() {
         .config(config_manager.config)
         .sol_staker_stake(stake_pda)
         .sol_staker_authority_override(
-            find_sol_staker_authority_override_pda(
-                &stake_manager.authority.pubkey(),
-                &config_manager.config,
-            )
-            .0,
+            find_sol_staker_authority_override_pda(&withdrawer.pubkey(), &config_manager.config).0,
         )
-        .sol_staker_authority_override(
-            find_sol_staker_authority_override_pda(
-                &stake_manager.authority.pubkey(),
-                &config_manager.config,
-            )
-            .0,
-        )
-        .validator_stake(stake_manager.stake)
+        .validator_stake(validator_stake_manager.stake)
         .sol_staker_native_stake(stake_state)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
         .instruction();
@@ -519,7 +512,8 @@ async fn fail_initialize_sol_staker_stake_with_invalid_sol_stake_view_program() 
     // Given a config and a validator stake accounts.
 
     let config_manager = ConfigManager::new(&mut context).await;
-    let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
+    let validator_stake_manager =
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we create a SOL stake account.
 
@@ -537,7 +531,13 @@ async fn fail_initialize_sol_staker_stake_with_invalid_sol_stake_view_program() 
     .await;
 
     let stake_state = stake_state.pubkey();
-    delegate_stake_account(&mut context, &stake_state, &stake_manager.vote, &withdrawer).await;
+    delegate_stake_account(
+        &mut context,
+        &stake_state,
+        &validator_stake_manager.vote,
+        &withdrawer,
+    )
+    .await;
 
     // When we try initialize the SOL staker stake account with an invalid SOL stake view program.
 
@@ -558,13 +558,9 @@ async fn fail_initialize_sol_staker_stake_with_invalid_sol_stake_view_program() 
         .config(config_manager.config)
         .sol_staker_stake(stake_pda)
         .sol_staker_authority_override(
-            find_sol_staker_authority_override_pda(
-                &stake_manager.authority.pubkey(),
-                &config_manager.config,
-            )
-            .0,
+            find_sol_staker_authority_override_pda(&withdrawer.pubkey(), &config_manager.config).0,
         )
-        .validator_stake(stake_manager.stake)
+        .validator_stake(validator_stake_manager.stake)
         .sol_staker_native_stake(stake_state)
         .sol_stake_view_program(fake_sol_stake_view_program) // <-- Invalid program
         .instruction();

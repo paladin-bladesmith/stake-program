@@ -12,7 +12,7 @@ use borsh::BorshSerialize;
 pub struct InactivateSolStakerStake {
     /// Stake config account
     pub config: solana_program::pubkey::Pubkey,
-    /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
+    /// SOL staker stake account
     pub sol_staker_stake: solana_program::pubkey::Pubkey,
     /// SOL staker stake authority account
     pub sol_staker_stake_authority: solana_program::pubkey::Pubkey,
@@ -103,7 +103,7 @@ impl InactivateSolStakerStakeBuilder {
         self.config = Some(config);
         self
     }
-    /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
+    /// SOL staker stake account
     #[inline(always)]
     pub fn sol_staker_stake(
         &mut self,
@@ -169,7 +169,7 @@ impl InactivateSolStakerStakeBuilder {
 pub struct InactivateSolStakerStakeCpiAccounts<'a, 'b> {
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
+    /// SOL staker stake account
     pub sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// SOL staker stake authority account
     pub sol_staker_stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
@@ -183,7 +183,7 @@ pub struct InactivateSolStakerStakeCpi<'a, 'b> {
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
+    /// SOL staker stake account
     pub sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// SOL staker stake authority account
     pub sol_staker_stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
@@ -322,7 +322,7 @@ impl<'a, 'b> InactivateSolStakerStakeCpiBuilder<'a, 'b> {
         self.instruction.config = Some(config);
         self
     }
-    /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
+    /// SOL staker stake account
     #[inline(always)]
     pub fn sol_staker_stake(
         &mut self,

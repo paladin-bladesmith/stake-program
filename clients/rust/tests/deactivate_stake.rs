@@ -738,9 +738,7 @@ async fn fail_sol_staker_stake_deactivate_stake_with_amount_greater_than_stake_a
     let mut context = setup(&[]).await;
 
     // Given a config account and a validator's vote account.
-
     let config_manager = ConfigManager::new(&mut context).await;
-    // "manually" set the total amount delegated
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
     config_account.token_amount_effective = 100;
@@ -748,10 +746,8 @@ async fn fail_sol_staker_stake_deactivate_stake_with_amount_greater_than_stake_a
     context.set_account(&config_manager.config, &account.into());
 
     // And a stake account.
-
     let validator_stake_manager =
         ValidatorStakeManager::new(&mut context, &config_manager.config).await;
-    // "manually" set the amount to 100
     let mut account = get_account!(context, validator_stake_manager.stake);
     let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     stake_account.delegation.active_amount = 100;
@@ -759,7 +755,6 @@ async fn fail_sol_staker_stake_deactivate_stake_with_amount_greater_than_stake_a
     context.set_account(&validator_stake_manager.stake, &account.into());
 
     // And a SOL staker stake account.
-
     let sol_staker_stake_manager = SolStakerStakeManager::new(
         &mut context,
         &config_manager.config,
@@ -768,7 +763,6 @@ async fn fail_sol_staker_stake_deactivate_stake_with_amount_greater_than_stake_a
         1_000_000_000,
     )
     .await;
-    // "manually" set the amount to 100
     let mut account = get_account!(context, sol_staker_stake_manager.stake);
     let mut stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
     stake_account.delegation.active_amount = 100;
@@ -776,7 +770,6 @@ async fn fail_sol_staker_stake_deactivate_stake_with_amount_greater_than_stake_a
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
 
     // When we try to deactivate an amount greater than the staked amount.
-
     let deactivate_ix = DeactivateStakeBuilder::new()
         .config(config_manager.config)
         .stake(sol_staker_stake_manager.stake)

@@ -1,8 +1,6 @@
 #![cfg(feature = "test-sbf")]
 use borsh::BorshSerialize;
-use paladin_stake_program_client::accounts::Config;
 use paladin_stake_program_client::accounts::SolStakerStake;
-use paladin_stake_program_client::errors::PaladinStakeProgramError;
 use paladin_stake_program_client::instructions::SolStakerUpdateAuthority;
 use setup::validator_stake::ValidatorStakeManager;
 use setup::{config::ConfigManager, sol_staker_stake::SolStakerStakeManager};
@@ -40,7 +38,6 @@ async fn update_authority_zero_stake() {
         paladin_stake_program_client::pdas::find_sol_staker_authority_override_pda(
             &sol_staker_stake_manager.authority.pubkey(),
             &config_manager.config,
-            &paladin_rewards_program_client::ID,
         );
     let new_authority = Pubkey::new_unique();
     context.set_account(
@@ -109,7 +106,6 @@ async fn update_authority_non_zero_stake() {
         paladin_stake_program_client::pdas::find_sol_staker_authority_override_pda(
             &sol_staker_stake_manager.authority.pubkey(),
             &config_manager.config,
-            &paladin_rewards_program_client::ID,
         );
     context.set_account(
         &sol_staker_authority_override,

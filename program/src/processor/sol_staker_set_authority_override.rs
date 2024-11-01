@@ -76,10 +76,7 @@ pub(crate) fn process_sol_staker_set_authority_override(
 
         // Set the funnel program as the owner.
         invoke_signed(
-            &system_instruction::assign(
-                ctx.accounts.sol_staker_authority_override.key,
-                &program_id,
-            ),
+            &system_instruction::assign(ctx.accounts.sol_staker_authority_override.key, program_id),
             &[ctx.accounts.sol_staker_authority_override.clone()],
             &[&[
                 &authority_original.to_bytes() as &[u8],

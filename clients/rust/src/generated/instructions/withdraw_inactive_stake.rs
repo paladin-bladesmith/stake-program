@@ -20,7 +20,7 @@ pub struct WithdrawInactiveStake {
     pub vault: solana_program::pubkey::Pubkey,
     /// Vault holder rewards
     pub vault_holder_rewards: solana_program::pubkey::Pubkey,
-    /// Vault authority (pda of `['token-owner', config]`)
+    /// Vault authority
     pub vault_authority: solana_program::pubkey::Pubkey,
     /// Destination token account
     pub destination_token_account: solana_program::pubkey::Pubkey,
@@ -180,7 +180,7 @@ impl WithdrawInactiveStakeBuilder {
         self.vault_holder_rewards = Some(vault_holder_rewards);
         self
     }
-    /// Vault authority (pda of `['token-owner', config]`)
+    /// Vault authority
     #[inline(always)]
     pub fn vault_authority(
         &mut self,
@@ -276,7 +276,7 @@ pub struct WithdrawInactiveStakeCpiAccounts<'a, 'b> {
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
     /// Vault holder rewards
     pub vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Vault authority (pda of `['token-owner', config]`)
+    /// Vault authority
     pub vault_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Destination token account
     pub destination_token_account: &'b solana_program::account_info::AccountInfo<'a>,
@@ -300,7 +300,7 @@ pub struct WithdrawInactiveStakeCpi<'a, 'b> {
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
     /// Vault holder rewards
     pub vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Vault authority (pda of `['token-owner', config]`)
+    /// Vault authority
     pub vault_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Destination token account
     pub destination_token_account: &'b solana_program::account_info::AccountInfo<'a>,
@@ -515,7 +515,7 @@ impl<'a, 'b> WithdrawInactiveStakeCpiBuilder<'a, 'b> {
         self.instruction.vault_holder_rewards = Some(vault_holder_rewards);
         self
     }
-    /// Vault authority (pda of `['token-owner', config]`)
+    /// Vault authority
     #[inline(always)]
     pub fn vault_authority(
         &mut self,

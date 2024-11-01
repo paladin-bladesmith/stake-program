@@ -107,7 +107,7 @@ pub fn get_sol_staker_stake_pda_signer_seeds<'a>(
     bump_seed: &'a [u8],
 ) -> [&'a [u8]; 4] {
     [
-        "stake::state::sol_staker_stake".as_bytes(),
+        "sol_staker_stake".as_bytes(),
         stake_state.as_ref(),
         config.as_ref(),
         bump_seed,
@@ -121,7 +121,7 @@ pub fn get_validator_stake_pda_signer_seeds<'a>(
     bump_seed: &'a [u8],
 ) -> [&'a [u8]; 4] {
     [
-        "stake::state::validator_stake".as_bytes(),
+        "validator_stake".as_bytes(),
         validator_vote.as_ref(),
         config.as_ref(),
         bump_seed,

@@ -122,7 +122,7 @@ export type HarvestHolderRewardsInput<
   vault: Address<TAccountVault>;
   /** Holder rewards account for vault token account */
   vaultHolderRewards: Address<TAccountVaultHolderRewards>;
-  /** Vault authority (pda of `['token-owner', config]`) */
+  /** Vault authority */
   vaultAuthority: Address<TAccountVaultAuthority>;
   /** Stake token mint */
   mint: Address<TAccountMint>;
@@ -252,7 +252,7 @@ export type ParsedHarvestHolderRewardsInstruction<
     vault: TAccountMetas[2];
     /** Holder rewards account for vault token account */
     vaultHolderRewards: TAccountMetas[3];
-    /** Vault authority (pda of `['token-owner', config]`) */
+    /** Vault authority */
     vaultAuthority: TAccountMetas[4];
     /** Stake token mint */
     mint: TAccountMetas[5];

@@ -73,7 +73,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+            "Validator stake account"
           ]
         },
         {
@@ -115,7 +115,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+            "Validator stake account"
           ]
         },
         {
@@ -123,7 +123,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+            "Validator stake account"
           ]
         },
         {
@@ -241,7 +241,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+            "Validator stake account"
           ]
         },
         {
@@ -315,7 +315,7 @@
           "isMut": false,
           "isSigner": false,
           "docs": [
-            "Vault authority (pda of `['token-owner', config]`)"
+            "Vault authority"
           ]
         },
         {
@@ -394,7 +394,7 @@
           "isMut": false,
           "isSigner": false,
           "docs": [
-            "Vault authority (pda of `['token-owner', config]`)"
+            "Vault authority"
           ]
         },
         {
@@ -494,7 +494,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+            "Validator stake account"
           ]
         },
         {
@@ -534,7 +534,7 @@
           "isMut": false,
           "isSigner": false,
           "docs": [
-            "Vault authority (pda of `['token-owner', config]`)"
+            "Vault authority"
           ]
         },
         {
@@ -832,7 +832,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+            "SOL staker stake account"
           ]
         },
         {
@@ -923,7 +923,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+            "SOL staker stake account"
           ]
         },
         {
@@ -965,7 +965,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+            "SOL staker stake account"
           ]
         },
         {
@@ -1013,7 +1013,7 @@
           "isMut": false,
           "isSigner": false,
           "docs": [
-            "Vault authority (pda of `['token-owner', config]`)"
+            "Vault authority"
           ]
         },
         {

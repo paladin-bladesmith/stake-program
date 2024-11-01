@@ -1,6 +1,7 @@
 use paladin_stake_program_client::{
-    accounts::SolStakerStake, instructions::InitializeSolStakerStakeBuilder,
-    pdas::find_sol_staker_stake_pda,
+    accounts::SolStakerStake,
+    instructions::InitializeSolStakerStakeBuilder,
+    pdas::{find_sol_staker_authority_override_pda, find_sol_staker_stake_pda},
 };
 use solana_program_test::ProgramTestContext;
 use solana_sdk::{
@@ -67,8 +68,14 @@ impl SolStakerStakeManager {
         }
 
         // create the sol staker stake account
-        let stake =
-            create_sol_staker_stake(context, &stake_state.pubkey(), validator_stake, config).await;
+        let stake = create_sol_staker_stake(
+            context,
+            &stake_state.pubkey(),
+            validator_stake,
+            &authority.pubkey(),
+            config,
+        )
+        .await;
 
         Self {
             stake,
@@ -82,6 +89,7 @@ pub async fn create_sol_staker_stake(
     context: &mut ProgramTestContext,
     sol_stake: &Pubkey,
     validator_stake: &Pubkey,
+    original_authority: &Pubkey,
     config: &Pubkey,
 ) -> Pubkey {
     let (stake_pda, _) = find_sol_staker_stake_pda(sol_stake, config);
@@ -100,6 +108,9 @@ pub async fn create_sol_staker_stake(
     let initialize_ix = InitializeSolStakerStakeBuilder::new()
         .config(*config)
         .sol_staker_stake(stake_pda)
+        .sol_staker_authority_override(
+            find_sol_staker_authority_override_pda(original_authority, config).0,
+        )
         .validator_stake(*validator_stake)
         .sol_staker_native_stake(*sol_stake)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)

@@ -48,7 +48,7 @@ pub enum StakeInstruction {
         1,
         writable,
         name = "validator_stake",
-        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+        desc = "Validator stake account"
     )]
     #[account(
         2,
@@ -78,13 +78,13 @@ pub enum StakeInstruction {
         1,
         writable,
         name = "validator_stake",
-        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+        desc = "Validator stake account"
     )]
     #[account(
         2,
         writable,
         name = "validator_stake_authority",
-        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+        desc = "Validator stake account"
     )]
     #[account(
         3,
@@ -165,7 +165,7 @@ pub enum StakeInstruction {
         1,
         writable,
         name = "validator_stake",
-        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+        desc = "Validator stake account"
     )]
     #[account(
         2,
@@ -218,7 +218,7 @@ pub enum StakeInstruction {
     #[account(
         5,
         name = "vault_authority",
-        desc = "Vault authority (pda of `['token-owner', config]`)"
+        desc = "Vault authority"
     )]
     #[account(
         6,
@@ -275,7 +275,7 @@ pub enum StakeInstruction {
     #[account(
         4,
         name = "vault_authority",
-        desc = "Vault authority (pda of `['token-owner', config]`)"
+        desc = "Vault authority"
     )]
     #[account(
         5,
@@ -345,7 +345,7 @@ pub enum StakeInstruction {
         1,
         writable,
         name = "validator_stake",
-        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+        desc = "Validator stake account"
     )]
     #[account(
         2,
@@ -373,7 +373,7 @@ pub enum StakeInstruction {
     #[account(
         6,
         name = "vault_authority",
-        desc = "Vault authority (pda of `['token-owner', config]`)"
+        desc = "Vault authority"
     )]
     #[account(
         7,
@@ -556,7 +556,7 @@ pub enum StakeInstruction {
         3,
         writable,
         name = "sol_staker_stake",
-        desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+        desc = "SOL staker stake account"
     )]
     #[account(
         4,
@@ -624,7 +624,7 @@ pub enum StakeInstruction {
         1,
         writable,
         name = "sol_staker_stake",
-        desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+        desc = "SOL staker stake account"
     )]
     #[account(
         2,
@@ -656,7 +656,7 @@ pub enum StakeInstruction {
         1,
         writable,
         name = "sol_staker_stake",
-        desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+        desc = "SOL staker stake account"
     )]
     #[account(
         2,
@@ -690,7 +690,7 @@ pub enum StakeInstruction {
     #[account(
         7,
         name = "vault_authority",
-        desc = "Vault authority (pda of `['token-owner', config]`)"
+        desc = "Vault authority"
     )]
     #[account(
         8,
