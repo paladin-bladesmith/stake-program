@@ -18,13 +18,10 @@ import {
   type Decoder,
   type Encoder,
   type IAccountMeta,
-  type IAccountSignerMeta,
   type IInstruction,
   type IInstructionWithAccounts,
   type IInstructionWithData,
   type ReadonlyAccount,
-  type ReadonlySignerAccount,
-  type TransactionSigner,
   type WritableAccount,
 } from '@solana/web3.js';
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
@@ -33,7 +30,6 @@ import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 export type SolStakerUpdateAuthorityInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
-  TAccountConfigAuthority extends string | IAccountMeta<string> = string,
   TAccountSolStakerStake extends string | IAccountMeta<string> = string,
   TAccountSolStakerAuthorityOverride extends
     | string
@@ -46,10 +42,6 @@ export type SolStakerUpdateAuthorityInstruction<
       TAccountConfig extends string
         ? ReadonlyAccount<TAccountConfig>
         : TAccountConfig,
-      TAccountConfigAuthority extends string
-        ? ReadonlySignerAccount<TAccountConfigAuthority> &
-            IAccountSignerMeta<TAccountConfigAuthority>
-        : TAccountConfigAuthority,
       TAccountSolStakerStake extends string
         ? WritableAccount<TAccountSolStakerStake>
         : TAccountSolStakerStake,
@@ -87,14 +79,11 @@ export function getSolStakerUpdateAuthorityInstructionDataCodec(): Codec<
 
 export type SolStakerUpdateAuthorityInput<
   TAccountConfig extends string = string,
-  TAccountConfigAuthority extends string = string,
   TAccountSolStakerStake extends string = string,
   TAccountSolStakerAuthorityOverride extends string = string,
 > = {
   /** Config */
   config: Address<TAccountConfig>;
-  /** Config authority */
-  configAuthority: TransactionSigner<TAccountConfigAuthority>;
   /** Sol staker stake */
   solStakerStake: Address<TAccountSolStakerStake>;
   /** Sol staker authority override */
@@ -103,20 +92,17 @@ export type SolStakerUpdateAuthorityInput<
 
 export function getSolStakerUpdateAuthorityInstruction<
   TAccountConfig extends string,
-  TAccountConfigAuthority extends string,
   TAccountSolStakerStake extends string,
   TAccountSolStakerAuthorityOverride extends string,
 >(
   input: SolStakerUpdateAuthorityInput<
     TAccountConfig,
-    TAccountConfigAuthority,
     TAccountSolStakerStake,
     TAccountSolStakerAuthorityOverride
   >
 ): SolStakerUpdateAuthorityInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
-  TAccountConfigAuthority,
   TAccountSolStakerStake,
   TAccountSolStakerAuthorityOverride
 > {
@@ -126,10 +112,6 @@ export function getSolStakerUpdateAuthorityInstruction<
   // Original accounts.
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
-    configAuthority: {
-      value: input.configAuthority ?? null,
-      isWritable: false,
-    },
     solStakerStake: { value: input.solStakerStake ?? null, isWritable: true },
     solStakerAuthorityOverride: {
       value: input.solStakerAuthorityOverride ?? null,
@@ -145,7 +127,6 @@ export function getSolStakerUpdateAuthorityInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.config),
-      getAccountMeta(accounts.configAuthority),
       getAccountMeta(accounts.solStakerStake),
       getAccountMeta(accounts.solStakerAuthorityOverride),
     ],
@@ -154,7 +135,6 @@ export function getSolStakerUpdateAuthorityInstruction<
   } as SolStakerUpdateAuthorityInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
-    TAccountConfigAuthority,
     TAccountSolStakerStake,
     TAccountSolStakerAuthorityOverride
   >;
@@ -170,12 +150,10 @@ export type ParsedSolStakerUpdateAuthorityInstruction<
   accounts: {
     /** Config */
     config: TAccountMetas[0];
-    /** Config authority */
-    configAuthority: TAccountMetas[1];
     /** Sol staker stake */
-    solStakerStake: TAccountMetas[2];
+    solStakerStake: TAccountMetas[1];
     /** Sol staker authority override */
-    solStakerAuthorityOverride: TAccountMetas[3];
+    solStakerAuthorityOverride: TAccountMetas[2];
   };
   data: SolStakerUpdateAuthorityInstructionData;
 };
@@ -188,7 +166,7 @@ export function parseSolStakerUpdateAuthorityInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedSolStakerUpdateAuthorityInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 4) {
+  if (instruction.accounts.length < 3) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -202,7 +180,6 @@ export function parseSolStakerUpdateAuthorityInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       config: getNextAccount(),
-      configAuthority: getNextAccount(),
       solStakerStake: getNextAccount(),
       solStakerAuthorityOverride: getNextAccount(),
     },

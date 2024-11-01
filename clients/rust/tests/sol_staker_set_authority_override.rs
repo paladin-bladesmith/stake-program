@@ -1,16 +1,10 @@
 #![cfg(feature = "test-sbf")]
 
-use borsh::BorshSerialize;
-use paladin_stake_program_client::accounts::Config;
-use paladin_stake_program_client::accounts::SolStakerStake;
-use paladin_stake_program_client::errors::PaladinStakeProgramError;
 use paladin_stake_program_client::instructions::SolStakerSetAuthorityOverride;
 use paladin_stake_program_client::instructions::SolStakerSetAuthorityOverrideInstructionArgs;
-use paladin_stake_program_client::instructions::SolStakerUpdateAuthority;
 use setup::validator_stake::ValidatorStakeManager;
 use setup::{config::ConfigManager, sol_staker_stake::SolStakerStakeManager};
 use solana_program_test::tokio;
-use solana_sdk::account::Account;
 use solana_sdk::instruction::InstructionError;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
@@ -23,7 +17,6 @@ mod setup;
 #[tokio::test]
 async fn config_authority_signature_err() {
     let mut context = setup::setup(&[]).await;
-    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Setup the relevant accounts.
     let config_manager = ConfigManager::new(&mut context).await;

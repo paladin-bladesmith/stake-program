@@ -8,7 +8,6 @@ use setup::validator_stake::ValidatorStakeManager;
 use setup::{config::ConfigManager, sol_staker_stake::SolStakerStakeManager};
 use solana_program_test::tokio;
 use solana_sdk::account::Account;
-use solana_sdk::instruction::InstructionError;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
@@ -59,7 +58,6 @@ async fn update_authority_zero_stake() {
     // Act - Update the authority.
     let sol_staker_update_authority = SolStakerUpdateAuthority {
         config: config_manager.config,
-        config_authority: config_manager.authority.pubkey(),
         sol_staker_stake: sol_staker_stake_manager.stake,
         sol_staker_authority_override,
     }
@@ -67,7 +65,7 @@ async fn update_authority_zero_stake() {
     let tx = Transaction::new_signed_with_payer(
         &[sol_staker_update_authority],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &config_manager.authority],
+        &[&context.payer],
         context.last_blockhash,
     );
     context.banks_client.process_transaction(tx).await.unwrap();
@@ -113,7 +111,6 @@ async fn update_authority_non_zero_stake() {
             &config_manager.config,
             &paladin_rewards_program_client::ID,
         );
-    let new_authority = Pubkey::new_unique();
     context.set_account(
         &sol_staker_authority_override,
         &Account {
@@ -129,7 +126,6 @@ async fn update_authority_non_zero_stake() {
     // Act - Update the authority.
     let sol_staker_update_authority = SolStakerUpdateAuthority {
         config: config_manager.config,
-        config_authority: config_manager.authority.pubkey(),
         sol_staker_stake: sol_staker_stake_manager.stake,
         sol_staker_authority_override: sol_staker_authority_override,
     }
@@ -137,7 +133,7 @@ async fn update_authority_non_zero_stake() {
     let tx = Transaction::new_signed_with_payer(
         &[sol_staker_update_authority],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &config_manager.authority],
+        &[&context.payer],
         context.last_blockhash,
     );
     context.banks_client.process_transaction(tx).await.unwrap();
@@ -150,77 +146,4 @@ async fn update_authority_non_zero_stake() {
     assert_eq!(stake.delegation.effective_amount, 0);
     assert_eq!(stake.delegation.deactivating_amount, 0);
     assert_eq!(stake.delegation.inactive_amount, 0);
-}
-
-#[tokio::test]
-async fn update_authority_config_authority_not_set_err() {
-    let mut context = setup::setup(&[]).await;
-    let rent = context.banks_client.get_rent().await.unwrap();
-
-    // Setup the relevant accounts.
-    let config_manager = ConfigManager::new(&mut context).await;
-    let validator_stake_manager =
-        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
-    let stake_authority = Keypair::new();
-    let sol_staker_stake_manager = SolStakerStakeManager::new_with_authority(
-        &mut context,
-        &config_manager.config,
-        &validator_stake_manager.stake,
-        &validator_stake_manager.vote,
-        stake_authority.insecure_clone(),
-        5_000_000_000, // 5 SOL staked
-    )
-    .await;
-
-    // Remove the config authority.
-    let mut config = get_account!(context, config_manager.config);
-    let mut config_state = Config::from_bytes(&config.data).unwrap();
-    config_state.authority = Pubkey::default().into();
-    config.data = config_state.try_to_vec().unwrap();
-    context.set_account(&config_manager.config, &config.into());
-
-    // Set the authority override with the new authority.
-    let new_authority = Pubkey::new_unique();
-    let (sol_staker_authority_override, _) =
-        paladin_stake_program_client::pdas::find_sol_staker_authority_override_pda(
-            &sol_staker_stake_manager.authority.pubkey(),
-            &config_manager.config,
-            &paladin_rewards_program_client::ID,
-        );
-    let new_authority = Pubkey::new_unique();
-    context.set_account(
-        &sol_staker_authority_override,
-        &Account {
-            lamports: rent.minimum_balance(32),
-            data: new_authority.to_bytes().to_vec(),
-            owner: paladin_stake_program_client::ID,
-            executable: false,
-            rent_epoch: 0,
-        }
-        .into(),
-    );
-
-    // Act - Update the authority.
-    let new_authority = Keypair::new();
-    let sol_staker_update_authority = SolStakerUpdateAuthority {
-        config: config_manager.config,
-        config_authority: config_manager.authority.pubkey(),
-        sol_staker_stake: sol_staker_stake_manager.stake,
-        sol_staker_authority_override,
-    }
-    .instruction();
-    let tx = Transaction::new_signed_with_payer(
-        &[sol_staker_update_authority],
-        Some(&context.payer.pubkey()),
-        &[&context.payer, &config_manager.authority],
-        context.last_blockhash,
-    );
-    let err = context
-        .banks_client
-        .process_transaction(tx)
-        .await
-        .unwrap_err();
-
-    // Assert - Transaction errored due to no configured authority.
-    assert_custom_error!(err, PaladinStakeProgramError::AuthorityNotSet);
 }

@@ -1095,14 +1095,6 @@
           ]
         },
         {
-          "name": "configAuthority",
-          "isMut": false,
-          "isSigner": true,
-          "docs": [
-            "Config authority"
-          ]
-        },
-        {
           "name": "solStakerStake",
           "isMut": true,
           "isSigner": false,

@@ -1,8 +1,6 @@
 use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey};
 
 use crate::{
-    err,
-    error::StakeError,
     instruction::accounts::{Context, SolStakerUpdateAuthorityAccounts},
     processor::{unpack_initialized, unpack_initialized_mut},
     require,
@@ -22,25 +20,7 @@ pub(crate) fn process_sol_staker_update_authority(
         "config"
     );
     let config = ctx.accounts.config.data.borrow();
-    let config = unpack_initialized::<Config>(&config)?;
-
-    // Config Authority.
-    // - Must match the provided authority account.
-    // - Must sign the transaction.
-    let authority = config.authority.0;
-    if authority == Pubkey::default() {
-        return err!(StakeError::AuthorityNotSet);
-    };
-    require!(
-        ctx.accounts.config_authority.key == &authority,
-        StakeError::InvalidAuthority,
-        "config_authority"
-    );
-    require!(
-        ctx.accounts.config_authority.is_signer,
-        ProgramError::MissingRequiredSignature,
-        "config_authority"
-    );
+    let _ = unpack_initialized::<Config>(&config)?;
 
     // Sol staker stake.
     // - Must be owned by this program.

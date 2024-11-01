@@ -733,18 +733,12 @@ pub enum StakeInstruction {
     )]
     #[account(
         1,
-        signer,
-        name = "config_authority",
-        desc = "Config authority"
-    )]
-    #[account(
-        2,
         writable,
         name = "sol_staker_stake",
         desc = "Sol staker stake"
     )]
     #[account(
-        3,
+        2,
         name = "sol_staker_authority_override",
         desc = "Sol staker authority override"
     )]
