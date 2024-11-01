@@ -31,6 +31,9 @@ export type InitializeSolStakerStakeInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountSolStakerStake extends string | IAccountMeta<string> = string,
+  TAccountSolStakerAuthorityOverride extends
+    | string
+    | IAccountMeta<string> = string,
   TAccountValidatorStake extends string | IAccountMeta<string> = string,
   TAccountSolStakerNativeStake extends string | IAccountMeta<string> = string,
   TAccountSysvarStakeHistory extends
@@ -51,6 +54,9 @@ export type InitializeSolStakerStakeInstruction<
       TAccountSolStakerStake extends string
         ? WritableAccount<TAccountSolStakerStake>
         : TAccountSolStakerStake,
+      TAccountSolStakerAuthorityOverride extends string
+        ? WritableAccount<TAccountSolStakerAuthorityOverride>
+        : TAccountSolStakerAuthorityOverride,
       TAccountValidatorStake extends string
         ? WritableAccount<TAccountValidatorStake>
         : TAccountValidatorStake,
@@ -98,17 +104,20 @@ export function getInitializeSolStakerStakeInstructionDataCodec(): Codec<
 export type InitializeSolStakerStakeInput<
   TAccountConfig extends string = string,
   TAccountSolStakerStake extends string = string,
+  TAccountSolStakerAuthorityOverride extends string = string,
   TAccountValidatorStake extends string = string,
   TAccountSolStakerNativeStake extends string = string,
   TAccountSysvarStakeHistory extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountSolStakeViewProgram extends string = string,
 > = {
-  /** Stake config account */
+  /** Stake config */
   config: Address<TAccountConfig>;
-  /** SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`) */
+  /** Sol staker stake */
   solStakerStake: Address<TAccountSolStakerStake>;
-  /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
+  /** Sol staker authority override */
+  solStakerAuthorityOverride: Address<TAccountSolStakerAuthorityOverride>;
+  /** Validator stake */
   validatorStake: Address<TAccountValidatorStake>;
   /** Sol staker native stake */
   solStakerNativeStake: Address<TAccountSolStakerNativeStake>;
@@ -123,6 +132,7 @@ export type InitializeSolStakerStakeInput<
 export function getInitializeSolStakerStakeInstruction<
   TAccountConfig extends string,
   TAccountSolStakerStake extends string,
+  TAccountSolStakerAuthorityOverride extends string,
   TAccountValidatorStake extends string,
   TAccountSolStakerNativeStake extends string,
   TAccountSysvarStakeHistory extends string,
@@ -132,6 +142,7 @@ export function getInitializeSolStakerStakeInstruction<
   input: InitializeSolStakerStakeInput<
     TAccountConfig,
     TAccountSolStakerStake,
+    TAccountSolStakerAuthorityOverride,
     TAccountValidatorStake,
     TAccountSolStakerNativeStake,
     TAccountSysvarStakeHistory,
@@ -142,6 +153,7 @@ export function getInitializeSolStakerStakeInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountSolStakerStake,
+  TAccountSolStakerAuthorityOverride,
   TAccountValidatorStake,
   TAccountSolStakerNativeStake,
   TAccountSysvarStakeHistory,
@@ -155,6 +167,10 @@ export function getInitializeSolStakerStakeInstruction<
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
     solStakerStake: { value: input.solStakerStake ?? null, isWritable: true },
+    solStakerAuthorityOverride: {
+      value: input.solStakerAuthorityOverride ?? null,
+      isWritable: true,
+    },
     validatorStake: { value: input.validatorStake ?? null, isWritable: true },
     solStakerNativeStake: {
       value: input.solStakerNativeStake ?? null,
@@ -190,6 +206,7 @@ export function getInitializeSolStakerStakeInstruction<
     accounts: [
       getAccountMeta(accounts.config),
       getAccountMeta(accounts.solStakerStake),
+      getAccountMeta(accounts.solStakerAuthorityOverride),
       getAccountMeta(accounts.validatorStake),
       getAccountMeta(accounts.solStakerNativeStake),
       getAccountMeta(accounts.sysvarStakeHistory),
@@ -202,6 +219,7 @@ export function getInitializeSolStakerStakeInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountSolStakerStake,
+    TAccountSolStakerAuthorityOverride,
     TAccountValidatorStake,
     TAccountSolStakerNativeStake,
     TAccountSysvarStakeHistory,
@@ -218,20 +236,22 @@ export type ParsedInitializeSolStakerStakeInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    /** Stake config account */
+    /** Stake config */
     config: TAccountMetas[0];
-    /** SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`) */
+    /** Sol staker stake */
     solStakerStake: TAccountMetas[1];
-    /** Validator stake account (pda of `['stake::state::validator_stake', validator, config]`) */
-    validatorStake: TAccountMetas[2];
+    /** Sol staker authority override */
+    solStakerAuthorityOverride: TAccountMetas[2];
+    /** Validator stake */
+    validatorStake: TAccountMetas[3];
     /** Sol staker native stake */
-    solStakerNativeStake: TAccountMetas[3];
+    solStakerNativeStake: TAccountMetas[4];
     /** Sysvar stake history */
-    sysvarStakeHistory: TAccountMetas[4];
+    sysvarStakeHistory: TAccountMetas[5];
     /** System program */
-    systemProgram: TAccountMetas[5];
+    systemProgram: TAccountMetas[6];
     /** Paladin SOL Stake View program */
-    solStakeViewProgram: TAccountMetas[6];
+    solStakeViewProgram: TAccountMetas[7];
   };
   data: InitializeSolStakerStakeInstructionData;
 };
@@ -244,7 +264,7 @@ export function parseInitializeSolStakerStakeInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedInitializeSolStakerStakeInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 7) {
+  if (instruction.accounts.length < 8) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -259,6 +279,7 @@ export function parseInitializeSolStakerStakeInstruction<
     accounts: {
       config: getNextAccount(),
       solStakerStake: getNextAccount(),
+      solStakerAuthorityOverride: getNextAccount(),
       validatorStake: getNextAccount(),
       solStakerNativeStake: getNextAccount(),
       sysvarStakeHistory: getNextAccount(),

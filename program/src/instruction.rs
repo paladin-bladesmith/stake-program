@@ -430,37 +430,43 @@ pub enum StakeInstruction {
     #[account(
         0,
         name = "config",
-        desc = "Stake config account"
+        desc = "Stake config"
     )]
     #[account(
         1,
         writable,
         name = "sol_staker_stake",
-        desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+        desc = "Sol staker stake"
     )]
     #[account(
         2,
         writable,
-        name = "validator_stake",
-        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+        name = "sol_staker_authority_override",
+        desc = "Sol staker authority override"
     )]
     #[account(
         3,
+        writable,
+        name = "validator_stake",
+        desc = "Validator stake"
+    )]
+    #[account(
+        4,
         name = "sol_staker_native_stake",
         desc = "Sol staker native stake"
     )]
     #[account(
-        4,
+        5,
         name = "sysvar_stake_history",
         desc = "Sysvar stake history"
     )]
     #[account(
-        5,
+        6,
         name = "system_program",
         desc = "System program"
     )]
     #[account(
-        6,
+        7,
         name = "sol_stake_view_program",
         desc = "Paladin SOL Stake View program"
     )]
