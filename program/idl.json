@@ -73,7 +73,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+            "Validator stake account"
           ]
         },
         {
@@ -115,7 +115,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+            "Validator stake account"
           ]
         },
         {
@@ -123,7 +123,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+            "Validator stake account"
           ]
         },
         {
@@ -241,7 +241,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+            "Validator stake account"
           ]
         },
         {
@@ -315,7 +315,7 @@
           "isMut": false,
           "isSigner": false,
           "docs": [
-            "Vault authority (pda of `['token-owner', config]`)"
+            "Vault authority"
           ]
         },
         {
@@ -394,7 +394,7 @@
           "isMut": false,
           "isSigner": false,
           "docs": [
-            "Vault authority (pda of `['token-owner', config]`)"
+            "Vault authority"
           ]
         },
         {
@@ -494,7 +494,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+            "Validator stake account"
           ]
         },
         {
@@ -534,7 +534,7 @@
           "isMut": false,
           "isSigner": false,
           "docs": [
-            "Vault authority (pda of `['token-owner', config]`)"
+            "Vault authority"
           ]
         },
         {
@@ -647,7 +647,7 @@
           "isMut": false,
           "isSigner": false,
           "docs": [
-            "Stake config account"
+            "Stake config"
           ]
         },
         {
@@ -655,7 +655,15 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+            "Sol staker stake"
+          ]
+        },
+        {
+          "name": "solStakerAuthorityOverride",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Sol staker authority override"
           ]
         },
         {
@@ -663,7 +671,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+            "Validator stake"
           ]
         },
         {
@@ -824,7 +832,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+            "SOL staker stake account"
           ]
         },
         {
@@ -915,7 +923,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+            "SOL staker stake account"
           ]
         },
         {
@@ -957,7 +965,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+            "SOL staker stake account"
           ]
         },
         {
@@ -1005,7 +1013,7 @@
           "isMut": false,
           "isSigner": false,
           "docs": [
-            "Vault authority (pda of `['token-owner', config]`)"
+            "Vault authority"
           ]
         },
         {
@@ -1095,6 +1103,40 @@
           ]
         },
         {
+          "name": "solStakerStake",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Sol staker stake"
+          ]
+        },
+        {
+          "name": "solStakerAuthorityOverride",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Sol staker authority override"
+          ]
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 17
+      }
+    },
+    {
+      "name": "SolStakerSetAuthorityOverride",
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Config"
+          ]
+        },
+        {
           "name": "configAuthority",
           "isMut": false,
           "isSigner": true,
@@ -1103,23 +1145,36 @@
           ]
         },
         {
-          "name": "solStakerStake",
+          "name": "solStakerAuthorityOverride",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Sol staker stake"
+            "Sol staker authority override"
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true,
+          "docs": [
+            "System program"
           ]
         }
       ],
       "args": [
         {
-          "name": "newAuthority",
+          "name": "authorityOriginal",
+          "type": "publicKey"
+        },
+        {
+          "name": "authorityOverride",
           "type": "publicKey"
         }
       ],
       "discriminant": {
         "type": "u8",
-        "value": 17
+        "value": 18
       }
     }
   ],

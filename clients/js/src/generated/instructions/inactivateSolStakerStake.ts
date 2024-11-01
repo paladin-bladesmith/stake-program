@@ -88,7 +88,7 @@ export type InactivateSolStakerStakeInput<
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
-  /** SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`) */
+  /** SOL staker stake account */
   solStakerStake: Address<TAccountSolStakerStake>;
   /** SOL staker stake authority account */
   solStakerStakeAuthority: Address<TAccountSolStakerStakeAuthority>;
@@ -165,7 +165,7 @@ export type ParsedInactivateSolStakerStakeInstruction<
   accounts: {
     /** Stake config account */
     config: TAccountMetas[0];
-    /** SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`) */
+    /** SOL staker stake account */
     solStakerStake: TAccountMetas[1];
     /** SOL staker stake authority account */
     solStakerStakeAuthority: TAccountMetas[2];

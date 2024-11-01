@@ -48,7 +48,7 @@ pub enum StakeInstruction {
         1,
         writable,
         name = "validator_stake",
-        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+        desc = "Validator stake account"
     )]
     #[account(
         2,
@@ -78,13 +78,13 @@ pub enum StakeInstruction {
         1,
         writable,
         name = "validator_stake",
-        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+        desc = "Validator stake account"
     )]
     #[account(
         2,
         writable,
         name = "validator_stake_authority",
-        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+        desc = "Validator stake account"
     )]
     #[account(
         3,
@@ -165,7 +165,7 @@ pub enum StakeInstruction {
         1,
         writable,
         name = "validator_stake",
-        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+        desc = "Validator stake account"
     )]
     #[account(
         2,
@@ -218,7 +218,7 @@ pub enum StakeInstruction {
     #[account(
         5,
         name = "vault_authority",
-        desc = "Vault authority (pda of `['token-owner', config]`)"
+        desc = "Vault authority"
     )]
     #[account(
         6,
@@ -275,7 +275,7 @@ pub enum StakeInstruction {
     #[account(
         4,
         name = "vault_authority",
-        desc = "Vault authority (pda of `['token-owner', config]`)"
+        desc = "Vault authority"
     )]
     #[account(
         5,
@@ -345,7 +345,7 @@ pub enum StakeInstruction {
         1,
         writable,
         name = "validator_stake",
-        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+        desc = "Validator stake account"
     )]
     #[account(
         2,
@@ -373,7 +373,7 @@ pub enum StakeInstruction {
     #[account(
         6,
         name = "vault_authority",
-        desc = "Vault authority (pda of `['token-owner', config]`)"
+        desc = "Vault authority"
     )]
     #[account(
         7,
@@ -430,37 +430,43 @@ pub enum StakeInstruction {
     #[account(
         0,
         name = "config",
-        desc = "Stake config account"
+        desc = "Stake config"
     )]
     #[account(
         1,
         writable,
         name = "sol_staker_stake",
-        desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+        desc = "Sol staker stake"
     )]
     #[account(
         2,
         writable,
-        name = "validator_stake",
-        desc = "Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)"
+        name = "sol_staker_authority_override",
+        desc = "Sol staker authority override"
     )]
     #[account(
         3,
+        writable,
+        name = "validator_stake",
+        desc = "Validator stake"
+    )]
+    #[account(
+        4,
         name = "sol_staker_native_stake",
         desc = "Sol staker native stake"
     )]
     #[account(
-        4,
+        5,
         name = "sysvar_stake_history",
         desc = "Sysvar stake history"
     )]
     #[account(
-        5,
+        6,
         name = "system_program",
         desc = "System program"
     )]
     #[account(
-        6,
+        7,
         name = "sol_stake_view_program",
         desc = "Paladin SOL Stake View program"
     )]
@@ -550,7 +556,7 @@ pub enum StakeInstruction {
         3,
         writable,
         name = "sol_staker_stake",
-        desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+        desc = "SOL staker stake account"
     )]
     #[account(
         4,
@@ -618,7 +624,7 @@ pub enum StakeInstruction {
         1,
         writable,
         name = "sol_staker_stake",
-        desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+        desc = "SOL staker stake account"
     )]
     #[account(
         2,
@@ -650,7 +656,7 @@ pub enum StakeInstruction {
         1,
         writable,
         name = "sol_staker_stake",
-        desc = "SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)"
+        desc = "SOL staker stake account"
     )]
     #[account(
         2,
@@ -684,7 +690,7 @@ pub enum StakeInstruction {
     #[account(
         7,
         name = "vault_authority",
-        desc = "Vault authority (pda of `['token-owner', config]`)"
+        desc = "Vault authority"
     )]
     #[account(
         8,
@@ -725,7 +731,25 @@ pub enum StakeInstruction {
     )]
     SolStakerMoveTokens { amount: u64 },
 
-    /// Updates the authority on a staker account.
+    /// Aligns the authority on the account with the override authority.
+    #[account(
+        0,
+        name = "config",
+        desc = "Config"
+    )]
+    #[account(
+        1,
+        writable,
+        name = "sol_staker_stake",
+        desc = "Sol staker stake"
+    )]
+    #[account(
+        2,
+        name = "sol_staker_authority_override",
+        desc = "Sol staker authority override"
+    )]
+    SolStakerUpdateAuthority,
+    /// Globally overrides a given authority (intended for stake pools).
     ///
     /// Only callable by governance.
     #[account(
@@ -742,10 +766,16 @@ pub enum StakeInstruction {
     #[account(
         2,
         writable,
-        name = "sol_staker_stake",
-        desc = "Sol staker stake"
+        name = "sol_staker_authority_override",
+        desc = "Sol staker authority override"
     )]
-    SolStakerUpdateAuthority { new_authority: Pubkey },
+    #[account(
+        3,
+        optional,
+        name = "system_program",
+        desc = "System program"
+    )]
+    SolStakerSetAuthorityOverride { authority_original: Pubkey, authority_override: Pubkey },
 }
 
 impl StakeInstruction {
@@ -846,10 +876,15 @@ impl StakeInstruction {
                 data.extend_from_slice(&amount.to_le_bytes());
                 data
             }
-            StakeInstruction::SolStakerUpdateAuthority { new_authority } => {
-                let mut data = Vec::with_capacity(33);
-                data.push(17);
-                data.extend_from_slice(&new_authority.to_bytes());
+            StakeInstruction::SolStakerUpdateAuthority => vec![17],
+            StakeInstruction::SolStakerSetAuthorityOverride {
+                authority_original,
+                authority_override,
+            } => {
+                let mut data = Vec::with_capacity(65);
+                data.push(18);
+                data.extend_from_slice(&authority_original.to_bytes());
+                data.extend_from_slice(&authority_override.to_bytes());
                 data
             }
         }
@@ -959,11 +994,17 @@ impl StakeInstruction {
 
                 Ok(StakeInstruction::SolStakerMoveTokens { amount })
             }
-            // 17 - SolStakerMoveTokens: u64 (8)
-            Some((&17, rest)) if rest.len() == 32 => {
-                let new_authority = Pubkey::new_from_array(*array_ref![rest, 0, 32]);
+            // 17
+            Some((&17, _)) => Ok(StakeInstruction::SolStakerUpdateAuthority),
+            // 18 - SolStakerSetAuthorityOverride: Pubkey (32), Pubkey (32)
+            Some((&18, rest)) if rest.len() == 64 => {
+                let authority_original = Pubkey::new_from_array(*array_ref![rest, 0, 32]);
+                let authority_override = Pubkey::new_from_array(*array_ref![rest, 32, 32]);
 
-                Ok(StakeInstruction::SolStakerUpdateAuthority { new_authority })
+                Ok(StakeInstruction::SolStakerSetAuthorityOverride {
+                    authority_original,
+                    authority_override,
+                })
             }
             _ => Err(ProgramError::InvalidInstructionData),
         }

@@ -16,7 +16,7 @@ pub struct HarvestSolStakerRewards {
     pub config: solana_program::pubkey::Pubkey,
     /// Holder rewards account
     pub vault_holder_rewards: solana_program::pubkey::Pubkey,
-    /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
+    /// SOL staker stake account
     pub sol_staker_stake: solana_program::pubkey::Pubkey,
     /// SOL staker stake authority
     pub sol_staker_stake_authority: solana_program::pubkey::Pubkey,
@@ -192,7 +192,7 @@ impl HarvestSolStakerRewardsBuilder {
         self.vault_holder_rewards = Some(vault_holder_rewards);
         self
     }
-    /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
+    /// SOL staker stake account
     #[inline(always)]
     pub fn sol_staker_stake(
         &mut self,
@@ -340,7 +340,7 @@ pub struct HarvestSolStakerRewardsCpiAccounts<'a, 'b> {
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
     /// Holder rewards account
     pub vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
-    /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
+    /// SOL staker stake account
     pub sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// SOL staker stake authority
     pub sol_staker_stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
@@ -370,7 +370,7 @@ pub struct HarvestSolStakerRewardsCpi<'a, 'b> {
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
     /// Holder rewards account
     pub vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
-    /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
+    /// SOL staker stake account
     pub sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// SOL staker stake authority
     pub sol_staker_stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
@@ -612,7 +612,7 @@ impl<'a, 'b> HarvestSolStakerRewardsCpiBuilder<'a, 'b> {
         self.instruction.vault_holder_rewards = Some(vault_holder_rewards);
         self
     }
-    /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
+    /// SOL staker stake account
     #[inline(always)]
     pub fn sol_staker_stake(
         &mut self,

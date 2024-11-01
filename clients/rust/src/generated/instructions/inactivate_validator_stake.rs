@@ -12,7 +12,7 @@ use borsh::BorshSerialize;
 pub struct InactivateValidatorStake {
     /// Stake config account
     pub config: solana_program::pubkey::Pubkey,
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Validator stake account
     pub validator_stake: solana_program::pubkey::Pubkey,
     /// Validator stake authority account
     pub validator_stake_authority: solana_program::pubkey::Pubkey,
@@ -103,7 +103,7 @@ impl InactivateValidatorStakeBuilder {
         self.config = Some(config);
         self
     }
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Validator stake account
     #[inline(always)]
     pub fn validator_stake(
         &mut self,
@@ -169,7 +169,7 @@ impl InactivateValidatorStakeBuilder {
 pub struct InactivateValidatorStakeCpiAccounts<'a, 'b> {
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Validator stake account
     pub validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Validator stake authority account
     pub validator_stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
@@ -183,7 +183,7 @@ pub struct InactivateValidatorStakeCpi<'a, 'b> {
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Validator stake account
     pub validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Validator stake authority account
     pub validator_stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
@@ -322,7 +322,7 @@ impl<'a, 'b> InactivateValidatorStakeCpiBuilder<'a, 'b> {
         self.instruction.config = Some(config);
         self
     }
-    /// Validator stake account (pda of `['stake::state::validator_stake', validator, config]`)
+    /// Validator stake account
     #[inline(always)]
     pub fn validator_stake(
         &mut self,

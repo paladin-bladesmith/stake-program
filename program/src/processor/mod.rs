@@ -17,9 +17,9 @@ use crate::{
             InactivateValidatorStakeAccounts, InitializeConfigAccounts,
             InitializeSolStakerStakeAccounts, InitializeValidatorStakeAccounts,
             SetAuthorityAccounts, SlashSolStakerStakeAccounts, SlashValidatorStakeAccounts,
-            SolStakerMoveTokensAccounts, SolStakerStakeTokensAccounts,
-            SolStakerUpdateAuthorityAccounts, UpdateConfigAccounts, ValidatorStakeTokensAccounts,
-            WithdrawInactiveStakeAccounts,
+            SolStakerMoveTokensAccounts, SolStakerSetAuthorityOverrideAccounts,
+            SolStakerStakeTokensAccounts, SolStakerUpdateAuthorityAccounts, UpdateConfigAccounts,
+            ValidatorStakeTokensAccounts, WithdrawInactiveStakeAccounts,
         },
         StakeInstruction,
     },
@@ -43,6 +43,7 @@ mod set_authority;
 mod slash_sol_staker_stake;
 mod slash_validator_stake;
 mod sol_staker_move_tokens;
+mod sol_staker_set_authority_override;
 mod sol_staker_stake_tokens;
 mod sol_staker_update_authority;
 mod update_config;
@@ -197,12 +198,23 @@ pub fn process_instruction<'a>(
                 amount,
             )
         }
-        StakeInstruction::SolStakerUpdateAuthority { new_authority } => {
+        StakeInstruction::SolStakerUpdateAuthority => {
             msg!("Instruction: SolStakerUpdateAuthority");
             sol_staker_update_authority::process_sol_staker_update_authority(
                 program_id,
                 SolStakerUpdateAuthorityAccounts::context(accounts)?,
-                new_authority,
+            )
+        }
+        StakeInstruction::SolStakerSetAuthorityOverride {
+            authority_original,
+            authority_override,
+        } => {
+            msg!("Instruction: SolStakerSetAuthorityOverride");
+            sol_staker_set_authority_override::process_sol_staker_set_authority_override(
+                program_id,
+                SolStakerSetAuthorityOverrideAccounts::context(accounts)?,
+                authority_override,
+                authority_original,
             )
         }
     }

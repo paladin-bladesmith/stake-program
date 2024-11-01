@@ -133,7 +133,7 @@ export type SlashSolStakerStakeInput<
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
-  /** SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`) */
+  /** SOL staker stake account */
   solStakerStake: Address<TAccountSolStakerStake>;
   /** SOL staker stake authority account */
   solStakerStakeAuthority: Address<TAccountSolStakerStakeAuthority>;
@@ -145,7 +145,7 @@ export type SlashSolStakerStakeInput<
   vault: Address<TAccountVault>;
   /** Vault holder rewards account */
   vaultHolderRewards: Address<TAccountVaultHolderRewards>;
-  /** Vault authority (pda of `['token-owner', config]`) */
+  /** Vault authority */
   vaultAuthority: Address<TAccountVaultAuthority>;
   /** Token program */
   tokenProgram?: Address<TAccountTokenProgram>;
@@ -262,7 +262,7 @@ export type ParsedSlashSolStakerStakeInstruction<
   accounts: {
     /** Stake config account */
     config: TAccountMetas[0];
-    /** SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`) */
+    /** SOL staker stake account */
     solStakerStake: TAccountMetas[1];
     /** SOL staker stake authority account */
     solStakerStakeAuthority: TAccountMetas[2];
@@ -274,7 +274,7 @@ export type ParsedSlashSolStakerStakeInstruction<
     vault: TAccountMetas[5];
     /** Vault holder rewards account */
     vaultHolderRewards: TAccountMetas[6];
-    /** Vault authority (pda of `['token-owner', config]`) */
+    /** Vault authority */
     vaultAuthority: TAccountMetas[7];
     /** Token program */
     tokenProgram: TAccountMetas[8];

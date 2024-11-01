@@ -1,3 +1,4 @@
+use arrayref::array_ref;
 use paladin_sol_stake_view_program_client::{
     instructions::GetStakeActivatingAndDeactivatingCpiBuilder,
     GetStakeActivatingAndDeactivatingReturnData,
@@ -18,8 +19,9 @@ use crate::{
     processor::{unpack_initialized, unpack_initialized_mut},
     require,
     state::{
-        find_sol_staker_stake_pda, find_validator_stake_pda, get_sol_staker_stake_pda_signer_seeds,
-        Config, Delegation, SolStakerStake, ValidatorStake,
+        find_sol_staker_authority_override_pda, find_sol_staker_stake_pda,
+        find_validator_stake_pda, get_sol_staker_stake_pda_signer_seeds, Config, Delegation,
+        SolStakerStake, ValidatorStake,
     },
 };
 
@@ -30,14 +32,6 @@ use crate::{
 ///
 /// NOTE: Anybody can create the stake account for a SOL staker. For new
 /// accounts, the authority is initialized to the stake state account's withdrawer.
-///
-/// 0. `[ ]` Stake config
-/// 1. `[w]` Sol staker stake
-/// 2. `[w]` Validator stake
-/// 3. `[ ]` Sol staker native stake
-/// 4. `[ ]` Sysvar stake history
-/// 5. `[ ]` System program
-/// 6. `[ ]` Sol stake view program
 #[allow(clippy::useless_conversion)]
 pub fn process_initialize_sol_staker_stake(
     program_id: &Pubkey,
@@ -108,19 +102,19 @@ pub fn process_initialize_sol_staker_stake(
     let mut stake_data = ctx.accounts.validator_stake.try_borrow_mut_data()?;
     let validator_stake = unpack_initialized_mut::<ValidatorStake>(&mut stake_data)?;
 
-    // sol staker stake
-    // - have the correct PDA derivation
-    // - be uninitialized (empty data)
+    // Sol staker stake
+    // - Have the correct PDA derivation.
+    // - Be uninitialized (empty data).
     //
     // NOTE: The stake account is created and assigned to the stake program, so it needs
     // to be pre-funded with the minimum rent balance by the caller.
-    let (derivation, bump) = find_sol_staker_stake_pda(
+    let (sol_staker_stake_key, sol_staker_stake_bump) = find_sol_staker_stake_pda(
         ctx.accounts.sol_staker_native_stake.key,
         ctx.accounts.config.key,
         program_id,
     );
     require!(
-        ctx.accounts.sol_staker_stake.key == &derivation,
+        ctx.accounts.sol_staker_stake.key == &sol_staker_stake_key,
         ProgramError::InvalidSeeds,
         "stake"
     );
@@ -130,8 +124,29 @@ pub fn process_initialize_sol_staker_stake(
         "stake"
     );
 
+    // Sol staker authority override.
+    // - Correct derivation.
+    // - Allowed to be uninitialized.
+    let (sol_staker_authority_override, _) =
+        find_sol_staker_authority_override_pda(&withdrawer, ctx.accounts.config.key, program_id);
+    require!(
+        &sol_staker_authority_override == ctx.accounts.sol_staker_authority_override.key,
+        ProgramError::InvalidSeeds,
+        "sol staker authority"
+    );
+    let sol_staker_authority_override = ctx.accounts.sol_staker_authority_override.data.borrow();
+    let sol_staker_authority_override =
+        match ctx.accounts.sol_staker_authority_override.data_is_empty() {
+            true => None,
+            false => Some(Pubkey::new_from_array(*array_ref![
+                sol_staker_authority_override,
+                0,
+                32
+            ])),
+        };
+
     // Allocate and assign.
-    let bump_seed = [bump];
+    let bump_seed = [sol_staker_stake_bump];
     let signer_seeds = get_sol_staker_stake_pda_signer_seeds(
         ctx.accounts.sol_staker_native_stake.key,
         ctx.accounts.config.key,
@@ -162,7 +177,7 @@ pub fn process_initialize_sol_staker_stake(
             deactivation_timestamp: None,
             deactivating_amount: 0,
             inactive_amount: 0,
-            authority: withdrawer,
+            authority: sol_staker_authority_override.unwrap_or(withdrawer),
             validator_vote,
             // NB: Will be set on the first stake.
             last_seen_holder_rewards_per_token: 0.into(),

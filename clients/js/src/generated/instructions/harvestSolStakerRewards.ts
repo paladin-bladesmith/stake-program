@@ -139,7 +139,7 @@ export type HarvestSolStakerRewardsInput<
   config: Address<TAccountConfig>;
   /** Holder rewards account */
   vaultHolderRewards: Address<TAccountVaultHolderRewards>;
-  /** SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`) */
+  /** SOL staker stake account */
   solStakerStake: Address<TAccountSolStakerStake>;
   /** SOL staker stake authority */
   solStakerStakeAuthority: Address<TAccountSolStakerStakeAuthority>;
@@ -307,7 +307,7 @@ export type ParsedHarvestSolStakerRewardsInstruction<
     config: TAccountMetas[1];
     /** Holder rewards account */
     vaultHolderRewards: TAccountMetas[2];
-    /** SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`) */
+    /** SOL staker stake account */
     solStakerStake: TAccountMetas[3];
     /** SOL staker stake authority */
     solStakerStakeAuthority: TAccountMetas[4];

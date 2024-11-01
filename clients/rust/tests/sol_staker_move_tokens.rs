@@ -11,7 +11,6 @@ use solana_program_test::tokio;
 use solana_sdk::instruction::InstructionError;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
-use solana_sdk::stake::instruction::StakeError;
 use solana_sdk::transaction::Transaction;
 
 mod setup;
@@ -294,7 +293,7 @@ async fn transfer_with_wrong_authority_err() {
 
     // Act - Transfer 5 PAL to the destination sol staker stake.
     let wrong_authority = Keypair::new();
-    let mut sol_staker_move_tokens = SolStakerMoveTokens {
+    let sol_staker_move_tokens = SolStakerMoveTokens {
         config: config_manager.config,
         vault_holder_rewards: config_manager.vault_holder_rewards,
         sol_staker_authority: wrong_authority.pubkey(),
@@ -364,7 +363,7 @@ async fn transfer_to_account_with_different_authority_err() {
 
     // Act - Transfer 5 PAL to the destination sol staker stake.
     let wrong_authority = Keypair::new();
-    let mut sol_staker_move_tokens = SolStakerMoveTokens {
+    let sol_staker_move_tokens = SolStakerMoveTokens {
         config: config_manager.config,
         vault_holder_rewards: config_manager.vault_holder_rewards,
         sol_staker_authority: wrong_authority.pubkey(),

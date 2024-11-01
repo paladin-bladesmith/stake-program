@@ -14,7 +14,7 @@ use super::Delegation;
 ///   * `total_staked_sol_amount - total_staked_pal_amount` on the `ValidatorStake` account.
 #[repr(C)]
 #[derive(Clone, Copy, Default, Pod, ShankAccount, SplDiscriminate, Zeroable)]
-#[discriminator_hash_input("stake::state::sol_staker_stake")]
+#[discriminator_hash_input("sol_staker_stake")]
 pub struct SolStakerStake {
     /// Account discriminator.
     ///
@@ -23,7 +23,7 @@ pub struct SolStakerStake {
     /// is initialized.
     ///
     /// Note that the value of the discriminator is different than the prefix seed
-    /// `"stake::state::sol_staker_stake"` used to derive the PDA address.
+    /// `"sol_staker_stake"` used to derive the PDA address.
     pub _discriminator: [u8; 8],
 
     /// Delegation values for the stake account.

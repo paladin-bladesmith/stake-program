@@ -12,7 +12,7 @@ use borsh::BorshSerialize;
 pub struct SlashSolStakerStake {
     /// Stake config account
     pub config: solana_program::pubkey::Pubkey,
-    /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
+    /// SOL staker stake account
     pub sol_staker_stake: solana_program::pubkey::Pubkey,
     /// SOL staker stake authority account
     pub sol_staker_stake_authority: solana_program::pubkey::Pubkey,
@@ -24,7 +24,7 @@ pub struct SlashSolStakerStake {
     pub vault: solana_program::pubkey::Pubkey,
     /// Vault holder rewards account
     pub vault_holder_rewards: solana_program::pubkey::Pubkey,
-    /// Vault authority (pda of `['token-owner', config]`)
+    /// Vault authority
     pub vault_authority: solana_program::pubkey::Pubkey,
     /// Token program
     pub token_program: solana_program::pubkey::Pubkey,
@@ -154,7 +154,7 @@ impl SlashSolStakerStakeBuilder {
         self.config = Some(config);
         self
     }
-    /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
+    /// SOL staker stake account
     #[inline(always)]
     pub fn sol_staker_stake(
         &mut self,
@@ -202,7 +202,7 @@ impl SlashSolStakerStakeBuilder {
         self.vault_holder_rewards = Some(vault_holder_rewards);
         self
     }
-    /// Vault authority (pda of `['token-owner', config]`)
+    /// Vault authority
     #[inline(always)]
     pub fn vault_authority(
         &mut self,
@@ -272,7 +272,7 @@ impl SlashSolStakerStakeBuilder {
 pub struct SlashSolStakerStakeCpiAccounts<'a, 'b> {
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
+    /// SOL staker stake account
     pub sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// SOL staker stake authority account
     pub sol_staker_stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
@@ -284,7 +284,7 @@ pub struct SlashSolStakerStakeCpiAccounts<'a, 'b> {
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
     /// Vault holder rewards account
     pub vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Vault authority (pda of `['token-owner', config]`)
+    /// Vault authority
     pub vault_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Token program
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -296,7 +296,7 @@ pub struct SlashSolStakerStakeCpi<'a, 'b> {
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake config account
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
-    /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
+    /// SOL staker stake account
     pub sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// SOL staker stake authority account
     pub sol_staker_stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
@@ -308,7 +308,7 @@ pub struct SlashSolStakerStakeCpi<'a, 'b> {
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
     /// Vault holder rewards account
     pub vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Vault authority (pda of `['token-owner', config]`)
+    /// Vault authority
     pub vault_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Token program
     pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -492,7 +492,7 @@ impl<'a, 'b> SlashSolStakerStakeCpiBuilder<'a, 'b> {
         self.instruction.config = Some(config);
         self
     }
-    /// SOL staker stake account (pda of `['stake::state::sol_staker_stake', stake state, config]`)
+    /// SOL staker stake account
     #[inline(always)]
     pub fn sol_staker_stake(
         &mut self,
@@ -540,7 +540,7 @@ impl<'a, 'b> SlashSolStakerStakeCpiBuilder<'a, 'b> {
         self.instruction.vault_holder_rewards = Some(vault_holder_rewards);
         self
     }
-    /// Vault authority (pda of `['token-owner', config]`)
+    /// Vault authority
     #[inline(always)]
     pub fn vault_authority(
         &mut self,

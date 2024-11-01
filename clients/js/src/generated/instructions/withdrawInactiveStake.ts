@@ -141,7 +141,7 @@ export type WithdrawInactiveStakeInput<
   vault: Address<TAccountVault>;
   /** Vault holder rewards */
   vaultHolderRewards: Address<TAccountVaultHolderRewards>;
-  /** Vault authority (pda of `['token-owner', config]`) */
+  /** Vault authority */
   vaultAuthority: Address<TAccountVaultAuthority>;
   /** Destination token account */
   destinationTokenAccount: Address<TAccountDestinationTokenAccount>;
@@ -270,7 +270,7 @@ export type ParsedWithdrawInactiveStakeInstruction<
     vault: TAccountMetas[3];
     /** Vault holder rewards */
     vaultHolderRewards: TAccountMetas[4];
-    /** Vault authority (pda of `['token-owner', config]`) */
+    /** Vault authority */
     vaultAuthority: TAccountMetas[5];
     /** Destination token account */
     destinationTokenAccount: TAccountMetas[6];
