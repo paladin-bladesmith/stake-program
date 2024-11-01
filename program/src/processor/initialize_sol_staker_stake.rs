@@ -8,7 +8,9 @@ use solana_program::{
     program::{get_return_data, invoke_signed},
     program_error::ProgramError,
     pubkey::Pubkey,
+    rent::Rent,
     system_instruction,
+    sysvar::Sysvar,
 };
 use spl_discriminator::SplDiscriminate;
 
@@ -144,6 +146,14 @@ pub fn process_initialize_sol_staker_stake(
                 32
             ])),
         };
+
+    // Ensure the account is rent exempt.
+    require!(
+        ctx.accounts.sol_staker_stake.lamports()
+            >= Rent::get()?.minimum_balance(SolStakerStake::LEN),
+        ProgramError::AccountNotRentExempt,
+        "sol staker stake",
+    );
 
     // Allocate and assign.
     let bump_seed = [sol_staker_stake_bump];

@@ -1,7 +1,7 @@
 use arrayref::array_mut_ref;
 use solana_program::{
     entrypoint::ProgramResult, program::invoke_signed, program_error::ProgramError, pubkey::Pubkey,
-    system_instruction,
+    rent::Rent, system_instruction, sysvar::Sysvar,
 };
 
 use crate::{
@@ -64,6 +64,14 @@ pub(crate) fn process_sol_staker_set_authority_override(
 
     // Initialize the account if necessary (this assumes the caller has pre-funded rent).
     if ctx.accounts.sol_staker_authority_override.owner != program_id {
+        // Ensure the account is rent exempt.
+        require!(
+            ctx.accounts.sol_staker_authority_override.lamports()
+                >= Rent::get()?.minimum_balance(32),
+            ProgramError::AccountNotRentExempt,
+            "sol staker authority override",
+        );
+
         // Allocate the required space.
         invoke_signed(
             &system_instruction::allocate(ctx.accounts.sol_staker_authority_override.key, 32),

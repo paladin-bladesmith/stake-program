@@ -1,7 +1,7 @@
 use arrayref::array_ref;
 use solana_program::{
     entrypoint::ProgramResult, program::invoke_signed, program_error::ProgramError, pubkey::Pubkey,
-    system_instruction, vote::state::VoteState,
+    rent::Rent, system_instruction, sysvar::Sysvar, vote::state::VoteState,
 };
 use spl_discriminator::SplDiscriminate;
 
@@ -83,6 +83,14 @@ pub fn process_initialize_validator_stake(
         ctx.accounts.validator_stake.data_is_empty(),
         ProgramError::AccountAlreadyInitialized,
         "stake"
+    );
+
+    // Ensure the account is rent exempt.
+    require!(
+        ctx.accounts.validator_stake.lamports()
+            >= Rent::get()?.minimum_balance(ValidatorStake::LEN),
+        ProgramError::AccountNotRentExempt,
+        "validator stake",
     );
 
     // Allocate and assign.
