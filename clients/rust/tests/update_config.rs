@@ -527,7 +527,7 @@ async fn fail_update_config_with_wrong_authority() {
 
 #[tokio::test]
 async fn fail_update_config_non_existing() {
-    let mut context = ProgramTest::new(
+    let context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
         None,
@@ -568,7 +568,7 @@ async fn fail_update_config_non_existing() {
 
 #[tokio::test]
 async fn fail_update_with_uninitialized_config() {
-    let mut context = ProgramTest::new(
+    let context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
         None,

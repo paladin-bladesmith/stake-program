@@ -116,6 +116,9 @@ async fn withdraw_inactive_stake_with_validator_stake() {
     let vault_holder_rewards_state = HolderRewards {
         last_accumulated_rewards_per_token: 0,
         unharvested_rewards: 0,
+        rent_sponsor: Pubkey::default(),
+        rent_debt: 0,
+        minimum_balance: 0,
         padding: 0,
     };
     context.set_account(
@@ -276,6 +279,9 @@ async fn withdraw_inactive_stake_with_sol_staker_stake() {
     let vault_holder_rewards_state = HolderRewards {
         last_accumulated_rewards_per_token: 0,
         unharvested_rewards: 0,
+        rent_sponsor: Pubkey::default(),
+        rent_debt: 0,
+        minimum_balance: 0,
         padding: 0,
     };
     context.set_account(
@@ -436,6 +442,9 @@ async fn fail_withdraw_inactive_stake_with_validator_stake_without_inactive_stak
     let vault_holder_rewards_state = HolderRewards {
         last_accumulated_rewards_per_token: 0,
         unharvested_rewards: 0,
+        rent_sponsor: Pubkey::default(),
+        rent_debt: 0,
+        minimum_balance: 0,
         padding: 0,
     };
     context.set_account(
@@ -576,6 +585,9 @@ async fn fail_withdraw_inactive_stake_with_sol_staker_stake_without_inactive_sta
     let vault_holder_rewards_state = HolderRewards {
         last_accumulated_rewards_per_token: 0,
         unharvested_rewards: 0,
+        rent_sponsor: Pubkey::default(),
+        rent_debt: 0,
+        minimum_balance: 0,
         padding: 0,
     };
     context.set_account(
@@ -738,6 +750,9 @@ async fn fail_withdraw_inactive_stake_with_invalid_stake_authority() {
     let vault_holder_rewards_state = HolderRewards {
         last_accumulated_rewards_per_token: 0,
         unharvested_rewards: 0,
+        rent_sponsor: Pubkey::default(),
+        rent_debt: 0,
+        minimum_balance: 0,
         padding: 0,
     };
     context.set_account(
@@ -885,6 +900,9 @@ async fn fail_withdraw_inactive_stake_with_uninitialized_stake_account() {
     let vault_holder_rewards_state = HolderRewards {
         last_accumulated_rewards_per_token: 0,
         unharvested_rewards: 0,
+        rent_sponsor: Pubkey::default(),
+        rent_debt: 0,
+        minimum_balance: 0,
         padding: 0,
     };
     context.set_account(
@@ -1040,6 +1058,9 @@ async fn fail_withdraw_inactive_stake_with_uninitialized_config_account() {
     let vault_holder_rewards_state = HolderRewards {
         last_accumulated_rewards_per_token: 0,
         unharvested_rewards: 0,
+        rent_sponsor: Pubkey::default(),
+        rent_debt: 0,
+        minimum_balance: 0,
         padding: 0,
     };
     context.set_account(
@@ -1186,6 +1207,9 @@ async fn fail_withdraw_inactive_stake_with_wrong_config_account() {
     let vault_holder_rewards_state = HolderRewards {
         last_accumulated_rewards_per_token: 0,
         unharvested_rewards: 0,
+        rent_sponsor: Pubkey::default(),
+        rent_debt: 0,
+        minimum_balance: 0,
         padding: 0,
     };
     context.set_account(
@@ -1340,6 +1364,9 @@ async fn fail_withdraw_inactive_stake_with_wrong_mint() {
     let vault_holder_rewards_state = HolderRewards {
         last_accumulated_rewards_per_token: 0,
         unharvested_rewards: 0,
+        rent_sponsor: Pubkey::default(),
+        rent_debt: 0,
+        minimum_balance: 0,
         padding: 0,
     };
     context.set_account(
@@ -1496,6 +1523,9 @@ async fn fail_withdraw_inactive_stake_with_wrong_vault_account() {
     let vault_holder_rewards_state = HolderRewards {
         last_accumulated_rewards_per_token: 0,
         unharvested_rewards: 0,
+        rent_sponsor: Pubkey::default(),
+        rent_debt: 0,
+        minimum_balance: 0,
         padding: 0,
     };
     context.set_account(
@@ -1765,6 +1795,9 @@ async fn fail_withdraw_inactive_stake_with_vault_as_destination() {
     let vault_holder_rewards_state = HolderRewards {
         last_accumulated_rewards_per_token: 0,
         unharvested_rewards: 0,
+        rent_sponsor: Pubkey::default(),
+        rent_debt: 0,
+        minimum_balance: 0,
         padding: 0,
     };
     context.set_account(

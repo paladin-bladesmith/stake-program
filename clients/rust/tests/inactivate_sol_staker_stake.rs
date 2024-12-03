@@ -76,6 +76,9 @@ async fn inactivate_sol_staker_stake_base() {
     let vault_holder_rewards_state = HolderRewards {
         last_accumulated_rewards_per_token: 0,
         unharvested_rewards: 0,
+        rent_sponsor: Pubkey::default(),
+        rent_debt: 0,
+        minimum_balance: 0,
         padding: 0,
     };
     context.set_account(
@@ -161,6 +164,9 @@ async fn fail_inactivate_sol_staker_stake_with_no_deactivated_amount() {
     let vault_holder_rewards_state = HolderRewards {
         last_accumulated_rewards_per_token: 0,
         unharvested_rewards: 0,
+        rent_sponsor: Pubkey::default(),
+        rent_debt: 0,
+        minimum_balance: 0,
         padding: 0,
     };
     context.set_account(
@@ -246,6 +252,9 @@ async fn fail_inactivate_sol_staker_stake_with_wrong_config() {
     let vault_holder_rewards_state = HolderRewards {
         last_accumulated_rewards_per_token: 0,
         unharvested_rewards: 0,
+        rent_sponsor: Pubkey::default(),
+        rent_debt: 0,
+        minimum_balance: 0,
         padding: 0,
     };
     context.set_account(
@@ -312,6 +321,9 @@ async fn fail_inactivate_sol_stake_stake_with_uninitialized_stake_account() {
     let vault_holder_rewards_state = HolderRewards {
         last_accumulated_rewards_per_token: 0,
         unharvested_rewards: 0,
+        rent_sponsor: Pubkey::default(),
+        rent_debt: 0,
+        minimum_balance: 0,
         padding: 0,
     };
     context.set_account(
@@ -403,6 +415,9 @@ async fn fail_inactivate_sol_staker_stake_with_active_cooldown() {
     let vault_holder_rewards_state = HolderRewards {
         last_accumulated_rewards_per_token: 0,
         unharvested_rewards: 0,
+        rent_sponsor: Pubkey::default(),
+        rent_debt: 0,
+        minimum_balance: 0,
         padding: 0,
     };
     context.set_account(

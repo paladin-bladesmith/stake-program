@@ -20,11 +20,6 @@ runs:
       with:
         node-version: ${{ inputs.node }}
         cache: "pnpm"
-    - name: (Temporary Workaround) Install protoc
-      shell: bash
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y protobuf-compiler
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
       shell: bash

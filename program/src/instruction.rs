@@ -1,3 +1,5 @@
+#![allow(non_local_definitions)]
+
 use arrayref::array_ref;
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;

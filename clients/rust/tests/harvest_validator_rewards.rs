@@ -76,6 +76,9 @@ async fn harvest_validator_rewards() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -199,6 +202,9 @@ async fn harvest_validator_rewards_wrapped() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -304,6 +310,9 @@ async fn harvest_validator_rewards_with_no_rewards_available() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -406,6 +415,9 @@ async fn harvest_validator_rewards_after_harvesting() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -517,6 +529,9 @@ async fn fail_harvest_validator_rewards_with_wrong_authority() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -578,6 +593,9 @@ async fn fail_harvest_validator_rewards_with_uninitialized_config_account() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -667,6 +685,9 @@ async fn fail_harvest_validator_rewards_with_uninitialized_stake_account() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -746,6 +767,9 @@ async fn fail_harvest_validator_rewards_with_wrong_config_account() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -830,6 +854,9 @@ async fn fail_harvest_validator_rewards_with_wrong_holder_rewards() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -863,6 +890,9 @@ async fn fail_harvest_validator_rewards_with_wrong_holder_rewards() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),

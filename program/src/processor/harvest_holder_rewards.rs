@@ -110,6 +110,7 @@ pub fn process_harvest_holder_rewards(
             holder_rewards: *ctx.accounts.vault_holder_rewards.key,
             token_account: *ctx.accounts.vault.key,
             mint: *ctx.accounts.mint.key,
+            sponsor: None,
         }
         .instruction(),
         &[

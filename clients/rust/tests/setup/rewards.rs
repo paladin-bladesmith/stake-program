@@ -117,6 +117,7 @@ pub async fn create_holder_rewards(
             .holder_rewards(holder_rewards)
             .token_account(*token_account)
             .mint(*mint)
+            .sponsor(Pubkey::default())
             .instruction(),
     ];
 

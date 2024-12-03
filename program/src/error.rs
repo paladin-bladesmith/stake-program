@@ -1,3 +1,5 @@
+#![allow(non_local_definitions)]
+
 use num_derive::FromPrimitive;
 use solana_program::{
     decode_error::DecodeError,

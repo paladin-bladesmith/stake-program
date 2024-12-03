@@ -7,7 +7,7 @@ on:
 
 env:
   NODE_VERSION: 22
-  SOLANA_VERSION: 2.0.13
+  SOLANA_VERSION: 2.1.4
   CARGO_CACHE: |
     ~/.cargo/bin/
     ~/.cargo/registry/index/

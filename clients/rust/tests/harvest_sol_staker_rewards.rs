@@ -79,6 +79,9 @@ async fn harvest_sol_staker_rewards() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -204,6 +207,9 @@ async fn harvest_sol_staker_rewards_wrapped() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -343,6 +349,9 @@ async fn harvest_sol_staker_rewards_with_no_rewards_available() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -457,6 +466,9 @@ async fn harvest_sol_staker_rewards_after_harvesting() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -565,6 +577,9 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_authority() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -671,6 +686,9 @@ async fn fail_harvest_sol_staker_rewards_with_wrong_config_account() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -789,6 +807,9 @@ async fn fail_harvest_sol_staker_rewards_with_uninitialized_stake_account() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -886,6 +907,9 @@ async fn harvest_sol_stake_when_deactivating() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -987,6 +1011,9 @@ async fn harvest_sol_stake_when_inactive() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -1079,6 +1106,9 @@ async fn sync_sol_stake_when_effective() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -1162,6 +1192,9 @@ async fn sync_sol_stake_when_activating() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -1248,6 +1281,9 @@ async fn fail_sync_sol_stake_with_wrong_config_account() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -1340,6 +1376,9 @@ async fn fail_sync_sol_stake_with_wrong_sol_stake_account() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -1425,6 +1464,9 @@ async fn fail_sync_sol_stake_with_wrong_validator_stake() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -1524,6 +1566,9 @@ async fn fail_sync_sol_stake_with_uninitialized_config() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -1615,6 +1660,9 @@ async fn fail_sync_sol_stake_with_uninitialized_validator_stake() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -1709,6 +1757,9 @@ async fn fail_sync_sol_stake_with_invalid_sol_stake_view_program() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -1819,6 +1870,9 @@ async fn sync_sol_stake_sol_stake_redelegate_to_non_pal() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -1960,6 +2014,9 @@ async fn harvest_sync_rewards_base() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -2115,6 +2172,9 @@ async fn harvest_sync_rewards_wrapped() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -2262,6 +2322,9 @@ async fn harvest_sync_rewards_without_rewards() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -2410,6 +2473,9 @@ async fn harvest_sync_rewards_with_closed_sol_stake_account() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -2568,6 +2634,9 @@ async fn harvest_sync_rewards_with_capped_sync_rewards() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -2690,6 +2759,9 @@ async fn fail_harvest_sync_rewards_with_wrong_sol_stake_account() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -2776,6 +2848,9 @@ async fn fail_harvest_sync_rewards_with_wrong_previous_validator_stake_account()
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -2878,6 +2953,9 @@ async fn fail_harvest_sync_rewards_with_wrong_current_validator_stake_account() 
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -2981,6 +3059,9 @@ async fn fail_harvest_sync_rewards_with_wrong_config_account() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -3068,6 +3149,9 @@ async fn fail_harvest_sync_rewards_with_invalid_sol_stake_view_program() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -3150,6 +3234,9 @@ async fn fail_harvest_sync_rewards_with_wrong_vault_holder_rewards() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -3169,6 +3256,9 @@ async fn fail_harvest_sync_rewards_with_wrong_vault_holder_rewards() {
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
                 unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
                 padding: 0,
             })
             .unwrap(),

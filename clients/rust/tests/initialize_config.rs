@@ -367,7 +367,7 @@ async fn fail_initialize_config_without_transfer_hook() {
 
 #[tokio::test]
 async fn fail_initialize_config_with_unitialized_mint() {
-    let mut context = ProgramTest::new(
+    let context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
         None,
