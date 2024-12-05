@@ -46,7 +46,7 @@ impl InitializeSolStakerStake {
             self.sol_staker_stake,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.sol_staker_authority_override,
             false,
         ));
@@ -106,7 +106,7 @@ impl Default for InitializeSolStakerStakeInstructionData {
 ///
 ///   0. `[]` config
 ///   1. `[writable]` sol_staker_stake
-///   2. `[writable]` sol_staker_authority_override
+///   2. `[]` sol_staker_authority_override
 ///   3. `[writable]` validator_stake
 ///   4. `[]` sol_staker_native_stake
 ///   5. `[optional]` sysvar_stake_history (default to `SysvarStakeHistory1111111111111111111111111`)
@@ -343,7 +343,7 @@ impl<'a, 'b> InitializeSolStakerStakeCpi<'a, 'b> {
             *self.sol_staker_stake.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.sol_staker_authority_override.key,
             false,
         ));
@@ -411,7 +411,7 @@ impl<'a, 'b> InitializeSolStakerStakeCpi<'a, 'b> {
 ///
 ///   0. `[]` config
 ///   1. `[writable]` sol_staker_stake
-///   2. `[writable]` sol_staker_authority_override
+///   2. `[]` sol_staker_authority_override
 ///   3. `[writable]` validator_stake
 ///   4. `[]` sol_staker_native_stake
 ///   5. `[]` sysvar_stake_history

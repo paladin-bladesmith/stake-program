@@ -442,7 +442,6 @@ pub enum StakeInstruction {
     )]
     #[account(
         2,
-        writable,
         name = "sol_staker_authority_override",
         desc = "Sol staker authority override"
     )]

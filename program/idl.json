@@ -660,7 +660,7 @@
         },
         {
           "name": "solStakerAuthorityOverride",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false,
           "docs": [
             "Sol staker authority override"

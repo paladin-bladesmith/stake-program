@@ -55,7 +55,7 @@ export type InitializeSolStakerStakeInstruction<
         ? WritableAccount<TAccountSolStakerStake>
         : TAccountSolStakerStake,
       TAccountSolStakerAuthorityOverride extends string
-        ? WritableAccount<TAccountSolStakerAuthorityOverride>
+        ? ReadonlyAccount<TAccountSolStakerAuthorityOverride>
         : TAccountSolStakerAuthorityOverride,
       TAccountValidatorStake extends string
         ? WritableAccount<TAccountValidatorStake>
@@ -169,7 +169,7 @@ export function getInitializeSolStakerStakeInstruction<
     solStakerStake: { value: input.solStakerStake ?? null, isWritable: true },
     solStakerAuthorityOverride: {
       value: input.solStakerAuthorityOverride ?? null,
-      isWritable: true,
+      isWritable: false,
     },
     validatorStake: { value: input.validatorStake ?? null, isWritable: true },
     solStakerNativeStake: {
