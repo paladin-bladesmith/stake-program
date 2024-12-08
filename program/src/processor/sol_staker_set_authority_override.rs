@@ -10,7 +10,10 @@ use crate::{
     instruction::accounts::{Context, SolStakerSetAuthorityOverrideAccounts},
     processor::unpack_initialized,
     require,
-    state::{find_sol_staker_authority_override_pda, Config},
+    state::{
+        find_sol_staker_authority_override_pda, get_sol_staker_authority_override_pda_signer_seeds,
+        Config,
+    },
 };
 
 pub(crate) fn process_sol_staker_set_authority_override(
@@ -64,6 +67,13 @@ pub(crate) fn process_sol_staker_set_authority_override(
 
     // Initialize the account if necessary (this assumes the caller has pre-funded rent).
     if ctx.accounts.sol_staker_authority_override.owner != program_id {
+        let bump = [sol_staker_authority_override_bump];
+        let seeds = get_sol_staker_authority_override_pda_signer_seeds(
+            &authority_original,
+            ctx.accounts.config.key,
+            &bump,
+        );
+
         // Ensure the account is rent exempt.
         require!(
             ctx.accounts.sol_staker_authority_override.lamports()
@@ -76,20 +86,14 @@ pub(crate) fn process_sol_staker_set_authority_override(
         invoke_signed(
             &system_instruction::allocate(ctx.accounts.sol_staker_authority_override.key, 32),
             &[ctx.accounts.sol_staker_authority_override.clone()],
-            &[&[
-                &authority_original.to_bytes() as &[u8],
-                &[sol_staker_authority_override_bump],
-            ]],
+            &[&seeds],
         )?;
 
         // Set the funnel program as the owner.
         invoke_signed(
             &system_instruction::assign(ctx.accounts.sol_staker_authority_override.key, program_id),
             &[ctx.accounts.sol_staker_authority_override.clone()],
-            &[&[
-                &authority_original.to_bytes() as &[u8],
-                &[sol_staker_authority_override_bump],
-            ]],
+            &[&seeds],
         )?;
     }
 

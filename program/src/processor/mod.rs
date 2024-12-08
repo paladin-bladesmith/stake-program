@@ -213,8 +213,8 @@ pub fn process_instruction<'a>(
             sol_staker_set_authority_override::process_sol_staker_set_authority_override(
                 program_id,
                 SolStakerSetAuthorityOverrideAccounts::context(accounts)?,
-                authority_override,
                 authority_original,
+                authority_override,
             )
         }
     }

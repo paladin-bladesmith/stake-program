@@ -80,6 +80,20 @@ pub fn find_sol_staker_authority_override_pda(
 }
 
 #[inline(always)]
+pub fn get_sol_staker_authority_override_pda_signer_seeds<'a>(
+    original_authority: &'a Pubkey,
+    config: &'a Pubkey,
+    bump_seed: &'a [u8],
+) -> [&'a [u8]; 4] {
+    [
+        "sol_staker_authority_override".as_bytes(),
+        original_authority.as_ref(),
+        config.as_ref(),
+        bump_seed,
+    ]
+}
+
+#[inline(always)]
 pub fn find_validator_stake_pda(
     validator_vote: &Pubkey,
     config: &Pubkey,
