@@ -7,7 +7,7 @@ use crate::{
         accounts::{Context, SetAuthorityAccounts},
         AuthorityType,
     },
-    processor::{unpack_delegation_mut_unchecked, unpack_initialized_mut},
+    processor::unpack_initialized_mut,
     require,
     state::Config,
 };
@@ -71,16 +71,6 @@ pub fn process_set_authority(
             );
 
             config.slash_authority = OptionalNonZeroPubkey(*ctx.accounts.new_authority.key);
-        }
-        AuthorityType::Stake => {
-            let delegation = unpack_delegation_mut_unchecked(data)?;
-            require!(
-                *ctx.accounts.authority.key == delegation.authority,
-                StakeError::InvalidAuthority,
-                "authority (stake)"
-            );
-
-            delegation.authority = *ctx.accounts.new_authority.key;
         }
     }
 

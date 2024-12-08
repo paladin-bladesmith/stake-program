@@ -3,7 +3,7 @@
 mod setup;
 
 use paladin_stake_program_client::{
-    accounts::{Config, SolStakerStake, ValidatorStake},
+    accounts::Config,
     errors::PaladinStakeProgramError,
     instructions::{InitializeConfigBuilder, SetAuthorityBuilder},
     pdas::find_vault_pda,
@@ -11,10 +11,7 @@ use paladin_stake_program_client::{
 };
 use setup::{
     config::ConfigManager,
-    setup,
-    sol_staker_stake::SolStakerStakeManager,
     token::{create_mint, create_token_account, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS},
-    validator_stake::ValidatorStakeManager,
 };
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
@@ -403,182 +400,4 @@ async fn fail_set_slash_authority_when_authority_none() {
     // Then we expect an error.
 
     assert_custom_error!(err, PaladinStakeProgramError::AuthorityNotSet);
-}
-
-#[tokio::test]
-async fn set_authority_on_validator_stake() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
-
-    // Given a config and validator stake accounts.
-
-    let config_manager = ConfigManager::new(&mut context).await;
-    let validator_stake_manager =
-        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
-
-    // When we set a new authority on the stake account.
-
-    let new_authority = Pubkey::new_unique();
-
-    let set_authority_ix = SetAuthorityBuilder::new()
-        .account(validator_stake_manager.stake)
-        .authority(validator_stake_manager.authority.pubkey())
-        .new_authority(new_authority)
-        .authority_type(AuthorityType::Stake)
-        .instruction();
-
-    let tx = Transaction::new_signed_with_payer(
-        &[set_authority_ix],
-        Some(&context.payer.pubkey()),
-        &[&context.payer, &validator_stake_manager.authority],
-        context.last_blockhash,
-    );
-    context.banks_client.process_transaction(tx).await.unwrap();
-
-    // Then the stake authority is updated.
-
-    let account = get_account!(context, validator_stake_manager.stake);
-    let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake_account.delegation.authority, new_authority);
-}
-
-#[tokio::test]
-async fn fail_set_authority_on_validator_stake_with_invalid_authority() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
-
-    // Given a config and validator stake accounts.
-
-    let config_manager = ConfigManager::new(&mut context).await;
-    let validator_stake_manager =
-        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
-
-    // When we try to set a new authority on the stake account with an invalid authority.
-
-    let fake_authority = Keypair::new();
-    let new_authority = Pubkey::new_unique();
-
-    let set_authority_ix = SetAuthorityBuilder::new()
-        .account(validator_stake_manager.stake)
-        .authority(fake_authority.pubkey())
-        .new_authority(new_authority)
-        .authority_type(AuthorityType::Stake)
-        .instruction();
-
-    let tx = Transaction::new_signed_with_payer(
-        &[set_authority_ix],
-        Some(&context.payer.pubkey()),
-        &[&context.payer, &fake_authority],
-        context.last_blockhash,
-    );
-    let err = context
-        .banks_client
-        .process_transaction(tx)
-        .await
-        .unwrap_err();
-
-    // Then we expect an error.
-
-    assert_custom_error!(err, PaladinStakeProgramError::InvalidAuthority);
-}
-
-#[tokio::test]
-async fn set_authority_on_sol_staker_stake() {
-    let mut context = setup(&[]).await;
-
-    // Given a config, validator stake and SOL staker stake accounts.
-
-    let config_manager = ConfigManager::new(&mut context).await;
-    let validator_stake_manager =
-        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
-    let sol_staker_stake_manager = SolStakerStakeManager::new(
-        &mut context,
-        &config_manager.config,
-        &validator_stake_manager.stake,
-        &validator_stake_manager.vote,
-        1_000_000_000,
-    )
-    .await;
-
-    // When we set a new authority on the stake account.
-
-    let new_authority = Pubkey::new_unique();
-
-    let set_authority_ix = SetAuthorityBuilder::new()
-        .account(sol_staker_stake_manager.stake)
-        .authority(sol_staker_stake_manager.authority.pubkey())
-        .new_authority(new_authority)
-        .authority_type(AuthorityType::Stake)
-        .instruction();
-
-    let tx = Transaction::new_signed_with_payer(
-        &[set_authority_ix],
-        Some(&context.payer.pubkey()),
-        &[&context.payer, &sol_staker_stake_manager.authority],
-        context.last_blockhash,
-    );
-    context.banks_client.process_transaction(tx).await.unwrap();
-
-    // Then the stake authority is updated.
-
-    let account = get_account!(context, sol_staker_stake_manager.stake);
-    let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake_account.delegation.authority, new_authority);
-}
-
-#[tokio::test]
-async fn fail_set_authority_on_sol_staker_stake_with_invalid_authority() {
-    let mut context = setup(&[]).await;
-
-    // Given a config, validator stake and SOL staker stake accounts.
-
-    let config_manager = ConfigManager::new(&mut context).await;
-    let validator_stake_manager =
-        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
-    let sol_staker_stake_manager = SolStakerStakeManager::new(
-        &mut context,
-        &config_manager.config,
-        &validator_stake_manager.stake,
-        &validator_stake_manager.vote,
-        1_000_000_000,
-    )
-    .await;
-
-    // When we try to set a new authority on the stake account with an invalid authority.
-
-    let fake_authority = Keypair::new();
-    let new_authority = Pubkey::new_unique();
-
-    let set_authority_ix = SetAuthorityBuilder::new()
-        .account(sol_staker_stake_manager.stake)
-        .authority(fake_authority.pubkey())
-        .new_authority(new_authority)
-        .authority_type(AuthorityType::Stake)
-        .instruction();
-
-    let tx = Transaction::new_signed_with_payer(
-        &[set_authority_ix],
-        Some(&context.payer.pubkey()),
-        &[&context.payer, &fake_authority],
-        context.last_blockhash,
-    );
-    let err = context
-        .banks_client
-        .process_transaction(tx)
-        .await
-        .unwrap_err();
-
-    // Then we expect an error.
-
-    assert_custom_error!(err, PaladinStakeProgramError::InvalidAuthority);
 }

@@ -833,7 +833,6 @@ impl StakeInstruction {
                     match authority_type {
                         AuthorityType::Config => 0,
                         AuthorityType::Slash => 1,
-                        AuthorityType::Stake => 2,
                     },
                 ]
             }
@@ -1017,7 +1016,6 @@ impl StakeInstruction {
 pub enum AuthorityType {
     Config,
     Slash,
-    Stake,
 }
 
 /// Enum to allow updating the config account in the same instruction

@@ -18,7 +18,6 @@ import {
 export enum AuthorityType {
   Config,
   Slash,
-  Stake,
 }
 
 export type AuthorityTypeArgs = AuthorityType;
