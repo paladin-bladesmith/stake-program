@@ -227,7 +227,7 @@ pub fn process_harvest_sol_staker_rewards(
             let current_validator_stake =
                 unpack_initialized_mut::<ValidatorStake>(&mut current_validator_data)?;
 
-            // Harvest the current validator.
+            // Harvest the current validator to flush rewards before we update their stake.
             harvest(
                 HarvestAccounts {
                     config: ctx.accounts.config,

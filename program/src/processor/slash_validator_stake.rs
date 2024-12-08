@@ -90,15 +90,14 @@ pub fn process_slash_validator_stake(
     //
     // When there is no slash authority set, the stake account cannot be slashed and
     // an error is returned.
-    if let Some(slash_authority) = Option::<Pubkey>::from(config.slash_authority) {
-        require!(
-            ctx.accounts.slash_authority.key == &slash_authority,
-            StakeError::InvalidAuthority,
-            "slash authority",
-        );
-    } else {
+    let Some(slash_authority) = Option::<Pubkey>::from(config.slash_authority) else {
         return err!(StakeError::AuthorityNotSet, "slash authority");
-    }
+    };
+    require!(
+        ctx.accounts.slash_authority.key == &slash_authority,
+        StakeError::InvalidAuthority,
+        "slash authority",
+    );
     require!(
         ctx.accounts.slash_authority.is_signer,
         ProgramError::MissingRequiredSignature,

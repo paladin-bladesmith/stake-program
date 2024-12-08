@@ -4,7 +4,9 @@ use crate::{
     instruction::accounts::{Context, SolStakerUpdateAuthorityAccounts},
     processor::{unpack_initialized, unpack_initialized_mut},
     require,
-    state::{find_sol_staker_stake_pda, Config, SolStakerStake},
+    state::{
+        find_sol_staker_authority_override_pda, find_sol_staker_stake_pda, Config, SolStakerStake,
+    },
 };
 
 pub(crate) fn process_sol_staker_update_authority(
@@ -44,10 +46,21 @@ pub(crate) fn process_sol_staker_update_authority(
 
     // Sol staker authority override.
     // - Must be owned by this program.
+    // - Must match authority override derivation.
     // - Must not be default pubkey (all zeroes).
     require!(
         ctx.accounts.sol_staker_authority_override.owner == program_id,
         ProgramError::IllegalOwner,
+        "sol staker authority override"
+    );
+    let (derivation, _) = find_sol_staker_authority_override_pda(
+        &sol_staker_stake.delegation.authority,
+        ctx.accounts.config.key,
+        program_id,
+    );
+    require!(
+        &derivation == ctx.accounts.sol_staker_authority_override.key,
+        ProgramError::InvalidSeeds,
         "sol staker authority override"
     );
     let authority_override = ctx.accounts.sol_staker_authority_override.data.borrow();
