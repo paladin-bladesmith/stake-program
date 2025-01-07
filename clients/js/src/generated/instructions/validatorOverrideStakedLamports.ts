@@ -24,7 +24,6 @@ import {
   type IInstruction,
   type IInstructionWithAccounts,
   type IInstructionWithData,
-  type ReadonlyAccount,
   type ReadonlySignerAccount,
   type TransactionSigner,
   type WritableAccount,
@@ -41,14 +40,13 @@ export type ValidatorOverrideStakedLamportsInstruction<
     | string
     | IAccountMeta<string> = string,
   TAccountVaultHolderRewards extends string | IAccountMeta<string> = string,
-  TAccountSystemProgram extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
       TAccountConfig extends string
-        ? ReadonlyAccount<TAccountConfig>
+        ? WritableAccount<TAccountConfig>
         : TAccountConfig,
       TAccountConfigAuthority extends string
         ? ReadonlySignerAccount<TAccountConfigAuthority> &
@@ -63,9 +61,6 @@ export type ValidatorOverrideStakedLamportsInstruction<
       TAccountVaultHolderRewards extends string
         ? WritableAccount<TAccountVaultHolderRewards>
         : TAccountVaultHolderRewards,
-      TAccountSystemProgram extends string
-        ? ReadonlyAccount<TAccountSystemProgram>
-        : TAccountSystemProgram,
       ...TRemainingAccounts,
     ]
   >;
@@ -112,7 +107,6 @@ export type ValidatorOverrideStakedLamportsInput<
   TAccountValidatorStake extends string = string,
   TAccountValidatorStakeAuthority extends string = string,
   TAccountVaultHolderRewards extends string = string,
-  TAccountSystemProgram extends string = string,
 > = {
   /** Config */
   config: Address<TAccountConfig>;
@@ -124,8 +118,6 @@ export type ValidatorOverrideStakedLamportsInput<
   validatorStakeAuthority: Address<TAccountValidatorStakeAuthority>;
   /** Vault holder rewards */
   vaultHolderRewards: Address<TAccountVaultHolderRewards>;
-  /** System program */
-  systemProgram?: Address<TAccountSystemProgram>;
   amountMin: ValidatorOverrideStakedLamportsInstructionDataArgs['amountMin'];
 };
 
@@ -135,15 +127,13 @@ export function getValidatorOverrideStakedLamportsInstruction<
   TAccountValidatorStake extends string,
   TAccountValidatorStakeAuthority extends string,
   TAccountVaultHolderRewards extends string,
-  TAccountSystemProgram extends string,
 >(
   input: ValidatorOverrideStakedLamportsInput<
     TAccountConfig,
     TAccountConfigAuthority,
     TAccountValidatorStake,
     TAccountValidatorStakeAuthority,
-    TAccountVaultHolderRewards,
-    TAccountSystemProgram
+    TAccountVaultHolderRewards
   >
 ): ValidatorOverrideStakedLamportsInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
@@ -151,15 +141,14 @@ export function getValidatorOverrideStakedLamportsInstruction<
   TAccountConfigAuthority,
   TAccountValidatorStake,
   TAccountValidatorStakeAuthority,
-  TAccountVaultHolderRewards,
-  TAccountSystemProgram
+  TAccountVaultHolderRewards
 > {
   // Program address.
   const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
-    config: { value: input.config ?? null, isWritable: false },
+    config: { value: input.config ?? null, isWritable: true },
     configAuthority: {
       value: input.configAuthority ?? null,
       isWritable: false,
@@ -173,7 +162,6 @@ export function getValidatorOverrideStakedLamportsInstruction<
       value: input.vaultHolderRewards ?? null,
       isWritable: true,
     },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -191,7 +179,6 @@ export function getValidatorOverrideStakedLamportsInstruction<
       getAccountMeta(accounts.validatorStake),
       getAccountMeta(accounts.validatorStakeAuthority),
       getAccountMeta(accounts.vaultHolderRewards),
-      getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
     data: getValidatorOverrideStakedLamportsInstructionDataEncoder().encode(
@@ -203,8 +190,7 @@ export function getValidatorOverrideStakedLamportsInstruction<
     TAccountConfigAuthority,
     TAccountValidatorStake,
     TAccountValidatorStakeAuthority,
-    TAccountVaultHolderRewards,
-    TAccountSystemProgram
+    TAccountVaultHolderRewards
   >;
 
   return instruction;
@@ -226,8 +212,6 @@ export type ParsedValidatorOverrideStakedLamportsInstruction<
     validatorStakeAuthority: TAccountMetas[3];
     /** Vault holder rewards */
     vaultHolderRewards: TAccountMetas[4];
-    /** System program */
-    systemProgram?: TAccountMetas[5] | undefined;
   };
   data: ValidatorOverrideStakedLamportsInstructionData;
 };
@@ -240,7 +224,7 @@ export function parseValidatorOverrideStakedLamportsInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedValidatorOverrideStakedLamportsInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 6) {
+  if (instruction.accounts.length < 5) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -250,12 +234,6 @@ export function parseValidatorOverrideStakedLamportsInstruction<
     accountIndex += 1;
     return accountMeta;
   };
-  const getNextOptionalAccount = () => {
-    const accountMeta = getNextAccount();
-    return accountMeta.address === PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS
-      ? undefined
-      : accountMeta;
-  };
   return {
     programAddress: instruction.programAddress,
     accounts: {
@@ -264,7 +242,6 @@ export function parseValidatorOverrideStakedLamportsInstruction<
       validatorStake: getNextAccount(),
       validatorStakeAuthority: getNextAccount(),
       vaultHolderRewards: getNextAccount(),
-      systemProgram: getNextOptionalAccount(),
     },
     data: getValidatorOverrideStakedLamportsInstructionDataDecoder().decode(
       instruction.data

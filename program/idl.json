@@ -1182,7 +1182,7 @@
       "accounts": [
         {
           "name": "config",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false,
           "docs": [
             "Config"
@@ -1218,15 +1218,6 @@
           "isSigner": false,
           "docs": [
             "Vault holder rewards"
-          ]
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true,
-          "docs": [
-            "System program"
           ]
         }
       ],

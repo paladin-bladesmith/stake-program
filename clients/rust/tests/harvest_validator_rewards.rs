@@ -52,7 +52,6 @@ async fn harvest_validator_rewards() {
     let config = config_manager.config;
 
     // And a validator stake account wiht a 65 staked amount.
-
     let validator_stake_manager = ValidatorStakeManager::new(&mut context, &config).await;
 
     let mut account = get_account!(context, validator_stake_manager.stake);

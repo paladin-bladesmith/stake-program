@@ -20,8 +20,6 @@ pub struct ValidatorOverrideStakedLamports {
     pub validator_stake_authority: solana_program::pubkey::Pubkey,
     /// Vault holder rewards
     pub vault_holder_rewards: solana_program::pubkey::Pubkey,
-    /// System program
-    pub system_program: Option<solana_program::pubkey::Pubkey>,
 }
 
 impl ValidatorOverrideStakedLamports {
@@ -37,8 +35,8 @@ impl ValidatorOverrideStakedLamports {
         args: ValidatorOverrideStakedLamportsInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
+        accounts.push(solana_program::instruction::AccountMeta::new(
             self.config,
             false,
         ));
@@ -58,17 +56,6 @@ impl ValidatorOverrideStakedLamports {
             self.vault_holder_rewards,
             false,
         ));
-        if let Some(system_program) = self.system_program {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                system_program,
-                false,
-            ));
-        } else {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::PALADIN_STAKE_PROGRAM_ID,
-                false,
-            ));
-        }
         accounts.extend_from_slice(remaining_accounts);
         let mut data = ValidatorOverrideStakedLamportsInstructionData::new()
             .try_to_vec()
@@ -111,12 +98,11 @@ pub struct ValidatorOverrideStakedLamportsInstructionArgs {
 ///
 /// ### Accounts:
 ///
-///   0. `[]` config
+///   0. `[writable]` config
 ///   1. `[signer]` config_authority
 ///   2. `[writable]` validator_stake
 ///   3. `[writable]` validator_stake_authority
 ///   4. `[writable]` vault_holder_rewards
-///   5. `[optional]` system_program
 #[derive(Clone, Debug, Default)]
 pub struct ValidatorOverrideStakedLamportsBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
@@ -124,7 +110,6 @@ pub struct ValidatorOverrideStakedLamportsBuilder {
     validator_stake: Option<solana_program::pubkey::Pubkey>,
     validator_stake_authority: Option<solana_program::pubkey::Pubkey>,
     vault_holder_rewards: Option<solana_program::pubkey::Pubkey>,
-    system_program: Option<solana_program::pubkey::Pubkey>,
     amount_min: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
@@ -175,16 +160,6 @@ impl ValidatorOverrideStakedLamportsBuilder {
         self.vault_holder_rewards = Some(vault_holder_rewards);
         self
     }
-    /// `[optional account]`
-    /// System program
-    #[inline(always)]
-    pub fn system_program(
-        &mut self,
-        system_program: Option<solana_program::pubkey::Pubkey>,
-    ) -> &mut Self {
-        self.system_program = system_program;
-        self
-    }
     #[inline(always)]
     pub fn amount_min(&mut self, amount_min: u64) -> &mut Self {
         self.amount_min = Some(amount_min);
@@ -220,7 +195,6 @@ impl ValidatorOverrideStakedLamportsBuilder {
             vault_holder_rewards: self
                 .vault_holder_rewards
                 .expect("vault_holder_rewards is not set"),
-            system_program: self.system_program,
         };
         let args = ValidatorOverrideStakedLamportsInstructionArgs {
             amount_min: self.amount_min.clone().expect("amount_min is not set"),
@@ -242,8 +216,6 @@ pub struct ValidatorOverrideStakedLamportsCpiAccounts<'a, 'b> {
     pub validator_stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Vault holder rewards
     pub vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
-    /// System program
-    pub system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 }
 
 /// `validator_override_staked_lamports` CPI instruction.
@@ -260,8 +232,6 @@ pub struct ValidatorOverrideStakedLamportsCpi<'a, 'b> {
     pub validator_stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Vault holder rewards
     pub vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
-    /// System program
-    pub system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The arguments for the instruction.
     pub __args: ValidatorOverrideStakedLamportsInstructionArgs,
 }
@@ -279,7 +249,6 @@ impl<'a, 'b> ValidatorOverrideStakedLamportsCpi<'a, 'b> {
             validator_stake: accounts.validator_stake,
             validator_stake_authority: accounts.validator_stake_authority,
             vault_holder_rewards: accounts.vault_holder_rewards,
-            system_program: accounts.system_program,
             __args: args,
         }
     }
@@ -316,8 +285,8 @@ impl<'a, 'b> ValidatorOverrideStakedLamportsCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
+        accounts.push(solana_program::instruction::AccountMeta::new(
             *self.config.key,
             false,
         ));
@@ -337,17 +306,6 @@ impl<'a, 'b> ValidatorOverrideStakedLamportsCpi<'a, 'b> {
             *self.vault_holder_rewards.key,
             false,
         ));
-        if let Some(system_program) = self.system_program {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                *system_program.key,
-                false,
-            ));
-        } else {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::PALADIN_STAKE_PROGRAM_ID,
-                false,
-            ));
-        }
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -366,16 +324,13 @@ impl<'a, 'b> ValidatorOverrideStakedLamportsCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(6 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(5 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.config.clone());
         account_infos.push(self.config_authority.clone());
         account_infos.push(self.validator_stake.clone());
         account_infos.push(self.validator_stake_authority.clone());
         account_infos.push(self.vault_holder_rewards.clone());
-        if let Some(system_program) = self.system_program {
-            account_infos.push(system_program.clone());
-        }
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -392,12 +347,11 @@ impl<'a, 'b> ValidatorOverrideStakedLamportsCpi<'a, 'b> {
 ///
 /// ### Accounts:
 ///
-///   0. `[]` config
+///   0. `[writable]` config
 ///   1. `[signer]` config_authority
 ///   2. `[writable]` validator_stake
 ///   3. `[writable]` validator_stake_authority
 ///   4. `[writable]` vault_holder_rewards
-///   5. `[optional]` system_program
 #[derive(Clone, Debug)]
 pub struct ValidatorOverrideStakedLamportsCpiBuilder<'a, 'b> {
     instruction: Box<ValidatorOverrideStakedLamportsCpiBuilderInstruction<'a, 'b>>,
@@ -412,7 +366,6 @@ impl<'a, 'b> ValidatorOverrideStakedLamportsCpiBuilder<'a, 'b> {
             validator_stake: None,
             validator_stake_authority: None,
             vault_holder_rewards: None,
-            system_program: None,
             amount_min: None,
             __remaining_accounts: Vec::new(),
         });
@@ -461,16 +414,6 @@ impl<'a, 'b> ValidatorOverrideStakedLamportsCpiBuilder<'a, 'b> {
         vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.vault_holder_rewards = Some(vault_holder_rewards);
-        self
-    }
-    /// `[optional account]`
-    /// System program
-    #[inline(always)]
-    pub fn system_program(
-        &mut self,
-        system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    ) -> &mut Self {
-        self.instruction.system_program = system_program;
         self
     }
     #[inline(always)]
@@ -550,8 +493,6 @@ impl<'a, 'b> ValidatorOverrideStakedLamportsCpiBuilder<'a, 'b> {
                 .instruction
                 .vault_holder_rewards
                 .expect("vault_holder_rewards is not set"),
-
-            system_program: self.instruction.system_program,
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -569,7 +510,6 @@ struct ValidatorOverrideStakedLamportsCpiBuilderInstruction<'a, 'b> {
     validator_stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     validator_stake_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault_holder_rewards: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     amount_min: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(

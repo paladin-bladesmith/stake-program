@@ -779,6 +779,7 @@ pub enum StakeInstruction {
     SolStakerSetAuthorityOverride { authority_original: Pubkey, authority_override: Pubkey },
     #[account(
         0,
+        writable,
         name = "config",
         desc = "Config"
     )]
@@ -805,12 +806,6 @@ pub enum StakeInstruction {
         writable,
         name = "vault_holder_rewards",
         desc = "Vault holder rewards"
-    )]
-    #[account(
-        5,
-        optional,
-        name = "system_program",
-        desc = "System program"
     )]
     ValidatorOverrideStakedLamports { amount_min: u64 },
 }
