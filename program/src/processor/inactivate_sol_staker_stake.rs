@@ -106,7 +106,7 @@ pub fn process_inactivate_sol_staker_stake(
     delegation.deactivating_amount = 0;
     delegation.deactivation_timestamp = None;
     delegation.inactive_amount = staker_inactive;
-    sync_effective(config, delegation, sol_staker_stake.lamports_amount)?;
+    sync_effective(config, delegation, (sol_staker_stake.lamports_amount, 0))?;
 
     Ok(())
 }

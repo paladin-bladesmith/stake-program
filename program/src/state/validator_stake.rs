@@ -30,6 +30,12 @@ pub struct ValidatorStake {
 
     /// Total amount of SOL (lamports) staked on the validator.
     pub total_staked_lamports_amount: u64,
+
+    /// Sets the minimum lamports for this stake.
+    ///
+    /// Can be set by governance to artificially increase an accounts stake.
+    /// Intended only for use on the dev fund account.
+    pub total_staked_lamports_amount_min: u64,
 }
 
 impl ValidatorStake {

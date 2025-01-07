@@ -22,6 +22,7 @@ pub(crate) mod r#sol_staker_set_authority_override;
 pub(crate) mod r#sol_staker_stake_tokens;
 pub(crate) mod r#sol_staker_update_authority;
 pub(crate) mod r#update_config;
+pub(crate) mod r#validator_override_staked_lamports;
 pub(crate) mod r#validator_stake_tokens;
 pub(crate) mod r#withdraw_inactive_stake;
 
@@ -42,5 +43,6 @@ pub use self::r#sol_staker_set_authority_override::*;
 pub use self::r#sol_staker_stake_tokens::*;
 pub use self::r#sol_staker_update_authority::*;
 pub use self::r#update_config::*;
+pub use self::r#validator_override_staked_lamports::*;
 pub use self::r#validator_stake_tokens::*;
 pub use self::r#withdraw_inactive_stake::*;

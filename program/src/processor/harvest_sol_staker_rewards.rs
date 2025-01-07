@@ -198,7 +198,10 @@ pub fn process_harvest_sol_staker_rewards(
         sync_effective(
             config,
             &mut previous_validator_stake.delegation,
-            previous_validator_stake.total_staked_lamports_amount,
+            (
+                previous_validator_stake.total_staked_lamports_amount,
+                previous_validator_stake.total_staked_lamports_amount_min,
+            ),
         )?;
     } else {
         assert_eq!(sol_staker_stake.lamports_amount, 0);
@@ -249,7 +252,10 @@ pub fn process_harvest_sol_staker_rewards(
             sync_effective(
                 config,
                 &mut current_validator_stake.delegation,
-                current_validator_stake.total_staked_lamports_amount,
+                (
+                    current_validator_stake.total_staked_lamports_amount,
+                    current_validator_stake.total_staked_lamports_amount_min,
+                ),
             )?;
         } else {
             current_delegation = Pubkey::default();
@@ -260,7 +266,7 @@ pub fn process_harvest_sol_staker_rewards(
     // Finally, the user's stake is updated.
     sol_staker_stake.lamports_amount = current_stake;
     sol_staker_stake.delegation.validator_vote = current_delegation;
-    sync_effective(config, &mut sol_staker_stake.delegation, current_stake)?;
+    sync_effective(config, &mut sol_staker_stake.delegation, (current_stake, 0))?;
 
     Ok(())
 }

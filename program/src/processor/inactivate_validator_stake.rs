@@ -107,7 +107,10 @@ pub fn process_inactivate_validator_stake(
     sync_effective(
         config,
         &mut validator_stake.delegation,
-        validator_stake.total_staked_lamports_amount,
+        (
+            validator_stake.total_staked_lamports_amount,
+            validator_stake.total_staked_lamports_amount_min,
+        ),
     )?;
 
     Ok(())

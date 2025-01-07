@@ -777,6 +777,42 @@ pub enum StakeInstruction {
         desc = "System program"
     )]
     SolStakerSetAuthorityOverride { authority_original: Pubkey, authority_override: Pubkey },
+    #[account(
+        0,
+        name = "config",
+        desc = "Config"
+    )]
+    #[account(
+        1,
+        signer,
+        name = "config_authority",
+        desc = "Config authority"
+    )]
+    #[account(
+        2,
+        writable,
+        name = "validator_stake",
+        desc = "Validator stake"
+    )]
+    #[account(
+        3,
+        writable,
+        name = "validator_stake_authority",
+        desc = "Validator stake authority"
+    )]
+    #[account(
+        4,
+        writable,
+        name = "vault_holder_rewards",
+        desc = "Vault holder rewards"
+    )]
+    #[account(
+        5,
+        optional,
+        name = "system_program",
+        desc = "System program"
+    )]
+    ValidatorOverrideStakedLamports { amount_min: u64 },
 }
 
 impl StakeInstruction {
@@ -885,6 +921,12 @@ impl StakeInstruction {
                 data.push(18);
                 data.extend_from_slice(&authority_original.to_bytes());
                 data.extend_from_slice(&authority_override.to_bytes());
+                data
+            }
+            StakeInstruction::ValidatorOverrideStakedLamports { amount_min } => {
+                let mut data = Vec::with_capacity(9);
+                data.push(19);
+                data.extend_from_slice(&amount_min.to_le_bytes());
                 data
             }
         }
@@ -1005,6 +1047,12 @@ impl StakeInstruction {
                     authority_original,
                     authority_override,
                 })
+            }
+            // 19 - Validator: Pubkey (32), Pubkey (32)
+            Some((&19, rest)) if rest.len() == 8 => {
+                let amount_min = u64::from_le_bytes(*array_ref![rest, 0, 8]);
+
+                Ok(StakeInstruction::ValidatorOverrideStakedLamports { amount_min })
             }
             _ => Err(ProgramError::InvalidInstructionData),
         }
@@ -1127,6 +1175,14 @@ mod tests {
         assert_eq!(original, unpacked);
 
         let original = StakeInstruction::UpdateConfig(ConfigField::MaxDeactivationBasisPoints(500));
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_pack_unpack_validator_override_staked_lamports() {
+        let original = StakeInstruction::ValidatorOverrideStakedLamports { amount_min: 500 };
         let packed = original.pack();
         let unpacked = StakeInstruction::unpack(&packed).unwrap();
         assert_eq!(original, unpacked);

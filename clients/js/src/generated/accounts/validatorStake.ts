@@ -43,12 +43,14 @@ export type ValidatorStake = {
   discriminator: Array<number>;
   delegation: Delegation;
   totalStakedLamportsAmount: bigint;
+  totalStakedLamportsAmountMin: bigint;
 };
 
 export type ValidatorStakeArgs = {
   discriminator: Array<number>;
   delegation: DelegationArgs;
   totalStakedLamportsAmount: number | bigint;
+  totalStakedLamportsAmountMin: number | bigint;
 };
 
 export function getValidatorStakeEncoder(): Encoder<ValidatorStakeArgs> {
@@ -56,6 +58,7 @@ export function getValidatorStakeEncoder(): Encoder<ValidatorStakeArgs> {
     ['discriminator', getArrayEncoder(getU8Encoder(), { size: 8 })],
     ['delegation', getDelegationEncoder()],
     ['totalStakedLamportsAmount', getU64Encoder()],
+    ['totalStakedLamportsAmountMin', getU64Encoder()],
   ]);
 }
 
@@ -64,6 +67,7 @@ export function getValidatorStakeDecoder(): Decoder<ValidatorStake> {
     ['discriminator', getArrayDecoder(getU8Decoder(), { size: 8 })],
     ['delegation', getDelegationDecoder()],
     ['totalStakedLamportsAmount', getU64Decoder()],
+    ['totalStakedLamportsAmountMin', getU64Decoder()],
   ]);
 }
 
@@ -136,5 +140,5 @@ export async function fetchAllMaybeValidatorStake(
 }
 
 export function getValidatorStakeSize(): number {
-  return 152;
+  return 160;
 }

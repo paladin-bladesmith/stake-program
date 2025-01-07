@@ -23,5 +23,6 @@ export * from './solStakerSetAuthorityOverride';
 export * from './solStakerStakeTokens';
 export * from './solStakerUpdateAuthority';
 export * from './updateConfig';
+export * from './validatorOverrideStakedLamports';
 export * from './validatorStakeTokens';
 export * from './withdrawInactiveStake';

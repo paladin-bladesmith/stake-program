@@ -114,7 +114,7 @@ pub fn process_sol_staker_stake_tokens<'a>(
     sync_effective(
         config,
         &mut sol_staker_stake.delegation,
-        sol_staker_stake.lamports_amount,
+        (sol_staker_stake.lamports_amount, 0),
     )?;
 
     // Transfer the tokens to the vault (stakes them).

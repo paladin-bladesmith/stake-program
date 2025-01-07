@@ -19,7 +19,8 @@ use crate::{
             SetAuthorityAccounts, SlashSolStakerStakeAccounts, SlashValidatorStakeAccounts,
             SolStakerMoveTokensAccounts, SolStakerSetAuthorityOverrideAccounts,
             SolStakerStakeTokensAccounts, SolStakerUpdateAuthorityAccounts, UpdateConfigAccounts,
-            ValidatorStakeTokensAccounts, WithdrawInactiveStakeAccounts,
+            ValidatorOverrideStakedLamportsAccounts, ValidatorStakeTokensAccounts,
+            WithdrawInactiveStakeAccounts,
         },
         StakeInstruction,
     },
@@ -47,6 +48,7 @@ mod sol_staker_set_authority_override;
 mod sol_staker_stake_tokens;
 mod sol_staker_update_authority;
 mod update_config;
+mod validator_override_staked_lamports;
 mod validator_stake_tokens;
 mod withdraw_inactive_stake;
 
@@ -215,6 +217,14 @@ pub fn process_instruction<'a>(
                 SolStakerSetAuthorityOverrideAccounts::context(accounts)?,
                 authority_original,
                 authority_override,
+            )
+        }
+        StakeInstruction::ValidatorOverrideStakedLamports { amount_min } => {
+            msg!("Instruction: ValidatorOverrideStakedLamports");
+            validator_override_staked_lamports::process_validator_override_staked_lamports(
+                program_id,
+                ValidatorOverrideStakedLamportsAccounts::context(accounts)?,
+                amount_min,
             )
         }
     }
@@ -441,8 +451,9 @@ pub(crate) fn harvest(
 pub(crate) fn sync_effective(
     config: &mut Config,
     delegation: &mut Delegation,
-    lamports_stake: u64,
+    (lamports_stake, lamports_stake_min): (u64, u64),
 ) -> ProgramResult {
+    let lamports_stake = std::cmp::max(lamports_stake, lamports_stake_min);
     let limit = calculate_maximum_stake_for_lamports_amount(lamports_stake)?;
     let staker_effective = std::cmp::min(delegation.active_amount, limit);
 
