@@ -114,7 +114,10 @@ pub fn process_validator_stake_tokens<'a>(
     sync_effective(
         config,
         &mut stake.delegation,
-        stake.total_staked_lamports_amount,
+        (
+            stake.total_staked_lamports_amount,
+            stake.total_staked_lamports_amount_min,
+        ),
     )?;
 
     // Transfer the tokens to the vault (stakes them).

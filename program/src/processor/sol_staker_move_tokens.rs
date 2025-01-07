@@ -134,12 +134,12 @@ pub(crate) fn process_sol_staker_move_tokens(
     sync_effective(
         config,
         &mut source_sol_staker_stake.delegation,
-        source_sol_staker_stake.lamports_amount,
+        (source_sol_staker_stake.lamports_amount, 0),
     )?;
     sync_effective(
         config,
         &mut destination_sol_staker_stake.delegation,
-        destination_sol_staker_stake.lamports_amount,
+        (destination_sol_staker_stake.lamports_amount, 0),
     )?;
 
     Ok(())

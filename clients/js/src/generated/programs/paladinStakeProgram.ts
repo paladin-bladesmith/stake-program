@@ -25,6 +25,7 @@ import {
   type ParsedSolStakerStakeTokensInstruction,
   type ParsedSolStakerUpdateAuthorityInstruction,
   type ParsedUpdateConfigInstruction,
+  type ParsedValidatorOverrideStakedLamportsInstruction,
   type ParsedValidatorStakeTokensInstruction,
   type ParsedWithdrawInactiveStakeInstruction,
 } from '../instructions';
@@ -58,6 +59,7 @@ export enum PaladinStakeProgramInstruction {
   SolStakerMoveTokens,
   SolStakerUpdateAuthority,
   SolStakerSetAuthorityOverride,
+  ValidatorOverrideStakedLamports,
 }
 
 export function identifyPaladinStakeProgramInstruction(
@@ -121,6 +123,9 @@ export function identifyPaladinStakeProgramInstruction(
   }
   if (containsBytes(data, getU8Encoder().encode(18), 0)) {
     return PaladinStakeProgramInstruction.SolStakerSetAuthorityOverride;
+  }
+  if (containsBytes(data, getU8Encoder().encode(19), 0)) {
+    return PaladinStakeProgramInstruction.ValidatorOverrideStakedLamports;
   }
   throw new Error(
     'The provided instruction could not be identified as a paladinStakeProgram instruction.'
@@ -186,4 +191,7 @@ export type ParsedPaladinStakeProgramInstruction<
     } & ParsedSolStakerUpdateAuthorityInstruction<TProgram>)
   | ({
       instructionType: PaladinStakeProgramInstruction.SolStakerSetAuthorityOverride;
-    } & ParsedSolStakerSetAuthorityOverrideInstruction<TProgram>);
+    } & ParsedSolStakerSetAuthorityOverrideInstruction<TProgram>)
+  | ({
+      instructionType: PaladinStakeProgramInstruction.ValidatorOverrideStakedLamports;
+    } & ParsedValidatorOverrideStakedLamportsInstruction<TProgram>);

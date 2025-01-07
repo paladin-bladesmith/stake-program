@@ -130,6 +130,7 @@ pub fn process_initialize_validator_stake(
             last_seen_stake_rewards_per_token: 0.into(),
         },
         total_staked_lamports_amount: 0,
+        total_staked_lamports_amount_min: 0,
     };
 
     Ok(())
