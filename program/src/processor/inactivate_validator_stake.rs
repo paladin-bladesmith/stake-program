@@ -78,7 +78,7 @@ pub fn process_inactivate_validator_stake(
     let Some(timestamp) = delegation.deactivation_timestamp else {
         return Err(StakeError::NoDeactivatedTokens.into());
     };
-    let inactive_timestamp = config.cooldown_time_seconds.saturating_add(timestamp.get());
+    let inactive_timestamp = timestamp.get().saturating_add(config.cooldown_time_seconds);
     let current_timestamp = Clock::get()?.unix_timestamp as u64;
     require!(
         current_timestamp >= inactive_timestamp,
@@ -106,7 +106,7 @@ pub fn process_inactivate_validator_stake(
     delegation.inactive_amount = validator_inactive;
     sync_effective(
         config,
-        &mut validator_stake.delegation,
+        delegation,
         (
             validator_stake.total_staked_lamports_amount,
             validator_stake.total_staked_lamports_amount_min,

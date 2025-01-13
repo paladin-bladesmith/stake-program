@@ -111,12 +111,13 @@ pub fn process_harvest_sol_staker_rewards(
     // Compute the latest native stake for this staker.
     GetStakeActivatingAndDeactivatingCpiBuilder::new(ctx.accounts.sol_stake_view_program)
         .stake(ctx.accounts.sol_staker_native_stake)
+        // NB: Sysvar is checked by sol-stake-view-program.
         .stake_history(ctx.accounts.sysvar_stake_history)
         .invoke()?;
     let (_, return_data) = get_return_data().ok_or(ProgramError::InvalidAccountData)?;
     let stake_state_data =
         bytemuck::try_from_bytes::<GetStakeActivatingAndDeactivatingReturnData>(&return_data)
-            .map_err(|_error| ProgramError::InvalidAccountData)?;
+            .map_err(|_| ProgramError::InvalidAccountData)?;
     let mut current_delegation = stake_state_data.delegated_vote.get().unwrap_or_default();
     let mut current_stake = stake_state_data.effective.into();
     let requires_sync = current_stake != sol_staker_stake.lamports_amount

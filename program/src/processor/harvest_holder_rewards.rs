@@ -106,6 +106,7 @@ pub fn process_harvest_holder_rewards(
     drop(config_data);
     invoke(
         &paladin_rewards_program_client::instructions::HarvestRewards {
+            // NB: Account correctness validated by paladin rewards program.
             holder_rewards_pool: *ctx.accounts.holder_rewards_pool.key,
             holder_rewards: *ctx.accounts.vault_holder_rewards.key,
             token_account: *ctx.accounts.vault.key,

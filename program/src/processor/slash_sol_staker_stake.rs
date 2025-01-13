@@ -102,7 +102,7 @@ pub fn process_slash_sol_staker_stake(
     require!(
         ctx.accounts.slash_authority.is_signer,
         ProgramError::MissingRequiredSignature,
-        "stake authority",
+        "slash authority",
     );
 
     // vault authority
@@ -139,9 +139,7 @@ pub fn process_slash_sol_staker_stake(
     // update the stake delegation on the stake and config accounts.
     drop(vault_data);
     process_slash_for_delegation(SlashArgs {
-        config,
         delegation: &mut sol_staker_stake.delegation,
-        lamports_stake: sol_staker_stake.lamports_amount,
         mint_info: ctx.accounts.mint,
         vault_info: ctx.accounts.vault,
         vault_authority_info: ctx.accounts.vault_authority,

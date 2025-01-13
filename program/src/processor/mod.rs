@@ -471,9 +471,7 @@ pub(crate) fn sync_effective(
 
 /// Arguments to process the slash of a stake delegation.
 struct SlashArgs<'a, 'b> {
-    config: &'b mut Config,
     delegation: &'b mut Delegation,
-    lamports_stake: u64,
     mint_info: &'b AccountInfo<'a>,
     vault_info: &'b AccountInfo<'a>,
     vault_authority_info: &'b AccountInfo<'a>,
@@ -485,9 +483,7 @@ struct SlashArgs<'a, 'b> {
 /// Processes the slash for a stake delegation.
 fn process_slash_for_delegation(args: SlashArgs) -> ProgramResult {
     let SlashArgs {
-        config,
         delegation,
-        lamports_stake,
         mint_info,
         vault_info,
         vault_authority_info,
@@ -526,20 +522,10 @@ fn process_slash_for_delegation(args: SlashArgs) -> ProgramResult {
         .active_amount
         .checked_sub(actual_slash)
         .ok_or(ProgramError::ArithmeticOverflow)?;
-    let limit = calculate_maximum_stake_for_lamports_amount(lamports_stake)?;
-    let effective = std::cmp::min(active, limit);
-    let effective_delta = delegation
-        .effective_amount
-        .checked_sub(effective)
-        .ok_or(ProgramError::ArithmeticOverflow)?;
+    // NB: Effective is updated by the caller via `sync_effective`.
 
     // Update stake amounts.
     delegation.active_amount = active;
-    delegation.effective_amount = effective;
-    config.token_amount_effective = config
-        .token_amount_effective
-        .checked_sub(effective_delta)
-        .ok_or(ProgramError::ArithmeticOverflow)?;
 
     // Check if we need to downwards adjust deactivating amount.
     if delegation.deactivating_amount > delegation.active_amount {

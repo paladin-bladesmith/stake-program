@@ -1,4 +1,7 @@
-use solana_program::{entrypoint::ProgramResult, msg, program_error::ProgramError, pubkey::Pubkey};
+use solana_program::{
+    entrypoint::ProgramResult, msg, program_error::ProgramError, pubkey::Pubkey, rent::Rent,
+    sysvar::Sysvar,
+};
 use spl_discriminator::SplDiscriminate;
 use spl_pod::optional_keys::OptionalNonZeroPubkey;
 use spl_token_2022::{
@@ -109,6 +112,7 @@ pub fn process_initialize_config(
     // - owner must be this program
     // - have the correct length
     // - be uninitialized
+    // - be rent exempt
     let mut data = ctx.accounts.config.try_borrow_mut_data()?;
     require!(
         ctx.accounts.config.owner == program_id,
@@ -125,6 +129,11 @@ pub fn process_initialize_config(
         config.is_uninitialized(),
         ProgramError::AccountAlreadyInitialized,
         "config"
+    );
+    require!(
+        ctx.accounts.config.lamports() >= Rent::get()?.minimum_balance(Config::LEN),
+        ProgramError::AccountNotRentExempt,
+        "config",
     );
 
     // Validate the maximum deactivation basis points argument.

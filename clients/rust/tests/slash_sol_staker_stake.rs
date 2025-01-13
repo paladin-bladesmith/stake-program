@@ -910,7 +910,7 @@ async fn fail_slash_sol_staker_stake_with_insufficient_total_amount_delegated() 
         .unwrap_err();
 
     // Then we expect an error since there are not enough delegated tokens.
-    assert_instruction_error!(err, InstructionError::ArithmeticOverflow);
+    assert_custom_error!(err, 1);
 }
 
 #[tokio::test]
