@@ -6,7 +6,8 @@ use crate::{
     error::StakeError,
     instruction::accounts::{Context, SlashValidatorStakeAccounts},
     processor::{
-        harvest, process_slash_for_delegation, unpack_initialized_mut, HarvestAccounts, SlashArgs,
+        harvest, process_slash_for_delegation, sync_effective, unpack_initialized_mut,
+        HarvestAccounts, SlashArgs,
     },
     require,
     state::{
@@ -145,6 +146,16 @@ pub fn process_slash_validator_stake(
         amount,
         signer_seeds: &signer_seeds,
     })?;
+
+    // Sync the new effective stake.
+    sync_effective(
+        config,
+        &mut validator_stake.delegation,
+        (
+            validator_stake.total_staked_lamports_amount,
+            validator_stake.total_staked_lamports_amount_min,
+        ),
+    )?;
 
     Ok(())
 }

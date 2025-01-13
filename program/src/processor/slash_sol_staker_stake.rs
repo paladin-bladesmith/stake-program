@@ -6,7 +6,8 @@ use crate::{
     error::StakeError,
     instruction::accounts::{Context, SlashSolStakerStakeAccounts},
     processor::{
-        harvest, process_slash_for_delegation, unpack_initialized_mut, HarvestAccounts, SlashArgs,
+        harvest, process_slash_for_delegation, sync_effective, unpack_initialized_mut,
+        HarvestAccounts, SlashArgs,
     },
     require,
     state::{
@@ -148,6 +149,13 @@ pub fn process_slash_sol_staker_stake(
         amount,
         signer_seeds: &signer_seeds,
     })?;
+
+    // Sync the new effective stake.
+    sync_effective(
+        config,
+        &mut sol_staker_stake.delegation,
+        (sol_staker_stake.lamports_amount, 0),
+    )?;
 
     Ok(())
 }

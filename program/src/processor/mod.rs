@@ -420,7 +420,7 @@ pub(crate) fn harvest(
         Some(keeper) => {
             let keeper_reward = std::cmp::min(total_reward, config_state.sync_rewards_lamports);
             let keeper_lamports = keeper
-                .try_borrow_lamports()?
+                .lamports()
                 .checked_add(keeper_reward)
                 .ok_or(ProgramError::ArithmeticOverflow)?;
             **keeper.try_borrow_mut_lamports()? = keeper_lamports;
