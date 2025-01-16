@@ -187,174 +187,6 @@
       }
     },
     {
-      "name": "DeactivateStake",
-      "accounts": [
-        {
-          "name": "config",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Stake config account"
-          ]
-        },
-        {
-          "name": "stake",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Validator or SOL staker stake account"
-          ]
-        },
-        {
-          "name": "stakeAuthority",
-          "isMut": false,
-          "isSigner": true,
-          "docs": [
-            "Authority on validator stake account"
-          ]
-        }
-      ],
-      "args": [
-        {
-          "name": "args",
-          "type": "u64"
-        }
-      ],
-      "discriminant": {
-        "type": "u8",
-        "value": 3
-      }
-    },
-    {
-      "name": "InactivateValidatorStake",
-      "accounts": [
-        {
-          "name": "config",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Stake config account"
-          ]
-        },
-        {
-          "name": "validatorStake",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Validator stake account"
-          ]
-        },
-        {
-          "name": "validatorStakeAuthority",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Validator stake authority account"
-          ]
-        },
-        {
-          "name": "vaultHolderRewards",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Vault holder rewards account"
-          ]
-        }
-      ],
-      "args": [],
-      "discriminant": {
-        "type": "u8",
-        "value": 4
-      }
-    },
-    {
-      "name": "WithdrawInactiveStake",
-      "accounts": [
-        {
-          "name": "config",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Stake config account"
-          ]
-        },
-        {
-          "name": "stake",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Validator or SOL staker stake account"
-          ]
-        },
-        {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Stake Token Mint"
-          ]
-        },
-        {
-          "name": "vault",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Vault token account"
-          ]
-        },
-        {
-          "name": "vaultHolderRewards",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Vault holder rewards"
-          ]
-        },
-        {
-          "name": "vaultAuthority",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Vault authority"
-          ]
-        },
-        {
-          "name": "destinationTokenAccount",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Destination token account"
-          ]
-        },
-        {
-          "name": "stakeAuthority",
-          "isMut": false,
-          "isSigner": true,
-          "docs": [
-            "Stake authority"
-          ]
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Token program"
-          ]
-        }
-      ],
-      "args": [
-        {
-          "name": "args",
-          "type": "u64"
-        }
-      ],
-      "discriminant": {
-        "type": "u8",
-        "value": 5
-      }
-    },
-    {
       "name": "HarvestHolderRewards",
       "accounts": [
         {
@@ -433,7 +265,7 @@
       "args": [],
       "discriminant": {
         "type": "u8",
-        "value": 6
+        "value": 3
       }
     },
     {
@@ -475,7 +307,7 @@
       "args": [],
       "discriminant": {
         "type": "u8",
-        "value": 7
+        "value": 4
       }
     },
     {
@@ -562,7 +394,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 8
+        "value": 5
       }
     },
     {
@@ -603,7 +435,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 9
+        "value": 6
       }
     },
     {
@@ -636,7 +468,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 10
+        "value": 7
       }
     },
     {
@@ -710,7 +542,7 @@
       "args": [],
       "discriminant": {
         "type": "u8",
-        "value": 11
+        "value": 8
       }
     },
     {
@@ -797,7 +629,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 12
+        "value": 9
       }
     },
     {
@@ -904,11 +736,11 @@
       "args": [],
       "discriminant": {
         "type": "u8",
-        "value": 13
+        "value": 10
       }
     },
     {
-      "name": "InactivateSolStakerStake",
+      "name": "UnstakeTokens",
       "accounts": [
         {
           "name": "config",
@@ -919,19 +751,35 @@
           ]
         },
         {
-          "name": "solStakerStake",
+          "name": "stake",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "SOL staker stake account"
+            "Sol staker/validator stake account"
           ]
         },
         {
-          "name": "solStakerStakeAuthority",
+          "name": "validatorStakeAuthority",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "Validator stake authority account"
+          ]
+        },
+        {
+          "name": "vault",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "SOL staker stake authority account"
+            "Vault account"
+          ]
+        },
+        {
+          "name": "vaultAuthority",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Vault authority"
           ]
         },
         {
@@ -941,12 +789,33 @@
           "docs": [
             "Vault holder rewards account"
           ]
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Mint account"
+          ]
+        },
+        {
+          "name": "destinationTokenAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Destination token account"
+          ]
         }
       ],
-      "args": [],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ],
       "discriminant": {
         "type": "u8",
-        "value": 14
+        "value": 11
       }
     },
     {
@@ -1033,7 +902,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 15
+        "value": 12
       }
     },
     {
@@ -1088,7 +957,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 16
+        "value": 13
       }
     },
     {
@@ -1122,7 +991,7 @@
       "args": [],
       "discriminant": {
         "type": "u8",
-        "value": 17
+        "value": 14
       }
     },
     {
@@ -1174,7 +1043,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 18
+        "value": 15
       }
     },
     {
@@ -1229,7 +1098,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 19
+        "value": 16
       }
     }
   ],
@@ -1376,11 +1245,7 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "activeAmount",
-            "type": "u64"
-          },
-          {
-            "name": "inactiveAmount",
+            "name": "stakedAmount",
             "type": "u64"
           },
           {
@@ -1388,15 +1253,7 @@
             "type": "u64"
           },
           {
-            "name": "deactivationTimestamp",
-            "type": {
-              "option": {
-                "defined": "NonZeroU64"
-              }
-            }
-          },
-          {
-            "name": "deactivatingAmount",
+            "name": "unstakeCooldown",
             "type": "u64"
           },
           {
@@ -1536,8 +1393,8 @@
     },
     {
       "code": 14,
-      "name": "ActiveDeactivationCooldown",
-      "msg": "Active deactivation cooldown"
+      "name": "ActiveUnstakeCooldown",
+      "msg": "Active unstake cooldown"
     },
     {
       "code": 15,

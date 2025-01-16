@@ -63,7 +63,7 @@ export type HarvestValidatorRewardsInstructionDataArgs = {};
 export function getHarvestValidatorRewardsInstructionDataEncoder(): Encoder<HarvestValidatorRewardsInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', getU8Encoder()]]),
-    (value) => ({ ...value, discriminator: 7 })
+    (value) => ({ ...value, discriminator: 4 })
   );
 }
 

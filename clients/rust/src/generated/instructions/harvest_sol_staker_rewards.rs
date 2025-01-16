@@ -121,7 +121,7 @@ pub struct HarvestSolStakerRewardsInstructionData {
 
 impl HarvestSolStakerRewardsInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 13 }
+        Self { discriminator: 10 }
     }
 }
 

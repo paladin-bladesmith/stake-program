@@ -80,7 +80,7 @@ export function getSolStakerSetAuthorityOverrideInstructionDataEncoder(): Encode
       ['authorityOriginal', getAddressEncoder()],
       ['authorityOverride', getAddressEncoder()],
     ]),
-    (value) => ({ ...value, discriminator: 18 })
+    (value) => ({ ...value, discriminator: 15 })
   );
 }
 

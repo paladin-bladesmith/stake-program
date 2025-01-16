@@ -99,7 +99,7 @@ export function getSlashValidatorStakeInstructionDataEncoder(): Encoder<SlashVal
       ['discriminator', getU8Encoder()],
       ['amount', getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 8 })
+    (value) => ({ ...value, discriminator: 5 })
   );
 }
 

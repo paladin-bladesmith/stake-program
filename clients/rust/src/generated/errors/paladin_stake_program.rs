@@ -52,9 +52,9 @@ pub enum PaladinStakeProgramError {
     /// 13 - Amount exeeds maximum deactivation amount
     #[error("Amount exeeds maximum deactivation amount")]
     MaximumDeactivationAmountExceeded = 0xD,
-    /// 14 - Active deactivation cooldown
-    #[error("Active deactivation cooldown")]
-    ActiveDeactivationCooldown = 0xE,
+    /// 14 - Active unstake cooldown
+    #[error("Active unstake cooldown")]
+    ActiveUnstakeCooldown = 0xE,
     /// 15 - No deactivated tokens
     #[error("No deactivated tokens")]
     NoDeactivatedTokens = 0xF,

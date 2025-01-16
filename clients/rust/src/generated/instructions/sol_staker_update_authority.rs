@@ -60,7 +60,7 @@ pub struct SolStakerUpdateAuthorityInstructionData {
 
 impl SolStakerUpdateAuthorityInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 17 }
+        Self { discriminator: 14 }
     }
 }
 

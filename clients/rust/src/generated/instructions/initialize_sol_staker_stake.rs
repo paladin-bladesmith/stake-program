@@ -90,7 +90,7 @@ pub struct InitializeSolStakerStakeInstructionData {
 
 impl InitializeSolStakerStakeInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 11 }
+        Self { discriminator: 8 }
     }
 }
 

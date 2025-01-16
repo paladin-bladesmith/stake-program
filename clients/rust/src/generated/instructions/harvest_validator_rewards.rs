@@ -66,7 +66,7 @@ pub struct HarvestValidatorRewardsInstructionData {
 
 impl HarvestValidatorRewardsInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 7 }
+        Self { discriminator: 4 }
     }
 }
 

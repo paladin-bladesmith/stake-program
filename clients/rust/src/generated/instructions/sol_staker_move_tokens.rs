@@ -78,7 +78,7 @@ pub struct SolStakerMoveTokensInstructionData {
 
 impl SolStakerMoveTokensInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 16 }
+        Self { discriminator: 13 }
     }
 }
 

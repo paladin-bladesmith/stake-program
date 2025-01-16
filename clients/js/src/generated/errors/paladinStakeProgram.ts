@@ -34,8 +34,8 @@ export const PALADIN_STAKE_PROGRAM_ERROR__INSUFFICIENT_STAKE_AMOUNT = 0xb; // 11
 export const PALADIN_STAKE_PROGRAM_ERROR__INVALID_AMOUNT = 0xc; // 12
 /** MaximumDeactivationAmountExceeded: Amount exeeds maximum deactivation amount */
 export const PALADIN_STAKE_PROGRAM_ERROR__MAXIMUM_DEACTIVATION_AMOUNT_EXCEEDED = 0xd; // 13
-/** ActiveDeactivationCooldown: Active deactivation cooldown */
-export const PALADIN_STAKE_PROGRAM_ERROR__ACTIVE_DEACTIVATION_COOLDOWN = 0xe; // 14
+/** ActiveUnstakeCooldown: Active unstake cooldown */
+export const PALADIN_STAKE_PROGRAM_ERROR__ACTIVE_UNSTAKE_COOLDOWN = 0xe; // 14
 /** NoDeactivatedTokens: No deactivated tokens */
 export const PALADIN_STAKE_PROGRAM_ERROR__NO_DEACTIVATED_TOKENS = 0xf; // 15
 /** IncorrectVaultAccount: Incorrect vault account */
@@ -54,7 +54,7 @@ export const PALADIN_STAKE_PROGRAM_ERROR__TOTAL_STAKE_AMOUNT_EXCEEDS_SOL_LIMIT =
 export const PALADIN_STAKE_PROGRAM_ERROR__INCORRECT_SOL_STAKE_ACCOUNT = 0x16; // 22
 
 export type PaladinStakeProgramError =
-  | typeof PALADIN_STAKE_PROGRAM_ERROR__ACTIVE_DEACTIVATION_COOLDOWN
+  | typeof PALADIN_STAKE_PROGRAM_ERROR__ACTIVE_UNSTAKE_COOLDOWN
   | typeof PALADIN_STAKE_PROGRAM_ERROR__AMOUNT_GREATER_THAN_ZERO
   | typeof PALADIN_STAKE_PROGRAM_ERROR__AUTHORITY_NOT_SET
   | typeof PALADIN_STAKE_PROGRAM_ERROR__CLOSE_AUTHORITY_NOT_NONE
@@ -83,7 +83,7 @@ let paladinStakeProgramErrorMessages:
   | undefined;
 if (__DEV__) {
   paladinStakeProgramErrorMessages = {
-    [PALADIN_STAKE_PROGRAM_ERROR__ACTIVE_DEACTIVATION_COOLDOWN]: `Active deactivation cooldown`,
+    [PALADIN_STAKE_PROGRAM_ERROR__ACTIVE_UNSTAKE_COOLDOWN]: `Active unstake cooldown`,
     [PALADIN_STAKE_PROGRAM_ERROR__AMOUNT_GREATER_THAN_ZERO]: `Amount cannot be greater than zero`,
     [PALADIN_STAKE_PROGRAM_ERROR__AUTHORITY_NOT_SET]: `Authority is not set`,
     [PALADIN_STAKE_PROGRAM_ERROR__CLOSE_AUTHORITY_NOT_NONE]: `Close authority must be none`,

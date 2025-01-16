@@ -99,7 +99,7 @@ export function getSlashSolStakerStakeInstructionDataEncoder(): Encoder<SlashSol
       ['discriminator', getU8Encoder()],
       ['amount', getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 15 })
+    (value) => ({ ...value, discriminator: 12 })
   );
 }
 

@@ -6,12 +6,9 @@
  * @see https://github.com/kinobi-so/kinobi
  */
 
-export * from './deactivateStake';
 export * from './harvestHolderRewards';
 export * from './harvestSolStakerRewards';
 export * from './harvestValidatorRewards';
-export * from './inactivateSolStakerStake';
-export * from './inactivateValidatorStake';
 export * from './initializeConfig';
 export * from './initializeSolStakerStake';
 export * from './initializeValidatorStake';
@@ -22,7 +19,7 @@ export * from './solStakerMoveTokens';
 export * from './solStakerSetAuthorityOverride';
 export * from './solStakerStakeTokens';
 export * from './solStakerUpdateAuthority';
+export * from './unstakeTokens';
 export * from './updateConfig';
 export * from './validatorOverrideStakedLamports';
 export * from './validatorStakeTokens';
-export * from './withdrawInactiveStake';

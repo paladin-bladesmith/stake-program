@@ -100,7 +100,7 @@ pub struct SlashValidatorStakeInstructionData {
 
 impl SlashValidatorStakeInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 8 }
+        Self { discriminator: 5 }
     }
 }
 

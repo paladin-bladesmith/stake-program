@@ -65,7 +65,7 @@ pub struct SetAuthorityInstructionData {
 
 impl SetAuthorityInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 9 }
+        Self { discriminator: 6 }
     }
 }
 
