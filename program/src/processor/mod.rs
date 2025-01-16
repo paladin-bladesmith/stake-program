@@ -13,13 +13,13 @@ use crate::{
     instruction::{
         accounts::{
             HarvestHolderRewardsAccounts, HarvestSolStakerRewardsAccounts,
-            HarvestValidatorRewardsAccounts, InactivateSolStakerStakeAccounts,
-            InactivateValidatorStakeAccounts, InitializeConfigAccounts,
+            HarvestValidatorRewardsAccounts, InitializeConfigAccounts,
             InitializeSolStakerStakeAccounts, InitializeValidatorStakeAccounts,
             SetAuthorityAccounts, SlashSolStakerStakeAccounts, SlashValidatorStakeAccounts,
             SolStakerMoveTokensAccounts, SolStakerSetAuthorityOverrideAccounts,
-            SolStakerStakeTokensAccounts, SolStakerUpdateAuthorityAccounts, UpdateConfigAccounts,
-            ValidatorOverrideStakedLamportsAccounts, ValidatorStakeTokensAccounts,
+            SolStakerStakeTokensAccounts, SolStakerUpdateAuthorityAccounts, UnstakeTokensAccounts,
+            UpdateConfigAccounts, ValidatorOverrideStakedLamportsAccounts,
+            ValidatorStakeTokensAccounts,
         },
         StakeInstruction,
     },
@@ -33,8 +33,6 @@ use crate::{
 mod harvest_holder_rewards;
 mod harvest_sol_staker_rewards;
 mod harvest_validator_rewards;
-mod inactivate_sol_staker_stake;
-mod inactivate_validator_stake;
 mod initialize_config;
 mod initialize_sol_staker_stake;
 mod initialize_validator_stake;
@@ -45,6 +43,7 @@ mod sol_staker_move_tokens;
 mod sol_staker_set_authority_override;
 mod sol_staker_stake_tokens;
 mod sol_staker_update_authority;
+mod unstake_tokens;
 mod update_config;
 mod validator_override_staked_lamports;
 mod validator_stake_tokens;
@@ -70,14 +69,6 @@ pub fn process_instruction<'a>(
             harvest_validator_rewards::process_harvest_validator_rewards(
                 program_id,
                 HarvestValidatorRewardsAccounts::context(accounts)?,
-            )
-        }
-        StakeInstruction::InactivateValidatorStake { amount } => {
-            msg!("Instruction: InactivateValidatorStake");
-            inactivate_validator_stake::process_inactivate_validator_stake(
-                program_id,
-                InactivateValidatorStakeAccounts::context(accounts)?,
-                amount,
             )
         }
         StakeInstruction::InitializeConfig {
@@ -159,11 +150,12 @@ pub fn process_instruction<'a>(
                 HarvestSolStakerRewardsAccounts::context(accounts)?,
             )
         }
-        StakeInstruction::InactivateSolStakerStake => {
-            msg!("Instruction: InactivateSolStakerStake");
-            inactivate_sol_staker_stake::process_inactivate_sol_staker_stake(
+        StakeInstruction::UnstakeTokens { amount } => {
+            msg!("Instruction: UnstakeTokens");
+            unstake_tokens::process_unstake_tokens(
                 program_id,
-                InactivateSolStakerStakeAccounts::context(accounts)?,
+                UnstakeTokensAccounts::context(accounts)?,
+                amount,
             )
         }
         StakeInstruction::SlashSolStakerStake(amount) => {

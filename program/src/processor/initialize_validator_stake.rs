@@ -119,9 +119,7 @@ pub fn process_initialize_validator_stake(
         delegation: Delegation {
             staked_amount: 0,
             effective_amount: 0,
-            deactivation_timestamp: None,
-            deactivating_amount: 0,
-            inactive_amount: 0,
+            unstake_cooldown: 0,
             authority: withdraw_authority,
             validator_vote: *ctx.accounts.validator_vote.key,
             // NB: Will be set on the first stake.
