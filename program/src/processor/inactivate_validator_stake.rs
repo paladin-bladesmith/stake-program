@@ -1,6 +1,10 @@
 use solana_program::{
-    clock::Clock, entrypoint::ProgramResult, msg, program_error::ProgramError, pubkey::Pubkey,
+    clock::Clock, entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey,
     sysvar::Sysvar,
+};
+use spl_token_2022::{
+    extension::PodStateWithExtensions,
+    pod::{PodAccount, PodMint},
 };
 
 use crate::{
@@ -8,7 +12,10 @@ use crate::{
     instruction::accounts::{Context, InactivateValidatorStakeAccounts},
     processor::{harvest, sync_effective, unpack_initialized_mut, HarvestAccounts},
     require,
-    state::{find_validator_stake_pda, Config, ValidatorStake},
+    state::{
+        create_vault_pda, find_validator_stake_pda, get_vault_pda_signer_seeds, Config,
+        ValidatorStake,
+    },
 };
 
 /// Move tokens from deactivating to inactive.
@@ -21,9 +28,10 @@ use crate::{
 ///
 /// 0. `[w]` Stake config account
 /// 1. `[w]` Validator stake account
-pub fn process_inactivate_validator_stake(
+pub fn process_inactivate_validator_stake<'info>(
     program_id: &Pubkey,
-    ctx: Context<InactivateValidatorStakeAccounts>,
+    ctx: Context<'info, InactivateValidatorStakeAccounts<'info>>,
+    amount: u64,
 ) -> ProgramResult {
     // Account validation.
 
@@ -37,6 +45,31 @@ pub fn process_inactivate_validator_stake(
     );
     let mut config = ctx.accounts.config.data.borrow_mut();
     let config = unpack_initialized_mut::<Config>(&mut config)?;
+
+    // vault
+    // - must be the token account on the stake config account
+    require!(
+        ctx.accounts.vault.key == &config.vault,
+        StakeError::IncorrectVaultAccount,
+    );
+    require!(
+        ctx.accounts.vault.key != ctx.accounts.destination_token_account.key,
+        StakeError::InvalidDestinationAccount,
+        "vault matches destination token account"
+    );
+    let vault_data = ctx.accounts.vault.try_borrow_data()?;
+    let vault = PodStateWithExtensions::<PodAccount>::unpack(&vault_data)?;
+
+    // vault authority
+    // - derivation must match
+    let bump = [config.vault_authority_bump];
+    let vault_signer = create_vault_pda(ctx.accounts.config.key, &bump, program_id)?;
+    require!(
+        ctx.accounts.vault_authority.key == &vault_signer,
+        StakeError::InvalidAuthority,
+        "vault authority",
+    );
+    let signer_seeds = get_vault_pda_signer_seeds(ctx.accounts.config.key, &bump);
 
     // stake
     // - owner must be the stake program
@@ -62,6 +95,31 @@ pub fn process_inactivate_validator_stake(
     );
     let delegation = &mut validator_stake.delegation;
 
+    // authority
+    // - must be a signer
+    // - must match the authority on the stake account
+    require!(
+        ctx.accounts.validator_stake_authority.is_signer,
+        ProgramError::MissingRequiredSignature,
+        "stake_authority"
+    );
+    require!(
+        ctx.accounts.validator_stake_authority.key == &delegation.authority,
+        StakeError::InvalidAuthority,
+        "stake_authority"
+    );
+
+    // mint
+    // - must match the stake vault mint
+    require!(
+        &vault.base.mint == ctx.accounts.mint.key,
+        StakeError::InvalidMint,
+        "mint"
+    );
+    let mint_data = ctx.accounts.mint.try_borrow_data()?;
+    let mint = PodStateWithExtensions::<PodMint>::unpack(&mint_data)?;
+    let decimals = mint.base.decimals;
+
     // Harvest rewards & update last claim tracking.
     harvest(
         HarvestAccounts {
@@ -74,36 +132,29 @@ pub fn process_inactivate_validator_stake(
         None,
     )?;
 
-    // Inactivates the stake if eligible.
-    let Some(timestamp) = delegation.deactivation_timestamp else {
-        return Err(StakeError::NoDeactivatedTokens.into());
-    };
-    let inactive_timestamp = timestamp.get().saturating_add(config.cooldown_time_seconds);
-    let current_timestamp = Clock::get()?.unix_timestamp as u64;
+    // Ensure we are not in a cooldown period.
+    let now = Clock::get()?.unix_timestamp as u64;
     require!(
-        current_timestamp >= inactive_timestamp,
-        StakeError::ActiveDeactivationCooldown,
-        "{} second(s) remaining for deactivation",
-        inactive_timestamp.saturating_sub(current_timestamp),
+        delegation.unstake_cooldown < now,
+        StakeError::ActiveUnstakeCooldown,
     );
 
-    msg!("Inactivating {} token(s)", delegation.deactivating_amount);
-
-    // Compute the new stake values.
-    let validator_active = delegation
-        .active_amount
-        .checked_sub(delegation.deactivating_amount)
+    // Update staked amount & unstake cooldown.
+    let staked_amount = delegation
+        .staked_amount
+        .checked_sub(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
-    let validator_inactive = delegation
-        .inactive_amount
-        .checked_add(delegation.deactivating_amount)
-        .ok_or(ProgramError::ArithmeticOverflow)?;
+    delegation.staked_amount = staked_amount;
+    delegation.unstake_cooldown = now;
 
-    // Update the state values.
-    delegation.active_amount = validator_active;
-    delegation.deactivating_amount = 0;
-    delegation.deactivation_timestamp = None;
-    delegation.inactive_amount = validator_inactive;
+    // TODO:
+    //
+    // - Check the stake cooldown.
+    // - Remove the staked amount.
+    // - Transfer the tokens to the staker authority.
+    // - Set the stake cooldown.
+    // - Sync effective.
+
     sync_effective(
         config,
         delegation,
@@ -112,6 +163,18 @@ pub fn process_inactivate_validator_stake(
             validator_stake.total_staked_lamports_amount_min,
         ),
     )?;
+
+    spl_token_2022::onchain::invoke_transfer_checked(
+        &spl_token_2022::ID,
+        ctx.accounts.vault.clone(),
+        ctx.accounts.mint.clone(),
+        ctx.accounts.destination_token_account.clone(),
+        ctx.accounts.vault_authority.clone(),
+        ctx.remaining_accounts,
+        amount,
+        decimals,
+        &[&signer_seeds],
+    );
 
     Ok(())
 }

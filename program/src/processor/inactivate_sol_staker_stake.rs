@@ -93,7 +93,7 @@ pub fn process_inactivate_sol_staker_stake(
 
     // Compute the new stake values.
     let staker_active = delegation
-        .active_amount
+        .staked_amount
         .checked_sub(delegation.deactivating_amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
     let staker_inactive = delegation
@@ -101,11 +101,15 @@ pub fn process_inactivate_sol_staker_stake(
         .checked_add(delegation.deactivating_amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
-    // Update the state values.
-    delegation.active_amount = staker_active;
-    delegation.deactivating_amount = 0;
-    delegation.deactivation_timestamp = None;
-    delegation.inactive_amount = staker_inactive;
+    // TODO:
+    //
+    // - Check the stake cooldown.
+    // - Remove the staked amount.
+    // - Transfer the tokens to the staker authority.
+    // - Set the stake cooldown.
+    // - Sync effective.
+    todo!();
+
     sync_effective(config, delegation, (sol_staker_stake.lamports_amount, 0))?;
 
     Ok(())

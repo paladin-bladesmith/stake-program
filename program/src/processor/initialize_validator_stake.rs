@@ -117,7 +117,7 @@ pub fn process_initialize_validator_stake(
     *validator_stake = ValidatorStake {
         _discriminator: ValidatorStake::SPL_DISCRIMINATOR.into(),
         delegation: Delegation {
-            active_amount: 0,
+            staked_amount: 0,
             effective_amount: 0,
             deactivation_timestamp: None,
             deactivating_amount: 0,

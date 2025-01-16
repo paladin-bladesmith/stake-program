@@ -91,11 +91,11 @@ pub fn process_deactivate_stake(
 
     // Validate the amount.
     require!(
-        amount <= delegation.active_amount,
+        amount <= delegation.staked_amount,
         StakeError::InsufficientStakeAmount
     );
     let max_deactivation_amount = get_max_deactivation_amount(
-        delegation.active_amount,
+        delegation.staked_amount,
         config.max_deactivation_basis_points,
     )?;
     require!(
@@ -105,17 +105,6 @@ pub fn process_deactivate_stake(
         amount,
         max_deactivation_amount
     );
-
-    // Deactivate the stake, if the stake is already deactivating this will
-    // reset the deactivation.
-    if amount > 0 {
-        delegation.deactivating_amount = amount;
-        delegation.deactivation_timestamp = NonZeroU64::new(Clock::get()?.unix_timestamp as u64);
-    } else {
-        // Cancels the deactivation if the amount is 0.
-        delegation.deactivating_amount = 0;
-        delegation.deactivation_timestamp = None;
-    }
 
     Ok(())
 }

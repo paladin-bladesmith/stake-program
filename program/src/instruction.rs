@@ -124,32 +124,6 @@ pub enum StakeInstruction {
     )]
     ValidatorStakeTokens(u64),
 
-    /// Deactivate staked tokens for a stake delegation.
-    ///
-    /// Only one deactivation may be in-flight at once, so if this is called
-    /// with an active deactivation, it will succeed, but reset the amount and
-    /// timestamp.
-    ///
-    /// Instruction data: amount of tokens to deactivate, as a little-endian `u64`.
-    #[account(
-        0,
-        name = "config",
-        desc = "Stake config account"
-    )]
-    #[account(
-        1,
-        writable,
-        name = "stake",
-        desc = "Validator or SOL staker stake account"
-    )]
-    #[account(
-        2,
-        signer,
-        name = "stake_authority",
-        desc = "Authority on validator stake account"
-    )]
-    DeactivateStake(u64),
-
     /// Move tokens from deactivating to inactive.
     ///
     /// Reduces the total voting power for the validator stake account and the total staked
@@ -171,6 +145,7 @@ pub enum StakeInstruction {
     )]
     #[account(
         2,
+        signer,
         writable,
         name = "validator_stake_authority",
         desc = "Validator stake authority account"
@@ -178,68 +153,33 @@ pub enum StakeInstruction {
     #[account(
         3,
         writable,
-        name = "vault_holder_rewards",
-        desc = "Vault holder rewards account"
-    )]
-    InactivateValidatorStake,
-
-    /// Withdraw inactive staked tokens from the vault.
-    ///
-    /// After a deactivation has gone through the cooldown period and been
-    /// "inactivated", the authority may move the tokens out of the vault.
-    ///
-    /// Instruction data: amount of tokens to move.
-    #[account(
-        0,
-        writable,
-        name = "config",
-        desc = "Stake config account"
-    )]
-    #[account(
-        1,
-        writable,
-        name = "stake",
-        desc = "Validator or SOL staker stake account"
-    )]
-    #[account(
-        2,
-        name = "mint",
-        desc = "Stake Token Mint"
-    )]
-    #[account(
-        3,
-        writable,
         name = "vault",
-        desc = "Vault token account"
+        desc = "Vault account"
     )]
     #[account(
         4,
-        name = "vault_holder_rewards",
-        desc = "Vault holder rewards"
-    )]
-    #[account(
-        5,
+        writable,
         name = "vault_authority",
         desc = "Vault authority"
     )]
     #[account(
+        5,
+        writable,
+        name = "vault_holder_rewards",
+        desc = "Vault holder rewards account"
+    )]
+    #[account(
         6,
+        name = "mint",
+        desc = "Mint account"
+    )]
+    #[account(
+        7,
         writable,
         name = "destination_token_account",
         desc = "Destination token account"
     )]
-    #[account(
-        7,
-        signer,
-        name = "stake_authority",
-        desc = "Stake authority"
-    )]
-    #[account(
-        8,
-        name = "token_program",
-        desc = "Token program"
-    )]
-    WithdrawInactiveStake(u64),
+    InactivateValidatorStake { amount: u64 },
 
     /// Harvests holder SOL rewards earned by the given stake account.
     ///
@@ -837,30 +777,23 @@ impl StakeInstruction {
                 data.extend_from_slice(&amount.to_le_bytes());
                 data
             }
-            StakeInstruction::DeactivateStake(amount) => {
+            StakeInstruction::InactivateValidatorStake { amount } => {
                 let mut data = Vec::with_capacity(9);
                 data.push(3);
                 data.extend_from_slice(&amount.to_le_bytes());
                 data
             }
-            StakeInstruction::InactivateValidatorStake => vec![4],
-            StakeInstruction::WithdrawInactiveStake(amount) => {
-                let mut data = Vec::with_capacity(9);
-                data.push(5);
-                data.extend_from_slice(&amount.to_le_bytes());
-                data
-            }
-            StakeInstruction::HarvestHolderRewards => vec![6],
-            StakeInstruction::HarvestValidatorRewards => vec![7],
+            StakeInstruction::HarvestHolderRewards => vec![4],
+            StakeInstruction::HarvestValidatorRewards => vec![5],
             StakeInstruction::SlashValidatorStake(amount) => {
                 let mut data = Vec::with_capacity(9);
-                data.push(8);
+                data.push(6);
                 data.extend_from_slice(&amount.to_le_bytes());
                 data
             }
             StakeInstruction::SetAuthority(authority_type) => {
                 vec![
-                    9,
+                    7,
                     match authority_type {
                         AuthorityType::Config => 0,
                         AuthorityType::Slash => 1,
@@ -869,7 +802,7 @@ impl StakeInstruction {
             }
             StakeInstruction::UpdateConfig(field) => {
                 let mut data = Vec::with_capacity(11);
-                data.push(10);
+                data.push(8);
                 match field {
                     ConfigField::CooldownTimeSeconds(value) => {
                         data.push(0);
@@ -886,41 +819,41 @@ impl StakeInstruction {
                 }
                 data
             }
-            StakeInstruction::InitializeSolStakerStake => vec![11],
+            StakeInstruction::InitializeSolStakerStake => vec![9],
             StakeInstruction::SolStakerStakeTokens(amount) => {
                 let mut data = Vec::with_capacity(9);
-                data.push(12);
+                data.push(10);
                 data.extend_from_slice(&amount.to_le_bytes());
                 data
             }
-            StakeInstruction::HarvestSolStakerRewards => vec![13],
-            StakeInstruction::InactivateSolStakerStake => vec![14],
+            StakeInstruction::HarvestSolStakerRewards => vec![11],
+            StakeInstruction::InactivateSolStakerStake => vec![12],
             StakeInstruction::SlashSolStakerStake(amount) => {
                 let mut data = Vec::with_capacity(9);
-                data.push(15);
+                data.push(13);
                 data.extend_from_slice(&amount.to_le_bytes());
                 data
             }
             StakeInstruction::SolStakerMoveTokens { amount } => {
                 let mut data = Vec::with_capacity(9);
-                data.push(16);
+                data.push(14);
                 data.extend_from_slice(&amount.to_le_bytes());
                 data
             }
-            StakeInstruction::SolStakerUpdateAuthority => vec![17],
+            StakeInstruction::SolStakerUpdateAuthority => vec![15],
             StakeInstruction::SolStakerSetAuthorityOverride {
                 authority_original,
                 authority_override,
             } => {
                 let mut data = Vec::with_capacity(65);
-                data.push(18);
+                data.push(16);
                 data.extend_from_slice(&authority_original.to_bytes());
                 data.extend_from_slice(&authority_override.to_bytes());
                 data
             }
             StakeInstruction::ValidatorOverrideStakedLamports { amount_min } => {
                 let mut data = Vec::with_capacity(9);
-                data.push(19);
+                data.push(17);
                 data.extend_from_slice(&amount_min.to_le_bytes());
                 data
             }
@@ -954,38 +887,30 @@ impl StakeInstruction {
 
                 Ok(StakeInstruction::ValidatorStakeTokens(amount))
             }
-            // 3 - DeactivateStake: u64 (8)
+            // 3 - InactivateValidatorStake
             Some((&3, rest)) if rest.len() == 8 => {
                 let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
 
-                Ok(StakeInstruction::DeactivateStake(amount))
+                Ok(StakeInstruction::InactivateValidatorStake { amount })
             }
-            // 4 - InactivateValidatorStake
-            Some((&4, _)) => Ok(StakeInstruction::InactivateValidatorStake),
-            // 5 - WithdrawInactiveStake: u64 (8)
-            Some((&5, rest)) if rest.len() == 8 => {
-                let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
-
-                Ok(StakeInstruction::WithdrawInactiveStake(amount))
-            }
-            // 6 - HarvestHolderRewards
-            Some((&6, _)) => Ok(StakeInstruction::HarvestHolderRewards),
-            // 7 - HarvestStakeRewards
-            Some((&7, _)) => Ok(StakeInstruction::HarvestValidatorRewards),
-            // 8 - SlashValidatorStake: u64 (8)
-            Some((&8, rest)) if rest.len() == 8 => {
+            // 4 - HarvestHolderRewards
+            Some((&4, _)) => Ok(StakeInstruction::HarvestHolderRewards),
+            // 5 - HarvestStakeRewards
+            Some((&5, _)) => Ok(StakeInstruction::HarvestValidatorRewards),
+            // 6 - SlashValidatorStake: u64 (8)
+            Some((&6, rest)) if rest.len() == 8 => {
                 let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
 
                 Ok(StakeInstruction::SlashValidatorStake(amount))
             }
-            // 9 - SetAuthority: AuthorityType (u8))
-            Some((&9, rest)) if rest.len() == 1 => {
+            // 7 - SetAuthority: AuthorityType (u8))
+            Some((&7, rest)) if rest.len() == 1 => {
                 let authority_type =
                     FromPrimitive::from_u8(rest[0]).ok_or(ProgramError::InvalidInstructionData)?;
                 Ok(StakeInstruction::SetAuthority(authority_type))
             }
-            // 10 - UpdateConfig: ConfigField (u64 or u16)
-            Some((&10, rest)) => {
+            // 8 - UpdateConfig: ConfigField (u64 or u16)
+            Some((&8, rest)) => {
                 let field = match rest.split_first() {
                     Some((&0, rest)) if rest.len() == 8 => {
                         ConfigField::CooldownTimeSeconds(u64::from_le_bytes(*array_ref![
@@ -1007,34 +932,34 @@ impl StakeInstruction {
 
                 Ok(StakeInstruction::UpdateConfig(field))
             }
-            // 11 - InitializeSolStakerStake
-            Some((&11, _)) => Ok(StakeInstruction::InitializeSolStakerStake),
-            // 12 - SolStakerStakeTokens: u64 (8)
-            Some((&12, rest)) if rest.len() == 8 => {
+            // 9 - InitializeSolStakerStake
+            Some((&9, _)) => Ok(StakeInstruction::InitializeSolStakerStake),
+            // 10 - SolStakerStakeTokens: u64 (8)
+            Some((&10, rest)) if rest.len() == 8 => {
                 let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
 
                 Ok(StakeInstruction::SolStakerStakeTokens(amount))
             }
-            // 13 - HarvestSolStakerRewards
-            Some((&13, _)) => Ok(StakeInstruction::HarvestSolStakerRewards),
-            // 14 - InactivateSolStakerStake
-            Some((&14, _)) => Ok(StakeInstruction::InactivateSolStakerStake),
-            // 15 - SlashSolStakerStake: u64 (8)
-            Some((&15, rest)) if rest.len() == 8 => {
+            // 11 - HarvestSolStakerRewards
+            Some((&11, _)) => Ok(StakeInstruction::HarvestSolStakerRewards),
+            // 12 - InactivateSolStakerStake
+            Some((&12, _)) => Ok(StakeInstruction::InactivateSolStakerStake),
+            // 13 - SlashSolStakerStake: u64 (8)
+            Some((&13, rest)) if rest.len() == 8 => {
                 let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
 
                 Ok(StakeInstruction::SlashSolStakerStake(amount))
             }
-            // 16 - SolStakerMoveTokens: u64 (8)
-            Some((&16, rest)) if rest.len() == 8 => {
+            // 14 - SolStakerMoveTokens: u64 (8)
+            Some((&14, rest)) if rest.len() == 8 => {
                 let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
 
                 Ok(StakeInstruction::SolStakerMoveTokens { amount })
             }
-            // 17
-            Some((&17, _)) => Ok(StakeInstruction::SolStakerUpdateAuthority),
-            // 18 - SolStakerSetAuthorityOverride: Pubkey (32), Pubkey (32)
-            Some((&18, rest)) if rest.len() == 64 => {
+            // 15
+            Some((&15, _)) => Ok(StakeInstruction::SolStakerUpdateAuthority),
+            // 16 - SolStakerSetAuthorityOverride: Pubkey (32), Pubkey (32)
+            Some((&16, rest)) if rest.len() == 64 => {
                 let authority_original = Pubkey::new_from_array(*array_ref![rest, 0, 32]);
                 let authority_override = Pubkey::new_from_array(*array_ref![rest, 32, 32]);
 
@@ -1043,8 +968,8 @@ impl StakeInstruction {
                     authority_override,
                 })
             }
-            // 19 - Validator: Pubkey (32), Pubkey (32)
-            Some((&19, rest)) if rest.len() == 8 => {
+            // 17 - Validator: Pubkey (32), Pubkey (32)
+            Some((&17, rest)) if rest.len() == 8 => {
                 let amount_min = u64::from_le_bytes(*array_ref![rest, 0, 8]);
 
                 Ok(StakeInstruction::ValidatorOverrideStakedLamports { amount_min })
@@ -1107,24 +1032,8 @@ mod tests {
     }
 
     #[test]
-    fn test_pack_unpack_deactivate_stake() {
-        let original = StakeInstruction::DeactivateStake(100);
-        let packed = original.pack();
-        let unpacked = StakeInstruction::unpack(&packed).unwrap();
-        assert_eq!(original, unpacked);
-    }
-
-    #[test]
     fn test_pack_unpack_inactivate_stake() {
-        let original = StakeInstruction::InactivateValidatorStake;
-        let packed = original.pack();
-        let unpacked = StakeInstruction::unpack(&packed).unwrap();
-        assert_eq!(original, unpacked);
-    }
-
-    #[test]
-    fn test_pack_unpack_withdraw_inactive_stake() {
-        let original = StakeInstruction::WithdrawInactiveStake(100);
+        let original = StakeInstruction::InactivateValidatorStake { amount: 50 };
         let packed = original.pack();
         let unpacked = StakeInstruction::unpack(&packed).unwrap();
         assert_eq!(original, unpacked);

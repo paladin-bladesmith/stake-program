@@ -182,7 +182,7 @@ pub fn process_initialize_sol_staker_stake(
     *stake = SolStakerStake {
         _discriminator: SolStakerStake::SPL_DISCRIMINATOR.into(),
         delegation: Delegation {
-            active_amount: 0,
+            staked_amount: 0,
             effective_amount: 0,
             deactivation_timestamp: None,
             deactivating_amount: 0,
