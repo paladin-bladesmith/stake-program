@@ -33,8 +33,8 @@ pub fn process_unstake_tokens<'info>(
         ProgramError::InvalidAccountOwner,
         "config"
     );
-    let mut config = ctx.accounts.config.data.borrow_mut();
-    let config = unpack_initialized_mut::<Config>(&mut config)?;
+    let mut config_borrow = ctx.accounts.config.data.borrow_mut();
+    let config = unpack_initialized_mut::<Config>(&mut config_borrow)?;
 
     // vault
     // - must be the token account on the stake config account
@@ -47,8 +47,8 @@ pub fn process_unstake_tokens<'info>(
         StakeError::InvalidDestinationAccount,
         "vault matches destination token account"
     );
-    let vault_data = ctx.accounts.vault.try_borrow_data()?;
-    let vault = PodStateWithExtensions::<PodAccount>::unpack(&vault_data)?;
+    let vault_borrow = ctx.accounts.vault.try_borrow_data()?;
+    let vault = PodStateWithExtensions::<PodAccount>::unpack(&vault_borrow)?;
 
     // vault authority
     // - derivation must match
@@ -71,10 +71,10 @@ pub fn process_unstake_tokens<'info>(
         ProgramError::InvalidAccountOwner,
         "stake"
     );
-    let stake_data = &mut ctx.accounts.stake.try_borrow_mut_data()?;
-    let (derivation, lamports, lamports_min, delegation) = match stake_data.len() {
+    let stake_borrow = &mut ctx.accounts.stake.try_borrow_mut_data()?;
+    let (derivation, lamports, lamports_min, delegation) = match stake_borrow.len() {
         ValidatorStake::LEN => {
-            let stake = unpack_initialized_mut::<ValidatorStake>(stake_data)?;
+            let stake = unpack_initialized_mut::<ValidatorStake>(stake_borrow)?;
 
             (
                 find_validator_stake_pda(
@@ -89,7 +89,7 @@ pub fn process_unstake_tokens<'info>(
             )
         }
         SolStakerStake::LEN => {
-            let stake = unpack_initialized_mut::<SolStakerStake>(stake_data)?;
+            let stake = unpack_initialized_mut::<SolStakerStake>(stake_borrow)?;
 
             (
                 find_sol_staker_stake_pda(&stake.sol_stake, ctx.accounts.config.key, program_id).0,
@@ -110,12 +110,12 @@ pub fn process_unstake_tokens<'info>(
     // - must be a signer
     // - must match the authority on the stake account
     require!(
-        ctx.accounts.validator_stake_authority.is_signer,
+        ctx.accounts.stake_authority.is_signer,
         ProgramError::MissingRequiredSignature,
         "stake_authority"
     );
     require!(
-        ctx.accounts.validator_stake_authority.key == &delegation.authority,
+        ctx.accounts.stake_authority.key == &delegation.authority,
         StakeError::InvalidAuthority,
         "stake_authority"
     );
@@ -127,8 +127,8 @@ pub fn process_unstake_tokens<'info>(
         StakeError::InvalidMint,
         "mint"
     );
-    let mint_data = ctx.accounts.mint.try_borrow_data()?;
-    let mint = PodStateWithExtensions::<PodMint>::unpack(&mint_data)?;
+    let mint_borrow = ctx.accounts.mint.try_borrow_data()?;
+    let mint = PodStateWithExtensions::<PodMint>::unpack(&mint_borrow)?;
     let decimals = mint.base.decimals;
 
     // Harvest rewards & update last claim tracking.
@@ -136,7 +136,7 @@ pub fn process_unstake_tokens<'info>(
         HarvestAccounts {
             config: ctx.accounts.config,
             vault_holder_rewards: ctx.accounts.vault_holder_rewards,
-            authority: ctx.accounts.validator_stake_authority,
+            authority: ctx.accounts.stake_authority,
         },
         config,
         delegation,
@@ -168,6 +168,8 @@ pub fn process_unstake_tokens<'info>(
 
     sync_effective(config, delegation, (lamports, lamports_min))?;
 
+    drop(mint_borrow);
+    drop(vault_borrow);
     spl_token_2022::onchain::invoke_transfer_checked(
         &spl_token_2022::ID,
         ctx.accounts.vault.clone(),

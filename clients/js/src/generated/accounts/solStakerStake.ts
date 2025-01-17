@@ -142,5 +142,5 @@ export async function fetchAllMaybeSolStakerStake(
 }
 
 export function getSolStakerStakeSize(): number {
-  return 184;
+  return 168;
 }

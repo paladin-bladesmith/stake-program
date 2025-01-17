@@ -14,8 +14,8 @@ pub struct UnstakeTokens {
     pub config: solana_program::pubkey::Pubkey,
     /// Sol staker/validator stake account
     pub stake: solana_program::pubkey::Pubkey,
-    /// Validator stake authority account
-    pub validator_stake_authority: solana_program::pubkey::Pubkey,
+    /// Stake authority account
+    pub stake_authority: solana_program::pubkey::Pubkey,
     /// Vault account
     pub vault: solana_program::pubkey::Pubkey,
     /// Vault authority
@@ -50,7 +50,7 @@ impl UnstakeTokens {
             self.stake, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.validator_stake_authority,
+            self.stake_authority,
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -113,7 +113,7 @@ pub struct UnstakeTokensInstructionArgs {
 ///
 ///   0. `[writable]` config
 ///   1. `[writable]` stake
-///   2. `[writable, signer]` validator_stake_authority
+///   2. `[writable, signer]` stake_authority
 ///   3. `[writable]` vault
 ///   4. `[writable]` vault_authority
 ///   5. `[writable]` vault_holder_rewards
@@ -123,7 +123,7 @@ pub struct UnstakeTokensInstructionArgs {
 pub struct UnstakeTokensBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
     stake: Option<solana_program::pubkey::Pubkey>,
-    validator_stake_authority: Option<solana_program::pubkey::Pubkey>,
+    stake_authority: Option<solana_program::pubkey::Pubkey>,
     vault: Option<solana_program::pubkey::Pubkey>,
     vault_authority: Option<solana_program::pubkey::Pubkey>,
     vault_holder_rewards: Option<solana_program::pubkey::Pubkey>,
@@ -149,13 +149,13 @@ impl UnstakeTokensBuilder {
         self.stake = Some(stake);
         self
     }
-    /// Validator stake authority account
+    /// Stake authority account
     #[inline(always)]
-    pub fn validator_stake_authority(
+    pub fn stake_authority(
         &mut self,
-        validator_stake_authority: solana_program::pubkey::Pubkey,
+        stake_authority: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
-        self.validator_stake_authority = Some(validator_stake_authority);
+        self.stake_authority = Some(stake_authority);
         self
     }
     /// Vault account
@@ -225,9 +225,7 @@ impl UnstakeTokensBuilder {
         let accounts = UnstakeTokens {
             config: self.config.expect("config is not set"),
             stake: self.stake.expect("stake is not set"),
-            validator_stake_authority: self
-                .validator_stake_authority
-                .expect("validator_stake_authority is not set"),
+            stake_authority: self.stake_authority.expect("stake_authority is not set"),
             vault: self.vault.expect("vault is not set"),
             vault_authority: self.vault_authority.expect("vault_authority is not set"),
             vault_holder_rewards: self
@@ -252,8 +250,8 @@ pub struct UnstakeTokensCpiAccounts<'a, 'b> {
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
     /// Sol staker/validator stake account
     pub stake: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake authority account
-    pub validator_stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Stake authority account
+    pub stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Vault account
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
     /// Vault authority
@@ -274,8 +272,8 @@ pub struct UnstakeTokensCpi<'a, 'b> {
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
     /// Sol staker/validator stake account
     pub stake: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Validator stake authority account
-    pub validator_stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Stake authority account
+    pub stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// Vault account
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
     /// Vault authority
@@ -300,7 +298,7 @@ impl<'a, 'b> UnstakeTokensCpi<'a, 'b> {
             __program: program,
             config: accounts.config,
             stake: accounts.stake,
-            validator_stake_authority: accounts.validator_stake_authority,
+            stake_authority: accounts.stake_authority,
             vault: accounts.vault,
             vault_authority: accounts.vault_authority,
             vault_holder_rewards: accounts.vault_holder_rewards,
@@ -352,7 +350,7 @@ impl<'a, 'b> UnstakeTokensCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.validator_stake_authority.key,
+            *self.stake_authority.key,
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -395,7 +393,7 @@ impl<'a, 'b> UnstakeTokensCpi<'a, 'b> {
         account_infos.push(self.__program.clone());
         account_infos.push(self.config.clone());
         account_infos.push(self.stake.clone());
-        account_infos.push(self.validator_stake_authority.clone());
+        account_infos.push(self.stake_authority.clone());
         account_infos.push(self.vault.clone());
         account_infos.push(self.vault_authority.clone());
         account_infos.push(self.vault_holder_rewards.clone());
@@ -419,7 +417,7 @@ impl<'a, 'b> UnstakeTokensCpi<'a, 'b> {
 ///
 ///   0. `[writable]` config
 ///   1. `[writable]` stake
-///   2. `[writable, signer]` validator_stake_authority
+///   2. `[writable, signer]` stake_authority
 ///   3. `[writable]` vault
 ///   4. `[writable]` vault_authority
 ///   5. `[writable]` vault_holder_rewards
@@ -436,7 +434,7 @@ impl<'a, 'b> UnstakeTokensCpiBuilder<'a, 'b> {
             __program: program,
             config: None,
             stake: None,
-            validator_stake_authority: None,
+            stake_authority: None,
             vault: None,
             vault_authority: None,
             vault_holder_rewards: None,
@@ -462,13 +460,13 @@ impl<'a, 'b> UnstakeTokensCpiBuilder<'a, 'b> {
         self.instruction.stake = Some(stake);
         self
     }
-    /// Validator stake authority account
+    /// Stake authority account
     #[inline(always)]
-    pub fn validator_stake_authority(
+    pub fn stake_authority(
         &mut self,
-        validator_stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
+        stake_authority: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.validator_stake_authority = Some(validator_stake_authority);
+        self.instruction.stake_authority = Some(stake_authority);
         self
     }
     /// Vault account
@@ -566,10 +564,10 @@ impl<'a, 'b> UnstakeTokensCpiBuilder<'a, 'b> {
 
             stake: self.instruction.stake.expect("stake is not set"),
 
-            validator_stake_authority: self
+            stake_authority: self
                 .instruction
-                .validator_stake_authority
-                .expect("validator_stake_authority is not set"),
+                .stake_authority
+                .expect("stake_authority is not set"),
 
             vault: self.instruction.vault.expect("vault is not set"),
 
@@ -603,7 +601,7 @@ struct UnstakeTokensCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    validator_stake_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    stake_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault_holder_rewards: Option<&'b solana_program::account_info::AccountInfo<'a>>,

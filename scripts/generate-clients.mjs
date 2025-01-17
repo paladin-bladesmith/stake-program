@@ -211,10 +211,10 @@ kinobi.update(
       size: 160,
     },
     validatorStake: {
-      size: 160,
+      size: 144,
     },
     solStakerStake: {
-      size: 184,
+      size: 168,
     },
   })
 );

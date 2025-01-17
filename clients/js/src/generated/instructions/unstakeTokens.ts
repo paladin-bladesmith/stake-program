@@ -36,9 +36,7 @@ export type UnstakeTokensInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountStake extends string | IAccountMeta<string> = string,
-  TAccountValidatorStakeAuthority extends
-    | string
-    | IAccountMeta<string> = string,
+  TAccountStakeAuthority extends string | IAccountMeta<string> = string,
   TAccountVault extends string | IAccountMeta<string> = string,
   TAccountVaultAuthority extends string | IAccountMeta<string> = string,
   TAccountVaultHolderRewards extends string | IAccountMeta<string> = string,
@@ -57,10 +55,10 @@ export type UnstakeTokensInstruction<
       TAccountStake extends string
         ? WritableAccount<TAccountStake>
         : TAccountStake,
-      TAccountValidatorStakeAuthority extends string
-        ? WritableSignerAccount<TAccountValidatorStakeAuthority> &
-            IAccountSignerMeta<TAccountValidatorStakeAuthority>
-        : TAccountValidatorStakeAuthority,
+      TAccountStakeAuthority extends string
+        ? WritableSignerAccount<TAccountStakeAuthority> &
+            IAccountSignerMeta<TAccountStakeAuthority>
+        : TAccountStakeAuthority,
       TAccountVault extends string
         ? WritableAccount<TAccountVault>
         : TAccountVault,
@@ -117,7 +115,7 @@ export function getUnstakeTokensInstructionDataCodec(): Codec<
 export type UnstakeTokensInput<
   TAccountConfig extends string = string,
   TAccountStake extends string = string,
-  TAccountValidatorStakeAuthority extends string = string,
+  TAccountStakeAuthority extends string = string,
   TAccountVault extends string = string,
   TAccountVaultAuthority extends string = string,
   TAccountVaultHolderRewards extends string = string,
@@ -128,8 +126,8 @@ export type UnstakeTokensInput<
   config: Address<TAccountConfig>;
   /** Sol staker/validator stake account */
   stake: Address<TAccountStake>;
-  /** Validator stake authority account */
-  validatorStakeAuthority: TransactionSigner<TAccountValidatorStakeAuthority>;
+  /** Stake authority account */
+  stakeAuthority: TransactionSigner<TAccountStakeAuthority>;
   /** Vault account */
   vault: Address<TAccountVault>;
   /** Vault authority */
@@ -146,7 +144,7 @@ export type UnstakeTokensInput<
 export function getUnstakeTokensInstruction<
   TAccountConfig extends string,
   TAccountStake extends string,
-  TAccountValidatorStakeAuthority extends string,
+  TAccountStakeAuthority extends string,
   TAccountVault extends string,
   TAccountVaultAuthority extends string,
   TAccountVaultHolderRewards extends string,
@@ -156,7 +154,7 @@ export function getUnstakeTokensInstruction<
   input: UnstakeTokensInput<
     TAccountConfig,
     TAccountStake,
-    TAccountValidatorStakeAuthority,
+    TAccountStakeAuthority,
     TAccountVault,
     TAccountVaultAuthority,
     TAccountVaultHolderRewards,
@@ -167,7 +165,7 @@ export function getUnstakeTokensInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountStake,
-  TAccountValidatorStakeAuthority,
+  TAccountStakeAuthority,
   TAccountVault,
   TAccountVaultAuthority,
   TAccountVaultHolderRewards,
@@ -181,10 +179,7 @@ export function getUnstakeTokensInstruction<
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
     stake: { value: input.stake ?? null, isWritable: true },
-    validatorStakeAuthority: {
-      value: input.validatorStakeAuthority ?? null,
-      isWritable: true,
-    },
+    stakeAuthority: { value: input.stakeAuthority ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
     vaultAuthority: { value: input.vaultAuthority ?? null, isWritable: true },
     vaultHolderRewards: {
@@ -210,7 +205,7 @@ export function getUnstakeTokensInstruction<
     accounts: [
       getAccountMeta(accounts.config),
       getAccountMeta(accounts.stake),
-      getAccountMeta(accounts.validatorStakeAuthority),
+      getAccountMeta(accounts.stakeAuthority),
       getAccountMeta(accounts.vault),
       getAccountMeta(accounts.vaultAuthority),
       getAccountMeta(accounts.vaultHolderRewards),
@@ -225,7 +220,7 @@ export function getUnstakeTokensInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountStake,
-    TAccountValidatorStakeAuthority,
+    TAccountStakeAuthority,
     TAccountVault,
     TAccountVaultAuthority,
     TAccountVaultHolderRewards,
@@ -246,8 +241,8 @@ export type ParsedUnstakeTokensInstruction<
     config: TAccountMetas[0];
     /** Sol staker/validator stake account */
     stake: TAccountMetas[1];
-    /** Validator stake authority account */
-    validatorStakeAuthority: TAccountMetas[2];
+    /** Stake authority account */
+    stakeAuthority: TAccountMetas[2];
     /** Vault account */
     vault: TAccountMetas[3];
     /** Vault authority */
@@ -285,7 +280,7 @@ export function parseUnstakeTokensInstruction<
     accounts: {
       config: getNextAccount(),
       stake: getNextAccount(),
-      validatorStakeAuthority: getNextAccount(),
+      stakeAuthority: getNextAccount(),
       vault: getNextAccount(),
       vaultAuthority: getNextAccount(),
       vaultHolderRewards: getNextAccount(),

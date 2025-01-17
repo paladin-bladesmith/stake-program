@@ -514,8 +514,8 @@ pub enum StakeInstruction {
         2,
         signer,
         writable,
-        name = "validator_stake_authority",
-        desc = "Validator stake authority account"
+        name = "stake_authority",
+        desc = "Stake authority account"
     )]
     #[account(
         3,
@@ -902,22 +902,28 @@ impl StakeInstruction {
             }
             // 10 - HarvestSolStakerRewards
             Some((&10, _)) => Ok(StakeInstruction::HarvestSolStakerRewards),
-            // 11 - SlashSolStakerStake: u64 (8)
+            // 11 - UnstakeTokens: u64 (8)
             Some((&11, rest)) if rest.len() == 8 => {
+                let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
+
+                Ok(StakeInstruction::UnstakeTokens { amount })
+            }
+            // 12 - SlashSolStakerStake: u64 (8)
+            Some((&12, rest)) if rest.len() == 8 => {
                 let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
 
                 Ok(StakeInstruction::SlashSolStakerStake(amount))
             }
-            // 12 - SolStakerMoveTokens: u64 (8)
-            Some((&12, rest)) if rest.len() == 8 => {
+            // 13 - SolStakerMoveTokens: u64 (8)
+            Some((&13, rest)) if rest.len() == 8 => {
                 let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
 
                 Ok(StakeInstruction::SolStakerMoveTokens { amount })
             }
-            // 13
-            Some((&13, _)) => Ok(StakeInstruction::SolStakerUpdateAuthority),
-            // 14 - SolStakerSetAuthorityOverride: Pubkey (32), Pubkey (32)
-            Some((&14, rest)) if rest.len() == 64 => {
+            // 14
+            Some((&14, _)) => Ok(StakeInstruction::SolStakerUpdateAuthority),
+            // 15 - SolStakerSetAuthorityOverride: Pubkey (32), Pubkey (32)
+            Some((&15, rest)) if rest.len() == 64 => {
                 let authority_original = Pubkey::new_from_array(*array_ref![rest, 0, 32]);
                 let authority_override = Pubkey::new_from_array(*array_ref![rest, 32, 32]);
 
@@ -926,8 +932,8 @@ impl StakeInstruction {
                     authority_override,
                 })
             }
-            // 15 - Validator: Pubkey (32), Pubkey (32)
-            Some((&15, rest)) if rest.len() == 8 => {
+            // 16 - Validator: Pubkey (32), Pubkey (32)
+            Some((&16, rest)) if rest.len() == 8 => {
                 let amount_min = u64::from_le_bytes(*array_ref![rest, 0, 8]);
 
                 Ok(StakeInstruction::ValidatorOverrideStakedLamports { amount_min })

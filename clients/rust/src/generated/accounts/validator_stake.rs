@@ -19,7 +19,7 @@ pub struct ValidatorStake {
 }
 
 impl ValidatorStake {
-    pub const LEN: usize = 160;
+    pub const LEN: usize = 144;
 
     #[inline(always)]
     pub fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {

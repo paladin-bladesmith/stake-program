@@ -24,7 +24,7 @@ pub struct SolStakerStake {
 }
 
 impl SolStakerStake {
-    pub const LEN: usize = 184;
+    pub const LEN: usize = 168;
 
     #[inline(always)]
     pub fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {

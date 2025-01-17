@@ -759,11 +759,11 @@
           ]
         },
         {
-          "name": "validatorStakeAuthority",
+          "name": "stakeAuthority",
           "isMut": true,
           "isSigner": true,
           "docs": [
-            "Validator stake authority account"
+            "Stake authority account"
           ]
         },
         {

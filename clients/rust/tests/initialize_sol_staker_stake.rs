@@ -106,8 +106,7 @@ async fn initialize_sol_staker_stake_base() {
         validator_stake_manager.vote
     );
     assert_eq!(stake_account.delegation.authority, withdrawer.pubkey());
-    assert_eq!(stake_account.delegation.active_amount, 0);
-    assert_eq!(stake_account.delegation.inactive_amount, 0);
+    assert_eq!(stake_account.delegation.staked_amount, 0);
     assert_eq!(stake_account.delegation.effective_amount, 0);
     assert_eq!(
         stake_account.delegation.last_seen_holder_rewards_per_token,
@@ -390,7 +389,6 @@ async fn fail_initialize_stake_with_invalid_stake_state() {
         .unwrap_err();
 
     // Then we expect an error.
-
     assert_instruction_error!(err, InstructionError::BorshIoError(..));
 }
 

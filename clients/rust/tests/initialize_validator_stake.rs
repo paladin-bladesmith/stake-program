@@ -69,8 +69,7 @@ async fn initialize_stake_with_validator_vote() {
     let stake_account = ValidatorStake::from_bytes(account_data).unwrap();
     assert_eq!(stake_account.delegation.validator_vote, validator_vote);
     assert_eq!(stake_account.delegation.authority, validator);
-    assert_eq!(stake_account.delegation.active_amount, 0);
-    assert_eq!(stake_account.delegation.inactive_amount, 0);
+    assert_eq!(stake_account.delegation.staked_amount, 0);
     assert_eq!(stake_account.delegation.effective_amount, 0);
     assert_eq!(
         stake_account.delegation.last_seen_holder_rewards_per_token,
