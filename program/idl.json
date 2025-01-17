@@ -1406,41 +1406,31 @@
     },
     {
       "code": 15,
-      "name": "NoDeactivatedTokens",
-      "msg": "No deactivated tokens"
-    },
-    {
-      "code": 16,
       "name": "IncorrectVaultAccount",
       "msg": "Incorrect vault account"
     },
     {
-      "code": 17,
-      "name": "NotEnoughInactivatedTokens",
-      "msg": "Not enough inactivated tokens"
-    },
-    {
-      "code": 18,
+      "code": 16,
       "name": "InvalidDestinationAccount",
       "msg": "Invalid destination account"
     },
     {
-      "code": 19,
+      "code": 17,
       "name": "InvalidSlashAmount",
       "msg": "Invalid slash amount"
     },
     {
-      "code": 20,
+      "code": 18,
       "name": "UndelegatedSolStakeAccount",
       "msg": "Undelegated SOL stake account"
     },
     {
-      "code": 21,
+      "code": 19,
       "name": "TotalStakeAmountExceedsSolLimit",
       "msg": "Total stake amount exceeds SOL limit"
     },
     {
-      "code": 22,
+      "code": 20,
       "name": "IncorrectSolStakeAccount",
       "msg": "Incorrect SOL stake account"
     }

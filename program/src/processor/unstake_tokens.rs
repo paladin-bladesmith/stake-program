@@ -162,9 +162,6 @@ pub fn process_unstake_tokens<'info>(
 
     drop(mint_borrow);
     drop(vault_borrow);
-    for (i, account) in ctx.remaining_accounts.iter().enumerate() {
-        solana_program::msg!("{i}: {}", account.key);
-    }
     spl_token_2022::onchain::invoke_transfer_checked(
         &spl_token_2022::ID,
         ctx.accounts.vault.clone(),
