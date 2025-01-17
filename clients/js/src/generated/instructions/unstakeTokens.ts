@@ -44,6 +44,9 @@ export type UnstakeTokensInstruction<
   TAccountDestinationTokenAccount extends
     | string
     | IAccountMeta<string> = string,
+  TAccountTokenProgram extends
+    | string
+    | IAccountMeta<string> = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -74,6 +77,9 @@ export type UnstakeTokensInstruction<
       TAccountDestinationTokenAccount extends string
         ? WritableAccount<TAccountDestinationTokenAccount>
         : TAccountDestinationTokenAccount,
+      TAccountTokenProgram extends string
+        ? ReadonlyAccount<TAccountTokenProgram>
+        : TAccountTokenProgram,
       ...TRemainingAccounts,
     ]
   >;
@@ -121,6 +127,7 @@ export type UnstakeTokensInput<
   TAccountVaultHolderRewards extends string = string,
   TAccountMint extends string = string,
   TAccountDestinationTokenAccount extends string = string,
+  TAccountTokenProgram extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
@@ -138,6 +145,8 @@ export type UnstakeTokensInput<
   mint: Address<TAccountMint>;
   /** Destination token account */
   destinationTokenAccount: Address<TAccountDestinationTokenAccount>;
+  /** Token program */
+  tokenProgram?: Address<TAccountTokenProgram>;
   amount: UnstakeTokensInstructionDataArgs['amount'];
 };
 
@@ -150,6 +159,7 @@ export function getUnstakeTokensInstruction<
   TAccountVaultHolderRewards extends string,
   TAccountMint extends string,
   TAccountDestinationTokenAccount extends string,
+  TAccountTokenProgram extends string,
 >(
   input: UnstakeTokensInput<
     TAccountConfig,
@@ -159,7 +169,8 @@ export function getUnstakeTokensInstruction<
     TAccountVaultAuthority,
     TAccountVaultHolderRewards,
     TAccountMint,
-    TAccountDestinationTokenAccount
+    TAccountDestinationTokenAccount,
+    TAccountTokenProgram
   >
 ): UnstakeTokensInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
@@ -170,7 +181,8 @@ export function getUnstakeTokensInstruction<
   TAccountVaultAuthority,
   TAccountVaultHolderRewards,
   TAccountMint,
-  TAccountDestinationTokenAccount
+  TAccountDestinationTokenAccount,
+  TAccountTokenProgram
 > {
   // Program address.
   const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
@@ -191,6 +203,7 @@ export function getUnstakeTokensInstruction<
       value: input.destinationTokenAccount ?? null,
       isWritable: true,
     },
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -199,6 +212,12 @@ export function getUnstakeTokensInstruction<
 
   // Original args.
   const args = { ...input };
+
+  // Resolve default values.
+  if (!accounts.tokenProgram.value) {
+    accounts.tokenProgram.value =
+      'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' as Address<'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'>;
+  }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -211,6 +230,7 @@ export function getUnstakeTokensInstruction<
       getAccountMeta(accounts.vaultHolderRewards),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.destinationTokenAccount),
+      getAccountMeta(accounts.tokenProgram),
     ],
     programAddress,
     data: getUnstakeTokensInstructionDataEncoder().encode(
@@ -225,7 +245,8 @@ export function getUnstakeTokensInstruction<
     TAccountVaultAuthority,
     TAccountVaultHolderRewards,
     TAccountMint,
-    TAccountDestinationTokenAccount
+    TAccountDestinationTokenAccount,
+    TAccountTokenProgram
   >;
 
   return instruction;
@@ -253,6 +274,8 @@ export type ParsedUnstakeTokensInstruction<
     mint: TAccountMetas[6];
     /** Destination token account */
     destinationTokenAccount: TAccountMetas[7];
+    /** Token program */
+    tokenProgram: TAccountMetas[8];
   };
   data: UnstakeTokensInstructionData;
 };
@@ -265,7 +288,7 @@ export function parseUnstakeTokensInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedUnstakeTokensInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 8) {
+  if (instruction.accounts.length < 9) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -286,6 +309,7 @@ export function parseUnstakeTokensInstruction<
       vaultHolderRewards: getNextAccount(),
       mint: getNextAccount(),
       destinationTokenAccount: getNextAccount(),
+      tokenProgram: getNextAccount(),
     },
     data: getUnstakeTokensInstructionDataDecoder().decode(instruction.data),
   };

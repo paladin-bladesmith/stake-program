@@ -26,6 +26,8 @@ pub struct UnstakeTokens {
     pub mint: solana_program::pubkey::Pubkey,
     /// Destination token account
     pub destination_token_account: solana_program::pubkey::Pubkey,
+    /// Token program
+    pub token_program: solana_program::pubkey::Pubkey,
 }
 
 impl UnstakeTokens {
@@ -41,7 +43,7 @@ impl UnstakeTokens {
         args: UnstakeTokensInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(8 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.config,
             false,
@@ -69,6 +71,10 @@ impl UnstakeTokens {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.destination_token_account,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.token_program,
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
@@ -119,6 +125,7 @@ pub struct UnstakeTokensInstructionArgs {
 ///   5. `[writable]` vault_holder_rewards
 ///   6. `[]` mint
 ///   7. `[writable]` destination_token_account
+///   8. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
 #[derive(Clone, Debug, Default)]
 pub struct UnstakeTokensBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
@@ -129,6 +136,7 @@ pub struct UnstakeTokensBuilder {
     vault_holder_rewards: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
     destination_token_account: Option<solana_program::pubkey::Pubkey>,
+    token_program: Option<solana_program::pubkey::Pubkey>,
     amount: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
@@ -197,6 +205,13 @@ impl UnstakeTokensBuilder {
         self.destination_token_account = Some(destination_token_account);
         self
     }
+    /// `[optional account, default to 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb']`
+    /// Token program
+    #[inline(always)]
+    pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.token_program = Some(token_program);
+        self
+    }
     #[inline(always)]
     pub fn amount(&mut self, amount: u64) -> &mut Self {
         self.amount = Some(amount);
@@ -235,6 +250,9 @@ impl UnstakeTokensBuilder {
             destination_token_account: self
                 .destination_token_account
                 .expect("destination_token_account is not set"),
+            token_program: self.token_program.unwrap_or(solana_program::pubkey!(
+                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+            )),
         };
         let args = UnstakeTokensInstructionArgs {
             amount: self.amount.clone().expect("amount is not set"),
@@ -262,6 +280,8 @@ pub struct UnstakeTokensCpiAccounts<'a, 'b> {
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// Destination token account
     pub destination_token_account: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Token program
+    pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `unstake_tokens` CPI instruction.
@@ -284,6 +304,8 @@ pub struct UnstakeTokensCpi<'a, 'b> {
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// Destination token account
     pub destination_token_account: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Token program
+    pub token_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
     pub __args: UnstakeTokensInstructionArgs,
 }
@@ -304,6 +326,7 @@ impl<'a, 'b> UnstakeTokensCpi<'a, 'b> {
             vault_holder_rewards: accounts.vault_holder_rewards,
             mint: accounts.mint,
             destination_token_account: accounts.destination_token_account,
+            token_program: accounts.token_program,
             __args: args,
         }
     }
@@ -340,7 +363,7 @@ impl<'a, 'b> UnstakeTokensCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(8 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.config.key,
             false,
@@ -373,6 +396,10 @@ impl<'a, 'b> UnstakeTokensCpi<'a, 'b> {
             *self.destination_token_account.key,
             false,
         ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.token_program.key,
+            false,
+        ));
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -389,7 +416,7 @@ impl<'a, 'b> UnstakeTokensCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(8 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(9 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.config.clone());
         account_infos.push(self.stake.clone());
@@ -399,6 +426,7 @@ impl<'a, 'b> UnstakeTokensCpi<'a, 'b> {
         account_infos.push(self.vault_holder_rewards.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.destination_token_account.clone());
+        account_infos.push(self.token_program.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -423,6 +451,7 @@ impl<'a, 'b> UnstakeTokensCpi<'a, 'b> {
 ///   5. `[writable]` vault_holder_rewards
 ///   6. `[]` mint
 ///   7. `[writable]` destination_token_account
+///   8. `[]` token_program
 #[derive(Clone, Debug)]
 pub struct UnstakeTokensCpiBuilder<'a, 'b> {
     instruction: Box<UnstakeTokensCpiBuilderInstruction<'a, 'b>>,
@@ -440,6 +469,7 @@ impl<'a, 'b> UnstakeTokensCpiBuilder<'a, 'b> {
             vault_holder_rewards: None,
             mint: None,
             destination_token_account: None,
+            token_program: None,
             amount: None,
             __remaining_accounts: Vec::new(),
         });
@@ -506,6 +536,15 @@ impl<'a, 'b> UnstakeTokensCpiBuilder<'a, 'b> {
         destination_token_account: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.destination_token_account = Some(destination_token_account);
+        self
+    }
+    /// Token program
+    #[inline(always)]
+    pub fn token_program(
+        &mut self,
+        token_program: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.token_program = Some(token_program);
         self
     }
     #[inline(always)]
@@ -587,6 +626,11 @@ impl<'a, 'b> UnstakeTokensCpiBuilder<'a, 'b> {
                 .instruction
                 .destination_token_account
                 .expect("destination_token_account is not set"),
+
+            token_program: self
+                .instruction
+                .token_program
+                .expect("token_program is not set"),
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -607,6 +651,7 @@ struct UnstakeTokensCpiBuilderInstruction<'a, 'b> {
     vault_holder_rewards: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     destination_token_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     amount: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(

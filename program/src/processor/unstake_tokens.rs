@@ -156,20 +156,15 @@ pub fn process_unstake_tokens<'info>(
         .checked_sub(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
     delegation.staked_amount = staked_amount;
-    delegation.unstake_cooldown = now;
-
-    // TODO:
-    //
-    // - Check the stake cooldown.
-    // - Remove the staked amount.
-    // - Transfer the tokens to the staker authority.
-    // - Set the stake cooldown.
-    // - Sync effective.
+    delegation.unstake_cooldown = now.saturating_add(config.cooldown_time_seconds);
 
     sync_effective(config, delegation, (lamports, lamports_min))?;
 
     drop(mint_borrow);
     drop(vault_borrow);
+    for (i, account) in ctx.remaining_accounts.iter().enumerate() {
+        solana_program::msg!("{i}: {}", account.key);
+    }
     spl_token_2022::onchain::invoke_transfer_checked(
         &spl_token_2022::ID,
         ctx.accounts.vault.clone(),

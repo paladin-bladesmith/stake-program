@@ -16,7 +16,7 @@ use setup::{
     pack_to_vec,
     rewards::RewardsManager,
     setup,
-    token::create_associated_token_account,
+    token::{create_associated_token_account, mint_to},
     validator_stake::create_validator_stake,
     vote::create_vote_account,
 };
@@ -24,14 +24,19 @@ use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
     account::{Account, AccountSharedData},
     clock::Clock,
-    instruction::InstructionError,
+    instruction::{AccountMeta, InstructionError},
     program_pack::Pack,
     pubkey::Pubkey,
     rent::Rent,
     signature::{Keypair, Signer},
+    sysvar::SysvarId,
     transaction::Transaction,
 };
-use spl_token_2022::state::{Account as SplAccount, AccountState};
+use spl_token_2022::{
+    extension::{PodStateWithExtensions, PodStateWithExtensionsMut},
+    pod::PodAccount,
+    state::{Account as SplAccount, AccountState},
+};
 use spl_transfer_hook_interface::get_extra_account_metas_address;
 
 #[tokio::test]
@@ -46,6 +51,18 @@ async fn inactivate_validator_stake() {
     config_account.token_amount_effective = 100;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config_manager.config, &account.into());
+
+    // Mint 100 tokens to the config vault.
+    mint_to(
+        &mut context,
+        &config_manager.mint,
+        &config_manager.mint_authority,
+        &config_manager.vault,
+        100,
+        0,
+    )
+    .await
+    .unwrap();
 
     // Setup rewards pool.
     let rewards_manager = RewardsManager::new(
@@ -93,24 +110,60 @@ async fn inactivate_validator_stake() {
         .mint(config_manager.mint)
         .destination_token_account(destination_token_account)
         .amount(50)
+        .add_remaining_accounts(&[
+            AccountMeta {
+                pubkey: get_extra_account_metas_address(
+                    &config_manager.mint,
+                    &paladin_rewards_program_client::ID,
+                ),
+                is_signer: false,
+                is_writable: false,
+            },
+            AccountMeta {
+                pubkey: rewards_manager.pool,
+                is_signer: false,
+                is_writable: false,
+            },
+            AccountMeta {
+                pubkey: config_manager.vault_holder_rewards,
+                is_signer: false,
+                is_writable: true,
+            },
+            AccountMeta {
+                pubkey: paladin_rewards_program_client::accounts::HolderRewards::find_pda(
+                    &destination_token_account,
+                )
+                .0,
+                is_signer: false,
+                is_writable: true,
+            },
+            AccountMeta {
+                pubkey: paladin_rewards_program_client::ID,
+                is_signer: false,
+                is_writable: false,
+            },
+        ])
         .instruction();
-    add_extra_account_metas_for_transfer(
-        &mut context,
-        &mut inactivate_ix,
-        &paladin_rewards_program_client::ID,
-        &config_manager.vault,
-        &config_manager.mint,
-        &destination_token_account,
-        &authority.pubkey(),
-        50,
-    )
-    .await;
     let tx = Transaction::new_signed_with_payer(
         &[inactivate_ix],
         Some(&context.payer.pubkey()),
         &[&context.payer, &authority],
         context.last_blockhash,
     );
+    println!(
+        "0: {}",
+        get_extra_account_metas_address(&config_manager.mint, &paladin_rewards_program_client::ID)
+    );
+    println!("1: {}", rewards_manager.pool);
+    println!("2: {}", config_manager.vault_holder_rewards);
+    println!(
+        "3: {}",
+        paladin_rewards_program_client::accounts::HolderRewards::find_pda(
+            &destination_token_account
+        )
+        .0
+    );
+    println!("4: {}", paladin_rewards_program_client::ID);
     context.banks_client.process_transaction(tx).await.unwrap();
 
     // Assert - The inactivation should be successful.
@@ -118,7 +171,13 @@ async fn inactivate_validator_stake() {
     let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(stake_account.delegation.staked_amount, 50);
     assert_eq!(stake_account.delegation.effective_amount, 50);
-    assert_eq!(stake_account.delegation.unstake_cooldown, 0);
+
+    // Assert - Cooldown timer should be set to now() + COOLDOWN_TIME.
+    let clock: Clock = bincode::deserialize(&get_account!(context, Clock::id()).data).unwrap();
+    assert_eq!(
+        stake_account.delegation.unstake_cooldown,
+        clock.unix_timestamp as u64 + config_account.cooldown_time_seconds
+    );
 
     // Assert - The total delegated on the config was updated.
     let account = get_account!(context, config_manager.config);
@@ -127,8 +186,8 @@ async fn inactivate_validator_stake() {
 
     // Assert - The authority token account now has 50 PAL.
     let account = get_account!(context, destination_token_account);
-    let account = SplAccount::unpack(&account.data).unwrap();
-    assert_eq!(account.amount, 50);
+    let account = PodStateWithExtensions::<PodAccount>::unpack(&account.data).unwrap();
+    assert_eq!(u64::from(account.base.amount), 50);
 }
 
 /*

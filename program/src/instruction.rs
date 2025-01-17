@@ -546,6 +546,11 @@ pub enum StakeInstruction {
         name = "destination_token_account",
         desc = "Destination token account"
     )]
+    #[account(
+        8,
+        name = "token_program",
+        desc = "Token program"
+    )]
     UnstakeTokens { amount: u64 },
 
     /// Slashes a validator stake account for the given amount.

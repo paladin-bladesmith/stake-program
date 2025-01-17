@@ -805,6 +805,14 @@
           "docs": [
             "Destination token account"
           ]
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Token program"
+          ]
         }
       ],
       "args": [
