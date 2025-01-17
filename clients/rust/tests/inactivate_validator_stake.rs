@@ -16,6 +16,7 @@ use setup::{
     pack_to_vec,
     rewards::RewardsManager,
     setup,
+    token::create_associated_token_account,
     validator_stake::create_validator_stake,
     vote::create_vote_account,
 };
@@ -77,27 +78,9 @@ async fn inactivate_validator_stake() {
     context.set_account(&stake_pda, &account.into());
 
     // Setup the validator authorities receiving token account.
-    let destination_token_account = Pubkey::new_unique();
-    context.set_account(
-        &destination_token_account,
-        &Account {
-            owner: spl_token_2022::ID,
-            data: pack_to_vec(SplAccount {
-                mint: config_manager.mint,
-                owner: authority.pubkey(),
-                amount: 0,
-                delegate: COption::None,
-                delegated_amount: 0,
-                state: AccountState::Initialized,
-                is_native: COption::None,
-                close_authority: COption::None,
-            }),
-            lamports: Rent::default().minimum_balance(SplAccount::LEN),
-            rent_epoch: u64::MAX,
-            executable: false,
-        }
-        .into(),
-    );
+    let destination_token_account =
+        create_associated_token_account(&mut context, &authority.pubkey(), &config_manager.mint)
+            .await;
 
     // When we move the deactivated amount to inactive (50 tokens).
     let mut inactivate_ix = UnstakeTokensBuilder::new()
@@ -227,7 +210,9 @@ async fn fail_inactivate_validator_stake_with_no_deactivated_amount() {
     // Then we expect an error.
     assert_custom_error!(err, PaladinStakeProgramError::NoDeactivatedTokens);
 }
+*/
 
+/*
 #[tokio::test]
 async fn fail_inactivate_validator_stake_with_wrong_config() {
     let mut context = ProgramTest::new(
