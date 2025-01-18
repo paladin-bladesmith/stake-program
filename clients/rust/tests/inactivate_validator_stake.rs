@@ -400,3 +400,86 @@ async fn fail_inactivate_validator_stake_with_active_cooldown() {
     // Then we expect an error.
     assert_custom_error!(err, PaladinStakeProgramError::ActiveUnstakeCooldown);
 }
+
+#[tokio::test]
+async fn fail_validator_stake_deactivate_stake_with_amount_greater_than_stake_amount() {
+    let mut context = setup(&[]).await;
+    let Fixture {
+        config_manager,
+        stake_pda,
+        destination_token_account,
+        authority,
+        ..
+    } = setup_fixture(&mut context, None).await;
+
+    // When we try to deactivate an amount greater than the staked amount.
+    let deactivate_ix = UnstakeTokensBuilder::new()
+        .config(config_manager.config)
+        .stake(stake_pda)
+        .stake_authority(authority.pubkey())
+        .vault(config_manager.vault)
+        .vault_authority(find_vault_pda(&config_manager.config).0)
+        .vault_holder_rewards(config_manager.vault_holder_rewards)
+        .mint(config_manager.mint)
+        .destination_token_account(destination_token_account)
+        .amount(150)
+        .instruction();
+
+    let tx = Transaction::new_signed_with_payer(
+        &[deactivate_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, &authority],
+        context.last_blockhash,
+    );
+    let err = context
+        .banks_client
+        .process_transaction(tx)
+        .await
+        .unwrap_err();
+
+    // Then we expect an error.
+    assert_instruction_error!(err, InstructionError::ArithmeticOverflow);
+}
+
+#[tokio::test]
+async fn fail_validator_stake_deactivate_stake_with_maximum_deactivation_amount_exceeded() {
+    let mut context = setup(&[]).await;
+    let Fixture {
+        config_manager,
+        stake_pda,
+        destination_token_account,
+        authority,
+        ..
+    } = setup_fixture(&mut context, None).await;
+
+    // When we try to deactivate a greater amount than the maximum allowed.
+    let deactivate_ix = UnstakeTokensBuilder::new()
+        .config(config_manager.config)
+        .stake(stake_pda)
+        .stake_authority(authority.pubkey())
+        .vault(config_manager.vault)
+        .vault_authority(find_vault_pda(&config_manager.config).0)
+        .vault_holder_rewards(config_manager.vault_holder_rewards)
+        .mint(config_manager.mint)
+        .destination_token_account(destination_token_account)
+        .amount(100) // 100% of stake.
+        .instruction();
+
+    let tx = Transaction::new_signed_with_payer(
+        &[deactivate_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, &authority],
+        context.last_blockhash,
+    );
+    let err = context
+        .banks_client
+        .process_transaction(tx)
+        .await
+        .unwrap_err();
+
+    // Then we expect an error.
+    assert_custom_error!(
+        err,
+        PaladinStakeProgramError::MaximumDeactivationAmountExceeded
+    );
+}

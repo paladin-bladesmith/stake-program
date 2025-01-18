@@ -14,7 +14,7 @@ use crate::{
     require,
     state::{
         create_vault_pda, find_sol_staker_stake_pda, find_validator_stake_pda,
-        get_vault_pda_signer_seeds, Config, SolStakerStake, ValidatorStake,
+        get_vault_pda_signer_seeds, Config, SolStakerStake, ValidatorStake, MAX_BASIS_POINTS,
     },
 };
 
@@ -148,6 +148,24 @@ pub fn process_unstake_tokens<'info>(
     require!(
         delegation.unstake_cooldown < now,
         StakeError::ActiveUnstakeCooldown,
+    );
+
+    // Validate the amount.
+    require!(
+        amount <= delegation.staked_amount,
+        StakeError::InsufficientStakeAmount
+    );
+    let max_deactivation_amount = (delegation.staked_amount as u128)
+        .checked_mul(config.max_deactivation_basis_points as u128)
+        .and_then(|p| p.checked_div(MAX_BASIS_POINTS))
+        .and_then(|amount| u64::try_from(amount).ok())
+        .ok_or(ProgramError::ArithmeticOverflow)?;
+    require!(
+        amount <= max_deactivation_amount,
+        StakeError::MaximumDeactivationAmountExceeded,
+        "amount requested ({}), maximum allowed ({})",
+        amount,
+        max_deactivation_amount
     );
 
     // Update staked amount & unstake cooldown.
