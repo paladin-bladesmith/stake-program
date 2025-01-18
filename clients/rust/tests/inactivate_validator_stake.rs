@@ -39,7 +39,7 @@ struct Fixture {
     destination_token_account: Pubkey,
 }
 
-async fn setup_base(context: &mut ProgramTestContext, active_cooldown: Option<u64>) -> Fixture {
+async fn setup_fixture(context: &mut ProgramTestContext, active_cooldown: Option<u64>) -> Fixture {
     // Given a config account (total amount delegated = 100).
     let config_manager = ConfigManager::new(context).await;
     let mut account = get_account!(context, config_manager.config);
@@ -110,7 +110,7 @@ async fn inactivate_validator_stake() {
         authority,
         stake_pda,
         destination_token_account,
-    } = setup_base(&mut context, None).await;
+    } = setup_fixture(&mut context, None).await;
 
     // When we move the deactivated amount to inactive (50 tokens).
     let inactivate_ix = UnstakeTokensBuilder::new()
@@ -198,7 +198,7 @@ async fn fail_inactivate_validator_stake_with_cooldown() {
         stake_pda,
         destination_token_account,
         ..
-    } = setup_base(&mut context, Some(1)).await;
+    } = setup_fixture(&mut context, Some(1)).await;
 
     // When we try to inactivate the stake without any deactivated amount.
     let inactivate_ix = UnstakeTokensBuilder::new()
@@ -237,7 +237,7 @@ async fn fail_inactivate_validator_stake_with_wrong_config_for_vault() {
         stake_pda,
         destination_token_account,
         ..
-    } = setup_base(&mut context, None).await;
+    } = setup_fixture(&mut context, None).await;
 
     // And we create a second config.
     let wrong_config = create_config(&mut context).await;
@@ -278,7 +278,7 @@ async fn fail_inactivate_validator_stake_with_wrong_config_for_stake() {
         stake_pda,
         destination_token_account,
         ..
-    } = setup_base(&mut context, None).await;
+    } = setup_fixture(&mut context, None).await;
 
     // And we create a second config.
     let wrong_config = ConfigManager::new(&mut context).await;
@@ -320,7 +320,7 @@ async fn fail_inactivate_validator_stake_with_uninitialized_stake_account() {
         stake_pda,
         destination_token_account,
         ..
-    } = setup_base(&mut context, None).await;
+    } = setup_fixture(&mut context, None).await;
 
     // Uninitialize the stake account.
     context.set_account(
@@ -370,7 +370,7 @@ async fn fail_inactivate_validator_stake_with_active_cooldown() {
         stake_pda,
         destination_token_account,
         ..
-    } = setup_base(&mut context, Some(1)).await;
+    } = setup_fixture(&mut context, Some(1)).await;
 
     // When we try to move the deactivated amount to inactive before the end of
     // the cooldown period.
