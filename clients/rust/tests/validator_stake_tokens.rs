@@ -86,7 +86,6 @@ async fn validator_stake_tokens_simple() {
 
     let config_state = get_account!(context, config_manager.config);
     let config_state = Config::from_bytes(&config_state.data).unwrap();
-    println!("{:?}", config_state);
     let mut stake_ix = ValidatorStakeTokensBuilder::new()
         .config(config_manager.config)
         .validator_stake(stake_manager.stake)

@@ -31,16 +31,6 @@ async fn sol_staker_stake_tokens_simple() {
 
     // Given a config, validator stake and sol staker stake accounts with 5 SOL staked.
     let config_manager = ConfigManager::new(&mut context).await;
-    // println!(
-    //     "{:?}",
-    //     get_account!(
-    //         context,
-    //         get_extra_account_metas_address(
-    //             &config_manager.mint,
-    //             &paladin_rewards_program_client::ID,
-    //         )
-    //     )
-    // );
     let validator_stake_manager =
         ValidatorStakeManager::new(&mut context, &config_manager.config).await;
     let sol_staker_staker_manager = SolStakerStakeManager::new(
@@ -51,16 +41,6 @@ async fn sol_staker_stake_tokens_simple() {
         5_000_000_000, // 5 SOL staked
     )
     .await;
-    // println!(
-    //     "{:?}",
-    //     get_account!(
-    //         context,
-    //         get_extra_account_metas_address(
-    //             &config_manager.mint,
-    //             &paladin_rewards_program_client::ID,
-    //         )
-    //     )
-    // );
 
     // And we initialize the holder rewards accounts and mint 6_500_000_000 tokens.
     let rewards_manager = RewardsManager::new(
