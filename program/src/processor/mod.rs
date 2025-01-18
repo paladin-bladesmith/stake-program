@@ -489,14 +489,14 @@ fn process_slash_for_delegation(args: SlashArgs) -> ProgramResult {
 
     // Compute actual slash & new stake numbers.
     let actual_slash = std::cmp::min(amount, delegation.staked_amount);
-    let active = delegation
+    let staked_amount = delegation
         .staked_amount
         .checked_sub(actual_slash)
         .ok_or(ProgramError::ArithmeticOverflow)?;
     // NB: Effective is updated by the caller via `sync_effective`.
 
     // Update stake amounts.
-    delegation.staked_amount = active;
+    delegation.staked_amount = staked_amount;
 
     // Burn the tokens from the vault account (if there are tokens to slash).
     if actual_slash > 0 {
