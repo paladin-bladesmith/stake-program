@@ -291,35 +291,6 @@ pub fn unpack_delegation_mut_checked<'a>(
     Ok(delegation)
 }
 
-/// Unpacks the delegation information from either a `SolStakerStake` and `ValidatorStake`
-/// accounts.
-///
-/// This function will validate that the account data is initialized.
-#[inline]
-pub fn unpack_delegation_mut_unchecked(
-    stake_data: &mut [u8],
-) -> Result<&mut Delegation, ProgramError> {
-    let delegation = match &stake_data[..ArrayDiscriminator::LENGTH] {
-        SolStakerStake::SPL_DISCRIMINATOR_SLICE => {
-            let sol_staker = unpack_initialized_mut::<SolStakerStake>(stake_data)?;
-            &mut sol_staker.delegation
-        }
-        ValidatorStake::SPL_DISCRIMINATOR_SLICE => {
-            let validator = unpack_initialized_mut::<ValidatorStake>(stake_data)?;
-            &mut validator.delegation
-        }
-        _ => return Err(ProgramError::InvalidAccountData),
-    };
-
-    Ok(delegation)
-}
-
-pub(crate) struct HarvestAccounts<'a, 'info> {
-    pub(crate) config: &'a AccountInfo<'info>,
-    pub(crate) vault_holder_rewards: &'a AccountInfo<'info>,
-    pub(crate) authority: &'a AccountInfo<'info>,
-}
-
 pub(crate) fn sync_config_lamports(
     config: &AccountInfo,
     config_state: &mut Config,
@@ -337,6 +308,12 @@ pub(crate) fn sync_config_lamports(
     config_state.lamports_last = config.lamports();
 
     Ok(())
+}
+
+pub(crate) struct HarvestAccounts<'a, 'info> {
+    pub(crate) config: &'a AccountInfo<'info>,
+    pub(crate) vault_holder_rewards: &'a AccountInfo<'info>,
+    pub(crate) authority: &'a AccountInfo<'info>,
 }
 
 pub(crate) fn harvest(
@@ -434,16 +411,16 @@ pub(crate) fn sync_effective(
 ) -> ProgramResult {
     let lamports_stake = std::cmp::max(lamports_stake, lamports_stake_min);
     let limit = calculate_maximum_stake_for_lamports_amount(lamports_stake)?;
-    let staker_effective = std::cmp::min(delegation.staked_amount, limit);
+    let new_effective_amount = std::cmp::min(delegation.staked_amount, limit);
 
     // Update states.
     config.token_amount_effective = config
         .token_amount_effective
         .checked_sub(delegation.effective_amount)
         .ok_or(ProgramError::ArithmeticOverflow)?
-        .checked_add(staker_effective)
+        .checked_add(new_effective_amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
-    delegation.effective_amount = staker_effective;
+    delegation.effective_amount = new_effective_amount;
 
     Ok(())
 }
