@@ -52,33 +52,27 @@ pub enum PaladinStakeProgramError {
     /// 13 - Amount exeeds maximum deactivation amount
     #[error("Amount exeeds maximum deactivation amount")]
     MaximumDeactivationAmountExceeded = 0xD,
-    /// 14 - Active deactivation cooldown
-    #[error("Active deactivation cooldown")]
-    ActiveDeactivationCooldown = 0xE,
-    /// 15 - No deactivated tokens
-    #[error("No deactivated tokens")]
-    NoDeactivatedTokens = 0xF,
-    /// 16 - Incorrect vault account
+    /// 14 - Active unstake cooldown
+    #[error("Active unstake cooldown")]
+    ActiveUnstakeCooldown = 0xE,
+    /// 15 - Incorrect vault account
     #[error("Incorrect vault account")]
-    IncorrectVaultAccount = 0x10,
-    /// 17 - Not enough inactivated tokens
-    #[error("Not enough inactivated tokens")]
-    NotEnoughInactivatedTokens = 0x11,
-    /// 18 - Invalid destination account
+    IncorrectVaultAccount = 0xF,
+    /// 16 - Invalid destination account
     #[error("Invalid destination account")]
-    InvalidDestinationAccount = 0x12,
-    /// 19 - Invalid slash amount
+    InvalidDestinationAccount = 0x10,
+    /// 17 - Invalid slash amount
     #[error("Invalid slash amount")]
-    InvalidSlashAmount = 0x13,
-    /// 20 - Undelegated SOL stake account
+    InvalidSlashAmount = 0x11,
+    /// 18 - Undelegated SOL stake account
     #[error("Undelegated SOL stake account")]
-    UndelegatedSolStakeAccount = 0x14,
-    /// 21 - Total stake amount exceeds SOL limit
+    UndelegatedSolStakeAccount = 0x12,
+    /// 19 - Total stake amount exceeds SOL limit
     #[error("Total stake amount exceeds SOL limit")]
-    TotalStakeAmountExceedsSolLimit = 0x15,
-    /// 22 - Incorrect SOL stake account
+    TotalStakeAmountExceedsSolLimit = 0x13,
+    /// 20 - Incorrect SOL stake account
     #[error("Incorrect SOL stake account")]
-    IncorrectSolStakeAccount = 0x16,
+    IncorrectSolStakeAccount = 0x14,
 }
 
 impl solana_program::program_error::PrintProgramError for PaladinStakeProgramError {

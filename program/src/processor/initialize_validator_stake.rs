@@ -117,11 +117,9 @@ pub fn process_initialize_validator_stake(
     *validator_stake = ValidatorStake {
         _discriminator: ValidatorStake::SPL_DISCRIMINATOR.into(),
         delegation: Delegation {
-            active_amount: 0,
+            staked_amount: 0,
             effective_amount: 0,
-            deactivation_timestamp: None,
-            deactivating_amount: 0,
-            inactive_amount: 0,
+            unstake_cooldown: 0,
             authority: withdraw_authority,
             validator_vote: *ctx.accounts.validator_vote.key,
             // NB: Will be set on the first stake.

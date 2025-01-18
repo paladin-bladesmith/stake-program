@@ -80,7 +80,7 @@ pub struct SolStakerSetAuthorityOverrideInstructionData {
 
 impl SolStakerSetAuthorityOverrideInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 18 }
+        Self { discriminator: 15 }
     }
 }
 

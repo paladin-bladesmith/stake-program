@@ -2705,6 +2705,7 @@ name = "paladin-stake-program-client"
 version = "0.0.1"
 dependencies = [
  "assert_matches",
+ "bincode",
  "borsh 0.10.4",
  "num-derive 0.3.3",
  "num-traits",

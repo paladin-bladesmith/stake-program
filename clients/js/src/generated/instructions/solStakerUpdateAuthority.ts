@@ -59,7 +59,7 @@ export type SolStakerUpdateAuthorityInstructionDataArgs = {};
 export function getSolStakerUpdateAuthorityInstructionDataEncoder(): Encoder<SolStakerUpdateAuthorityInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', getU8Encoder()]]),
-    (value) => ({ ...value, discriminator: 17 })
+    (value) => ({ ...value, discriminator: 14 })
   );
 }
 

@@ -83,10 +83,6 @@ async fn validator_stake_tokens_simple() {
     // - raw amount to be staked: 65
     // - current lamports staked: 50
     // - stake limit: 1.3 * 50 = 65
-
-    let config_state = get_account!(context, config_manager.config);
-    let config_state = Config::from_bytes(&config_state.data).unwrap();
-    println!("{:?}", config_state);
     let mut stake_ix = ValidatorStakeTokensBuilder::new()
         .config(config_manager.config)
         .validator_stake(stake_manager.stake)
@@ -121,7 +117,7 @@ async fn validator_stake_tokens_simple() {
     // Assert - The tokens are staked.
     let account = get_account!(context, stake_manager.stake);
     let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake_account.delegation.active_amount, 65);
+    assert_eq!(stake_account.delegation.staked_amount, 65);
 
     // Assert - The vault account has 50 tokens.
     let account = get_account!(context, config_manager.vault);
@@ -593,7 +589,7 @@ async fn fail_validator_stake_tokens_without_staked_sol() {
     let account = ValidatorStake::from_bytes(&account.data).unwrap();
     assert_eq!(account.total_staked_lamports_amount, 0);
     assert_eq!(account.delegation.effective_amount, 0);
-    assert_eq!(account.delegation.active_amount, 50);
+    assert_eq!(account.delegation.staked_amount, 50);
 }
 
 #[tokio::test]
@@ -695,5 +691,5 @@ async fn validator_stake_tokens_with_insufficient_staked_sol_effective_capped() 
         stake_account.total_staked_lamports_amount
     );
     assert_eq!(account.delegation.effective_amount, 2_600_000_000);
-    assert_eq!(account.delegation.active_amount, 2_600_000_001);
+    assert_eq!(account.delegation.staked_amount, 2_600_000_001);
 }

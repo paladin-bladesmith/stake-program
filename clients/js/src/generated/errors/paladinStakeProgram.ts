@@ -34,27 +34,23 @@ export const PALADIN_STAKE_PROGRAM_ERROR__INSUFFICIENT_STAKE_AMOUNT = 0xb; // 11
 export const PALADIN_STAKE_PROGRAM_ERROR__INVALID_AMOUNT = 0xc; // 12
 /** MaximumDeactivationAmountExceeded: Amount exeeds maximum deactivation amount */
 export const PALADIN_STAKE_PROGRAM_ERROR__MAXIMUM_DEACTIVATION_AMOUNT_EXCEEDED = 0xd; // 13
-/** ActiveDeactivationCooldown: Active deactivation cooldown */
-export const PALADIN_STAKE_PROGRAM_ERROR__ACTIVE_DEACTIVATION_COOLDOWN = 0xe; // 14
-/** NoDeactivatedTokens: No deactivated tokens */
-export const PALADIN_STAKE_PROGRAM_ERROR__NO_DEACTIVATED_TOKENS = 0xf; // 15
+/** ActiveUnstakeCooldown: Active unstake cooldown */
+export const PALADIN_STAKE_PROGRAM_ERROR__ACTIVE_UNSTAKE_COOLDOWN = 0xe; // 14
 /** IncorrectVaultAccount: Incorrect vault account */
-export const PALADIN_STAKE_PROGRAM_ERROR__INCORRECT_VAULT_ACCOUNT = 0x10; // 16
-/** NotEnoughInactivatedTokens: Not enough inactivated tokens */
-export const PALADIN_STAKE_PROGRAM_ERROR__NOT_ENOUGH_INACTIVATED_TOKENS = 0x11; // 17
+export const PALADIN_STAKE_PROGRAM_ERROR__INCORRECT_VAULT_ACCOUNT = 0xf; // 15
 /** InvalidDestinationAccount: Invalid destination account */
-export const PALADIN_STAKE_PROGRAM_ERROR__INVALID_DESTINATION_ACCOUNT = 0x12; // 18
+export const PALADIN_STAKE_PROGRAM_ERROR__INVALID_DESTINATION_ACCOUNT = 0x10; // 16
 /** InvalidSlashAmount: Invalid slash amount */
-export const PALADIN_STAKE_PROGRAM_ERROR__INVALID_SLASH_AMOUNT = 0x13; // 19
+export const PALADIN_STAKE_PROGRAM_ERROR__INVALID_SLASH_AMOUNT = 0x11; // 17
 /** UndelegatedSolStakeAccount: Undelegated SOL stake account */
-export const PALADIN_STAKE_PROGRAM_ERROR__UNDELEGATED_SOL_STAKE_ACCOUNT = 0x14; // 20
+export const PALADIN_STAKE_PROGRAM_ERROR__UNDELEGATED_SOL_STAKE_ACCOUNT = 0x12; // 18
 /** TotalStakeAmountExceedsSolLimit: Total stake amount exceeds SOL limit */
-export const PALADIN_STAKE_PROGRAM_ERROR__TOTAL_STAKE_AMOUNT_EXCEEDS_SOL_LIMIT = 0x15; // 21
+export const PALADIN_STAKE_PROGRAM_ERROR__TOTAL_STAKE_AMOUNT_EXCEEDS_SOL_LIMIT = 0x13; // 19
 /** IncorrectSolStakeAccount: Incorrect SOL stake account */
-export const PALADIN_STAKE_PROGRAM_ERROR__INCORRECT_SOL_STAKE_ACCOUNT = 0x16; // 22
+export const PALADIN_STAKE_PROGRAM_ERROR__INCORRECT_SOL_STAKE_ACCOUNT = 0x14; // 20
 
 export type PaladinStakeProgramError =
-  | typeof PALADIN_STAKE_PROGRAM_ERROR__ACTIVE_DEACTIVATION_COOLDOWN
+  | typeof PALADIN_STAKE_PROGRAM_ERROR__ACTIVE_UNSTAKE_COOLDOWN
   | typeof PALADIN_STAKE_PROGRAM_ERROR__AMOUNT_GREATER_THAN_ZERO
   | typeof PALADIN_STAKE_PROGRAM_ERROR__AUTHORITY_NOT_SET
   | typeof PALADIN_STAKE_PROGRAM_ERROR__CLOSE_AUTHORITY_NOT_NONE
@@ -73,8 +69,6 @@ export type PaladinStakeProgramError =
   | typeof PALADIN_STAKE_PROGRAM_ERROR__INVALID_TRANSFER_HOOK_PROGRAM_ID
   | typeof PALADIN_STAKE_PROGRAM_ERROR__MAXIMUM_DEACTIVATION_AMOUNT_EXCEEDED
   | typeof PALADIN_STAKE_PROGRAM_ERROR__MISSING_TRANSFER_HOOK
-  | typeof PALADIN_STAKE_PROGRAM_ERROR__NO_DEACTIVATED_TOKENS
-  | typeof PALADIN_STAKE_PROGRAM_ERROR__NOT_ENOUGH_INACTIVATED_TOKENS
   | typeof PALADIN_STAKE_PROGRAM_ERROR__TOTAL_STAKE_AMOUNT_EXCEEDS_SOL_LIMIT
   | typeof PALADIN_STAKE_PROGRAM_ERROR__UNDELEGATED_SOL_STAKE_ACCOUNT;
 
@@ -83,7 +77,7 @@ let paladinStakeProgramErrorMessages:
   | undefined;
 if (__DEV__) {
   paladinStakeProgramErrorMessages = {
-    [PALADIN_STAKE_PROGRAM_ERROR__ACTIVE_DEACTIVATION_COOLDOWN]: `Active deactivation cooldown`,
+    [PALADIN_STAKE_PROGRAM_ERROR__ACTIVE_UNSTAKE_COOLDOWN]: `Active unstake cooldown`,
     [PALADIN_STAKE_PROGRAM_ERROR__AMOUNT_GREATER_THAN_ZERO]: `Amount cannot be greater than zero`,
     [PALADIN_STAKE_PROGRAM_ERROR__AUTHORITY_NOT_SET]: `Authority is not set`,
     [PALADIN_STAKE_PROGRAM_ERROR__CLOSE_AUTHORITY_NOT_NONE]: `Close authority must be none`,
@@ -102,8 +96,6 @@ if (__DEV__) {
     [PALADIN_STAKE_PROGRAM_ERROR__INVALID_TRANSFER_HOOK_PROGRAM_ID]: `Invalid transfer hook program id`,
     [PALADIN_STAKE_PROGRAM_ERROR__MAXIMUM_DEACTIVATION_AMOUNT_EXCEEDED]: `Amount exeeds maximum deactivation amount`,
     [PALADIN_STAKE_PROGRAM_ERROR__MISSING_TRANSFER_HOOK]: `Missing transfer hook`,
-    [PALADIN_STAKE_PROGRAM_ERROR__NO_DEACTIVATED_TOKENS]: `No deactivated tokens`,
-    [PALADIN_STAKE_PROGRAM_ERROR__NOT_ENOUGH_INACTIVATED_TOKENS]: `Not enough inactivated tokens`,
     [PALADIN_STAKE_PROGRAM_ERROR__TOTAL_STAKE_AMOUNT_EXCEEDS_SOL_LIMIT]: `Total stake amount exceeds SOL limit`,
     [PALADIN_STAKE_PROGRAM_ERROR__UNDELEGATED_SOL_STAKE_ACCOUNT]: `Undelegated SOL stake account`,
   };

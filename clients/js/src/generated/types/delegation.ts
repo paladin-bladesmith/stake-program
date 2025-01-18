@@ -21,19 +21,11 @@ import {
   type Decoder,
   type Encoder,
 } from '@solana/web3.js';
-import {
-  getNullableU64Decoder,
-  getNullableU64Encoder,
-  type NullableU64,
-  type NullableU64Args,
-} from '../../hooked';
 
 export type Delegation = {
-  activeAmount: bigint;
-  inactiveAmount: bigint;
+  stakedAmount: bigint;
   effectiveAmount: bigint;
-  deactivationTimestamp: NullableU64;
-  deactivatingAmount: bigint;
+  unstakeCooldown: bigint;
   authority: Address;
   validatorVote: Address;
   lastSeenHolderRewardsPerToken: bigint;
@@ -41,11 +33,9 @@ export type Delegation = {
 };
 
 export type DelegationArgs = {
-  activeAmount: number | bigint;
-  inactiveAmount: number | bigint;
+  stakedAmount: number | bigint;
   effectiveAmount: number | bigint;
-  deactivationTimestamp: NullableU64Args;
-  deactivatingAmount: number | bigint;
+  unstakeCooldown: number | bigint;
   authority: Address;
   validatorVote: Address;
   lastSeenHolderRewardsPerToken: number | bigint;
@@ -54,11 +44,9 @@ export type DelegationArgs = {
 
 export function getDelegationEncoder(): Encoder<DelegationArgs> {
   return getStructEncoder([
-    ['activeAmount', getU64Encoder()],
-    ['inactiveAmount', getU64Encoder()],
+    ['stakedAmount', getU64Encoder()],
     ['effectiveAmount', getU64Encoder()],
-    ['deactivationTimestamp', getNullableU64Encoder()],
-    ['deactivatingAmount', getU64Encoder()],
+    ['unstakeCooldown', getU64Encoder()],
     ['authority', getAddressEncoder()],
     ['validatorVote', getAddressEncoder()],
     ['lastSeenHolderRewardsPerToken', getU128Encoder()],
@@ -68,11 +56,9 @@ export function getDelegationEncoder(): Encoder<DelegationArgs> {
 
 export function getDelegationDecoder(): Decoder<Delegation> {
   return getStructDecoder([
-    ['activeAmount', getU64Decoder()],
-    ['inactiveAmount', getU64Decoder()],
+    ['stakedAmount', getU64Decoder()],
     ['effectiveAmount', getU64Decoder()],
-    ['deactivationTimestamp', getNullableU64Decoder()],
-    ['deactivatingAmount', getU64Decoder()],
+    ['unstakeCooldown', getU64Decoder()],
     ['authority', getAddressDecoder()],
     ['validatorVote', getAddressDecoder()],
     ['lastSeenHolderRewardsPerToken', getU128Decoder()],

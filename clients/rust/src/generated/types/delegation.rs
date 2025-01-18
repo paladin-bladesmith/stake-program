@@ -5,7 +5,6 @@
 //! <https://github.com/kinobi-so/kinobi>
 //!
 
-use crate::hooked::NullableU64;
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 use solana_program::pubkey::Pubkey;
@@ -13,11 +12,9 @@ use solana_program::pubkey::Pubkey;
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Delegation {
-    pub active_amount: u64,
-    pub inactive_amount: u64,
+    pub staked_amount: u64,
     pub effective_amount: u64,
-    pub deactivation_timestamp: NullableU64,
-    pub deactivating_amount: u64,
+    pub unstake_cooldown: u64,
     #[cfg_attr(
         feature = "serde",
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")

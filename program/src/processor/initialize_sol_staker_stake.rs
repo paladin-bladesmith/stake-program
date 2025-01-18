@@ -182,11 +182,9 @@ pub fn process_initialize_sol_staker_stake(
     *stake = SolStakerStake {
         _discriminator: SolStakerStake::SPL_DISCRIMINATOR.into(),
         delegation: Delegation {
-            active_amount: 0,
+            staked_amount: 0,
             effective_amount: 0,
-            deactivation_timestamp: None,
-            deactivating_amount: 0,
-            inactive_amount: 0,
+            unstake_cooldown: 0,
             authority: sol_staker_authority_override.unwrap_or(withdrawer),
             validator_vote,
             // NB: Will be set on the first stake.

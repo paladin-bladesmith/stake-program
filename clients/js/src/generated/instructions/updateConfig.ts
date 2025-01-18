@@ -68,7 +68,7 @@ export function getUpdateConfigInstructionDataEncoder(): Encoder<UpdateConfigIns
       ['discriminator', getU8Encoder()],
       ['configField', getConfigFieldEncoder()],
     ]),
-    (value) => ({ ...value, discriminator: 10 })
+    (value) => ({ ...value, discriminator: 7 })
   );
 }
 

@@ -81,7 +81,7 @@ export function getSolStakerMoveTokensInstructionDataEncoder(): Encoder<SolStake
       ['discriminator', getU8Encoder()],
       ['amount', getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 16 })
+    (value) => ({ ...value, discriminator: 13 })
   );
 }
 

@@ -101,7 +101,7 @@ export type HarvestSolStakerRewardsInstructionDataArgs = {};
 export function getHarvestSolStakerRewardsInstructionDataEncoder(): Encoder<HarvestSolStakerRewardsInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', getU8Encoder()]]),
-    (value) => ({ ...value, discriminator: 13 })
+    (value) => ({ ...value, discriminator: 10 })
   );
 }
 

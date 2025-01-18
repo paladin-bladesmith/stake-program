@@ -94,7 +94,7 @@ pub struct HarvestHolderRewardsInstructionData {
 
 impl HarvestHolderRewardsInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 6 }
+        Self { discriminator: 3 }
     }
 }
 

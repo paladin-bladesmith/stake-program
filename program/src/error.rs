@@ -67,39 +67,31 @@ pub enum StakeError {
     #[error("Amount exeeds maximum deactivation amount")]
     MaximumDeactivationAmountExceeded,
 
-    /// 14 - Active deactivation cooldown
-    #[error("Active deactivation cooldown")]
-    ActiveDeactivationCooldown,
+    /// 14 - Active unstake cooldown
+    #[error("Active unstake cooldown")]
+    ActiveUnstakeCooldown,
 
-    /// 15 - No deactivated tokens
-    #[error("No deactivated tokens")]
-    NoDeactivatedTokens,
-
-    /// 16 - Incorrect vault account
+    /// 15 - Incorrect vault account
     #[error("Incorrect vault account")]
     IncorrectVaultAccount,
 
-    /// 17 - Not enough inactivated tokens
-    #[error("Not enough inactivated tokens")]
-    NotEnoughInactivatedTokens,
-
-    /// 18 - Invalid destination account
+    /// 16 - Invalid destination account
     #[error("Invalid destination account")]
     InvalidDestinationAccount,
 
-    /// 19 - Invalid slash amount
+    /// 17 - Invalid slash amount
     #[error("Invalid slash amount")]
     InvalidSlashAmount,
 
-    /// 20 - Undelegated SOL stake account
+    /// 18 - Undelegated SOL stake account
     #[error("Undelegated SOL stake account")]
     UndelegatedSolStakeAccount,
 
-    /// 21 - Total stake amount exceeds SOL limit
+    /// 19 - Total stake amount exceeds SOL limit
     #[error("Total stake amount exceeds SOL limit")]
     TotalStakeAmountExceedsSolLimit,
 
-    /// 22 - Incorrect SOL stake account
+    /// 20 - Incorrect SOL stake account
     #[error("Incorrect SOL stake account")]
     IncorrectSolStakeAccount,
 }

@@ -105,12 +105,12 @@ pub fn process_sol_staker_stake_tokens<'a>(
     require!(amount > 0, StakeError::InvalidAmount);
     let staker_active = sol_staker_stake
         .delegation
-        .active_amount
+        .staked_amount
         .checked_add(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
     // Update states.
-    sol_staker_stake.delegation.active_amount = staker_active;
+    sol_staker_stake.delegation.staked_amount = staker_active;
     sync_effective(
         config,
         &mut sol_staker_stake.delegation,

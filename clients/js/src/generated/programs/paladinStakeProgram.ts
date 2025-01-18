@@ -8,12 +8,9 @@
 
 import { containsBytes, getU8Encoder, type Address } from '@solana/web3.js';
 import {
-  type ParsedDeactivateStakeInstruction,
   type ParsedHarvestHolderRewardsInstruction,
   type ParsedHarvestSolStakerRewardsInstruction,
   type ParsedHarvestValidatorRewardsInstruction,
-  type ParsedInactivateSolStakerStakeInstruction,
-  type ParsedInactivateValidatorStakeInstruction,
   type ParsedInitializeConfigInstruction,
   type ParsedInitializeSolStakerStakeInstruction,
   type ParsedInitializeValidatorStakeInstruction,
@@ -24,10 +21,10 @@ import {
   type ParsedSolStakerSetAuthorityOverrideInstruction,
   type ParsedSolStakerStakeTokensInstruction,
   type ParsedSolStakerUpdateAuthorityInstruction,
+  type ParsedUnstakeTokensInstruction,
   type ParsedUpdateConfigInstruction,
   type ParsedValidatorOverrideStakedLamportsInstruction,
   type ParsedValidatorStakeTokensInstruction,
-  type ParsedWithdrawInactiveStakeInstruction,
 } from '../instructions';
 
 export const PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS =
@@ -43,9 +40,6 @@ export enum PaladinStakeProgramInstruction {
   InitializeConfig,
   InitializeValidatorStake,
   ValidatorStakeTokens,
-  DeactivateStake,
-  InactivateValidatorStake,
-  WithdrawInactiveStake,
   HarvestHolderRewards,
   HarvestValidatorRewards,
   SlashValidatorStake,
@@ -54,7 +48,7 @@ export enum PaladinStakeProgramInstruction {
   InitializeSolStakerStake,
   SolStakerStakeTokens,
   HarvestSolStakerRewards,
-  InactivateSolStakerStake,
+  UnstakeTokens,
   SlashSolStakerStake,
   SolStakerMoveTokens,
   SolStakerUpdateAuthority,
@@ -77,54 +71,45 @@ export function identifyPaladinStakeProgramInstruction(
     return PaladinStakeProgramInstruction.ValidatorStakeTokens;
   }
   if (containsBytes(data, getU8Encoder().encode(3), 0)) {
-    return PaladinStakeProgramInstruction.DeactivateStake;
-  }
-  if (containsBytes(data, getU8Encoder().encode(4), 0)) {
-    return PaladinStakeProgramInstruction.InactivateValidatorStake;
-  }
-  if (containsBytes(data, getU8Encoder().encode(5), 0)) {
-    return PaladinStakeProgramInstruction.WithdrawInactiveStake;
-  }
-  if (containsBytes(data, getU8Encoder().encode(6), 0)) {
     return PaladinStakeProgramInstruction.HarvestHolderRewards;
   }
-  if (containsBytes(data, getU8Encoder().encode(7), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(4), 0)) {
     return PaladinStakeProgramInstruction.HarvestValidatorRewards;
   }
-  if (containsBytes(data, getU8Encoder().encode(8), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(5), 0)) {
     return PaladinStakeProgramInstruction.SlashValidatorStake;
   }
-  if (containsBytes(data, getU8Encoder().encode(9), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(6), 0)) {
     return PaladinStakeProgramInstruction.SetAuthority;
   }
-  if (containsBytes(data, getU8Encoder().encode(10), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(7), 0)) {
     return PaladinStakeProgramInstruction.UpdateConfig;
   }
-  if (containsBytes(data, getU8Encoder().encode(11), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(8), 0)) {
     return PaladinStakeProgramInstruction.InitializeSolStakerStake;
   }
-  if (containsBytes(data, getU8Encoder().encode(12), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(9), 0)) {
     return PaladinStakeProgramInstruction.SolStakerStakeTokens;
   }
-  if (containsBytes(data, getU8Encoder().encode(13), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(10), 0)) {
     return PaladinStakeProgramInstruction.HarvestSolStakerRewards;
   }
-  if (containsBytes(data, getU8Encoder().encode(14), 0)) {
-    return PaladinStakeProgramInstruction.InactivateSolStakerStake;
+  if (containsBytes(data, getU8Encoder().encode(11), 0)) {
+    return PaladinStakeProgramInstruction.UnstakeTokens;
   }
-  if (containsBytes(data, getU8Encoder().encode(15), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(12), 0)) {
     return PaladinStakeProgramInstruction.SlashSolStakerStake;
   }
-  if (containsBytes(data, getU8Encoder().encode(16), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(13), 0)) {
     return PaladinStakeProgramInstruction.SolStakerMoveTokens;
   }
-  if (containsBytes(data, getU8Encoder().encode(17), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(14), 0)) {
     return PaladinStakeProgramInstruction.SolStakerUpdateAuthority;
   }
-  if (containsBytes(data, getU8Encoder().encode(18), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(15), 0)) {
     return PaladinStakeProgramInstruction.SolStakerSetAuthorityOverride;
   }
-  if (containsBytes(data, getU8Encoder().encode(19), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(16), 0)) {
     return PaladinStakeProgramInstruction.ValidatorOverrideStakedLamports;
   }
   throw new Error(
@@ -144,15 +129,6 @@ export type ParsedPaladinStakeProgramInstruction<
   | ({
       instructionType: PaladinStakeProgramInstruction.ValidatorStakeTokens;
     } & ParsedValidatorStakeTokensInstruction<TProgram>)
-  | ({
-      instructionType: PaladinStakeProgramInstruction.DeactivateStake;
-    } & ParsedDeactivateStakeInstruction<TProgram>)
-  | ({
-      instructionType: PaladinStakeProgramInstruction.InactivateValidatorStake;
-    } & ParsedInactivateValidatorStakeInstruction<TProgram>)
-  | ({
-      instructionType: PaladinStakeProgramInstruction.WithdrawInactiveStake;
-    } & ParsedWithdrawInactiveStakeInstruction<TProgram>)
   | ({
       instructionType: PaladinStakeProgramInstruction.HarvestHolderRewards;
     } & ParsedHarvestHolderRewardsInstruction<TProgram>)
@@ -178,8 +154,8 @@ export type ParsedPaladinStakeProgramInstruction<
       instructionType: PaladinStakeProgramInstruction.HarvestSolStakerRewards;
     } & ParsedHarvestSolStakerRewardsInstruction<TProgram>)
   | ({
-      instructionType: PaladinStakeProgramInstruction.InactivateSolStakerStake;
-    } & ParsedInactivateSolStakerStakeInstruction<TProgram>)
+      instructionType: PaladinStakeProgramInstruction.UnstakeTokens;
+    } & ParsedUnstakeTokensInstruction<TProgram>)
   | ({
       instructionType: PaladinStakeProgramInstruction.SlashSolStakerStake;
     } & ParsedSlashSolStakerStakeInstruction<TProgram>)

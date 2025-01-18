@@ -105,12 +105,12 @@ pub fn process_validator_stake_tokens<'a>(
     require!(amount > 0, StakeError::InvalidAmount);
     let validator_active = stake
         .delegation
-        .active_amount
+        .staked_amount
         .checked_add(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
     // Update states.
-    stake.delegation.active_amount = validator_active;
+    stake.delegation.staked_amount = validator_active;
     sync_effective(
         config,
         &mut stake.delegation,

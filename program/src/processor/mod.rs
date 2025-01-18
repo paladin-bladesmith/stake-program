@@ -12,15 +12,14 @@ use crate::{
     error::StakeError,
     instruction::{
         accounts::{
-            DeactivateStakeAccounts, HarvestHolderRewardsAccounts, HarvestSolStakerRewardsAccounts,
-            HarvestValidatorRewardsAccounts, InactivateSolStakerStakeAccounts,
-            InactivateValidatorStakeAccounts, InitializeConfigAccounts,
+            HarvestHolderRewardsAccounts, HarvestSolStakerRewardsAccounts,
+            HarvestValidatorRewardsAccounts, InitializeConfigAccounts,
             InitializeSolStakerStakeAccounts, InitializeValidatorStakeAccounts,
             SetAuthorityAccounts, SlashSolStakerStakeAccounts, SlashValidatorStakeAccounts,
             SolStakerMoveTokensAccounts, SolStakerSetAuthorityOverrideAccounts,
-            SolStakerStakeTokensAccounts, SolStakerUpdateAuthorityAccounts, UpdateConfigAccounts,
-            ValidatorOverrideStakedLamportsAccounts, ValidatorStakeTokensAccounts,
-            WithdrawInactiveStakeAccounts,
+            SolStakerStakeTokensAccounts, SolStakerUpdateAuthorityAccounts, UnstakeTokensAccounts,
+            UpdateConfigAccounts, ValidatorOverrideStakedLamportsAccounts,
+            ValidatorStakeTokensAccounts,
         },
         StakeInstruction,
     },
@@ -31,12 +30,9 @@ use crate::{
     },
 };
 
-mod deactivate_stake;
 mod harvest_holder_rewards;
 mod harvest_sol_staker_rewards;
 mod harvest_validator_rewards;
-mod inactivate_sol_staker_stake;
-mod inactivate_validator_stake;
 mod initialize_config;
 mod initialize_sol_staker_stake;
 mod initialize_validator_stake;
@@ -47,10 +43,10 @@ mod sol_staker_move_tokens;
 mod sol_staker_set_authority_override;
 mod sol_staker_stake_tokens;
 mod sol_staker_update_authority;
+mod unstake_tokens;
 mod update_config;
 mod validator_override_staked_lamports;
 mod validator_stake_tokens;
-mod withdraw_inactive_stake;
 
 #[inline(always)]
 pub fn process_instruction<'a>(
@@ -61,14 +57,6 @@ pub fn process_instruction<'a>(
     let instruction = StakeInstruction::unpack(instruction_data)?;
 
     match instruction {
-        StakeInstruction::DeactivateStake(amount) => {
-            msg!("Instruction: DeactivateStake");
-            deactivate_stake::process_deactivate_stake(
-                program_id,
-                DeactivateStakeAccounts::context(accounts)?,
-                amount,
-            )
-        }
         StakeInstruction::HarvestHolderRewards => {
             msg!("Instruction: HarvestHolderRewards");
             harvest_holder_rewards::process_harvest_holder_rewards(
@@ -81,13 +69,6 @@ pub fn process_instruction<'a>(
             harvest_validator_rewards::process_harvest_validator_rewards(
                 program_id,
                 HarvestValidatorRewardsAccounts::context(accounts)?,
-            )
-        }
-        StakeInstruction::InactivateValidatorStake => {
-            msg!("Instruction: InactivateValidatorStake");
-            inactivate_validator_stake::process_inactivate_validator_stake(
-                program_id,
-                InactivateValidatorStakeAccounts::context(accounts)?,
             )
         }
         StakeInstruction::InitializeConfig {
@@ -147,14 +128,6 @@ pub fn process_instruction<'a>(
                 field,
             )
         }
-        StakeInstruction::WithdrawInactiveStake(amount) => {
-            msg!("Instruction: WithdrawInactiveStake");
-            withdraw_inactive_stake::process_withdraw_inactive_stake(
-                program_id,
-                WithdrawInactiveStakeAccounts::context(accounts)?,
-                amount,
-            )
-        }
         StakeInstruction::InitializeSolStakerStake => {
             msg!("Instruction: InitializeSolStakerStake");
             initialize_sol_staker_stake::process_initialize_sol_staker_stake(
@@ -177,11 +150,12 @@ pub fn process_instruction<'a>(
                 HarvestSolStakerRewardsAccounts::context(accounts)?,
             )
         }
-        StakeInstruction::InactivateSolStakerStake => {
-            msg!("Instruction: InactivateSolStakerStake");
-            inactivate_sol_staker_stake::process_inactivate_sol_staker_stake(
+        StakeInstruction::UnstakeTokens { amount } => {
+            msg!("Instruction: UnstakeTokens");
+            unstake_tokens::process_unstake_tokens(
                 program_id,
-                InactivateSolStakerStakeAccounts::context(accounts)?,
+                UnstakeTokensAccounts::context(accounts)?,
+                amount,
             )
         }
         StakeInstruction::SlashSolStakerStake(amount) => {
@@ -391,10 +365,7 @@ pub(crate) fn harvest(
     let holder_reward = calculate_eligible_rewards(
         vault_holder_rewards.last_accumulated_rewards_per_token,
         delegation.last_seen_holder_rewards_per_token.into(),
-        delegation
-            .active_amount
-            .checked_add(delegation.inactive_amount)
-            .ok_or(ProgramError::ArithmeticOverflow)?,
+        delegation.staked_amount,
     )?;
 
     // Claim both at the same time.
@@ -455,7 +426,7 @@ pub(crate) fn sync_effective(
 ) -> ProgramResult {
     let lamports_stake = std::cmp::max(lamports_stake, lamports_stake_min);
     let limit = calculate_maximum_stake_for_lamports_amount(lamports_stake)?;
-    let staker_effective = std::cmp::min(delegation.active_amount, limit);
+    let staker_effective = std::cmp::min(delegation.staked_amount, limit);
 
     // Update states.
     config.token_amount_effective = config
@@ -517,20 +488,15 @@ fn process_slash_for_delegation(args: SlashArgs) -> ProgramResult {
     );
 
     // Compute actual slash & new stake numbers.
-    let actual_slash = std::cmp::min(amount, delegation.active_amount);
-    let active = delegation
-        .active_amount
+    let actual_slash = std::cmp::min(amount, delegation.staked_amount);
+    let staked_amount = delegation
+        .staked_amount
         .checked_sub(actual_slash)
         .ok_or(ProgramError::ArithmeticOverflow)?;
     // NB: Effective is updated by the caller via `sync_effective`.
 
     // Update stake amounts.
-    delegation.active_amount = active;
-
-    // Check if we need to downwards adjust deactivating amount.
-    if delegation.deactivating_amount > delegation.active_amount {
-        delegation.deactivating_amount = delegation.active_amount;
-    }
+    delegation.staked_amount = staked_amount;
 
     // Burn the tokens from the vault account (if there are tokens to slash).
     if actual_slash > 0 {

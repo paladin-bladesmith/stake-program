@@ -96,7 +96,7 @@ async fn update_authority_non_zero_stake() {
     // Stake 10 PAL on the stake account.
     let mut stake = get_account!(context, sol_staker_stake_manager.stake);
     let mut stake_state = SolStakerStake::from_bytes(&stake.data).unwrap();
-    stake_state.delegation.active_amount = 10;
+    stake_state.delegation.staked_amount = 10;
     stake.data = stake_state.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &stake.into());
 
@@ -138,8 +138,6 @@ async fn update_authority_non_zero_stake() {
     let stake = get_account!(context, sol_staker_stake_manager.stake);
     let stake = SolStakerStake::from_bytes(&stake.data).unwrap();
     assert_eq!(stake.delegation.authority, new_authority);
-    assert_eq!(stake.delegation.active_amount, 10);
+    assert_eq!(stake.delegation.staked_amount, 10);
     assert_eq!(stake.delegation.effective_amount, 0);
-    assert_eq!(stake.delegation.deactivating_amount, 0);
-    assert_eq!(stake.delegation.inactive_amount, 0);
 }

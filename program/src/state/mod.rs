@@ -14,7 +14,7 @@ use solana_program::{
     program_error::ProgramError,
     pubkey::{Pubkey, PubkeyError},
 };
-use std::{mem::size_of, num::NonZeroU64};
+use std::mem::size_of;
 
 /// Scaling factor for rewards per token (1e18).
 const REWARDS_PER_TOKEN_SCALING_FACTOR: u128 = 1_000_000_000_000_000_000;
@@ -208,23 +208,13 @@ pub fn calculate_maximum_stake_for_lamports_amount(
 #[derive(Clone, Copy, Default, Pod, ShankType, Zeroable)]
 pub struct Delegation {
     /// Amount of staked tokens currently active.
-    pub active_amount: u64,
-
-    /// Amount that has passed the deactivation period, ready to be withdrawn.
-    ///
-    /// These tokens will receive holder rewards but will not count towards the `effective_amount`
-    /// that determines stake rewards.
-    pub inactive_amount: u64,
+    pub staked_amount: u64,
 
     /// Amount of staked tokens (but capped at 1.3 PAL per SOL).
     pub effective_amount: u64,
 
-    /// Timestamp for when deactivation began. Used to judge if a given stake
-    /// is inactive.
-    pub deactivation_timestamp: Option<NonZeroU64>,
-
-    /// Amount of tokens in the cooling down phase, waiting to become inactive.
-    pub deactivating_amount: u64,
+    /// Unix timestamp for when the next unstake can occur.
+    pub unstake_cooldown: u64,
 
     /// Authority permitted to deactivate and withdraw stake.
     pub authority: Pubkey,

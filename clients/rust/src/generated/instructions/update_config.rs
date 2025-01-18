@@ -59,7 +59,7 @@ pub struct UpdateConfigInstructionData {
 
 impl UpdateConfigInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 10 }
+        Self { discriminator: 7 }
     }
 }
 

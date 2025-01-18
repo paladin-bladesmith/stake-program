@@ -117,16 +117,16 @@ pub(crate) fn process_sol_staker_move_tokens(
     );
 
     // Decrease the staked balance of the source.
-    source_sol_staker_stake.delegation.active_amount = source_sol_staker_stake
+    source_sol_staker_stake.delegation.staked_amount = source_sol_staker_stake
         .delegation
-        .active_amount
+        .staked_amount
         .checked_sub(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
     // Increase the staked balance of the destination.
-    destination_sol_staker_stake.delegation.active_amount = destination_sol_staker_stake
+    destination_sol_staker_stake.delegation.staked_amount = destination_sol_staker_stake
         .delegation
-        .active_amount
+        .staked_amount
         .checked_add(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
