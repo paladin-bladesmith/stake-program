@@ -112,7 +112,7 @@ async fn inactivate_validator_stake() {
         destination_token_account,
     } = setup_fixture(&mut context, None).await;
 
-    // When we move the deactivated amount to inactive (50 tokens).
+    // When we move the deactivated amount to inactive (5 tokens).
     let inactivate_ix = UnstakeTokensBuilder::new()
         .config(config_manager.config)
         .stake(stake_pda)
@@ -122,7 +122,7 @@ async fn inactivate_validator_stake() {
         .vault_holder_rewards(config_manager.vault_holder_rewards)
         .mint(config_manager.mint)
         .destination_token_account(destination_token_account)
-        .amount(50)
+        .amount(5)
         .add_remaining_accounts(&[
             AccountMeta {
                 pubkey: get_extra_account_metas_address(
@@ -168,8 +168,8 @@ async fn inactivate_validator_stake() {
     // Assert - The inactivation should be successful.
     let account = get_account!(context, stake_pda);
     let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake_account.delegation.staked_amount, 50);
-    assert_eq!(stake_account.delegation.effective_amount, 50);
+    assert_eq!(stake_account.delegation.staked_amount, 95);
+    assert_eq!(stake_account.delegation.effective_amount, 95);
 
     // Assert - Cooldown timer should be set to now() + COOLDOWN_TIME.
     let clock: Clock = bincode::deserialize(&get_account!(context, Clock::id()).data).unwrap();
@@ -181,12 +181,12 @@ async fn inactivate_validator_stake() {
     // Assert - The total delegated on the config was updated.
     let account = get_account!(context, config_manager.config);
     let config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(config_account.token_amount_effective, 50);
+    assert_eq!(config_account.token_amount_effective, 95);
 
-    // Assert - The authority token account now has 50 PAL.
+    // Assert - The authority token account now has 5 PAL.
     let account = get_account!(context, destination_token_account);
     let account = PodStateWithExtensions::<PodAccount>::unpack(&account.data).unwrap();
-    assert_eq!(u64::from(account.base.amount), 50);
+    assert_eq!(u64::from(account.base.amount), 5);
 }
 
 #[tokio::test]
