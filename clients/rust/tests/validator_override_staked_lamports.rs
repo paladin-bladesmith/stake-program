@@ -8,7 +8,6 @@ use setup::config::ConfigManager;
 use setup::validator_stake::ValidatorStakeManager;
 use solana_program_test::tokio;
 use solana_sdk::instruction::InstructionError;
-use solana_sdk::program_error::ProgramError;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
@@ -27,9 +26,9 @@ async fn validator_override_staked_lamports_ok() {
     // Set the PAL amount to 5.
     let mut validator_stake = get_account!(context, validator_stake_manager.stake);
     let mut validator_stake_state = ValidatorStake::from_bytes(&validator_stake.data).unwrap();
-    validator_stake_state.delegation.active_amount = 2 * 10u64.pow(9);
+    validator_stake_state.delegation.staked_amount = 2 * 10u64.pow(9);
     assert_eq!(
-        validator_stake_state.delegation.active_amount,
+        validator_stake_state.delegation.staked_amount,
         2 * 10u64.pow(9)
     );
     assert_eq!(validator_stake_state.delegation.effective_amount, 0);
@@ -37,7 +36,6 @@ async fn validator_override_staked_lamports_ok() {
     context.set_account(&validator_stake_manager.stake, &validator_stake.into());
 
     // Act - Update the authority.
-    let authority_override = Pubkey::new_unique();
     let sol_staker_update_authority = ValidatorOverrideStakedLamports {
         config: config.config,
         config_authority: config.authority.pubkey(),
@@ -64,7 +62,7 @@ async fn validator_override_staked_lamports_ok() {
         validator_stake.total_staked_lamports_amount_min,
         10 * 10u64.pow(9)
     );
-    assert_eq!(validator_stake.delegation.active_amount, 2 * 10u64.pow(9));
+    assert_eq!(validator_stake.delegation.staked_amount, 2 * 10u64.pow(9));
     assert_eq!(
         validator_stake.delegation.effective_amount,
         2 * 10u64.pow(9)
@@ -82,9 +80,9 @@ async fn validator_override_staked_lamports_err_config() {
     // Set the PAL amount to 5.
     let mut validator_stake = get_account!(context, validator_stake_manager.stake);
     let mut validator_stake_state = ValidatorStake::from_bytes(&validator_stake.data).unwrap();
-    validator_stake_state.delegation.active_amount = 2 * 10u64.pow(9);
+    validator_stake_state.delegation.staked_amount = 2 * 10u64.pow(9);
     assert_eq!(
-        validator_stake_state.delegation.active_amount,
+        validator_stake_state.delegation.staked_amount,
         2 * 10u64.pow(9)
     );
     assert_eq!(validator_stake_state.delegation.effective_amount, 0);
@@ -129,9 +127,9 @@ async fn validator_override_staked_lamports_err_config_authority() {
     // Set the PAL amount to 5.
     let mut validator_stake = get_account!(context, validator_stake_manager.stake);
     let mut validator_stake_state = ValidatorStake::from_bytes(&validator_stake.data).unwrap();
-    validator_stake_state.delegation.active_amount = 2 * 10u64.pow(9);
+    validator_stake_state.delegation.staked_amount = 2 * 10u64.pow(9);
     assert_eq!(
-        validator_stake_state.delegation.active_amount,
+        validator_stake_state.delegation.staked_amount,
         2 * 10u64.pow(9)
     );
     assert_eq!(validator_stake_state.delegation.effective_amount, 0);
@@ -177,9 +175,9 @@ async fn validator_override_staked_lamports_err_validator_stake_owner() {
     // Set the PAL amount to 5.
     let mut validator_stake = get_account!(context, validator_stake_manager.stake);
     let mut validator_stake_state = ValidatorStake::from_bytes(&validator_stake.data).unwrap();
-    validator_stake_state.delegation.active_amount = 2 * 10u64.pow(9);
+    validator_stake_state.delegation.staked_amount = 2 * 10u64.pow(9);
     assert_eq!(
-        validator_stake_state.delegation.active_amount,
+        validator_stake_state.delegation.staked_amount,
         2 * 10u64.pow(9)
     );
     assert_eq!(validator_stake_state.delegation.effective_amount, 0);

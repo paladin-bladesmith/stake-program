@@ -46,7 +46,7 @@ async fn transfer_to_empty() {
     // Stake 10 PAL on the source account.
     let mut source = get_account!(context, source_sol_staker_staker_manager.stake);
     let mut source_state = SolStakerStake::from_bytes(&source.data).unwrap();
-    source_state.delegation.active_amount = 10;
+    source_state.delegation.staked_amount = 10;
     source.data = source_state.try_to_vec().unwrap();
     context.set_account(&source_sol_staker_staker_manager.stake, &source.into());
 
@@ -70,18 +70,14 @@ async fn transfer_to_empty() {
     // Assert - Source account has 5 PAL staked.
     let source = get_account!(context, source_sol_staker_staker_manager.stake);
     let source = SolStakerStake::from_bytes(&source.data).unwrap();
-    assert_eq!(source.delegation.active_amount, 7);
+    assert_eq!(source.delegation.staked_amount, 7);
     assert_eq!(source.delegation.effective_amount, 7);
-    assert_eq!(source.delegation.deactivating_amount, 0);
-    assert_eq!(source.delegation.inactive_amount, 0);
 
     // Assert - Destination account has 5 PAL staked.
     let destination = get_account!(context, destination_sol_staker_staker_manager.stake);
     let destination = SolStakerStake::from_bytes(&destination.data).unwrap();
-    assert_eq!(destination.delegation.active_amount, 3);
+    assert_eq!(destination.delegation.staked_amount, 3);
     assert_eq!(destination.delegation.effective_amount, 3);
-    assert_eq!(destination.delegation.deactivating_amount, 0);
-    assert_eq!(destination.delegation.inactive_amount, 0);
 
     // Assert - Config has 10 effective.
     let config = get_account!(context, config_manager.config);
@@ -121,14 +117,14 @@ async fn transfer_to_not_empty() {
     // Stake 10 PAL on the source account.
     let mut source = get_account!(context, source_sol_staker_staker_manager.stake);
     let mut source_state = SolStakerStake::from_bytes(&source.data).unwrap();
-    source_state.delegation.active_amount = 10;
+    source_state.delegation.staked_amount = 10;
     source.data = source_state.try_to_vec().unwrap();
     context.set_account(&source_sol_staker_staker_manager.stake, &source.into());
 
     // Stake 10 PAL on the destination account.
     let mut destination = get_account!(context, destination_sol_staker_staker_manager.stake);
     let mut destination_state = SolStakerStake::from_bytes(&destination.data).unwrap();
-    destination_state.delegation.active_amount = 10;
+    destination_state.delegation.staked_amount = 10;
     destination.data = destination_state.try_to_vec().unwrap();
     context.set_account(
         &destination_sol_staker_staker_manager.stake,
@@ -155,18 +151,14 @@ async fn transfer_to_not_empty() {
     // Assert - Source account has 5 PAL staked.
     let source = get_account!(context, source_sol_staker_staker_manager.stake);
     let source = SolStakerStake::from_bytes(&source.data).unwrap();
-    assert_eq!(source.delegation.active_amount, 5);
+    assert_eq!(source.delegation.staked_amount, 5);
     assert_eq!(source.delegation.effective_amount, 5);
-    assert_eq!(source.delegation.deactivating_amount, 0);
-    assert_eq!(source.delegation.inactive_amount, 0);
 
     // Assert - Destination account has 15 PAL staked.
     let destination = get_account!(context, destination_sol_staker_staker_manager.stake);
     let destination = SolStakerStake::from_bytes(&destination.data).unwrap();
-    assert_eq!(destination.delegation.active_amount, 15);
+    assert_eq!(destination.delegation.staked_amount, 15);
     assert_eq!(destination.delegation.effective_amount, 15);
-    assert_eq!(destination.delegation.deactivating_amount, 0);
-    assert_eq!(destination.delegation.inactive_amount, 0);
 
     // Assert - Config has 20 effective.
     let config = get_account!(context, config_manager.config);
@@ -206,14 +198,14 @@ async fn transfer_without_authority_signature_err() {
     // Stake 10 PAL on the source account.
     let mut source = get_account!(context, source_sol_staker_staker_manager.stake);
     let mut source_state = SolStakerStake::from_bytes(&source.data).unwrap();
-    source_state.delegation.active_amount = 10;
+    source_state.delegation.staked_amount = 10;
     source.data = source_state.try_to_vec().unwrap();
     context.set_account(&source_sol_staker_staker_manager.stake, &source.into());
 
     // Stake 10 PAL on the destination account.
     let mut destination = get_account!(context, destination_sol_staker_staker_manager.stake);
     let mut destination_state = SolStakerStake::from_bytes(&destination.data).unwrap();
-    destination_state.delegation.active_amount = 10;
+    destination_state.delegation.staked_amount = 10;
     destination.data = destination_state.try_to_vec().unwrap();
     context.set_account(
         &destination_sol_staker_staker_manager.stake,
@@ -277,14 +269,14 @@ async fn transfer_with_wrong_authority_err() {
     // Stake 10 PAL on the source account.
     let mut source = get_account!(context, source_sol_staker_staker_manager.stake);
     let mut source_state = SolStakerStake::from_bytes(&source.data).unwrap();
-    source_state.delegation.active_amount = 10;
+    source_state.delegation.staked_amount = 10;
     source.data = source_state.try_to_vec().unwrap();
     context.set_account(&source_sol_staker_staker_manager.stake, &source.into());
 
     // Stake 10 PAL on the destination account.
     let mut destination = get_account!(context, destination_sol_staker_staker_manager.stake);
     let mut destination_state = SolStakerStake::from_bytes(&destination.data).unwrap();
-    destination_state.delegation.active_amount = 10;
+    destination_state.delegation.staked_amount = 10;
     destination.data = destination_state.try_to_vec().unwrap();
     context.set_account(
         &destination_sol_staker_staker_manager.stake,
@@ -347,14 +339,14 @@ async fn transfer_to_account_with_different_authority_err() {
     // Stake 10 PAL on the source account.
     let mut source = get_account!(context, source_sol_staker_staker_manager.stake);
     let mut source_state = SolStakerStake::from_bytes(&source.data).unwrap();
-    source_state.delegation.active_amount = 10;
+    source_state.delegation.staked_amount = 10;
     source.data = source_state.try_to_vec().unwrap();
     context.set_account(&source_sol_staker_staker_manager.stake, &source.into());
 
     // Stake 10 PAL on the destination account.
     let mut destination = get_account!(context, destination_sol_staker_staker_manager.stake);
     let mut destination_state = SolStakerStake::from_bytes(&destination.data).unwrap();
-    destination_state.delegation.active_amount = 10;
+    destination_state.delegation.staked_amount = 10;
     destination.data = destination_state.try_to_vec().unwrap();
     context.set_account(
         &destination_sol_staker_staker_manager.stake,
