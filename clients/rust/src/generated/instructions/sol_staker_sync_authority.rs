@@ -9,7 +9,7 @@ use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 
 /// Accounts.
-pub struct SolStakerUpdateAuthority {
+pub struct SolStakerSyncAuthority {
     /// Config
     pub config: solana_program::pubkey::Pubkey,
     /// Sol staker stake
@@ -18,7 +18,7 @@ pub struct SolStakerUpdateAuthority {
     pub sol_staker_authority_override: solana_program::pubkey::Pubkey,
 }
 
-impl SolStakerUpdateAuthority {
+impl SolStakerSyncAuthority {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(&[])
     }
@@ -41,7 +41,7 @@ impl SolStakerUpdateAuthority {
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let data = SolStakerUpdateAuthorityInstructionData::new()
+        let data = SolStakerSyncAuthorityInstructionData::new()
             .try_to_vec()
             .unwrap();
 
@@ -54,23 +54,23 @@ impl SolStakerUpdateAuthority {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct SolStakerUpdateAuthorityInstructionData {
+pub struct SolStakerSyncAuthorityInstructionData {
     discriminator: u8,
 }
 
-impl SolStakerUpdateAuthorityInstructionData {
+impl SolStakerSyncAuthorityInstructionData {
     pub fn new() -> Self {
         Self { discriminator: 14 }
     }
 }
 
-impl Default for SolStakerUpdateAuthorityInstructionData {
+impl Default for SolStakerSyncAuthorityInstructionData {
     fn default() -> Self {
         Self::new()
     }
 }
 
-/// Instruction builder for `SolStakerUpdateAuthority`.
+/// Instruction builder for `SolStakerSyncAuthority`.
 ///
 /// ### Accounts:
 ///
@@ -78,14 +78,14 @@ impl Default for SolStakerUpdateAuthorityInstructionData {
 ///   1. `[writable]` sol_staker_stake
 ///   2. `[]` sol_staker_authority_override
 #[derive(Clone, Debug, Default)]
-pub struct SolStakerUpdateAuthorityBuilder {
+pub struct SolStakerSyncAuthorityBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
     sol_staker_stake: Option<solana_program::pubkey::Pubkey>,
     sol_staker_authority_override: Option<solana_program::pubkey::Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl SolStakerUpdateAuthorityBuilder {
+impl SolStakerSyncAuthorityBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -133,7 +133,7 @@ impl SolStakerUpdateAuthorityBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = SolStakerUpdateAuthority {
+        let accounts = SolStakerSyncAuthority {
             config: self.config.expect("config is not set"),
             sol_staker_stake: self.sol_staker_stake.expect("sol_staker_stake is not set"),
             sol_staker_authority_override: self
@@ -145,8 +145,8 @@ impl SolStakerUpdateAuthorityBuilder {
     }
 }
 
-/// `sol_staker_update_authority` CPI accounts.
-pub struct SolStakerUpdateAuthorityCpiAccounts<'a, 'b> {
+/// `sol_staker_sync_authority` CPI accounts.
+pub struct SolStakerSyncAuthorityCpiAccounts<'a, 'b> {
     /// Config
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
     /// Sol staker stake
@@ -155,8 +155,8 @@ pub struct SolStakerUpdateAuthorityCpiAccounts<'a, 'b> {
     pub sol_staker_authority_override: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `sol_staker_update_authority` CPI instruction.
-pub struct SolStakerUpdateAuthorityCpi<'a, 'b> {
+/// `sol_staker_sync_authority` CPI instruction.
+pub struct SolStakerSyncAuthorityCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// Config
@@ -167,10 +167,10 @@ pub struct SolStakerUpdateAuthorityCpi<'a, 'b> {
     pub sol_staker_authority_override: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-impl<'a, 'b> SolStakerUpdateAuthorityCpi<'a, 'b> {
+impl<'a, 'b> SolStakerSyncAuthorityCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: SolStakerUpdateAuthorityCpiAccounts<'a, 'b>,
+        accounts: SolStakerSyncAuthorityCpiAccounts<'a, 'b>,
     ) -> Self {
         Self {
             __program: program,
@@ -232,7 +232,7 @@ impl<'a, 'b> SolStakerUpdateAuthorityCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let data = SolStakerUpdateAuthorityInstructionData::new()
+        let data = SolStakerSyncAuthorityInstructionData::new()
             .try_to_vec()
             .unwrap();
 
@@ -258,7 +258,7 @@ impl<'a, 'b> SolStakerUpdateAuthorityCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `SolStakerUpdateAuthority` via CPI.
+/// Instruction builder for `SolStakerSyncAuthority` via CPI.
 ///
 /// ### Accounts:
 ///
@@ -266,13 +266,13 @@ impl<'a, 'b> SolStakerUpdateAuthorityCpi<'a, 'b> {
 ///   1. `[writable]` sol_staker_stake
 ///   2. `[]` sol_staker_authority_override
 #[derive(Clone, Debug)]
-pub struct SolStakerUpdateAuthorityCpiBuilder<'a, 'b> {
-    instruction: Box<SolStakerUpdateAuthorityCpiBuilderInstruction<'a, 'b>>,
+pub struct SolStakerSyncAuthorityCpiBuilder<'a, 'b> {
+    instruction: Box<SolStakerSyncAuthorityCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> SolStakerUpdateAuthorityCpiBuilder<'a, 'b> {
+impl<'a, 'b> SolStakerSyncAuthorityCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(SolStakerUpdateAuthorityCpiBuilderInstruction {
+        let instruction = Box::new(SolStakerSyncAuthorityCpiBuilderInstruction {
             __program: program,
             config: None,
             sol_staker_stake: None,
@@ -349,7 +349,7 @@ impl<'a, 'b> SolStakerUpdateAuthorityCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let instruction = SolStakerUpdateAuthorityCpi {
+        let instruction = SolStakerSyncAuthorityCpi {
             __program: self.instruction.__program,
 
             config: self.instruction.config.expect("config is not set"),
@@ -372,7 +372,7 @@ impl<'a, 'b> SolStakerUpdateAuthorityCpiBuilder<'a, 'b> {
 }
 
 #[derive(Clone, Debug)]
-struct SolStakerUpdateAuthorityCpiBuilderInstruction<'a, 'b> {
+struct SolStakerSyncAuthorityCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     sol_staker_stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,

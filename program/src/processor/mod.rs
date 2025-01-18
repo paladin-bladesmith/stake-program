@@ -17,7 +17,7 @@ use crate::{
             InitializeSolStakerStakeAccounts, InitializeValidatorStakeAccounts,
             SetAuthorityAccounts, SlashSolStakerStakeAccounts, SlashValidatorStakeAccounts,
             SolStakerMoveTokensAccounts, SolStakerSetAuthorityOverrideAccounts,
-            SolStakerStakeTokensAccounts, SolStakerUpdateAuthorityAccounts, UnstakeTokensAccounts,
+            SolStakerStakeTokensAccounts, SolStakerSyncAuthorityAccounts, UnstakeTokensAccounts,
             UpdateConfigAccounts, ValidatorOverrideStakedLamportsAccounts,
             ValidatorStakeTokensAccounts,
         },
@@ -42,7 +42,7 @@ mod slash_validator_stake;
 mod sol_staker_move_tokens;
 mod sol_staker_set_authority_override;
 mod sol_staker_stake_tokens;
-mod sol_staker_update_authority;
+mod sol_staker_sync_authority;
 mod unstake_tokens;
 mod update_config;
 mod validator_override_staked_lamports;
@@ -174,11 +174,11 @@ pub fn process_instruction<'a>(
                 amount,
             )
         }
-        StakeInstruction::SolStakerUpdateAuthority => {
+        StakeInstruction::SolStakerSyncAuthority => {
             msg!("Instruction: SolStakerUpdateAuthority");
-            sol_staker_update_authority::process_sol_staker_update_authority(
+            sol_staker_sync_authority::process_sol_staker_update_authority(
                 program_id,
-                SolStakerUpdateAuthorityAccounts::context(accounts)?,
+                SolStakerSyncAuthorityAccounts::context(accounts)?,
             )
         }
         StakeInstruction::SolStakerSetAuthorityOverride {

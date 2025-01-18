@@ -20,7 +20,7 @@ import {
   type ParsedSolStakerMoveTokensInstruction,
   type ParsedSolStakerSetAuthorityOverrideInstruction,
   type ParsedSolStakerStakeTokensInstruction,
-  type ParsedSolStakerUpdateAuthorityInstruction,
+  type ParsedSolStakerSyncAuthorityInstruction,
   type ParsedUnstakeTokensInstruction,
   type ParsedUpdateConfigInstruction,
   type ParsedValidatorOverrideStakedLamportsInstruction,
@@ -51,7 +51,7 @@ export enum PaladinStakeProgramInstruction {
   UnstakeTokens,
   SlashSolStakerStake,
   SolStakerMoveTokens,
-  SolStakerUpdateAuthority,
+  SolStakerSyncAuthority,
   SolStakerSetAuthorityOverride,
   ValidatorOverrideStakedLamports,
 }
@@ -104,7 +104,7 @@ export function identifyPaladinStakeProgramInstruction(
     return PaladinStakeProgramInstruction.SolStakerMoveTokens;
   }
   if (containsBytes(data, getU8Encoder().encode(14), 0)) {
-    return PaladinStakeProgramInstruction.SolStakerUpdateAuthority;
+    return PaladinStakeProgramInstruction.SolStakerSyncAuthority;
   }
   if (containsBytes(data, getU8Encoder().encode(15), 0)) {
     return PaladinStakeProgramInstruction.SolStakerSetAuthorityOverride;
@@ -163,8 +163,8 @@ export type ParsedPaladinStakeProgramInstruction<
       instructionType: PaladinStakeProgramInstruction.SolStakerMoveTokens;
     } & ParsedSolStakerMoveTokensInstruction<TProgram>)
   | ({
-      instructionType: PaladinStakeProgramInstruction.SolStakerUpdateAuthority;
-    } & ParsedSolStakerUpdateAuthorityInstruction<TProgram>)
+      instructionType: PaladinStakeProgramInstruction.SolStakerSyncAuthority;
+    } & ParsedSolStakerSyncAuthorityInstruction<TProgram>)
   | ({
       instructionType: PaladinStakeProgramInstruction.SolStakerSetAuthorityOverride;
     } & ParsedSolStakerSetAuthorityOverrideInstruction<TProgram>)

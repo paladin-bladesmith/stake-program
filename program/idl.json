@@ -969,7 +969,7 @@
       }
     },
     {
-      "name": "SolStakerUpdateAuthority",
+      "name": "SolStakerSyncAuthority",
       "accounts": [
         {
           "name": "config",

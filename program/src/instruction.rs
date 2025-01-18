@@ -661,7 +661,7 @@ pub enum StakeInstruction {
         name = "sol_staker_authority_override",
         desc = "Sol staker authority override"
     )]
-    SolStakerUpdateAuthority,
+    SolStakerSyncAuthority,
     /// Globally overrides a given authority (intended for stake pools).
     ///
     /// Only callable by governance.
@@ -811,7 +811,7 @@ impl StakeInstruction {
                 data.extend_from_slice(&amount.to_le_bytes());
                 data
             }
-            StakeInstruction::SolStakerUpdateAuthority => vec![14],
+            StakeInstruction::SolStakerSyncAuthority => vec![14],
             StakeInstruction::SolStakerSetAuthorityOverride {
                 authority_original,
                 authority_override,
@@ -926,7 +926,7 @@ impl StakeInstruction {
                 Ok(StakeInstruction::SolStakerMoveTokens { amount })
             }
             // 14
-            Some((&14, _)) => Ok(StakeInstruction::SolStakerUpdateAuthority),
+            Some((&14, _)) => Ok(StakeInstruction::SolStakerSyncAuthority),
             // 15 - SolStakerSetAuthorityOverride: Pubkey (32), Pubkey (32)
             Some((&15, rest)) if rest.len() == 64 => {
                 let authority_original = Pubkey::new_from_array(*array_ref![rest, 0, 32]);

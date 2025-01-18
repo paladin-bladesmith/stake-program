@@ -1,7 +1,7 @@
 use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey};
 
 use crate::{
-    instruction::accounts::{Context, SolStakerUpdateAuthorityAccounts},
+    instruction::accounts::{Context, SolStakerSyncAuthorityAccounts},
     processor::{unpack_initialized, unpack_initialized_mut},
     require,
     state::{
@@ -11,7 +11,7 @@ use crate::{
 
 pub(crate) fn process_sol_staker_update_authority(
     program_id: &Pubkey,
-    ctx: Context<SolStakerUpdateAuthorityAccounts>,
+    ctx: Context<SolStakerSyncAuthorityAccounts>,
 ) -> ProgramResult {
     // Config
     // - Owner must be this program.

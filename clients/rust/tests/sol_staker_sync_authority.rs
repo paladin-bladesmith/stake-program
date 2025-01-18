@@ -1,7 +1,7 @@
 #![cfg(feature = "test-sbf")]
 use borsh::BorshSerialize;
 use paladin_stake_program_client::accounts::SolStakerStake;
-use paladin_stake_program_client::instructions::SolStakerUpdateAuthority;
+use paladin_stake_program_client::instructions::SolStakerSyncAuthority;
 use setup::validator_stake::ValidatorStakeManager;
 use setup::{config::ConfigManager, sol_staker_stake::SolStakerStakeManager};
 use solana_program_test::tokio;
@@ -53,7 +53,7 @@ async fn update_authority_zero_stake() {
     );
 
     // Act - Update the authority.
-    let sol_staker_update_authority = SolStakerUpdateAuthority {
+    let sol_staker_update_authority = SolStakerSyncAuthority {
         config: config_manager.config,
         sol_staker_stake: sol_staker_stake_manager.stake,
         sol_staker_authority_override,
@@ -120,7 +120,7 @@ async fn update_authority_non_zero_stake() {
     );
 
     // Act - Update the authority.
-    let sol_staker_update_authority = SolStakerUpdateAuthority {
+    let sol_staker_update_authority = SolStakerSyncAuthority {
         config: config_manager.config,
         sol_staker_stake: sol_staker_stake_manager.stake,
         sol_staker_authority_override: sol_staker_authority_override,

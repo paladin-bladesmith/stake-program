@@ -18,7 +18,7 @@ export * from './slashValidatorStake';
 export * from './solStakerMoveTokens';
 export * from './solStakerSetAuthorityOverride';
 export * from './solStakerStakeTokens';
-export * from './solStakerUpdateAuthority';
+export * from './solStakerSyncAuthority';
 export * from './unstakeTokens';
 export * from './updateConfig';
 export * from './validatorOverrideStakedLamports';

@@ -27,7 +27,7 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export type SolStakerUpdateAuthorityInstruction<
+export type SolStakerSyncAuthorityInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountSolStakerStake extends string | IAccountMeta<string> = string,
@@ -52,32 +52,32 @@ export type SolStakerUpdateAuthorityInstruction<
     ]
   >;
 
-export type SolStakerUpdateAuthorityInstructionData = { discriminator: number };
+export type SolStakerSyncAuthorityInstructionData = { discriminator: number };
 
-export type SolStakerUpdateAuthorityInstructionDataArgs = {};
+export type SolStakerSyncAuthorityInstructionDataArgs = {};
 
-export function getSolStakerUpdateAuthorityInstructionDataEncoder(): Encoder<SolStakerUpdateAuthorityInstructionDataArgs> {
+export function getSolStakerSyncAuthorityInstructionDataEncoder(): Encoder<SolStakerSyncAuthorityInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', getU8Encoder()]]),
     (value) => ({ ...value, discriminator: 14 })
   );
 }
 
-export function getSolStakerUpdateAuthorityInstructionDataDecoder(): Decoder<SolStakerUpdateAuthorityInstructionData> {
+export function getSolStakerSyncAuthorityInstructionDataDecoder(): Decoder<SolStakerSyncAuthorityInstructionData> {
   return getStructDecoder([['discriminator', getU8Decoder()]]);
 }
 
-export function getSolStakerUpdateAuthorityInstructionDataCodec(): Codec<
-  SolStakerUpdateAuthorityInstructionDataArgs,
-  SolStakerUpdateAuthorityInstructionData
+export function getSolStakerSyncAuthorityInstructionDataCodec(): Codec<
+  SolStakerSyncAuthorityInstructionDataArgs,
+  SolStakerSyncAuthorityInstructionData
 > {
   return combineCodec(
-    getSolStakerUpdateAuthorityInstructionDataEncoder(),
-    getSolStakerUpdateAuthorityInstructionDataDecoder()
+    getSolStakerSyncAuthorityInstructionDataEncoder(),
+    getSolStakerSyncAuthorityInstructionDataDecoder()
   );
 }
 
-export type SolStakerUpdateAuthorityInput<
+export type SolStakerSyncAuthorityInput<
   TAccountConfig extends string = string,
   TAccountSolStakerStake extends string = string,
   TAccountSolStakerAuthorityOverride extends string = string,
@@ -90,17 +90,17 @@ export type SolStakerUpdateAuthorityInput<
   solStakerAuthorityOverride: Address<TAccountSolStakerAuthorityOverride>;
 };
 
-export function getSolStakerUpdateAuthorityInstruction<
+export function getSolStakerSyncAuthorityInstruction<
   TAccountConfig extends string,
   TAccountSolStakerStake extends string,
   TAccountSolStakerAuthorityOverride extends string,
 >(
-  input: SolStakerUpdateAuthorityInput<
+  input: SolStakerSyncAuthorityInput<
     TAccountConfig,
     TAccountSolStakerStake,
     TAccountSolStakerAuthorityOverride
   >
-): SolStakerUpdateAuthorityInstruction<
+): SolStakerSyncAuthorityInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountSolStakerStake,
@@ -131,8 +131,8 @@ export function getSolStakerUpdateAuthorityInstruction<
       getAccountMeta(accounts.solStakerAuthorityOverride),
     ],
     programAddress,
-    data: getSolStakerUpdateAuthorityInstructionDataEncoder().encode({}),
-  } as SolStakerUpdateAuthorityInstruction<
+    data: getSolStakerSyncAuthorityInstructionDataEncoder().encode({}),
+  } as SolStakerSyncAuthorityInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountSolStakerStake,
@@ -142,7 +142,7 @@ export function getSolStakerUpdateAuthorityInstruction<
   return instruction;
 }
 
-export type ParsedSolStakerUpdateAuthorityInstruction<
+export type ParsedSolStakerSyncAuthorityInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
@@ -155,17 +155,17 @@ export type ParsedSolStakerUpdateAuthorityInstruction<
     /** Sol staker authority override */
     solStakerAuthorityOverride: TAccountMetas[2];
   };
-  data: SolStakerUpdateAuthorityInstructionData;
+  data: SolStakerSyncAuthorityInstructionData;
 };
 
-export function parseSolStakerUpdateAuthorityInstruction<
+export function parseSolStakerSyncAuthorityInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedSolStakerUpdateAuthorityInstruction<TProgram, TAccountMetas> {
+): ParsedSolStakerSyncAuthorityInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 3) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -183,7 +183,7 @@ export function parseSolStakerUpdateAuthorityInstruction<
       solStakerStake: getNextAccount(),
       solStakerAuthorityOverride: getNextAccount(),
     },
-    data: getSolStakerUpdateAuthorityInstructionDataDecoder().decode(
+    data: getSolStakerSyncAuthorityInstructionDataDecoder().decode(
       instruction.data
     ),
   };
