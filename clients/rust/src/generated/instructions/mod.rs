@@ -22,6 +22,7 @@ pub(crate) mod r#unstake_tokens;
 pub(crate) mod r#update_config;
 pub(crate) mod r#validator_override_staked_lamports;
 pub(crate) mod r#validator_stake_tokens;
+pub(crate) mod r#validator_sync_authority;
 
 pub use self::r#harvest_holder_rewards::*;
 pub use self::r#harvest_sol_staker_rewards::*;
@@ -40,3 +41,4 @@ pub use self::r#unstake_tokens::*;
 pub use self::r#update_config::*;
 pub use self::r#validator_override_staked_lamports::*;
 pub use self::r#validator_stake_tokens::*;
+pub use self::r#validator_sync_authority::*;

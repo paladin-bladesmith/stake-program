@@ -1108,6 +1108,40 @@
         "type": "u8",
         "value": 16
       }
+    },
+    {
+      "name": "ValidatorSyncAuthority",
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Config"
+          ]
+        },
+        {
+          "name": "validatorStake",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Validator stake"
+          ]
+        },
+        {
+          "name": "validatorVote",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Validator vote"
+          ]
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 17
+      }
     }
   ],
   "accounts": [

@@ -9,7 +9,7 @@ use crate::{
     },
 };
 
-pub(crate) fn process_sol_staker_update_authority(
+pub(crate) fn process_sol_staker_sync_authority(
     program_id: &Pubkey,
     ctx: Context<SolStakerSyncAuthorityAccounts>,
 ) -> ProgramResult {

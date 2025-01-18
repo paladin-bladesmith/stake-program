@@ -19,7 +19,7 @@ use crate::{
             SolStakerMoveTokensAccounts, SolStakerSetAuthorityOverrideAccounts,
             SolStakerStakeTokensAccounts, SolStakerSyncAuthorityAccounts, UnstakeTokensAccounts,
             UpdateConfigAccounts, ValidatorOverrideStakedLamportsAccounts,
-            ValidatorStakeTokensAccounts,
+            ValidatorStakeTokensAccounts, ValidatorSyncAuthorityAccounts,
         },
         StakeInstruction,
     },
@@ -47,6 +47,7 @@ mod unstake_tokens;
 mod update_config;
 mod validator_override_staked_lamports;
 mod validator_stake_tokens;
+mod validator_sync_authority;
 
 #[inline(always)]
 pub fn process_instruction<'a>(
@@ -176,7 +177,7 @@ pub fn process_instruction<'a>(
         }
         StakeInstruction::SolStakerSyncAuthority => {
             msg!("Instruction: SolStakerUpdateAuthority");
-            sol_staker_sync_authority::process_sol_staker_update_authority(
+            sol_staker_sync_authority::process_sol_staker_sync_authority(
                 program_id,
                 SolStakerSyncAuthorityAccounts::context(accounts)?,
             )
@@ -199,6 +200,13 @@ pub fn process_instruction<'a>(
                 program_id,
                 ValidatorOverrideStakedLamportsAccounts::context(accounts)?,
                 amount_min,
+            )
+        }
+        StakeInstruction::ValidatorSyncAuthority => {
+            msg!("Instruction: ValidatorSyncAuthority");
+            validator_sync_authority::process_validator_sync_authority(
+                program_id,
+                ValidatorSyncAuthorityAccounts::context(accounts)?,
             )
         }
     }

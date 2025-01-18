@@ -23,3 +23,4 @@ export * from './unstakeTokens';
 export * from './updateConfig';
 export * from './validatorOverrideStakedLamports';
 export * from './validatorStakeTokens';
+export * from './validatorSyncAuthority';

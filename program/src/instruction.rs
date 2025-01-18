@@ -720,6 +720,26 @@ pub enum StakeInstruction {
         desc = "Vault holder rewards"
     )]
     ValidatorOverrideStakedLamports { amount_min: u64 },
+
+    #[account(
+        0,
+        writable,
+        name = "config",
+        desc = "Config"
+    )]
+    #[account(
+        1,
+        writable,
+        name = "validator_stake",
+        desc = "Validator stake"
+    )]
+    #[account(
+        2,
+        writable,
+        name = "validator_vote",
+        desc = "Validator vote"
+    )]
+    ValidatorSyncAuthority,
 }
 
 impl StakeInstruction {
@@ -828,6 +848,7 @@ impl StakeInstruction {
                 data.extend_from_slice(&amount_min.to_le_bytes());
                 data
             }
+            StakeInstruction::ValidatorSyncAuthority => vec![17],
         }
     }
 
@@ -943,6 +964,8 @@ impl StakeInstruction {
 
                 Ok(StakeInstruction::ValidatorOverrideStakedLamports { amount_min })
             }
+            // 17
+            Some((&17, _)) => Ok(StakeInstruction::ValidatorSyncAuthority),
             _ => Err(ProgramError::InvalidInstructionData),
         }
     }
@@ -1056,6 +1079,14 @@ mod tests {
     #[test]
     fn test_pack_unpack_validator_override_staked_lamports() {
         let original = StakeInstruction::ValidatorOverrideStakedLamports { amount_min: 500 };
+        let packed = original.pack();
+        let unpacked = StakeInstruction::unpack(&packed).unwrap();
+        assert_eq!(original, unpacked);
+    }
+
+    #[test]
+    fn test_pack_unpack_validator_sync_authority() {
+        let original = StakeInstruction::ValidatorSyncAuthority;
         let packed = original.pack();
         let unpacked = StakeInstruction::unpack(&packed).unwrap();
         assert_eq!(original, unpacked);
