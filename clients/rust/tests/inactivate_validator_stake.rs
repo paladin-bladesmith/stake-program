@@ -438,7 +438,7 @@ async fn fail_validator_stake_deactivate_stake_with_amount_greater_than_stake_am
         .unwrap_err();
 
     // Then we expect an error.
-    assert_instruction_error!(err, InstructionError::ArithmeticOverflow);
+    assert_custom_error!(err, PaladinStakeProgramError::InsufficientStakeAmount);
 }
 
 #[tokio::test]

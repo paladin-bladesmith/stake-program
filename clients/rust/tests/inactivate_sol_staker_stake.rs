@@ -27,6 +27,7 @@ use solana_sdk::{
     sysvar::SysvarId,
     transaction::Transaction,
 };
+use spl_token_2022::{extension::PodStateWithExtensions, pod::PodAccount};
 use spl_transfer_hook_interface::get_extra_account_metas_address;
 
 struct Fixture {
@@ -69,7 +70,7 @@ async fn setup_fixture(context: &mut ProgramTestContext, active_cooldown: Option
     // And a validator stake account.
     let validator_stake_manager = ValidatorStakeManager::new(context, &config_manager.config).await;
 
-    // And a SOL staker stake account (amount staked = 100, deactivating amount = 50).
+    // And a SOL staker stake account (amount staked = 100).
     let sol_staker_stake_manager = SolStakerStakeManager::new(
         context,
         &config_manager.config,
@@ -128,7 +129,7 @@ async fn inactivate_sol_staker_stake_base() {
         .vault_holder_rewards(config_manager.vault_holder_rewards)
         .mint(config_manager.mint)
         .destination_token_account(destination_token_account)
-        .amount(50)
+        .amount(5)
         .add_remaining_accounts(&[
             AccountMeta {
                 pubkey: get_extra_account_metas_address(
@@ -174,18 +175,23 @@ async fn inactivate_sol_staker_stake_base() {
     // Assert - The inactivation should be successful.
     let account = get_account!(context, sol_staker_stake_manager.stake);
     let stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(stake_account.delegation.staked_amount, 50);
-    assert_eq!(stake_account.delegation.effective_amount, 50);
+    assert_eq!(stake_account.delegation.staked_amount, 95);
+    assert_eq!(stake_account.delegation.effective_amount, 95);
     let clock: Clock = bincode::deserialize(&get_account!(context, Clock::id()).data).unwrap();
     assert_eq!(
         stake_account.delegation.unstake_cooldown,
         clock.unix_timestamp as u64 + config_account.cooldown_time_seconds
     );
 
+    // Assert - The destination token account received the amount.
+    let account = get_account!(context, destination_token_account);
+    let account = PodStateWithExtensions::<PodAccount>::unpack(&account.data).unwrap();
+    assert_eq!(u64::from(account.base.amount), 5);
+
     // Assert - The total delegated on the config was updated.
     let account = get_account!(context, config_manager.config);
     let config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    assert_eq!(config_account.token_amount_effective, 50);
+    assert_eq!(config_account.token_amount_effective, 95);
 }
 
 #[tokio::test]
@@ -211,7 +217,7 @@ async fn fail_inactivate_sol_staker_stake_with_wrong_config_for_vault() {
         .vault_holder_rewards(config_manager.vault_holder_rewards)
         .mint(config_manager.mint)
         .destination_token_account(destination_token_account)
-        .amount(50)
+        .amount(5)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
         &[inactivate_ix],
@@ -251,7 +257,7 @@ async fn fail_inactivate_sol_staker_stake_with_wrong_config_for_stake() {
         .vault_holder_rewards(wrong_config.vault_holder_rewards)
         .mint(wrong_config.mint)
         .destination_token_account(destination_token_account)
-        .amount(50)
+        .amount(5)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
         &[inactivate_ix],
@@ -300,7 +306,7 @@ async fn fail_inactivate_sol_stake_stake_with_uninitialized_stake_account() {
         .vault_holder_rewards(config_manager.vault_holder_rewards)
         .mint(config_manager.mint)
         .destination_token_account(destination_token_account)
-        .amount(50)
+        .amount(5)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
         &[inactivate_ix],
@@ -340,7 +346,7 @@ async fn fail_inactivate_sol_staker_stake_with_active_cooldown() {
         .vault_holder_rewards(config_manager.vault_holder_rewards)
         .mint(config_manager.mint)
         .destination_token_account(destination_token_account)
-        .amount(50)
+        .amount(5)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
         &[inactivate_ix],
