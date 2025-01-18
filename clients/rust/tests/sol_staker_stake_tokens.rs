@@ -24,7 +24,6 @@ use solana_sdk::{
     transaction::Transaction,
 };
 use spl_token_2022::{extension::StateWithExtensions, state::Account};
-use spl_transfer_hook_interface::get_extra_account_metas_address;
 
 #[tokio::test]
 async fn sol_staker_stake_tokens_simple() {

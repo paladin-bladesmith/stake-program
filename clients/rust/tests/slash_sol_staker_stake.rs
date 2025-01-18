@@ -9,7 +9,6 @@ use paladin_stake_program_client::{
     errors::PaladinStakeProgramError,
     instructions::SlashSolStakerStakeBuilder,
     pdas::{find_sol_staker_stake_pda, find_vault_pda},
-    NullableU64,
 };
 use setup::{
     config::ConfigManager,
@@ -21,7 +20,6 @@ use setup::{
 use solana_program_test::tokio;
 use solana_sdk::{
     account::{Account, AccountSharedData},
-    clock::Clock,
     instruction::InstructionError,
     pubkey::Pubkey,
     signature::{Keypair, Signer},

@@ -3,13 +3,11 @@
 mod setup;
 
 use borsh::BorshSerialize;
-use paladin_rewards_program_client::accounts::HolderRewards;
 use paladin_stake_program_client::{
     accounts::{Config, SolStakerStake, ValidatorStake},
     errors::PaladinStakeProgramError,
     instructions::UnstakeTokensBuilder,
-    pdas::{find_sol_staker_stake_pda, find_vault_pda},
-    NullableU64,
+    pdas::find_vault_pda,
 };
 use setup::{
     config::{create_config, ConfigManager},
@@ -195,7 +193,6 @@ async fn fail_inactivate_sol_staker_stake_with_wrong_config_for_vault() {
     let mut context = setup(&[]).await;
     let Fixture {
         config_manager,
-        config_account,
         sol_staker_stake_manager,
         destination_token_account,
         ..
@@ -236,8 +233,6 @@ async fn fail_inactivate_sol_staker_stake_with_wrong_config_for_vault() {
 async fn fail_inactivate_sol_staker_stake_with_wrong_config_for_stake() {
     let mut context = setup(&[]).await;
     let Fixture {
-        config_manager,
-        config_account,
         sol_staker_stake_manager,
         destination_token_account,
         ..
@@ -279,7 +274,6 @@ async fn fail_inactivate_sol_stake_stake_with_uninitialized_stake_account() {
     let mut context = setup(&[]).await;
     let Fixture {
         config_manager,
-        config_account,
         sol_staker_stake_manager,
         destination_token_account,
         ..
@@ -330,7 +324,6 @@ async fn fail_inactivate_sol_staker_stake_with_active_cooldown() {
     let mut context = setup(&[]).await;
     let Fixture {
         config_manager,
-        config_account,
         sol_staker_stake_manager,
         destination_token_account,
         ..
