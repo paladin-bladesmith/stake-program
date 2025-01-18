@@ -146,7 +146,7 @@ pub fn process_unstake_tokens<'info>(
     // Ensure we are not in a cooldown period.
     let now = Clock::get()?.unix_timestamp as u64;
     require!(
-        delegation.unstake_cooldown < now,
+        now >= delegation.unstake_cooldown,
         StakeError::ActiveUnstakeCooldown,
     );
 
