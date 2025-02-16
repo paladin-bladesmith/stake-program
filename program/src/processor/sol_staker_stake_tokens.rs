@@ -9,7 +9,9 @@ use crate::{
     instruction::accounts::{Context, SolStakerStakeTokensAccounts},
     processor::{harvest, sync_effective, unpack_initialized_mut, HarvestAccounts},
     require,
-    state::{find_sol_staker_stake_pda, Config, SolStakerStake},
+    state::{
+        find_sol_staker_stake_pda, find_validator_stake_pda, Config, SolStakerStake, ValidatorStake,
+    },
 };
 
 /// Stakes tokens with the given config.
@@ -18,15 +20,16 @@ use crate::{
 /// tokens is limited to the 1.3 * current amount of SOL staked by the SOL staker.
 ///
 /// 0. `[w]` Config
-/// 1. `[w]` Sol staker stake
-/// 2. `[w]` Sol staker stake authority
-/// 3. `[w]` Source token account
-/// 4. `[s]` Source token account authority (owner or delegate)
-/// 5. `[ ]` Mint
-/// 6. `[w]` Vault token account
-/// 7. `[w]` Vault holder rewards
-/// 8. `[ ]` Token program
-/// 9. Extra accounts required for the transfer hook
+/// 1. `[w]` Validator stake
+/// 2. `[w]` Sol staker stake
+/// 3. `[w]` Sol staker stake authority
+/// 4. `[w]` Source token account
+/// 5. `[s]` Source token account authority (owner or delegate)
+/// 6. `[ ]` Mint
+/// 7. `[w]` Vault token account
+/// 8. `[w]` Vault holder rewards
+/// 9. `[ ]` Token program
+/// 10. Extra accounts required for the transfer hook
 ///
 /// Instruction data: amount of tokens to stake, as a little-endian `u64`.
 pub fn process_sol_staker_stake_tokens<'a>(
@@ -46,6 +49,28 @@ pub fn process_sol_staker_stake_tokens<'a>(
     );
     let mut config = ctx.accounts.config.data.borrow_mut();
     let config = unpack_initialized_mut::<Config>(&mut config)?;
+
+    // validator stake
+    // - owner must be the stake program
+    // - must be initialized
+    // - must have the correct derivation
+    require!(
+        ctx.accounts.validator_stake.owner == program_id,
+        ProgramError::InvalidAccountOwner,
+        "validator stake"
+    );
+    let mut validator_stake = ctx.accounts.validator_stake.try_borrow_mut_data()?;
+    let validator_stake = unpack_initialized_mut::<ValidatorStake>(&mut validator_stake)?;
+    let (derivation, _) = find_validator_stake_pda(
+        &validator_stake.delegation.validator_vote,
+        ctx.accounts.config.key,
+        program_id,
+    );
+    require!(
+        ctx.accounts.validator_stake.key == &derivation,
+        ProgramError::InvalidSeeds,
+        "validator stake",
+    );
 
     // sol staker stake
     // - owner must be the stake program
@@ -116,6 +141,10 @@ pub fn process_sol_staker_stake_tokens<'a>(
         &mut sol_staker_stake.delegation,
         (sol_staker_stake.lamports_amount, 0),
     )?;
+    validator_stake.stakers_total_staked_pal = validator_stake
+        .stakers_total_staked_pal
+        .checked_add(amount)
+        .ok_or(ProgramError::ArithmeticOverflow)?;
 
     // Transfer the tokens to the vault (stakes them).
     drop(mint_data);

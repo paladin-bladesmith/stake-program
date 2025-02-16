@@ -127,6 +127,7 @@ pub fn process_initialize_validator_stake(
             // NB: Will be set on the first stake.
             last_seen_stake_rewards_per_token: 0.into(),
         },
+        stakers_total_staked_pal: 0,
         total_staked_lamports_amount: 0,
         total_staked_lamports_amount_min: 0,
     };

@@ -28,7 +28,10 @@ pub struct ValidatorStake {
     /// Delegation values for the stake account.
     pub delegation: Delegation,
 
-    /// Total amount of SOL (lamports) staked on the validator.
+    /// Total amount of PAL staked to the validator by stakers.
+    pub stakers_total_staked_pal: u64,
+
+    /// Total amount of SOL (lamports) staked to the validator.
     pub total_staked_lamports_amount: u64,
 
     /// Sets the minimum lamports for this stake.

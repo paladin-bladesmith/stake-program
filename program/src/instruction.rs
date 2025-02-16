@@ -371,45 +371,51 @@ pub enum StakeInstruction {
     #[account(
         1,
         writable,
+        name = "validator_stake",
+        desc = "Validator stake"
+    )]
+    #[account(
+        2,
+        writable,
         name = "sol_staker_stake",
         desc = "SOL staker stake account"
     )]
     #[account(
-        2,
+        3,
         writable,
         name = "sol_staker_stake_authority",
         desc = "SOL staker stake authority account"
     )]
     #[account(
-        3,
+        4,
         writable,
         name = "source_token_account",
         desc = "Token account"
     )]
     #[account(
-        4,
+        5,
         signer,
         name = "source_token_account_authority",
         desc = "Owner or delegate of the token account"
     )]
     #[account(
-        5,
+        6,
         name = "mint",
         desc = "Stake Token Mint"
     )]
     #[account(
-        6,
+        7,
         writable,
         name = "vault",
         desc = "Stake token Vault"
     )]
     #[account(
-        7,
+        8,
         name = "vault_holder_rewards",
         desc = "Stake token Vault"
     )]
     #[account(
-        8,
+        9,
         name = "token_program",
         desc = "Token program"
     )]
@@ -507,47 +513,53 @@ pub enum StakeInstruction {
     #[account(
         1,
         writable,
+        name = "validator_stake",
+        desc = "Validator stake"
+    )]
+    #[account(
+        2,
+        writable,
         name = "stake",
         desc = "Sol staker/validator stake account"
     )]
     #[account(
-        2,
+        3,
         signer,
         writable,
         name = "stake_authority",
         desc = "Stake authority account"
     )]
     #[account(
-        3,
+        4,
         writable,
         name = "vault",
         desc = "Vault account"
     )]
     #[account(
-        4,
+        5,
         writable,
         name = "vault_authority",
         desc = "Vault authority"
     )]
     #[account(
-        5,
+        6,
         writable,
         name = "vault_holder_rewards",
         desc = "Vault holder rewards account"
     )]
     #[account(
-        6,
+        7,
         name = "mint",
         desc = "Mint account"
     )]
     #[account(
-        7,
+        8,
         writable,
         name = "destination_token_account",
         desc = "Destination token account"
     )]
     #[account(
-        8,
+        9,
         name = "token_program",
         desc = "Token program"
     )]
