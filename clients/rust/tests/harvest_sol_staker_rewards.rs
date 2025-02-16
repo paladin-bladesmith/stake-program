@@ -1944,7 +1944,6 @@ async fn harvest_sync_rewards_base() {
     .await;
 
     // And there is 1 SOL for stake rewards on the config.
-
     let mut account = get_account!(context, config_manager.config);
     let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the total amount delegated
@@ -1957,7 +1956,6 @@ async fn harvest_sync_rewards_base() {
     context.set_account(&config_manager.config, &account.into());
 
     // And the SOL staker stake has 1_300_000_000 tokens staked.
-
     let mut account = get_account!(context, sol_staker_stake_manager.stake);
     let mut stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the staked values:
@@ -1969,13 +1967,17 @@ async fn harvest_sync_rewards_base() {
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
 
-    // And the SOL staker stake and validator stake accounts are correctly synced.
+    // The validator has 1.3 PAL staked by stakers.
+    let mut account = get_account!(context, validator_stake_manager.stake);
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
+    stake_account.stakers_total_staked_pal = 1_300_000_000;
+    account.data = stake_account.try_to_vec().unwrap();
+    context.set_account(&validator_stake_manager.stake, &account.into());
 
+    // And the SOL staker stake and validator stake accounts are correctly synced.
     let account = get_account!(context, sol_staker_stake_manager.stake);
     let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-
     assert_eq!(stake_account.lamports_amount, 1_000_000_000);
-
     let account = get_account!(context, validator_stake_manager.stake);
     let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
@@ -2413,7 +2415,6 @@ async fn harvest_sync_rewards_with_closed_sol_stake_account() {
     context.set_account(&config_manager.config, &account.into());
 
     // And the SOL staker stake has 1_300_000_000 tokens staked.
-
     let mut account = get_account!(context, sol_staker_stake_manager.stake);
     let mut stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
     // "manually" set the staked values:
@@ -2425,13 +2426,17 @@ async fn harvest_sync_rewards_with_closed_sol_stake_account() {
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
 
-    // And the SOL staker stake and validator stake accounts are correctly synced.
+    // The validator has 1.3 PAL staked by stakers.
+    let mut account = get_account!(context, validator_stake_manager.stake);
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
+    stake_account.stakers_total_staked_pal = 1_300_000_000;
+    account.data = stake_account.try_to_vec().unwrap();
+    context.set_account(&validator_stake_manager.stake, &account.into());
 
+    // And the SOL staker stake and validator stake accounts are correctly synced.
     let account = get_account!(context, sol_staker_stake_manager.stake);
     let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-
     assert_eq!(stake_account.lamports_amount, 1_000_000_000);
-
     let account = get_account!(context, validator_stake_manager.stake);
     let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
@@ -2588,13 +2593,17 @@ async fn harvest_sync_rewards_with_capped_sync_rewards() {
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
 
-    // And the SOL staker stake and validator stake accounts are correctly synced.
+    // The validator has 1.3 PAL staked by stakers.
+    let mut account = get_account!(context, validator_stake_manager.stake);
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
+    stake_account.stakers_total_staked_pal = 1_300_000_000;
+    account.data = stake_account.try_to_vec().unwrap();
+    context.set_account(&validator_stake_manager.stake, &account.into());
 
+    // And the SOL staker stake and validator stake accounts are correctly synced.
     let account = get_account!(context, sol_staker_stake_manager.stake);
     let stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-
     assert_eq!(stake_account.lamports_amount, 1_000_000_000);
-
     let account = get_account!(context, validator_stake_manager.stake);
     let validator_stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
     assert_eq!(
@@ -2603,7 +2612,6 @@ async fn harvest_sync_rewards_with_capped_sync_rewards() {
     );
 
     // And we deactivate the stake.
-
     deactivate_stake_account(
         &mut context,
         &stake_account.sol_stake,
