@@ -645,11 +645,23 @@ pub enum StakeInstruction {
     #[account(
         3,
         writable,
+        name = "source_validator_stake",
+        desc = "Source validator stake"
+    )]
+    #[account(
+        4,
+        writable,
         name = "source_sol_staker_stake",
         desc = "Source sol staker stake"
     )]
     #[account(
-        4,
+        5,
+        writable,
+        name = "destination_validator_stake",
+        desc = "Destination validator stake"
+    )]
+    #[account(
+        6,
         writable,
         name = "destination_sol_staker_stake",
         desc = "Destination sol staker stake"

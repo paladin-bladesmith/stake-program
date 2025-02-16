@@ -158,7 +158,7 @@ pub fn process_harvest_sol_staker_rewards(
         require!(
             ctx.accounts.previous_validator_stake.owner == program_id,
             ProgramError::InvalidAccountOwner,
-            "validator stake"
+            "previous validator stake"
         );
         let (derivation, _) = find_validator_stake_pda(
             &sol_staker_stake.delegation.validator_vote,
@@ -193,6 +193,12 @@ pub fn process_harvest_sol_staker_rewards(
         previous_validator_stake.total_staked_lamports_amount = previous_validator_stake
             .total_staked_lamports_amount
             .checked_sub(sol_staker_stake.lamports_amount)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
+
+        // Remove the staker's old PAL amount from the previous validator total.
+        previous_validator_stake.stakers_total_staked_pal = previous_validator_stake
+            .stakers_total_staked_pal
+            .checked_sub(sol_staker_stake.delegation.staked_amount)
             .ok_or(ProgramError::ArithmeticOverflow)?;
 
         // Update the validator's effective stake.
@@ -247,6 +253,12 @@ pub fn process_harvest_sol_staker_rewards(
             current_validator_stake.total_staked_lamports_amount = current_validator_stake
                 .total_staked_lamports_amount
                 .checked_add(current_stake)
+                .ok_or(ProgramError::ArithmeticOverflow)?;
+
+            // Add the staker's PAL amount from the current validator total.
+            current_validator_stake.stakers_total_staked_pal = current_validator_stake
+                .stakers_total_staked_pal
+                .checked_add(sol_staker_stake.delegation.staked_amount)
                 .ok_or(ProgramError::ArithmeticOverflow)?;
 
             // Update the validator's effective stake.

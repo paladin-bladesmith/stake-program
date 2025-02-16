@@ -5,7 +5,9 @@ use crate::{
     instruction::accounts::{Context, SolStakerMoveTokensAccounts},
     processor::{harvest, sync_effective, unpack_initialized_mut, HarvestAccounts},
     require,
-    state::{find_sol_staker_stake_pda, Config, SolStakerStake},
+    state::{
+        find_sol_staker_stake_pda, find_validator_stake_pda, Config, SolStakerStake, ValidatorStake,
+    },
 };
 
 pub(crate) fn process_sol_staker_move_tokens(
@@ -62,6 +64,7 @@ pub(crate) fn process_sol_staker_move_tokens(
         "sol staker authority"
     );
 
+    // Harvest the source rewards.
     harvest(
         HarvestAccounts {
             config: ctx.accounts.config,
@@ -72,6 +75,41 @@ pub(crate) fn process_sol_staker_move_tokens(
         &mut source_sol_staker_stake.delegation,
         None,
     )?;
+
+    // Update source validator total staked PAL.
+    //
+    // Checks:
+    // - owner must be the stake program
+    // - must have the correct derivation (validates both the validator vote
+    //   and config accounts)
+    // - must be initialized
+    // - must belong to the validator the staker was previously delegated to
+    if source_sol_staker_stake.delegation.validator_vote != Pubkey::default() {
+        require!(
+            ctx.accounts.source_validator_stake.owner == program_id,
+            ProgramError::InvalidAccountOwner,
+            "source validator stake"
+        );
+        let (derivation, _) = find_validator_stake_pda(
+            &source_sol_staker_stake.delegation.validator_vote,
+            ctx.accounts.config.key,
+            program_id,
+        );
+        require!(
+            ctx.accounts.source_validator_stake.key == &derivation,
+            ProgramError::InvalidSeeds,
+            "source validator stake",
+        );
+        let mut source_validator_data =
+            ctx.accounts.source_validator_stake.try_borrow_mut_data()?;
+        let source_validator_stake =
+            unpack_initialized_mut::<ValidatorStake>(&mut source_validator_data)?;
+
+        source_validator_stake.stakers_total_staked_pal = source_validator_stake
+            .stakers_total_staked_pal
+            .checked_sub(amount)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
+    }
 
     // Destination sol staker stake
     // - Owner must be the stake program.
@@ -99,6 +137,7 @@ pub(crate) fn process_sol_staker_move_tokens(
         "destination sol staker stake",
     );
 
+    // Harvest the destination rewards.
     harvest(
         HarvestAccounts {
             config: ctx.accounts.config,
@@ -109,6 +148,43 @@ pub(crate) fn process_sol_staker_move_tokens(
         &mut destination_sol_staker_stake.delegation,
         None,
     )?;
+
+    // Update destination validator total staked PAL.
+    //
+    // Checks:
+    // - owner must be the stake program
+    // - must have the correct derivation (validates both the validator vote
+    //   and config accounts)
+    // - must be initialized
+    // - must belong to the validator the staker was previously delegated to
+    if destination_sol_staker_stake.delegation.validator_vote != Pubkey::default() {
+        require!(
+            ctx.accounts.destination_validator_stake.owner == program_id,
+            ProgramError::InvalidAccountOwner,
+            "destination validator stake"
+        );
+        let (derivation, _) = find_validator_stake_pda(
+            &destination_sol_staker_stake.delegation.validator_vote,
+            ctx.accounts.config.key,
+            program_id,
+        );
+        require!(
+            ctx.accounts.destination_validator_stake.key == &derivation,
+            ProgramError::InvalidSeeds,
+            "destination validator stake",
+        );
+        let mut destination_validator_data = ctx
+            .accounts
+            .destination_validator_stake
+            .try_borrow_mut_data()?;
+        let destination_validator_stake =
+            unpack_initialized_mut::<ValidatorStake>(&mut destination_validator_data)?;
+
+        destination_validator_stake.stakers_total_staked_pal = destination_validator_stake
+            .stakers_total_staked_pal
+            .checked_add(amount)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
+    }
 
     // Ensure authorities match (technically harvest should already prove this).
     assert_eq!(
