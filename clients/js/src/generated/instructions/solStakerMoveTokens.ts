@@ -37,7 +37,11 @@ export type SolStakerMoveTokensInstruction<
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountVaultHolderRewards extends string | IAccountMeta<string> = string,
   TAccountSolStakerAuthority extends string | IAccountMeta<string> = string,
+  TAccountSourceValidatorStake extends string | IAccountMeta<string> = string,
   TAccountSourceSolStakerStake extends string | IAccountMeta<string> = string,
+  TAccountDestinationValidatorStake extends
+    | string
+    | IAccountMeta<string> = string,
   TAccountDestinationSolStakerStake extends
     | string
     | IAccountMeta<string> = string,
@@ -56,9 +60,15 @@ export type SolStakerMoveTokensInstruction<
         ? ReadonlySignerAccount<TAccountSolStakerAuthority> &
             IAccountSignerMeta<TAccountSolStakerAuthority>
         : TAccountSolStakerAuthority,
+      TAccountSourceValidatorStake extends string
+        ? WritableAccount<TAccountSourceValidatorStake>
+        : TAccountSourceValidatorStake,
       TAccountSourceSolStakerStake extends string
         ? WritableAccount<TAccountSourceSolStakerStake>
         : TAccountSourceSolStakerStake,
+      TAccountDestinationValidatorStake extends string
+        ? WritableAccount<TAccountDestinationValidatorStake>
+        : TAccountDestinationValidatorStake,
       TAccountDestinationSolStakerStake extends string
         ? WritableAccount<TAccountDestinationSolStakerStake>
         : TAccountDestinationSolStakerStake,
@@ -106,7 +116,9 @@ export type SolStakerMoveTokensInput<
   TAccountConfig extends string = string,
   TAccountVaultHolderRewards extends string = string,
   TAccountSolStakerAuthority extends string = string,
+  TAccountSourceValidatorStake extends string = string,
   TAccountSourceSolStakerStake extends string = string,
+  TAccountDestinationValidatorStake extends string = string,
   TAccountDestinationSolStakerStake extends string = string,
 > = {
   /** Staking config */
@@ -115,8 +127,12 @@ export type SolStakerMoveTokensInput<
   vaultHolderRewards: Address<TAccountVaultHolderRewards>;
   /** Sol staker authority */
   solStakerAuthority: TransactionSigner<TAccountSolStakerAuthority>;
+  /** Source validator stake */
+  sourceValidatorStake: Address<TAccountSourceValidatorStake>;
   /** Source sol staker stake */
   sourceSolStakerStake: Address<TAccountSourceSolStakerStake>;
+  /** Destination validator stake */
+  destinationValidatorStake: Address<TAccountDestinationValidatorStake>;
   /** Destination sol staker stake */
   destinationSolStakerStake: Address<TAccountDestinationSolStakerStake>;
   amount: SolStakerMoveTokensInstructionDataArgs['amount'];
@@ -126,14 +142,18 @@ export function getSolStakerMoveTokensInstruction<
   TAccountConfig extends string,
   TAccountVaultHolderRewards extends string,
   TAccountSolStakerAuthority extends string,
+  TAccountSourceValidatorStake extends string,
   TAccountSourceSolStakerStake extends string,
+  TAccountDestinationValidatorStake extends string,
   TAccountDestinationSolStakerStake extends string,
 >(
   input: SolStakerMoveTokensInput<
     TAccountConfig,
     TAccountVaultHolderRewards,
     TAccountSolStakerAuthority,
+    TAccountSourceValidatorStake,
     TAccountSourceSolStakerStake,
+    TAccountDestinationValidatorStake,
     TAccountDestinationSolStakerStake
   >
 ): SolStakerMoveTokensInstruction<
@@ -141,7 +161,9 @@ export function getSolStakerMoveTokensInstruction<
   TAccountConfig,
   TAccountVaultHolderRewards,
   TAccountSolStakerAuthority,
+  TAccountSourceValidatorStake,
   TAccountSourceSolStakerStake,
+  TAccountDestinationValidatorStake,
   TAccountDestinationSolStakerStake
 > {
   // Program address.
@@ -158,8 +180,16 @@ export function getSolStakerMoveTokensInstruction<
       value: input.solStakerAuthority ?? null,
       isWritable: false,
     },
+    sourceValidatorStake: {
+      value: input.sourceValidatorStake ?? null,
+      isWritable: true,
+    },
     sourceSolStakerStake: {
       value: input.sourceSolStakerStake ?? null,
+      isWritable: true,
+    },
+    destinationValidatorStake: {
+      value: input.destinationValidatorStake ?? null,
       isWritable: true,
     },
     destinationSolStakerStake: {
@@ -181,7 +211,9 @@ export function getSolStakerMoveTokensInstruction<
       getAccountMeta(accounts.config),
       getAccountMeta(accounts.vaultHolderRewards),
       getAccountMeta(accounts.solStakerAuthority),
+      getAccountMeta(accounts.sourceValidatorStake),
       getAccountMeta(accounts.sourceSolStakerStake),
+      getAccountMeta(accounts.destinationValidatorStake),
       getAccountMeta(accounts.destinationSolStakerStake),
     ],
     programAddress,
@@ -193,7 +225,9 @@ export function getSolStakerMoveTokensInstruction<
     TAccountConfig,
     TAccountVaultHolderRewards,
     TAccountSolStakerAuthority,
+    TAccountSourceValidatorStake,
     TAccountSourceSolStakerStake,
+    TAccountDestinationValidatorStake,
     TAccountDestinationSolStakerStake
   >;
 
@@ -212,10 +246,14 @@ export type ParsedSolStakerMoveTokensInstruction<
     vaultHolderRewards: TAccountMetas[1];
     /** Sol staker authority */
     solStakerAuthority: TAccountMetas[2];
+    /** Source validator stake */
+    sourceValidatorStake: TAccountMetas[3];
     /** Source sol staker stake */
-    sourceSolStakerStake: TAccountMetas[3];
+    sourceSolStakerStake: TAccountMetas[4];
+    /** Destination validator stake */
+    destinationValidatorStake: TAccountMetas[5];
     /** Destination sol staker stake */
-    destinationSolStakerStake: TAccountMetas[4];
+    destinationSolStakerStake: TAccountMetas[6];
   };
   data: SolStakerMoveTokensInstructionData;
 };
@@ -228,7 +266,7 @@ export function parseSolStakerMoveTokensInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedSolStakerMoveTokensInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 5) {
+  if (instruction.accounts.length < 7) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -244,7 +282,9 @@ export function parseSolStakerMoveTokensInstruction<
       config: getNextAccount(),
       vaultHolderRewards: getNextAccount(),
       solStakerAuthority: getNextAccount(),
+      sourceValidatorStake: getNextAccount(),
       sourceSolStakerStake: getNextAccount(),
+      destinationValidatorStake: getNextAccount(),
       destinationSolStakerStake: getNextAccount(),
     },
     data: getSolStakerMoveTokensInstructionDataDecoder().decode(

@@ -557,6 +557,14 @@
           ]
         },
         {
+          "name": "validatorStake",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Validator stake"
+          ]
+        },
+        {
           "name": "solStakerStake",
           "isMut": true,
           "isSigner": false,
@@ -751,6 +759,14 @@
           ]
         },
         {
+          "name": "validatorStake",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Validator stake"
+          ]
+        },
+        {
           "name": "stake",
           "isMut": true,
           "isSigner": false,
@@ -941,11 +957,27 @@
           ]
         },
         {
+          "name": "sourceValidatorStake",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Source validator stake"
+          ]
+        },
+        {
           "name": "sourceSolStakerStake",
           "isMut": true,
           "isSigner": false,
           "docs": [
             "Source sol staker stake"
+          ]
+        },
+        {
+          "name": "destinationValidatorStake",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Destination validator stake"
           ]
         },
         {
@@ -1267,6 +1299,10 @@
             "type": {
               "defined": "Delegation"
             }
+          },
+          {
+            "name": "stakersTotalStakedPal",
+            "type": "u64"
           },
           {
             "name": "totalStakedLamportsAmount",
