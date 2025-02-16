@@ -1,5 +1,4 @@
 use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey};
-use spl_discriminator::SplDiscriminate;
 
 use crate::{
     error::StakeError,
