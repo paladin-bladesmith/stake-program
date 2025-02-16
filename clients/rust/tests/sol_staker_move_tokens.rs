@@ -105,21 +105,22 @@ async fn transfer_to_empty() {
     assert_eq!(destination_validator.stakers_total_staked_pal, 3);
 }
 
-/*
 #[tokio::test]
 async fn transfer_to_not_empty() {
     let mut context = setup::setup(&[]).await;
 
     // Setup the relevant accounts.
     let config_manager = ConfigManager::new(&mut context).await;
-    let validator_stake_manager =
+    let source_validator_stake_manager =
+        ValidatorStakeManager::new(&mut context, &config_manager.config).await;
+    let destination_validator_stake_manager =
         ValidatorStakeManager::new(&mut context, &config_manager.config).await;
     let stake_authority = Keypair::new();
     let source_sol_staker_staker_manager = SolStakerStakeManager::new_with_authority(
         &mut context,
         &config_manager.config,
-        &validator_stake_manager.stake,
-        &validator_stake_manager.vote,
+        &source_validator_stake_manager.stake,
+        &source_validator_stake_manager.vote,
         stake_authority.insecure_clone(),
         5_000_000_000, // 5 SOL staked
     )
@@ -127,27 +128,40 @@ async fn transfer_to_not_empty() {
     let destination_sol_staker_staker_manager = SolStakerStakeManager::new_with_authority(
         &mut context,
         &config_manager.config,
-        &validator_stake_manager.stake,
-        &validator_stake_manager.vote,
+        &destination_validator_stake_manager.stake,
+        &destination_validator_stake_manager.vote,
         stake_authority,
         5_000_000_000, // 5 SOL staked
     )
     .await;
 
-    // Stake 10 PAL on the source account.
+    // Stake 10 PAL on the source accounts.
     let mut source = get_account!(context, source_sol_staker_staker_manager.stake);
     let mut source_state = SolStakerStake::from_bytes(&source.data).unwrap();
     source_state.delegation.staked_amount = 10;
     source.data = source_state.try_to_vec().unwrap();
     context.set_account(&source_sol_staker_staker_manager.stake, &source.into());
+    let mut source = get_account!(context, source_validator_stake_manager.stake);
+    let mut source_state = ValidatorStake::from_bytes(&source.data).unwrap();
+    source_state.stakers_total_staked_pal = 10;
+    source.data = source_state.try_to_vec().unwrap();
+    context.set_account(&source_validator_stake_manager.stake, &source.into());
 
-    // Stake 10 PAL on the destination account.
+    // Stake 10 PAL on the destination accounts.
     let mut destination = get_account!(context, destination_sol_staker_staker_manager.stake);
     let mut destination_state = SolStakerStake::from_bytes(&destination.data).unwrap();
     destination_state.delegation.staked_amount = 10;
     destination.data = destination_state.try_to_vec().unwrap();
     context.set_account(
         &destination_sol_staker_staker_manager.stake,
+        &destination.into(),
+    );
+    let mut destination = get_account!(context, destination_validator_stake_manager.stake);
+    let mut destination_state = ValidatorStake::from_bytes(&destination.data).unwrap();
+    destination_state.stakers_total_staked_pal = 10;
+    destination.data = destination_state.try_to_vec().unwrap();
+    context.set_account(
+        &destination_validator_stake_manager.stake,
         &destination.into(),
     );
 
@@ -176,11 +190,21 @@ async fn transfer_to_not_empty() {
     assert_eq!(source.delegation.staked_amount, 5);
     assert_eq!(source.delegation.effective_amount, 5);
 
+    // Assert - Source validator has 5 PAL staked.
+    let source = get_account!(context, source_validator_stake_manager.stake);
+    let source = ValidatorStake::from_bytes(&source.data).unwrap();
+    assert_eq!(source.stakers_total_staked_pal, 5);
+
     // Assert - Destination account has 15 PAL staked.
     let destination = get_account!(context, destination_sol_staker_staker_manager.stake);
     let destination = SolStakerStake::from_bytes(&destination.data).unwrap();
     assert_eq!(destination.delegation.staked_amount, 15);
     assert_eq!(destination.delegation.effective_amount, 15);
+
+    // Assert - Destination validator has 5 PAL staked.
+    let destination = get_account!(context, destination_validator_stake_manager.stake);
+    let destination = ValidatorStake::from_bytes(&destination.data).unwrap();
+    assert_eq!(destination.stakers_total_staked_pal, 15);
 
     // Assert - Config has 20 effective.
     let config = get_account!(context, config_manager.config);
@@ -189,6 +213,7 @@ async fn transfer_to_not_empty() {
     assert_eq!(config.token_amount_effective, 20);
 }
 
+/*
 #[tokio::test]
 async fn transfer_without_authority_signature_err() {
     let mut context = setup::setup(&[]).await;
