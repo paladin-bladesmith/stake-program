@@ -16,8 +16,12 @@ pub struct SolStakerMoveTokens {
     pub vault_holder_rewards: solana_program::pubkey::Pubkey,
     /// Sol staker authority
     pub sol_staker_authority: solana_program::pubkey::Pubkey,
+    /// Source validator stake
+    pub source_validator_stake: solana_program::pubkey::Pubkey,
     /// Source sol staker stake
     pub source_sol_staker_stake: solana_program::pubkey::Pubkey,
+    /// Destination validator stake
+    pub destination_validator_stake: solana_program::pubkey::Pubkey,
     /// Destination sol staker stake
     pub destination_sol_staker_stake: solana_program::pubkey::Pubkey,
 }
@@ -35,7 +39,7 @@ impl SolStakerMoveTokens {
         args: SolStakerMoveTokensInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.config,
             false,
@@ -49,7 +53,15 @@ impl SolStakerMoveTokens {
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
+            self.source_validator_stake,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
             self.source_sol_staker_stake,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.destination_validator_stake,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -101,14 +113,18 @@ pub struct SolStakerMoveTokensInstructionArgs {
 ///   0. `[writable]` config
 ///   1. `[]` vault_holder_rewards
 ///   2. `[signer]` sol_staker_authority
-///   3. `[writable]` source_sol_staker_stake
-///   4. `[writable]` destination_sol_staker_stake
+///   3. `[writable]` source_validator_stake
+///   4. `[writable]` source_sol_staker_stake
+///   5. `[writable]` destination_validator_stake
+///   6. `[writable]` destination_sol_staker_stake
 #[derive(Clone, Debug, Default)]
 pub struct SolStakerMoveTokensBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
     vault_holder_rewards: Option<solana_program::pubkey::Pubkey>,
     sol_staker_authority: Option<solana_program::pubkey::Pubkey>,
+    source_validator_stake: Option<solana_program::pubkey::Pubkey>,
     source_sol_staker_stake: Option<solana_program::pubkey::Pubkey>,
+    destination_validator_stake: Option<solana_program::pubkey::Pubkey>,
     destination_sol_staker_stake: Option<solana_program::pubkey::Pubkey>,
     amount: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
@@ -142,6 +158,15 @@ impl SolStakerMoveTokensBuilder {
         self.sol_staker_authority = Some(sol_staker_authority);
         self
     }
+    /// Source validator stake
+    #[inline(always)]
+    pub fn source_validator_stake(
+        &mut self,
+        source_validator_stake: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.source_validator_stake = Some(source_validator_stake);
+        self
+    }
     /// Source sol staker stake
     #[inline(always)]
     pub fn source_sol_staker_stake(
@@ -149,6 +174,15 @@ impl SolStakerMoveTokensBuilder {
         source_sol_staker_stake: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
         self.source_sol_staker_stake = Some(source_sol_staker_stake);
+        self
+    }
+    /// Destination validator stake
+    #[inline(always)]
+    pub fn destination_validator_stake(
+        &mut self,
+        destination_validator_stake: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.destination_validator_stake = Some(destination_validator_stake);
         self
     }
     /// Destination sol staker stake
@@ -193,9 +227,15 @@ impl SolStakerMoveTokensBuilder {
             sol_staker_authority: self
                 .sol_staker_authority
                 .expect("sol_staker_authority is not set"),
+            source_validator_stake: self
+                .source_validator_stake
+                .expect("source_validator_stake is not set"),
             source_sol_staker_stake: self
                 .source_sol_staker_stake
                 .expect("source_sol_staker_stake is not set"),
+            destination_validator_stake: self
+                .destination_validator_stake
+                .expect("destination_validator_stake is not set"),
             destination_sol_staker_stake: self
                 .destination_sol_staker_stake
                 .expect("destination_sol_staker_stake is not set"),
@@ -216,8 +256,12 @@ pub struct SolStakerMoveTokensCpiAccounts<'a, 'b> {
     pub vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
     /// Sol staker authority
     pub sol_staker_authority: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Source validator stake
+    pub source_validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Source sol staker stake
     pub source_sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Destination validator stake
+    pub destination_validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Destination sol staker stake
     pub destination_sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
 }
@@ -232,8 +276,12 @@ pub struct SolStakerMoveTokensCpi<'a, 'b> {
     pub vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
     /// Sol staker authority
     pub sol_staker_authority: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Source validator stake
+    pub source_validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Source sol staker stake
     pub source_sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Destination validator stake
+    pub destination_validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Destination sol staker stake
     pub destination_sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
@@ -251,7 +299,9 @@ impl<'a, 'b> SolStakerMoveTokensCpi<'a, 'b> {
             config: accounts.config,
             vault_holder_rewards: accounts.vault_holder_rewards,
             sol_staker_authority: accounts.sol_staker_authority,
+            source_validator_stake: accounts.source_validator_stake,
             source_sol_staker_stake: accounts.source_sol_staker_stake,
+            destination_validator_stake: accounts.destination_validator_stake,
             destination_sol_staker_stake: accounts.destination_sol_staker_stake,
             __args: args,
         }
@@ -289,7 +339,7 @@ impl<'a, 'b> SolStakerMoveTokensCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.config.key,
             false,
@@ -303,7 +353,15 @@ impl<'a, 'b> SolStakerMoveTokensCpi<'a, 'b> {
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.source_validator_stake.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
             *self.source_sol_staker_stake.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.destination_validator_stake.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -328,12 +386,14 @@ impl<'a, 'b> SolStakerMoveTokensCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(5 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(7 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.config.clone());
         account_infos.push(self.vault_holder_rewards.clone());
         account_infos.push(self.sol_staker_authority.clone());
+        account_infos.push(self.source_validator_stake.clone());
         account_infos.push(self.source_sol_staker_stake.clone());
+        account_infos.push(self.destination_validator_stake.clone());
         account_infos.push(self.destination_sol_staker_stake.clone());
         remaining_accounts
             .iter()
@@ -354,8 +414,10 @@ impl<'a, 'b> SolStakerMoveTokensCpi<'a, 'b> {
 ///   0. `[writable]` config
 ///   1. `[]` vault_holder_rewards
 ///   2. `[signer]` sol_staker_authority
-///   3. `[writable]` source_sol_staker_stake
-///   4. `[writable]` destination_sol_staker_stake
+///   3. `[writable]` source_validator_stake
+///   4. `[writable]` source_sol_staker_stake
+///   5. `[writable]` destination_validator_stake
+///   6. `[writable]` destination_sol_staker_stake
 #[derive(Clone, Debug)]
 pub struct SolStakerMoveTokensCpiBuilder<'a, 'b> {
     instruction: Box<SolStakerMoveTokensCpiBuilderInstruction<'a, 'b>>,
@@ -368,7 +430,9 @@ impl<'a, 'b> SolStakerMoveTokensCpiBuilder<'a, 'b> {
             config: None,
             vault_holder_rewards: None,
             sol_staker_authority: None,
+            source_validator_stake: None,
             source_sol_staker_stake: None,
+            destination_validator_stake: None,
             destination_sol_staker_stake: None,
             amount: None,
             __remaining_accounts: Vec::new(),
@@ -402,6 +466,15 @@ impl<'a, 'b> SolStakerMoveTokensCpiBuilder<'a, 'b> {
         self.instruction.sol_staker_authority = Some(sol_staker_authority);
         self
     }
+    /// Source validator stake
+    #[inline(always)]
+    pub fn source_validator_stake(
+        &mut self,
+        source_validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.source_validator_stake = Some(source_validator_stake);
+        self
+    }
     /// Source sol staker stake
     #[inline(always)]
     pub fn source_sol_staker_stake(
@@ -409,6 +482,15 @@ impl<'a, 'b> SolStakerMoveTokensCpiBuilder<'a, 'b> {
         source_sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.source_sol_staker_stake = Some(source_sol_staker_stake);
+        self
+    }
+    /// Destination validator stake
+    #[inline(always)]
+    pub fn destination_validator_stake(
+        &mut self,
+        destination_validator_stake: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.destination_validator_stake = Some(destination_validator_stake);
         self
     }
     /// Destination sol staker stake
@@ -484,10 +566,20 @@ impl<'a, 'b> SolStakerMoveTokensCpiBuilder<'a, 'b> {
                 .sol_staker_authority
                 .expect("sol_staker_authority is not set"),
 
+            source_validator_stake: self
+                .instruction
+                .source_validator_stake
+                .expect("source_validator_stake is not set"),
+
             source_sol_staker_stake: self
                 .instruction
                 .source_sol_staker_stake
                 .expect("source_sol_staker_stake is not set"),
+
+            destination_validator_stake: self
+                .instruction
+                .destination_validator_stake
+                .expect("destination_validator_stake is not set"),
 
             destination_sol_staker_stake: self
                 .instruction
@@ -508,7 +600,9 @@ struct SolStakerMoveTokensCpiBuilderInstruction<'a, 'b> {
     config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault_holder_rewards: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     sol_staker_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    source_validator_stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     source_sol_staker_stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    destination_validator_stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     destination_sol_staker_stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     amount: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.

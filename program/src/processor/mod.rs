@@ -408,6 +408,7 @@ pub(crate) fn sync_effective(
     config: &mut Config,
     delegation: &mut Delegation,
     (lamports_stake, lamports_stake_min): (u64, u64),
+    stakers_total_staked_pal: Option<&mut u64>,
 ) -> ProgramResult {
     let lamports_stake = std::cmp::max(lamports_stake, lamports_stake_min);
     let limit = calculate_maximum_stake_for_lamports_amount(lamports_stake)?;
@@ -420,6 +421,13 @@ pub(crate) fn sync_effective(
         .ok_or(ProgramError::ArithmeticOverflow)?
         .checked_add(new_effective_amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
+    if let Some(stakers_total_staked_pal) = stakers_total_staked_pal {
+        *stakers_total_staked_pal = stakers_total_staked_pal
+            .checked_sub(delegation.effective_amount)
+            .ok_or(ProgramError::ArithmeticOverflow)?
+            .checked_add(new_effective_amount)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
+    }
     delegation.effective_amount = new_effective_amount;
 
     Ok(())

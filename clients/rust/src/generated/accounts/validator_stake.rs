@@ -14,12 +14,13 @@ use borsh::BorshSerialize;
 pub struct ValidatorStake {
     pub discriminator: [u8; 8],
     pub delegation: Delegation,
+    pub stakers_total_staked_pal: u64,
     pub total_staked_lamports_amount: u64,
     pub total_staked_lamports_amount_min: u64,
 }
 
 impl ValidatorStake {
-    pub const LEN: usize = 144;
+    pub const LEN: usize = 152;
 
     #[inline(always)]
     pub fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {
