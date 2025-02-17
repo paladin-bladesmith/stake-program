@@ -50,28 +50,6 @@ pub fn process_sol_staker_stake_tokens<'a>(
     let mut config = ctx.accounts.config.data.borrow_mut();
     let config = unpack_initialized_mut::<Config>(&mut config)?;
 
-    // validator stake
-    // - owner must be the stake program
-    // - must be initialized
-    // - must have the correct derivation
-    require!(
-        ctx.accounts.validator_stake.owner == program_id,
-        ProgramError::InvalidAccountOwner,
-        "validator stake"
-    );
-    let mut validator_stake = ctx.accounts.validator_stake.try_borrow_mut_data()?;
-    let validator_stake = unpack_initialized_mut::<ValidatorStake>(&mut validator_stake)?;
-    let (derivation, _) = find_validator_stake_pda(
-        &validator_stake.delegation.validator_vote,
-        ctx.accounts.config.key,
-        program_id,
-    );
-    require!(
-        ctx.accounts.validator_stake.key == &derivation,
-        ProgramError::InvalidSeeds,
-        "validator stake",
-    );
-
     // sol staker stake
     // - owner must be the stake program
     // - must be initialized
@@ -141,10 +119,34 @@ pub fn process_sol_staker_stake_tokens<'a>(
         &mut sol_staker_stake.delegation,
         (sol_staker_stake.lamports_amount, 0),
     )?;
-    validator_stake.stakers_total_staked_pal = validator_stake
-        .stakers_total_staked_pal
-        .checked_add(amount)
-        .ok_or(ProgramError::ArithmeticOverflow)?;
+    if sol_staker_stake.delegation.validator_vote != Pubkey::default() {
+        // validator stake
+        // - owner must be the stake program
+        // - must be initialized
+        // - must have the correct derivation
+        require!(
+            ctx.accounts.validator_stake.owner == program_id,
+            ProgramError::InvalidAccountOwner,
+            "validator stake"
+        );
+        let mut validator_stake = ctx.accounts.validator_stake.try_borrow_mut_data()?;
+        let validator_stake = unpack_initialized_mut::<ValidatorStake>(&mut validator_stake)?;
+        let (derivation, _) = find_validator_stake_pda(
+            &validator_stake.delegation.validator_vote,
+            ctx.accounts.config.key,
+            program_id,
+        );
+        require!(
+            ctx.accounts.validator_stake.key == &derivation,
+            ProgramError::InvalidSeeds,
+            "validator stake",
+        );
+
+        validator_stake.stakers_total_staked_pal = validator_stake
+            .stakers_total_staked_pal
+            .checked_add(amount)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
+    }
 
     // Transfer the tokens to the vault (stakes them).
     drop(mint_data);
