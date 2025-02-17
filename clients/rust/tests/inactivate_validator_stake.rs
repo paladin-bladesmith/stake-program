@@ -115,6 +115,7 @@ async fn inactivate_validator_stake() {
     // When we move the deactivated amount to inactive (5 tokens).
     let inactivate_ix = UnstakeTokensBuilder::new()
         .config(config_manager.config)
+        .validator_stake(stake_pda)
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
         .vault(config_manager.vault)
@@ -203,6 +204,7 @@ async fn fail_inactivate_validator_stake_with_cooldown() {
     // When we try to inactivate the stake without any deactivated amount.
     let inactivate_ix = UnstakeTokensBuilder::new()
         .config(config_manager.config)
+        .validator_stake(stake_pda)
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
         .vault(config_manager.vault)
@@ -245,6 +247,7 @@ async fn fail_inactivate_validator_stake_with_wrong_config_for_vault() {
     // When we try to inactivate the stake with the wrong config account.
     let inactivate_ix = UnstakeTokensBuilder::new()
         .config(wrong_config) // <- wrong config
+        .validator_stake(stake_pda)
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
         .vault(config_manager.vault)
@@ -286,6 +289,7 @@ async fn fail_inactivate_validator_stake_with_wrong_config_for_stake() {
     // When we try to inactivate the stake with the wrong config account.
     let inactivate_ix = UnstakeTokensBuilder::new()
         .config(wrong_config.config) // <- wrong config
+        .validator_stake(stake_pda)
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
         .vault(wrong_config.vault)
@@ -336,6 +340,7 @@ async fn fail_inactivate_validator_stake_with_uninitialized_stake_account() {
     // When we try to deactivate from an uninitialized stake account.
     let inactivate_ix = UnstakeTokensBuilder::new()
         .config(config_manager.config)
+        .validator_stake(stake_pda)
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
         .vault(config_manager.vault)
@@ -376,6 +381,7 @@ async fn fail_inactivate_validator_stake_with_active_cooldown() {
     // the cooldown period.
     let inactivate_ix = UnstakeTokensBuilder::new()
         .config(config_manager.config)
+        .validator_stake(stake_pda)
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
         .vault(config_manager.vault)
@@ -415,6 +421,7 @@ async fn fail_validator_stake_deactivate_stake_with_amount_greater_than_stake_am
     // When we try to deactivate an amount greater than the staked amount.
     let deactivate_ix = UnstakeTokensBuilder::new()
         .config(config_manager.config)
+        .validator_stake(stake_pda)
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
         .vault(config_manager.vault)
@@ -455,6 +462,7 @@ async fn fail_validator_stake_deactivate_stake_with_maximum_deactivation_amount_
     // When we try to deactivate a greater amount than the maximum allowed.
     let deactivate_ix = UnstakeTokensBuilder::new()
         .config(config_manager.config)
+        .validator_stake(stake_pda)
         .stake(stake_pda)
         .stake_authority(authority.pubkey())
         .vault(config_manager.vault)

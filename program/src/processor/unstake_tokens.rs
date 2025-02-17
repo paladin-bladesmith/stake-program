@@ -36,28 +36,6 @@ pub fn process_unstake_tokens<'info>(
     let mut config_borrow = ctx.accounts.config.data.borrow_mut();
     let config = unpack_initialized_mut::<Config>(&mut config_borrow)?;
 
-    // validator stake
-    // - owner must be the stake program
-    // - must be initialized
-    // - must have the correct derivation
-    require!(
-        ctx.accounts.validator_stake.owner == program_id,
-        ProgramError::InvalidAccountOwner,
-        "validator stake"
-    );
-    let mut validator_stake = ctx.accounts.validator_stake.try_borrow_mut_data()?;
-    let validator_stake = unpack_initialized_mut::<ValidatorStake>(&mut validator_stake)?;
-    let (derivation, _) = find_validator_stake_pda(
-        &validator_stake.delegation.validator_vote,
-        ctx.accounts.config.key,
-        program_id,
-    );
-    require!(
-        ctx.accounts.validator_stake.key == &derivation,
-        ProgramError::InvalidSeeds,
-        "validator stake",
-    );
-
     // vault
     // - must be the token account on the stake config account
     require!(
@@ -112,6 +90,28 @@ pub fn process_unstake_tokens<'info>(
         }
         SolStakerStake::LEN => {
             let stake = unpack_initialized_mut::<SolStakerStake>(stake_borrow)?;
+
+            // validator stake
+            // - owner must be the stake program
+            // - must be initialized
+            // - must have the correct derivation
+            require!(
+                ctx.accounts.validator_stake.owner == program_id,
+                ProgramError::InvalidAccountOwner,
+                "validator stake"
+            );
+            let mut validator_stake = ctx.accounts.validator_stake.try_borrow_mut_data()?;
+            let validator_stake = unpack_initialized_mut::<ValidatorStake>(&mut validator_stake)?;
+            let (derivation, _) = find_validator_stake_pda(
+                &validator_stake.delegation.validator_vote,
+                ctx.accounts.config.key,
+                program_id,
+            );
+            require!(
+                ctx.accounts.validator_stake.key == &derivation,
+                ProgramError::InvalidSeeds,
+                "validator stake",
+            );
 
             // Update validator's `stakers_total_staked_pal` stake.
             validator_stake.stakers_total_staked_pal = validator_stake

@@ -77,6 +77,7 @@ async fn sol_staker_stake_tokens_simple() {
 
     let mut stake_ix = SolStakerStakeTokensBuilder::new()
         .config(config_manager.config)
+        .validator_stake(validator_stake_manager.stake)
         .sol_staker_stake(sol_staker_staker_manager.stake)
         .sol_staker_stake_authority(sol_staker_staker_manager.authority.pubkey())
         .source_token_account(rewards_manager.token_account)
@@ -179,6 +180,7 @@ async fn fail_sol_staker_stake_tokens_with_wrong_vault_account() {
     // When we try to stake tokens to the fake vault account.
     let mut stake_ix = SolStakerStakeTokensBuilder::new()
         .config(config_manager.config)
+        .validator_stake(validator_stake_manager.stake)
         .sol_staker_stake(sol_staker_staker_manager.stake)
         .sol_staker_stake_authority(sol_staker_staker_manager.authority.pubkey())
         .source_token_account(rewards_manager.token_account)
@@ -266,6 +268,7 @@ async fn fail_sol_staker_stake_tokens_with_wrong_config_account() {
     // When we try to stake tokens using the wrong config account.
     let mut stake_ix = SolStakerStakeTokensBuilder::new()
         .config(another_config.config)
+        .validator_stake(validator_stake_manager.stake)
         .sol_staker_stake(sol_staker_staker_manager.stake)
         .sol_staker_stake_authority(sol_staker_staker_manager.authority.pubkey())
         .source_token_account(rewards_manager.token_account)
@@ -350,6 +353,7 @@ async fn fail_sol_staker_stake_tokens_with_zero_amount() {
     // When we try to stake 0 tokens.
     let mut stake_ix = SolStakerStakeTokensBuilder::new()
         .config(config_manager.config)
+        .validator_stake(validator_stake_manager.stake)
         .sol_staker_stake(sol_staker_staker_manager.stake)
         .sol_staker_stake_authority(sol_staker_staker_manager.authority.pubkey())
         .source_token_account(rewards_manager.token_account)
@@ -445,6 +449,7 @@ async fn fail_sol_staker_stake_tokens_with_uninitialized_stake_account() {
     // When we try to stake the tokens to the uninitialized stake account.
     let mut stake_ix = SolStakerStakeTokensBuilder::new()
         .config(config_manager.config)
+        .validator_stake(validator_stake_manager.stake)
         .sol_staker_stake(sol_staker_staker_manager.stake)
         .sol_staker_stake_authority(sol_staker_staker_manager.authority.pubkey())
         .source_token_account(rewards_manager.token_account)
@@ -536,6 +541,7 @@ async fn sol_staker_stake_tokens_with_insufficient_staked_sol_reduces_effective(
 
     let mut stake_ix = SolStakerStakeTokensBuilder::new()
         .config(config_manager.config)
+        .validator_stake(validator_stake_manager.stake)
         .sol_staker_stake(sol_staker_staker_manager.stake)
         .sol_staker_stake_authority(sol_staker_staker_manager.authority.pubkey())
         .source_token_account(rewards_manager.token_account)

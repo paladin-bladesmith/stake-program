@@ -243,7 +243,7 @@ async fn fail_inactivate_sol_staker_stake_with_wrong_config_for_vault() {
         .unwrap_err();
 
     // Then we expect an error.
-    assert_instruction_error!(err, InstructionError::InvalidSeeds);
+    assert_custom_error!(err, PaladinStakeProgramError::IncorrectVaultAccount);
 }
 
 #[tokio::test]
