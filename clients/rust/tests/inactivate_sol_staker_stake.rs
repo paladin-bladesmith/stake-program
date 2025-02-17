@@ -34,6 +34,7 @@ struct Fixture {
     config_manager: ConfigManager,
     config_account: Config,
     rewards_manager: RewardsManager,
+    validator_stake_manager: ValidatorStakeManager,
     sol_staker_stake_manager: SolStakerStakeManager,
     destination_token_account: Pubkey,
 }
@@ -67,8 +68,13 @@ async fn setup_fixture(context: &mut ProgramTestContext, active_cooldown: Option
     )
     .await;
 
-    // And a validator stake account.
+    // And a validator stake account (staker's staked = 100).
     let validator_stake_manager = ValidatorStakeManager::new(context, &config_manager.config).await;
+    let mut account = get_account!(context, validator_stake_manager.stake);
+    let mut stake_account = ValidatorStake::from_bytes(account.data.as_ref()).unwrap();
+    stake_account.stakers_total_staked_pal = 100;
+    account.data = stake_account.try_to_vec().unwrap();
+    context.set_account(&validator_stake_manager.stake, &account.into());
 
     // And a SOL staker stake account (amount staked = 100).
     let sol_staker_stake_manager = SolStakerStakeManager::new(
@@ -102,6 +108,7 @@ async fn setup_fixture(context: &mut ProgramTestContext, active_cooldown: Option
         config_manager,
         config_account,
         rewards_manager,
+        validator_stake_manager,
         sol_staker_stake_manager,
         destination_token_account,
     }
@@ -114,6 +121,7 @@ async fn inactivate_sol_staker_stake_base() {
         config_manager,
         config_account,
         rewards_manager,
+        validator_stake_manager,
         sol_staker_stake_manager,
         destination_token_account,
         ..
@@ -122,6 +130,7 @@ async fn inactivate_sol_staker_stake_base() {
     // When we move the deactivated amount to inactive (50 tokens).
     let inactivate_ix = UnstakeTokensBuilder::new()
         .config(config_manager.config)
+        .validator_stake(validator_stake_manager.stake)
         .stake(sol_staker_stake_manager.stake)
         .stake_authority(sol_staker_stake_manager.authority.pubkey())
         .vault(config_manager.vault)
@@ -199,6 +208,7 @@ async fn fail_inactivate_sol_staker_stake_with_wrong_config_for_vault() {
     let mut context = setup(&[]).await;
     let Fixture {
         config_manager,
+        validator_stake_manager,
         sol_staker_stake_manager,
         destination_token_account,
         ..
@@ -210,6 +220,7 @@ async fn fail_inactivate_sol_staker_stake_with_wrong_config_for_vault() {
     // When we try to inactivate the stake with the wrong config account.
     let inactivate_ix = UnstakeTokensBuilder::new()
         .config(wrong_config) // <- wrong config
+        .validator_stake(validator_stake_manager.stake)
         .stake(sol_staker_stake_manager.stake)
         .stake_authority(sol_staker_stake_manager.authority.pubkey())
         .vault(config_manager.vault)
@@ -232,13 +243,14 @@ async fn fail_inactivate_sol_staker_stake_with_wrong_config_for_vault() {
         .unwrap_err();
 
     // Then we expect an error.
-    assert_custom_error!(err, PaladinStakeProgramError::IncorrectVaultAccount);
+    assert_instruction_error!(err, InstructionError::InvalidSeeds);
 }
 
 #[tokio::test]
 async fn fail_inactivate_sol_staker_stake_with_wrong_config_for_stake() {
     let mut context = setup(&[]).await;
     let Fixture {
+        validator_stake_manager,
         sol_staker_stake_manager,
         destination_token_account,
         ..
@@ -250,6 +262,7 @@ async fn fail_inactivate_sol_staker_stake_with_wrong_config_for_stake() {
     // When we try to inactivate the stake with the wrong config account.
     let inactivate_ix = UnstakeTokensBuilder::new()
         .config(wrong_config.config) // <- wrong config
+        .validator_stake(validator_stake_manager.stake)
         .stake(sol_staker_stake_manager.stake)
         .stake_authority(sol_staker_stake_manager.authority.pubkey())
         .vault(wrong_config.vault)
@@ -280,6 +293,7 @@ async fn fail_inactivate_sol_stake_stake_with_uninitialized_stake_account() {
     let mut context = setup(&[]).await;
     let Fixture {
         config_manager,
+        validator_stake_manager,
         sol_staker_stake_manager,
         destination_token_account,
         ..
@@ -299,6 +313,7 @@ async fn fail_inactivate_sol_stake_stake_with_uninitialized_stake_account() {
     // When we try to deactivate from an uninitialized stake account.
     let inactivate_ix = UnstakeTokensBuilder::new()
         .config(config_manager.config)
+        .validator_stake(validator_stake_manager.stake)
         .stake(sol_staker_stake_manager.stake)
         .stake_authority(sol_staker_stake_manager.authority.pubkey())
         .vault(config_manager.vault)
@@ -330,6 +345,7 @@ async fn fail_inactivate_sol_staker_stake_with_active_cooldown() {
     let mut context = setup(&[]).await;
     let Fixture {
         config_manager,
+        validator_stake_manager,
         sol_staker_stake_manager,
         destination_token_account,
         ..
@@ -339,6 +355,7 @@ async fn fail_inactivate_sol_staker_stake_with_active_cooldown() {
     // the cooldown period.
     let inactivate_ix = UnstakeTokensBuilder::new()
         .config(config_manager.config)
+        .validator_stake(validator_stake_manager.stake)
         .stake(sol_staker_stake_manager.stake)
         .stake_authority(sol_staker_stake_manager.authority.pubkey())
         .vault(config_manager.vault)
