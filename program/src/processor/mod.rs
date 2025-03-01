@@ -15,11 +15,11 @@ use crate::{
             HarvestHolderRewardsAccounts, HarvestSolStakerRewardsAccounts,
             HarvestValidatorRewardsAccounts, InitializeConfigAccounts,
             InitializeSolStakerStakeAccounts, InitializeValidatorStakeAccounts,
-            SetAuthorityAccounts, SlashSolStakerStakeAccounts, SlashValidatorStakeAccounts,
-            SolStakerMoveTokensAccounts, SolStakerSetAuthorityOverrideAccounts,
-            SolStakerStakeTokensAccounts, SolStakerSyncAuthorityAccounts, UnstakeTokensAccounts,
-            UpdateConfigAccounts, ValidatorOverrideStakedLamportsAccounts,
-            ValidatorStakeTokensAccounts, ValidatorSyncAuthorityAccounts,
+            SetAuthorityAccounts, SlashStakeAccounts, SolStakerMoveTokensAccounts,
+            SolStakerSetAuthorityOverrideAccounts, SolStakerStakeTokensAccounts,
+            SolStakerSyncAuthorityAccounts, UnstakeTokensAccounts, UpdateConfigAccounts,
+            ValidatorOverrideStakedLamportsAccounts, ValidatorStakeTokensAccounts,
+            ValidatorSyncAuthorityAccounts,
         },
         StakeInstruction,
     },
@@ -37,8 +37,7 @@ mod initialize_config;
 mod initialize_sol_staker_stake;
 mod initialize_validator_stake;
 mod set_authority;
-mod slash_sol_staker_stake;
-mod slash_validator_stake;
+mod slash_stake;
 mod sol_staker_move_tokens;
 mod sol_staker_set_authority_override;
 mod sol_staker_stake_tokens;
@@ -105,11 +104,11 @@ pub fn process_instruction<'a>(
                 authority,
             )
         }
-        StakeInstruction::SlashValidatorStake(amount) => {
-            msg!("Instruction: SlashValidatorStake");
-            slash_validator_stake::process_slash_validator_stake(
+        StakeInstruction::SlashStake(amount) => {
+            msg!("Instruction: SlashStake");
+            slash_stake::process_slash_stake(
                 program_id,
-                SlashValidatorStakeAccounts::context(accounts)?,
+                SlashStakeAccounts::context(accounts)?,
                 amount,
             )
         }
@@ -156,14 +155,6 @@ pub fn process_instruction<'a>(
             unstake_tokens::process_unstake_tokens(
                 program_id,
                 UnstakeTokensAccounts::context(accounts)?,
-                amount,
-            )
-        }
-        StakeInstruction::SlashSolStakerStake(amount) => {
-            msg!("Instruction: SlashSolStakerStake");
-            slash_sol_staker_stake::process_slash_sol_staker_stake(
-                program_id,
-                SlashSolStakerStakeAccounts::context(accounts)?,
                 amount,
             )
         }
@@ -289,6 +280,36 @@ pub fn unpack_delegation_mut_checked<'a>(
     require!(stake == &derivation, ProgramError::InvalidSeeds, "stake");
 
     Ok(delegation)
+}
+
+pub(crate) fn unpack_stake<'a>(
+    program_id: &Pubkey,
+    config: &Pubkey,
+    stake_borrow: &'a mut [u8],
+) -> Result<(Pubkey, u64, u64, &'a mut Delegation), ProgramError> {
+    match &stake_borrow[..ArrayDiscriminator::LENGTH] {
+        ValidatorStake::SPL_DISCRIMINATOR_SLICE => {
+            let stake = unpack_initialized_mut::<ValidatorStake>(stake_borrow)?;
+
+            Ok((
+                find_validator_stake_pda(&stake.delegation.validator_vote, config, program_id).0,
+                stake.total_staked_lamports_amount,
+                stake.total_staked_lamports_amount_min,
+                &mut stake.delegation,
+            ))
+        }
+        SolStakerStake::SPL_DISCRIMINATOR_SLICE => {
+            let stake = unpack_initialized_mut::<SolStakerStake>(stake_borrow)?;
+
+            Ok((
+                find_sol_staker_stake_pda(&stake.sol_stake, config, program_id).0,
+                stake.lamports_amount,
+                0,
+                &mut stake.delegation,
+            ))
+        }
+        _ => Err(ProgramError::InvalidAccountData),
+    }
 }
 
 pub(crate) fn sync_config_lamports(

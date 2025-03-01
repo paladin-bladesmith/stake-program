@@ -10,12 +10,9 @@ use spl_token_2022::{
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, UnstakeTokensAccounts},
-    processor::{harvest, sync_effective, unpack_initialized_mut, HarvestAccounts},
+    processor::{harvest, sync_effective, unpack_initialized_mut, unpack_stake, HarvestAccounts},
     require,
-    state::{
-        create_vault_pda, find_sol_staker_stake_pda, find_validator_stake_pda,
-        get_vault_pda_signer_seeds, Config, SolStakerStake, ValidatorStake, MAX_BASIS_POINTS,
-    },
+    state::{create_vault_pda, get_vault_pda_signer_seeds, Config, MAX_BASIS_POINTS},
 };
 
 pub fn process_unstake_tokens<'info>(
@@ -71,39 +68,13 @@ pub fn process_unstake_tokens<'info>(
         ProgramError::InvalidAccountOwner,
         "stake"
     );
-    let stake_borrow = &mut ctx.accounts.stake.try_borrow_mut_data()?;
-    let (derivation, lamports, lamports_min, delegation) = match stake_borrow.len() {
-        ValidatorStake::LEN => {
-            let stake = unpack_initialized_mut::<ValidatorStake>(stake_borrow)?;
-
-            (
-                find_validator_stake_pda(
-                    &stake.delegation.validator_vote,
-                    ctx.accounts.config.key,
-                    program_id,
-                )
-                .0,
-                stake.total_staked_lamports_amount,
-                stake.total_staked_lamports_amount_min,
-                &mut stake.delegation,
-            )
-        }
-        SolStakerStake::LEN => {
-            let stake = unpack_initialized_mut::<SolStakerStake>(stake_borrow)?;
-
-            (
-                find_sol_staker_stake_pda(&stake.sol_stake, ctx.accounts.config.key, program_id).0,
-                stake.lamports_amount,
-                0,
-                &mut stake.delegation,
-            )
-        }
-        _ => return Err(ProgramError::InvalidAccountData),
-    };
+    let mut stake_borrow = &mut ctx.accounts.stake.try_borrow_mut_data()?;
+    let (derivation, lamports, lamports_min, delegation) =
+        unpack_stake(program_id, ctx.accounts.config.key, &mut stake_borrow)?;
     require!(
         ctx.accounts.stake.key == &derivation,
         ProgramError::InvalidSeeds,
-        "validator stake",
+        "stake",
     );
 
     // authority

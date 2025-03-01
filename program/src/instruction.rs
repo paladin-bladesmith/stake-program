@@ -214,7 +214,7 @@ pub enum StakeInstruction {
     )]
     HarvestValidatorRewards,
 
-    /// Slashes a validator stake account for the given amount.
+    /// Slashes a stake account for the given amount.
     ///
     /// Burns the given amount of tokens from the vault account, and reduces the
     /// amount in the stake account.
@@ -229,14 +229,14 @@ pub enum StakeInstruction {
     #[account(
         1,
         writable,
-        name = "validator_stake",
-        desc = "Validator stake account"
+        name = "stake",
+        desc = "Stake account"
     )]
     #[account(
         2,
         writable,
-        name = "validator_stake_authority",
-        desc = "Validator stake authority account"
+        name = "stake_authority",
+        desc = "Stake authority account"
     )]
     #[account(
         3,
@@ -271,7 +271,7 @@ pub enum StakeInstruction {
         name = "token_program",
         desc = "Token program"
     )]
-    SlashValidatorStake(u64),
+    SlashStake(u64),
 
     /// Sets new authority on a config or stake account.
     #[account(
@@ -553,65 +553,6 @@ pub enum StakeInstruction {
     )]
     UnstakeTokens { amount: u64 },
 
-    /// Slashes a validator stake account for the given amount.
-    ///
-    /// Burns the given amount of tokens from the vault account, and reduces the
-    /// amount in the stake account.
-    ///
-    /// Instruction data: amount of tokens to slash.
-    #[account(
-        0,
-        writable,
-        name = "config",
-        desc = "Stake config account"
-    )]
-    #[account(
-        1,
-        writable,
-        name = "sol_staker_stake",
-        desc = "SOL staker stake account"
-    )]
-    #[account(
-        2,
-        writable,
-        name = "sol_staker_stake_authority",
-        desc = "SOL staker stake authority account"
-    )]
-    #[account(
-        3,
-        signer,
-        name = "slash_authority",
-        desc = "Config slash authority"
-    )]
-    #[account(
-        4,
-        writable,
-        name = "mint",
-        desc = "Vault token mint"
-    )]
-    #[account(
-        5,
-        writable,
-        name = "vault",
-        desc = "Vault token account"
-    )]
-    #[account(
-        6,
-        name = "vault_holder_rewards",
-        desc = "Vault holder rewards account"
-    )]
-    #[account(
-        7,
-        name = "vault_authority",
-        desc = "Vault authority"
-    )]
-    #[account(
-        8,
-        name = "token_program",
-        desc = "Token program"
-    )]
-    SlashSolStakerStake(u64),
-
     /// Moves staked PAL between two stake accounts controlled by the same authority.
     #[account(
         0,
@@ -771,7 +712,7 @@ impl StakeInstruction {
             }
             StakeInstruction::HarvestHolderRewards => vec![3],
             StakeInstruction::HarvestValidatorRewards => vec![4],
-            StakeInstruction::SlashValidatorStake(amount) => {
+            StakeInstruction::SlashStake(amount) => {
                 let mut data = Vec::with_capacity(9);
                 data.push(5);
                 data.extend_from_slice(&amount.to_le_bytes());
@@ -819,36 +760,30 @@ impl StakeInstruction {
                 data.extend_from_slice(&amount.to_le_bytes());
                 data
             }
-            StakeInstruction::SlashSolStakerStake(amount) => {
+            StakeInstruction::SolStakerMoveTokens { amount } => {
                 let mut data = Vec::with_capacity(9);
                 data.push(12);
                 data.extend_from_slice(&amount.to_le_bytes());
                 data
             }
-            StakeInstruction::SolStakerMoveTokens { amount } => {
-                let mut data = Vec::with_capacity(9);
-                data.push(13);
-                data.extend_from_slice(&amount.to_le_bytes());
-                data
-            }
-            StakeInstruction::SolStakerSyncAuthority => vec![14],
+            StakeInstruction::SolStakerSyncAuthority => vec![13],
             StakeInstruction::SolStakerSetAuthorityOverride {
                 authority_original,
                 authority_override,
             } => {
                 let mut data = Vec::with_capacity(65);
-                data.push(15);
+                data.push(14);
                 data.extend_from_slice(&authority_original.to_bytes());
                 data.extend_from_slice(&authority_override.to_bytes());
                 data
             }
             StakeInstruction::ValidatorOverrideStakedLamports { amount_min } => {
                 let mut data = Vec::with_capacity(9);
-                data.push(16);
+                data.push(15);
                 data.extend_from_slice(&amount_min.to_le_bytes());
                 data
             }
-            StakeInstruction::ValidatorSyncAuthority => vec![17],
+            StakeInstruction::ValidatorSyncAuthority => vec![16],
         }
     }
 
@@ -883,11 +818,11 @@ impl StakeInstruction {
             Some((&3, _)) => Ok(StakeInstruction::HarvestHolderRewards),
             // 4 - HarvestStakeRewards
             Some((&4, _)) => Ok(StakeInstruction::HarvestValidatorRewards),
-            // 5 - SlashValidatorStake: u64 (8)
+            // 5 - SlashStake: u64 (8)
             Some((&5, rest)) if rest.len() == 8 => {
                 let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
 
-                Ok(StakeInstruction::SlashValidatorStake(amount))
+                Ok(StakeInstruction::SlashStake(amount))
             }
             // 6 - SetAuthority: AuthorityType (u8))
             Some((&6, rest)) if rest.len() == 1 => {
@@ -934,22 +869,16 @@ impl StakeInstruction {
 
                 Ok(StakeInstruction::UnstakeTokens { amount })
             }
-            // 12 - SlashSolStakerStake: u64 (8)
+            // 12 - SolStakerMoveTokens: u64 (8)
             Some((&12, rest)) if rest.len() == 8 => {
-                let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
-
-                Ok(StakeInstruction::SlashSolStakerStake(amount))
-            }
-            // 13 - SolStakerMoveTokens: u64 (8)
-            Some((&13, rest)) if rest.len() == 8 => {
                 let amount = u64::from_le_bytes(*array_ref![rest, 0, 8]);
 
                 Ok(StakeInstruction::SolStakerMoveTokens { amount })
             }
-            // 14
-            Some((&14, _)) => Ok(StakeInstruction::SolStakerSyncAuthority),
-            // 15 - SolStakerSetAuthorityOverride: Pubkey (32), Pubkey (32)
-            Some((&15, rest)) if rest.len() == 64 => {
+            // 13
+            Some((&13, _)) => Ok(StakeInstruction::SolStakerSyncAuthority),
+            // 14 - SolStakerSetAuthorityOverride: Pubkey (32), Pubkey (32)
+            Some((&14, rest)) if rest.len() == 64 => {
                 let authority_original = Pubkey::new_from_array(*array_ref![rest, 0, 32]);
                 let authority_override = Pubkey::new_from_array(*array_ref![rest, 32, 32]);
 
@@ -958,14 +887,14 @@ impl StakeInstruction {
                     authority_override,
                 })
             }
-            // 16 - Validator: Pubkey (32), Pubkey (32)
-            Some((&16, rest)) if rest.len() == 8 => {
+            // 15 - Validator: Pubkey (32), Pubkey (32)
+            Some((&15, rest)) if rest.len() == 8 => {
                 let amount_min = u64::from_le_bytes(*array_ref![rest, 0, 8]);
 
                 Ok(StakeInstruction::ValidatorOverrideStakedLamports { amount_min })
             }
-            // 17
-            Some((&17, _)) => Ok(StakeInstruction::ValidatorSyncAuthority),
+            // 16
+            Some((&16, _)) => Ok(StakeInstruction::ValidatorSyncAuthority),
             _ => Err(ProgramError::InvalidInstructionData),
         }
     }
@@ -1048,8 +977,8 @@ mod tests {
     }
 
     #[test]
-    fn test_pack_unpack_slash_validator_stake() {
-        let original = StakeInstruction::SlashValidatorStake(100);
+    fn test_pack_unpack_slash_stake() {
+        let original = StakeInstruction::SlashStake(100);
         let packed = original.pack();
         let unpacked = StakeInstruction::unpack(&packed).unwrap();
         assert_eq!(original, unpacked);

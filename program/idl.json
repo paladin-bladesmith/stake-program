@@ -311,7 +311,7 @@
       }
     },
     {
-      "name": "SlashValidatorStake",
+      "name": "SlashStake",
       "accounts": [
         {
           "name": "config",
@@ -322,19 +322,19 @@
           ]
         },
         {
-          "name": "validatorStake",
+          "name": "stake",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake account"
+            "Stake account"
           ]
         },
         {
-          "name": "validatorStakeAuthority",
+          "name": "stakeAuthority",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "Validator stake authority account"
+            "Stake authority account"
           ]
         },
         {
@@ -827,93 +827,6 @@
       }
     },
     {
-      "name": "SlashSolStakerStake",
-      "accounts": [
-        {
-          "name": "config",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Stake config account"
-          ]
-        },
-        {
-          "name": "solStakerStake",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "SOL staker stake account"
-          ]
-        },
-        {
-          "name": "solStakerStakeAuthority",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "SOL staker stake authority account"
-          ]
-        },
-        {
-          "name": "slashAuthority",
-          "isMut": false,
-          "isSigner": true,
-          "docs": [
-            "Config slash authority"
-          ]
-        },
-        {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Vault token mint"
-          ]
-        },
-        {
-          "name": "vault",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Vault token account"
-          ]
-        },
-        {
-          "name": "vaultHolderRewards",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Vault holder rewards account"
-          ]
-        },
-        {
-          "name": "vaultAuthority",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Vault authority"
-          ]
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Token program"
-          ]
-        }
-      ],
-      "args": [
-        {
-          "name": "args",
-          "type": "u64"
-        }
-      ],
-      "discriminant": {
-        "type": "u8",
-        "value": 12
-      }
-    },
-    {
       "name": "SolStakerMoveTokens",
       "accounts": [
         {
@@ -965,7 +878,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 13
+        "value": 12
       }
     },
     {
@@ -999,7 +912,7 @@
       "args": [],
       "discriminant": {
         "type": "u8",
-        "value": 14
+        "value": 13
       }
     },
     {
@@ -1051,7 +964,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 15
+        "value": 14
       }
     },
     {
@@ -1106,7 +1019,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 16
+        "value": 15
       }
     },
     {
@@ -1140,7 +1053,7 @@
       "args": [],
       "discriminant": {
         "type": "u8",
-        "value": 17
+        "value": 16
       }
     }
   ],

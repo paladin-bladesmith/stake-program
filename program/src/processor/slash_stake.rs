@@ -4,26 +4,23 @@ use spl_token_2022::{extension::PodStateWithExtensions, pod::PodAccount};
 use crate::{
     err,
     error::StakeError,
-    instruction::accounts::{Context, SlashSolStakerStakeAccounts},
+    instruction::accounts::{Context, SlashStakeAccounts},
     processor::{
         harvest, process_slash_for_delegation, sync_effective, unpack_initialized_mut,
-        HarvestAccounts, SlashArgs,
+        unpack_stake, HarvestAccounts, SlashArgs,
     },
     require,
-    state::{
-        create_vault_pda, find_sol_staker_stake_pda, get_vault_pda_signer_seeds, Config,
-        SolStakerStake,
-    },
+    state::{create_vault_pda, get_vault_pda_signer_seeds, Config},
 };
 
-/// Slashes a SOL staker stake account for the given amount.
+/// Slashes stake account for the given amount.
 ///
 /// Burns the given amount of tokens from the vault account, and reduces the
 /// amount in the stake account.
 ///
 /// 0. `[w]` Config
-/// 1. `[w]` Sol staker stake
-/// 1. `[w]` Sol staker stake authority
+/// 1. `[w]` Stake
+/// 1. `[w]` Stake authority
 /// 3. `[s]` Slash authority
 /// 4. `[w]` Stake token mint
 /// 5. `[w]` Vault token account
@@ -32,9 +29,9 @@ use crate::{
 /// 8. `[ ]` Token program
 ///
 /// Instruction data: amount of tokens to slash.
-pub fn process_slash_sol_staker_stake(
+pub fn process_slash_stake(
     program_id: &Pubkey,
-    ctx: Context<SlashSolStakerStakeAccounts>,
+    ctx: Context<SlashStakeAccounts>,
     amount: u64,
 ) -> ProgramResult {
     // Account validation.
@@ -52,23 +49,19 @@ pub fn process_slash_sol_staker_stake(
 
     // stake
     // - owner must be the stake program
-    // - must be a SolStakerStake account
+    // - must be a ValidatorStake or SolStakerStake account
     // - must be initialized
-    // - derivation must match (validates the config account)
+    // - must have the correct derivation
     require!(
-        ctx.accounts.sol_staker_stake.owner == program_id,
+        ctx.accounts.stake.owner == program_id,
         ProgramError::InvalidAccountOwner,
         "stake"
     );
-    let mut stake_data = ctx.accounts.sol_staker_stake.try_borrow_mut_data()?;
-    let sol_staker_stake = unpack_initialized_mut::<SolStakerStake>(&mut stake_data)?;
-    let (derivation, _) = find_sol_staker_stake_pda(
-        &sol_staker_stake.sol_stake,
-        ctx.accounts.config.key,
-        program_id,
-    );
+    let mut stake_borrow = &mut ctx.accounts.stake.try_borrow_mut_data()?;
+    let (derivation, lamports, lamports_min, delegation) =
+        unpack_stake(program_id, ctx.accounts.config.key, &mut stake_borrow)?;
     require!(
-        ctx.accounts.sol_staker_stake.key == &derivation,
+        ctx.accounts.stake.key == &derivation,
         ProgramError::InvalidSeeds,
         "stake",
     );
@@ -78,10 +71,10 @@ pub fn process_slash_sol_staker_stake(
         HarvestAccounts {
             config: ctx.accounts.config,
             vault_holder_rewards: ctx.accounts.vault_holder_rewards,
-            authority: ctx.accounts.sol_staker_stake_authority,
+            authority: ctx.accounts.stake_authority,
         },
         config,
-        &mut sol_staker_stake.delegation,
+        delegation,
         None,
     )?;
 
@@ -139,7 +132,7 @@ pub fn process_slash_sol_staker_stake(
     // update the stake delegation on the stake and config accounts.
     drop(vault_data);
     process_slash_for_delegation(SlashArgs {
-        delegation: &mut sol_staker_stake.delegation,
+        delegation: delegation,
         mint_info: ctx.accounts.mint,
         vault_info: ctx.accounts.vault,
         vault_authority_info: ctx.accounts.vault_authority,
@@ -149,11 +142,7 @@ pub fn process_slash_sol_staker_stake(
     })?;
 
     // Sync the new effective stake.
-    sync_effective(
-        config,
-        &mut sol_staker_stake.delegation,
-        (sol_staker_stake.lamports_amount, 0),
-    )?;
+    sync_effective(config, delegation, (lamports, lamports_min))?;
 
     Ok(())
 }

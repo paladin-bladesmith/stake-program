@@ -56,7 +56,7 @@ export type ValidatorSyncAuthorityInstructionDataArgs = {};
 export function getValidatorSyncAuthorityInstructionDataEncoder(): Encoder<ValidatorSyncAuthorityInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', getU8Encoder()]]),
-    (value) => ({ ...value, discriminator: 17 })
+    (value) => ({ ...value, discriminator: 16 })
   );
 }
 

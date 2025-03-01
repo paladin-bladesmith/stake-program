@@ -80,7 +80,7 @@ export function getValidatorOverrideStakedLamportsInstructionDataEncoder(): Enco
       ['discriminator', getU8Encoder()],
       ['amountMin', getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 16 })
+    (value) => ({ ...value, discriminator: 15 })
   );
 }
 
