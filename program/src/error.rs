@@ -94,6 +94,10 @@ pub enum StakeError {
     /// 20 - Incorrect SOL stake account
     #[error("Incorrect SOL stake account")]
     IncorrectSolStakeAccount,
+
+    /// 21 - Invalid holder rewards.
+    #[error("Invalid holder rewards")]
+    InvalidHolderRewards,
 }
 
 impl PrintProgramError for StakeError {

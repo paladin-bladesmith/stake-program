@@ -28,6 +28,11 @@ pub enum StakeInstruction {
         name = "vault",
         desc = "Stake vault token account"
     )]
+    #[account(
+        3,
+        name = "vault_holder_rewards",
+        desc = "Stake vault holder rewards account"
+    )]
     InitializeConfig {
         slash_authority: Pubkey,
         config_authority: Pubkey,

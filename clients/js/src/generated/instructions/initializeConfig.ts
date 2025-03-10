@@ -38,6 +38,7 @@ export type InitializeConfigInstruction<
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountVault extends string | IAccountMeta<string> = string,
+  TAccountVaultHolderRewards extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -52,6 +53,9 @@ export type InitializeConfigInstruction<
       TAccountVault extends string
         ? ReadonlyAccount<TAccountVault>
         : TAccountVault,
+      TAccountVaultHolderRewards extends string
+        ? ReadonlyAccount<TAccountVaultHolderRewards>
+        : TAccountVaultHolderRewards,
       ...TRemainingAccounts,
     ]
   >;
@@ -112,6 +116,7 @@ export type InitializeConfigInput<
   TAccountConfig extends string = string,
   TAccountMint extends string = string,
   TAccountVault extends string = string,
+  TAccountVaultHolderRewards extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
@@ -119,6 +124,8 @@ export type InitializeConfigInput<
   mint: Address<TAccountMint>;
   /** Stake vault token account */
   vault: Address<TAccountVault>;
+  /** Stake vault holder rewards account */
+  vaultHolderRewards: Address<TAccountVaultHolderRewards>;
   slashAuthority: InitializeConfigInstructionDataArgs['slashAuthority'];
   configAuthority: InitializeConfigInstructionDataArgs['configAuthority'];
   cooldownTimeSeconds: InitializeConfigInstructionDataArgs['cooldownTimeSeconds'];
@@ -130,13 +137,20 @@ export function getInitializeConfigInstruction<
   TAccountConfig extends string,
   TAccountMint extends string,
   TAccountVault extends string,
+  TAccountVaultHolderRewards extends string,
 >(
-  input: InitializeConfigInput<TAccountConfig, TAccountMint, TAccountVault>
+  input: InitializeConfigInput<
+    TAccountConfig,
+    TAccountMint,
+    TAccountVault,
+    TAccountVaultHolderRewards
+  >
 ): InitializeConfigInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountMint,
-  TAccountVault
+  TAccountVault,
+  TAccountVaultHolderRewards
 > {
   // Program address.
   const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
@@ -146,6 +160,10 @@ export function getInitializeConfigInstruction<
     config: { value: input.config ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     vault: { value: input.vault ?? null, isWritable: false },
+    vaultHolderRewards: {
+      value: input.vaultHolderRewards ?? null,
+      isWritable: false,
+    },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -161,6 +179,7 @@ export function getInitializeConfigInstruction<
       getAccountMeta(accounts.config),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.vault),
+      getAccountMeta(accounts.vaultHolderRewards),
     ],
     programAddress,
     data: getInitializeConfigInstructionDataEncoder().encode(
@@ -170,7 +189,8 @@ export function getInitializeConfigInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountMint,
-    TAccountVault
+    TAccountVault,
+    TAccountVaultHolderRewards
   >;
 
   return instruction;
@@ -188,6 +208,8 @@ export type ParsedInitializeConfigInstruction<
     mint: TAccountMetas[1];
     /** Stake vault token account */
     vault: TAccountMetas[2];
+    /** Stake vault holder rewards account */
+    vaultHolderRewards: TAccountMetas[3];
   };
   data: InitializeConfigInstructionData;
 };
@@ -200,7 +222,7 @@ export function parseInitializeConfigInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedInitializeConfigInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 3) {
+  if (instruction.accounts.length < 4) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -216,6 +238,7 @@ export function parseInitializeConfigInstruction<
       config: getNextAccount(),
       mint: getNextAccount(),
       vault: getNextAccount(),
+      vaultHolderRewards: getNextAccount(),
     },
     data: getInitializeConfigInstructionDataDecoder().decode(instruction.data),
   };
