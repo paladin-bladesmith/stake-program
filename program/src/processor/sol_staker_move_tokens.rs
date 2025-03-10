@@ -130,6 +130,13 @@ pub(crate) fn process_sol_staker_move_tokens(
         .checked_add(amount)
         .ok_or(ProgramError::ArithmeticOverflow)?;
 
+    // The new stake account's cooldown will be the max of the two cooldowns (to
+    // prevent resetting the cooldown and unstaking more than intended).
+    destination_sol_staker_stake.delegation.unstake_cooldown = std::cmp::max(
+        source_sol_staker_stake.delegation.unstake_cooldown,
+        destination_sol_staker_stake.delegation.unstake_cooldown,
+    );
+
     // Synchronize both delegation's new effective amounts.
     sync_effective(
         config,
