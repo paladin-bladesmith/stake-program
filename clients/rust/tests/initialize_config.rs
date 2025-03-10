@@ -2,17 +2,23 @@
 
 mod setup;
 
+use borsh::BorshSerialize;
+use paladin_rewards_program_client::accounts::HolderRewards;
 use paladin_stake_program_client::{
     accounts::Config, errors::PaladinStakeProgramError, instructions::InitializeConfigBuilder,
     pdas::find_vault_pda,
 };
-use setup::token::{
-    create_mint, create_token_account, mint_to, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS,
+use setup::{
+    setup_holder_rewards,
+    token::{
+        create_mint, create_token_account, mint_to, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS,
+    },
 };
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
     account::{Account, AccountSharedData},
     instruction::InstructionError,
+    pubkey::Pubkey,
     signature::{Keypair, Signer},
     system_instruction,
     transaction::Transaction,
@@ -52,16 +58,17 @@ async fn initialize_config_with_mint_and_token() {
     .await
     .unwrap();
 
-    let token = Keypair::new();
+    let vault = Keypair::new();
     create_token_account(
         &mut context,
         &find_vault_pda(&config.pubkey()).0,
-        &token,
+        &vault,
         &mint.pubkey(),
         TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
 
     let create_ix = system_instruction::create_account(
         &context.payer.pubkey(),
@@ -79,7 +86,8 @@ async fn initialize_config_with_mint_and_token() {
     let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
         .mint(mint.pubkey())
-        .vault(token.pubkey())
+        .vault(vault.pubkey())
+        .vault_holder_rewards(vault_holder_rewards)
         .slash_authority(authority)
         .config_authority(authority)
         .cooldown_time_seconds(1) // 1 second
@@ -132,16 +140,17 @@ async fn fail_initialize_config_with_wrong_token_authority() {
     .await
     .unwrap();
 
-    let token = Keypair::new();
+    let vault = Keypair::new();
     create_token_account(
         &mut context,
         &authority, // <-- wrong authority
-        &token,
+        &vault,
         &mint.pubkey(),
         TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
 
     let create_ix = system_instruction::create_account(
         &context.payer.pubkey(),
@@ -161,7 +170,8 @@ async fn fail_initialize_config_with_wrong_token_authority() {
         .config_authority(authority)
         .slash_authority(authority)
         .mint(mint.pubkey())
-        .vault(token.pubkey())
+        .vault(vault.pubkey())
+        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
@@ -214,16 +224,17 @@ async fn fail_initialize_config_with_non_empty_token() {
     .await
     .unwrap();
 
-    let token = Keypair::new();
+    let vault = Keypair::new();
     create_token_account(
         &mut context,
         &find_vault_pda(&config.pubkey()).0,
-        &token,
+        &vault,
         &mint.pubkey(),
         TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
 
     // And we mint a token.
 
@@ -231,7 +242,7 @@ async fn fail_initialize_config_with_non_empty_token() {
         &mut context,
         &mint.pubkey(),
         &authority,
-        &token.pubkey(),
+        &vault.pubkey(),
         1,
         0,
     )
@@ -256,7 +267,8 @@ async fn fail_initialize_config_with_non_empty_token() {
         .config_authority(authority_pubkey)
         .slash_authority(authority_pubkey)
         .mint(mint.pubkey())
-        .vault(token.pubkey())
+        .vault(vault.pubkey())
+        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
@@ -310,16 +322,17 @@ async fn fail_initialize_config_without_transfer_hook() {
     .await
     .unwrap();
 
-    let token = Keypair::new();
+    let vault = Keypair::new();
     create_token_account(
         &mut context,
         &find_vault_pda(&config.pubkey()).0,
-        &token,
+        &vault,
         &mint.pubkey(),
         TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
 
     let create_ix = system_instruction::create_account(
         &context.payer.pubkey(),
@@ -339,7 +352,8 @@ async fn fail_initialize_config_without_transfer_hook() {
         .config_authority(authority_pubkey)
         .slash_authority(authority_pubkey)
         .mint(mint.pubkey())
-        .vault(token.pubkey())
+        .vault(vault.pubkey())
+        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
@@ -367,7 +381,7 @@ async fn fail_initialize_config_without_transfer_hook() {
 
 #[tokio::test]
 async fn fail_initialize_config_with_unitialized_mint() {
-    let context = ProgramTest::new(
+    let mut context = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
         None,
@@ -381,8 +395,9 @@ async fn fail_initialize_config_with_unitialized_mint() {
     let authority = Keypair::new().pubkey();
 
     let mint = Keypair::new();
-    let token = Keypair::new();
+    let vault = Keypair::new();
     let rent = context.banks_client.get_rent().await.unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
 
     let create_mint_ix = system_instruction::create_account(
         &context.payer.pubkey(),
@@ -410,7 +425,8 @@ async fn fail_initialize_config_with_unitialized_mint() {
         .config_authority(authority)
         .slash_authority(authority)
         .mint(mint.pubkey())
-        .vault(token.pubkey())
+        .vault(vault.pubkey())
+        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
@@ -464,16 +480,17 @@ async fn fail_initialize_config_with_wrong_account_length() {
     .await
     .unwrap();
 
-    let token = Keypair::new();
+    let vault = Keypair::new();
     create_token_account(
         &mut context,
         &find_vault_pda(&config.pubkey()).0,
-        &token,
+        &vault,
         &mint.pubkey(),
         TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
 
     let create_ix = system_instruction::create_account(
         &context.payer.pubkey(),
@@ -493,7 +510,8 @@ async fn fail_initialize_config_with_wrong_account_length() {
         .config_authority(authority_pubkey)
         .slash_authority(authority_pubkey)
         .mint(mint.pubkey())
-        .vault(token.pubkey())
+        .vault(vault.pubkey())
+        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
@@ -546,16 +564,17 @@ async fn fail_initialize_config_with_initialized_account() {
     .await
     .unwrap();
 
-    let token = Keypair::new();
+    let vault = Keypair::new();
     create_token_account(
         &mut context,
         &find_vault_pda(&config.pubkey()).0,
-        &token,
+        &vault,
         &mint.pubkey(),
         TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
 
     let create_ix = system_instruction::create_account(
         &context.payer.pubkey(),
@@ -571,13 +590,13 @@ async fn fail_initialize_config_with_initialized_account() {
     );
 
     // And we initialize a config.
-
     let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
         .config_authority(authority)
         .slash_authority(authority)
         .mint(mint.pubkey())
-        .vault(token.pubkey())
+        .vault(vault.pubkey())
+        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
@@ -601,7 +620,8 @@ async fn fail_initialize_config_with_initialized_account() {
         .config_authority(authority)
         .slash_authority(authority)
         .mint(mint.pubkey())
-        .vault(token.pubkey())
+        .vault(vault.pubkey())
+        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1)
         .max_deactivation_basis_points(500)
         .sync_rewards_lamports(1_000_000)
@@ -654,18 +674,19 @@ async fn fail_initialize_config_with_token_delegate() {
 
     // And a token account with a delegate.
 
-    let token = Keypair::new();
+    let vault = Keypair::new();
     create_token_account(
         &mut context,
         &find_vault_pda(&config.pubkey()).0,
-        &token,
+        &vault,
         &mint.pubkey(),
         TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
 
-    let account = get_account!(context, token.pubkey());
+    let account = get_account!(context, vault.pubkey());
     let mut data = account.data;
 
     let token_account = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut data).unwrap();
@@ -681,7 +702,7 @@ async fn fail_initialize_config_with_token_delegate() {
         rent_epoch: account.rent_epoch,
     };
     let account_shared_data: AccountSharedData = delegated_token_account.into();
-    context.set_account(&token.pubkey(), &account_shared_data);
+    context.set_account(&vault.pubkey(), &account_shared_data);
 
     let create_ix = system_instruction::create_account(
         &context.payer.pubkey(),
@@ -701,7 +722,8 @@ async fn fail_initialize_config_with_token_delegate() {
         .config_authority(authority_pubkey)
         .slash_authority(authority_pubkey)
         .mint(mint.pubkey())
-        .vault(token.pubkey())
+        .vault(vault.pubkey())
+        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
@@ -757,18 +779,19 @@ async fn fail_initialize_config_with_token_close_authority() {
 
     // And a token account with a close authority.
 
-    let token = Keypair::new();
+    let vault = Keypair::new();
     create_token_account(
         &mut context,
         &find_vault_pda(&config.pubkey()).0,
-        &token,
+        &vault,
         &mint.pubkey(),
         TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
 
-    let account = get_account!(context, token.pubkey());
+    let account = get_account!(context, vault.pubkey());
     let mut data = account.data;
 
     let token_account = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut data).unwrap();
@@ -783,7 +806,7 @@ async fn fail_initialize_config_with_token_close_authority() {
         rent_epoch: account.rent_epoch,
     };
     let account_shared_data: AccountSharedData = closeable_token_account.into();
-    context.set_account(&token.pubkey(), &account_shared_data);
+    context.set_account(&vault.pubkey(), &account_shared_data);
 
     let create_ix = system_instruction::create_account(
         &context.payer.pubkey(),
@@ -803,7 +826,8 @@ async fn fail_initialize_config_with_token_close_authority() {
         .config_authority(authority_pubkey)
         .slash_authority(authority_pubkey)
         .mint(mint.pubkey())
-        .vault(token.pubkey())
+        .vault(vault.pubkey())
+        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
@@ -859,13 +883,13 @@ async fn fail_initialize_config_with_invalid_token_extensions() {
 
     // And a token account with invalid Memo extensions.
 
-    let token = Keypair::new();
+    let vault = Keypair::new();
     let owner = Keypair::new();
 
     create_token_account(
         &mut context,
         &owner.pubkey(),
-        &token,
+        &vault,
         &mint.pubkey(),
         &[
             ExtensionType::MemoTransfer, // <- invalid extension
@@ -874,9 +898,10 @@ async fn fail_initialize_config_with_invalid_token_extensions() {
     )
     .await
     .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
 
     let enable_memo_ix =
-        enable_required_transfer_memos(&spl_token_2022::ID, &token.pubkey(), &owner.pubkey(), &[])
+        enable_required_transfer_memos(&spl_token_2022::ID, &vault.pubkey(), &owner.pubkey(), &[])
             .unwrap();
 
     let tx = Transaction::new_signed_with_payer(
@@ -887,7 +912,7 @@ async fn fail_initialize_config_with_invalid_token_extensions() {
     );
     context.banks_client.process_transaction(tx).await.unwrap();
 
-    let account = get_account!(context, token.pubkey());
+    let account = get_account!(context, vault.pubkey());
     let mut data = account.data;
 
     let token_account = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut data).unwrap();
@@ -902,7 +927,7 @@ async fn fail_initialize_config_with_invalid_token_extensions() {
         rent_epoch: account.rent_epoch,
     };
     let account_shared_data: AccountSharedData = memo_token_account.into();
-    context.set_account(&token.pubkey(), &account_shared_data);
+    context.set_account(&vault.pubkey(), &account_shared_data);
 
     // When we try to initialize the config with a memo-enabled token account.
 
@@ -924,7 +949,8 @@ async fn fail_initialize_config_with_invalid_token_extensions() {
         .config_authority(authority_pubkey)
         .slash_authority(authority_pubkey)
         .mint(mint.pubkey())
-        .vault(token.pubkey())
+        .vault(vault.pubkey())
+        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
@@ -975,16 +1001,17 @@ async fn fail_initialize_config_with_invalid_max_deactivation_basis_points() {
     .await
     .unwrap();
 
-    let token = Keypair::new();
+    let vault = Keypair::new();
     create_token_account(
         &mut context,
         &find_vault_pda(&config.pubkey()).0,
-        &token,
+        &vault,
         &mint.pubkey(),
         TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
 
     let create_ix = system_instruction::create_account(
         &context.payer.pubkey(),
@@ -1004,7 +1031,8 @@ async fn fail_initialize_config_with_invalid_max_deactivation_basis_points() {
         .config_authority(authority)
         .slash_authority(authority)
         .mint(mint.pubkey())
-        .vault(token.pubkey())
+        .vault(vault.pubkey())
+        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1)
         .max_deactivation_basis_points(20_000) // <- invalid (200%)
         .sync_rewards_lamports(1_000_000)
@@ -1027,4 +1055,90 @@ async fn fail_initialize_config_with_invalid_max_deactivation_basis_points() {
     // Then we expect an error.
 
     assert_instruction_error!(err, InstructionError::InvalidArgument);
+}
+
+#[tokio::test]
+async fn fail_initialize_config_with_invalid_holder_rewards() {
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
+
+    // Given an empty config account with an associated vault and a mint.
+    let config = Keypair::new();
+    let authority = Keypair::new().pubkey();
+
+    let mint = Keypair::new();
+    create_mint(
+        &mut context,
+        &mint,
+        &authority,
+        Some(&authority),
+        0,
+        MINT_EXTENSIONS,
+    )
+    .await
+    .unwrap();
+
+    let vault = Keypair::new();
+    create_token_account(
+        &mut context,
+        &find_vault_pda(&config.pubkey()).0,
+        &vault,
+        &mint.pubkey(),
+        TOKEN_ACCOUNT_EXTENSIONS,
+    )
+    .await
+    .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
+
+    // Set a sponsor on the holder rewards.
+    let mut vault_holder_rewards_account = get_account!(context, vault_holder_rewards);
+    let mut vault_holder_rewards_state =
+        HolderRewards::from_bytes(&vault_holder_rewards_account.data).unwrap();
+    vault_holder_rewards_state.rent_sponsor = Pubkey::new_unique();
+    vault_holder_rewards_account.data = vault_holder_rewards_state.try_to_vec().unwrap();
+    context.set_account(&vault_holder_rewards, &vault_holder_rewards_account.into());
+
+    let create_ix = system_instruction::create_account(
+        &context.payer.pubkey(),
+        &config.pubkey(),
+        context
+            .banks_client
+            .get_rent()
+            .await
+            .unwrap()
+            .minimum_balance(Config::LEN),
+        Config::LEN as u64,
+        &paladin_stake_program_client::ID,
+    );
+
+    let initialize_ix = InitializeConfigBuilder::new()
+        .config(config.pubkey())
+        .mint(mint.pubkey())
+        .vault(vault.pubkey())
+        .vault_holder_rewards(vault_holder_rewards)
+        .slash_authority(authority)
+        .config_authority(authority)
+        .cooldown_time_seconds(1) // 1 second
+        .max_deactivation_basis_points(500) // 5%
+        .sync_rewards_lamports(1_000_000) // 0.001 SOL
+        .instruction();
+    let tx = Transaction::new_signed_with_payer(
+        &[create_ix, initialize_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, &config],
+        context.last_blockhash,
+    );
+    let err = context
+        .banks_client
+        .process_transaction(tx)
+        .await
+        .unwrap_err();
+
+    // Then we expect an error.
+    assert_custom_error!(err, PaladinStakeProgramError::InvalidHolderRewards);
 }

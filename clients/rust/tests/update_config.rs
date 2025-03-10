@@ -9,7 +9,10 @@ use paladin_stake_program_client::{
     pdas::find_vault_pda,
     types::ConfigField,
 };
-use setup::token::{create_mint, create_token_account, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS};
+use setup::{
+    setup_holder_rewards,
+    token::{create_mint, create_token_account, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS},
+};
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
     instruction::InstructionError,
@@ -46,16 +49,17 @@ async fn update_cooldown_time_config() {
     .await
     .unwrap();
 
-    let token = Keypair::new();
+    let vault = Keypair::new();
     create_token_account(
         &mut context,
         &find_vault_pda(&config.pubkey()).0,
-        &token,
+        &vault,
         &mint.pubkey(),
         TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
 
     // And we create a config.
 
@@ -77,7 +81,8 @@ async fn update_cooldown_time_config() {
         .config_authority(authority.pubkey())
         .slash_authority(authority.pubkey())
         .mint(mint.pubkey())
-        .vault(token.pubkey())
+        .vault(vault.pubkey())
+        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
@@ -146,16 +151,17 @@ async fn update_max_deactivation_basis_points_config() {
     .await
     .unwrap();
 
-    let token = Keypair::new();
+    let vault = Keypair::new();
     create_token_account(
         &mut context,
         &find_vault_pda(&config.pubkey()).0,
-        &token,
+        &vault,
         &mint.pubkey(),
         TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
 
     // And we create a config.
 
@@ -177,7 +183,8 @@ async fn update_max_deactivation_basis_points_config() {
         .config_authority(authority.pubkey())
         .slash_authority(authority.pubkey())
         .mint(mint.pubkey())
-        .vault(token.pubkey())
+        .vault(vault.pubkey())
+        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1)
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
@@ -246,16 +253,17 @@ async fn update_sync_rewards_lamports() {
     .await
     .unwrap();
 
-    let token = Keypair::new();
+    let vault = Keypair::new();
     create_token_account(
         &mut context,
         &find_vault_pda(&config.pubkey()).0,
-        &token,
+        &vault,
         &mint.pubkey(),
         TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
 
     // And we create a config.
 
@@ -277,7 +285,8 @@ async fn update_sync_rewards_lamports() {
         .config_authority(authority.pubkey())
         .slash_authority(authority.pubkey())
         .mint(mint.pubkey())
-        .vault(token.pubkey())
+        .vault(vault.pubkey())
+        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
@@ -347,16 +356,17 @@ async fn fail_update_max_deactivation_basis_points_config_with_invalid_value() {
     .await
     .unwrap();
 
-    let token = Keypair::new();
+    let vault = Keypair::new();
     create_token_account(
         &mut context,
         &find_vault_pda(&config.pubkey()).0,
-        &token,
+        &vault,
         &mint.pubkey(),
         TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
 
     // And we create a config.
 
@@ -378,7 +388,8 @@ async fn fail_update_max_deactivation_basis_points_config_with_invalid_value() {
         .config_authority(authority.pubkey())
         .slash_authority(authority.pubkey())
         .mint(mint.pubkey())
-        .vault(token.pubkey())
+        .vault(vault.pubkey())
+        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1)
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
@@ -449,16 +460,17 @@ async fn fail_update_config_with_wrong_authority() {
     .await
     .unwrap();
 
-    let token = Keypair::new();
+    let vault = Keypair::new();
     create_token_account(
         &mut context,
         &find_vault_pda(&config.pubkey()).0,
-        &token,
+        &vault,
         &mint.pubkey(),
         TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
 
     // And we create a config.
 
@@ -480,7 +492,8 @@ async fn fail_update_config_with_wrong_authority() {
         .config_authority(authority.pubkey())
         .slash_authority(authority.pubkey())
         .mint(mint.pubkey())
-        .vault(token.pubkey())
+        .vault(vault.pubkey())
+        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
@@ -647,16 +660,17 @@ async fn fail_update_config_with_no_authority_set() {
     .await
     .unwrap();
 
-    let token = Keypair::new();
+    let vault = Keypair::new();
     create_token_account(
         &mut context,
         &find_vault_pda(&config.pubkey()).0,
-        &token,
+        &vault,
         &mint.pubkey(),
         TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
 
     // And we create a config.
 
@@ -678,7 +692,8 @@ async fn fail_update_config_with_no_authority_set() {
         .config_authority(Pubkey::default()) // <- no authority
         .slash_authority(authority.pubkey())
         .mint(mint.pubkey())
-        .vault(token.pubkey())
+        .vault(vault.pubkey())
+        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1)
         .max_deactivation_basis_points(500)
         .sync_rewards_lamports(1_000_000)
