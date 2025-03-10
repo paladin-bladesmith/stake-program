@@ -1,8 +1,9 @@
 #![cfg(feature = "test-sbf")]
 #![allow(dead_code)]
 
+use paladin_rewards_program_client::accounts::HolderRewards;
 use solana_program_test::{ProgramTest, ProgramTestContext};
-use solana_sdk::{instruction::Instruction, pubkey::Pubkey};
+use solana_sdk::{account::Account, instruction::Instruction, pubkey::Pubkey};
 use spl_transfer_hook_interface::{
     get_extra_account_metas_address, offchain::add_extra_account_metas_for_execute,
 };
@@ -165,4 +166,34 @@ where
     T::pack(val, &mut buf).unwrap();
 
     buf
+}
+
+pub async fn setup_holder_rewards(
+    context: &mut ProgramTestContext,
+    token_account: &Pubkey,
+) -> Pubkey {
+    // Create the holder rewards account for the vault.
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let vault_holder_rewards = HolderRewards::find_pda(token_account).0;
+    context.set_account(
+        &vault_holder_rewards,
+        &Account {
+            lamports: rent.minimum_balance(HolderRewards::LEN),
+            data: borsh::to_vec(&HolderRewards {
+                last_accumulated_rewards_per_token: 0,
+                unharvested_rewards: 0,
+                rent_sponsor: Pubkey::default(),
+                rent_debt: 0,
+                minimum_balance: 0,
+                padding: 0,
+            })
+            .unwrap(),
+            owner: paladin_rewards_program_client::ID,
+            executable: false,
+            rent_epoch: 0,
+        }
+        .into(),
+    );
+
+    vault_holder_rewards
 }

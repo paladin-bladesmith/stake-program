@@ -11,6 +11,7 @@ use paladin_stake_program_client::{
 };
 use setup::{
     config::ConfigManager,
+    setup_holder_rewards,
     token::{create_mint, create_token_account, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS},
 };
 use solana_program_test::{tokio, ProgramTest};
@@ -220,16 +221,17 @@ async fn fail_set_config_authority_when_authority_none() {
     .await
     .unwrap();
 
-    let token = Keypair::new();
+    let vault = Keypair::new();
     create_token_account(
         &mut context,
         &find_vault_pda(&config.pubkey()).0,
-        &token,
+        &vault,
         &mint.pubkey(),
         TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
 
     let create_ix = system_instruction::create_account(
         &context.payer.pubkey(),
@@ -249,7 +251,8 @@ async fn fail_set_config_authority_when_authority_none() {
         .config_authority(Pubkey::default()) // <- None
         .slash_authority(authority_pubkey)
         .mint(mint.pubkey())
-        .vault(token.pubkey())
+        .vault(vault.pubkey())
+        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
@@ -325,16 +328,17 @@ async fn fail_set_slash_authority_when_authority_none() {
     .await
     .unwrap();
 
-    let token = Keypair::new();
+    let vault = Keypair::new();
     create_token_account(
         &mut context,
         &find_vault_pda(&config.pubkey()).0,
-        &token,
+        &vault,
         &mint.pubkey(),
         TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
 
     let create_ix = system_instruction::create_account(
         &context.payer.pubkey(),
@@ -354,7 +358,8 @@ async fn fail_set_slash_authority_when_authority_none() {
         .config_authority(authority_pubkey)
         .slash_authority(Pubkey::default()) // <- None
         .mint(mint.pubkey())
-        .vault(token.pubkey())
+        .vault(vault.pubkey())
+        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL

@@ -1,3 +1,4 @@
+use paladin_rewards_program_client::accounts::HolderRewards;
 use solana_program::{
     entrypoint::ProgramResult, msg, program_error::ProgramError, pubkey::Pubkey, rent::Rent,
     sysvar::Sysvar,
@@ -107,6 +108,35 @@ pub fn process_initialize_config(
     );
     let amount: u64 = vault.base.amount.into();
     require!(amount == 0, StakeError::AmountGreaterThanZero, "vault");
+
+    // Vault (holder rewards).
+    // - Must match derivation.
+    // - Must be owned by the rewards program.
+    // - Must be initialized.
+    // - Must have no sponsor.
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(ctx.accounts.vault.key);
+    require!(
+        ctx.accounts.vault_holder_rewards.key == &vault_holder_rewards,
+        ProgramError::InvalidSeeds,
+        "vault holder rewards"
+    );
+    require!(
+        ctx.accounts.vault_holder_rewards.owner == &paladin_rewards_program_client::ID,
+        ProgramError::IllegalOwner,
+        "vault holder rewards"
+    );
+    require!(
+        ctx.accounts.vault_holder_rewards.data_len() == HolderRewards::LEN,
+        ProgramError::UninitializedAccount,
+        "vault holder rewards"
+    );
+    let holder_rewards =
+        HolderRewards::from_bytes(&ctx.accounts.vault_holder_rewards.data.borrow()).unwrap();
+    require!(
+        holder_rewards.rent_sponsor == Pubkey::default(),
+        StakeError::InvalidHolderRewards,
+        "vault holder rewards"
+    );
 
     // config
     // - owner must be this program

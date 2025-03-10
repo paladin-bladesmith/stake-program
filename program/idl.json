@@ -28,6 +28,14 @@
           "docs": [
             "Stake vault token account"
           ]
+        },
+        {
+          "name": "vaultHolderRewards",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Stake vault holder rewards account"
+          ]
         }
       ],
       "args": [
@@ -1467,6 +1475,11 @@
       "code": 20,
       "name": "IncorrectSolStakeAccount",
       "msg": "Incorrect SOL stake account"
+    },
+    {
+      "code": 21,
+      "name": "InvalidHolderRewards",
+      "msg": "Invalid holder rewards"
     }
   ],
   "metadata": {

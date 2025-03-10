@@ -73,6 +73,9 @@ pub enum PaladinStakeProgramError {
     /// 20 - Incorrect SOL stake account
     #[error("Incorrect SOL stake account")]
     IncorrectSolStakeAccount = 0x14,
+    /// 21 - Invalid holder rewards
+    #[error("Invalid holder rewards")]
+    InvalidHolderRewards = 0x15,
 }
 
 impl solana_program::program_error::PrintProgramError for PaladinStakeProgramError {

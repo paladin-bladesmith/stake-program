@@ -17,6 +17,8 @@ pub struct InitializeConfig {
     pub mint: solana_program::pubkey::Pubkey,
     /// Stake vault token account
     pub vault: solana_program::pubkey::Pubkey,
+    /// Stake vault holder rewards account
+    pub vault_holder_rewards: solana_program::pubkey::Pubkey,
 }
 
 impl InitializeConfig {
@@ -32,7 +34,7 @@ impl InitializeConfig {
         args: InitializeConfigInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.config,
             false,
@@ -42,6 +44,10 @@ impl InitializeConfig {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.vault, false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.vault_holder_rewards,
+            false,
         ));
         accounts.extend_from_slice(remaining_accounts);
         let mut data = InitializeConfigInstructionData::new().try_to_vec().unwrap();
@@ -90,11 +96,13 @@ pub struct InitializeConfigInstructionArgs {
 ///   0. `[writable]` config
 ///   1. `[]` mint
 ///   2. `[]` vault
+///   3. `[]` vault_holder_rewards
 #[derive(Clone, Debug, Default)]
 pub struct InitializeConfigBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
     vault: Option<solana_program::pubkey::Pubkey>,
+    vault_holder_rewards: Option<solana_program::pubkey::Pubkey>,
     slash_authority: Option<Pubkey>,
     config_authority: Option<Pubkey>,
     cooldown_time_seconds: Option<u64>,
@@ -123,6 +131,15 @@ impl InitializeConfigBuilder {
     #[inline(always)]
     pub fn vault(&mut self, vault: solana_program::pubkey::Pubkey) -> &mut Self {
         self.vault = Some(vault);
+        self
+    }
+    /// Stake vault holder rewards account
+    #[inline(always)]
+    pub fn vault_holder_rewards(
+        &mut self,
+        vault_holder_rewards: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.vault_holder_rewards = Some(vault_holder_rewards);
         self
     }
     #[inline(always)]
@@ -177,6 +194,9 @@ impl InitializeConfigBuilder {
             config: self.config.expect("config is not set"),
             mint: self.mint.expect("mint is not set"),
             vault: self.vault.expect("vault is not set"),
+            vault_holder_rewards: self
+                .vault_holder_rewards
+                .expect("vault_holder_rewards is not set"),
         };
         let args = InitializeConfigInstructionArgs {
             slash_authority: self
@@ -213,6 +233,8 @@ pub struct InitializeConfigCpiAccounts<'a, 'b> {
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake vault token account
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Stake vault holder rewards account
+    pub vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `initialize_config` CPI instruction.
@@ -225,6 +247,8 @@ pub struct InitializeConfigCpi<'a, 'b> {
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake vault token account
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Stake vault holder rewards account
+    pub vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
     pub __args: InitializeConfigInstructionArgs,
 }
@@ -240,6 +264,7 @@ impl<'a, 'b> InitializeConfigCpi<'a, 'b> {
             config: accounts.config,
             mint: accounts.mint,
             vault: accounts.vault,
+            vault_holder_rewards: accounts.vault_holder_rewards,
             __args: args,
         }
     }
@@ -276,7 +301,7 @@ impl<'a, 'b> InitializeConfigCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.config.key,
             false,
@@ -287,6 +312,10 @@ impl<'a, 'b> InitializeConfigCpi<'a, 'b> {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.vault.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.vault_holder_rewards.key,
             false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
@@ -305,11 +334,12 @@ impl<'a, 'b> InitializeConfigCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(3 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(4 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.config.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.vault.clone());
+        account_infos.push(self.vault_holder_rewards.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -329,6 +359,7 @@ impl<'a, 'b> InitializeConfigCpi<'a, 'b> {
 ///   0. `[writable]` config
 ///   1. `[]` mint
 ///   2. `[]` vault
+///   3. `[]` vault_holder_rewards
 #[derive(Clone, Debug)]
 pub struct InitializeConfigCpiBuilder<'a, 'b> {
     instruction: Box<InitializeConfigCpiBuilderInstruction<'a, 'b>>,
@@ -341,6 +372,7 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
             config: None,
             mint: None,
             vault: None,
+            vault_holder_rewards: None,
             slash_authority: None,
             config_authority: None,
             cooldown_time_seconds: None,
@@ -369,6 +401,15 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn vault(&mut self, vault: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.vault = Some(vault);
+        self
+    }
+    /// Stake vault holder rewards account
+    #[inline(always)]
+    pub fn vault_holder_rewards(
+        &mut self,
+        vault_holder_rewards: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.vault_holder_rewards = Some(vault_holder_rewards);
         self
     }
     #[inline(always)]
@@ -475,6 +516,11 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
             mint: self.instruction.mint.expect("mint is not set"),
 
             vault: self.instruction.vault.expect("vault is not set"),
+
+            vault_holder_rewards: self
+                .instruction
+                .vault_holder_rewards
+                .expect("vault_holder_rewards is not set"),
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -490,6 +536,7 @@ struct InitializeConfigCpiBuilderInstruction<'a, 'b> {
     config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    vault_holder_rewards: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     slash_authority: Option<Pubkey>,
     config_authority: Option<Pubkey>,
     cooldown_time_seconds: Option<u64>,

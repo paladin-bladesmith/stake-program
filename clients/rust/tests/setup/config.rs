@@ -1,17 +1,19 @@
 #![cfg(feature = "test-sbf")]
 #![allow(dead_code)]
 
-use paladin_rewards_program_client::accounts::HolderRewards;
 use paladin_stake_program_client::{
     accounts::Config, instructions::InitializeConfigBuilder, pdas::find_vault_pda,
 };
 use solana_program_test::ProgramTestContext;
 use solana_sdk::{
-    account::Account, pubkey::Pubkey, signature::Keypair, signer::Signer, system_instruction,
+    pubkey::Pubkey, signature::Keypair, signer::Signer, system_instruction,
     transaction::Transaction,
 };
 
-use super::token::{create_mint, create_token_account, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS};
+use super::{
+    setup_holder_rewards,
+    token::{create_mint, create_token_account, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS},
+};
 
 pub struct ConfigManager {
     // Config account.
@@ -80,27 +82,7 @@ impl ConfigManager {
         manager.vault = vault.pubkey();
 
         // Create the holder rewards account for the vault.
-        let rent = context.banks_client.get_rent().await.unwrap();
-        let vault_holder_rewards = HolderRewards::find_pda(&vault.pubkey()).0;
-        context.set_account(
-            &vault_holder_rewards,
-            &Account {
-                lamports: rent.minimum_balance(HolderRewards::LEN),
-                data: borsh::to_vec(&HolderRewards {
-                    last_accumulated_rewards_per_token: 0,
-                    unharvested_rewards: 0,
-                    rent_sponsor: Pubkey::default(),
-                    rent_debt: 0,
-                    minimum_balance: 0,
-                    padding: 0,
-                })
-                .unwrap(),
-                owner: paladin_rewards_program_client::ID,
-                executable: false,
-                rent_epoch: 0,
-            }
-            .into(),
-        );
+        let vault_holder_rewards = setup_holder_rewards(context, &vault.pubkey()).await;
         manager.vault_holder_rewards = vault_holder_rewards;
 
         // Initializes the config.
@@ -122,6 +104,7 @@ impl ConfigManager {
             .slash_authority(manager.authority.pubkey())
             .mint(mint.pubkey())
             .vault(manager.vault)
+            .vault_holder_rewards(vault_holder_rewards)
             .cooldown_time_seconds(cooldown_time_seconds)
             .max_deactivation_basis_points(max_deactivation_basis_points)
             .sync_rewards_lamports(sync_rewards_lamports)
