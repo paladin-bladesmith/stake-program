@@ -25,6 +25,7 @@ pub struct Config {
     pub token_amount_effective: u64,
     pub sync_rewards_lamports: u64,
     pub lamports_last: u64,
+    pub duna_document_hash: [u8; 32],
     pub accumulated_stake_rewards_per_token: u128,
     pub max_deactivation_basis_points: u16,
     pub vault_authority_bump: u8,

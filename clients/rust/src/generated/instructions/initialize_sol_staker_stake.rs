@@ -12,6 +12,8 @@ use borsh::BorshSerialize;
 pub struct InitializeSolStakerStake {
     /// Stake config
     pub config: solana_program::pubkey::Pubkey,
+    /// DUNA document PDA account
+    pub duna_document_pda: solana_program::pubkey::Pubkey,
     /// Sol staker stake
     pub sol_staker_stake: solana_program::pubkey::Pubkey,
     /// Sol staker authority override
@@ -37,9 +39,13 @@ impl InitializeSolStakerStake {
         &self,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(8 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.config,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.duna_document_pda,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -105,16 +111,18 @@ impl Default for InitializeSolStakerStakeInstructionData {
 /// ### Accounts:
 ///
 ///   0. `[]` config
-///   1. `[writable]` sol_staker_stake
-///   2. `[]` sol_staker_authority_override
-///   3. `[writable]` validator_stake
-///   4. `[]` sol_staker_native_stake
-///   5. `[optional]` sysvar_stake_history (default to `SysvarStakeHistory1111111111111111111111111`)
-///   6. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   7. `[]` sol_stake_view_program
+///   1. `[]` duna_document_pda
+///   2. `[writable]` sol_staker_stake
+///   3. `[]` sol_staker_authority_override
+///   4. `[writable]` validator_stake
+///   5. `[]` sol_staker_native_stake
+///   6. `[optional]` sysvar_stake_history (default to `SysvarStakeHistory1111111111111111111111111`)
+///   7. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   8. `[]` sol_stake_view_program
 #[derive(Clone, Debug, Default)]
 pub struct InitializeSolStakerStakeBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
+    duna_document_pda: Option<solana_program::pubkey::Pubkey>,
     sol_staker_stake: Option<solana_program::pubkey::Pubkey>,
     sol_staker_authority_override: Option<solana_program::pubkey::Pubkey>,
     validator_stake: Option<solana_program::pubkey::Pubkey>,
@@ -133,6 +141,15 @@ impl InitializeSolStakerStakeBuilder {
     #[inline(always)]
     pub fn config(&mut self, config: solana_program::pubkey::Pubkey) -> &mut Self {
         self.config = Some(config);
+        self
+    }
+    /// DUNA document PDA account
+    #[inline(always)]
+    pub fn duna_document_pda(
+        &mut self,
+        duna_document_pda: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.duna_document_pda = Some(duna_document_pda);
         self
     }
     /// Sol staker stake
@@ -219,6 +236,9 @@ impl InitializeSolStakerStakeBuilder {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = InitializeSolStakerStake {
             config: self.config.expect("config is not set"),
+            duna_document_pda: self
+                .duna_document_pda
+                .expect("duna_document_pda is not set"),
             sol_staker_stake: self.sol_staker_stake.expect("sol_staker_stake is not set"),
             sol_staker_authority_override: self
                 .sol_staker_authority_override
@@ -246,6 +266,8 @@ impl InitializeSolStakerStakeBuilder {
 pub struct InitializeSolStakerStakeCpiAccounts<'a, 'b> {
     /// Stake config
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
+    /// DUNA document PDA account
+    pub duna_document_pda: &'b solana_program::account_info::AccountInfo<'a>,
     /// Sol staker stake
     pub sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Sol staker authority override
@@ -268,6 +290,8 @@ pub struct InitializeSolStakerStakeCpi<'a, 'b> {
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake config
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
+    /// DUNA document PDA account
+    pub duna_document_pda: &'b solana_program::account_info::AccountInfo<'a>,
     /// Sol staker stake
     pub sol_staker_stake: &'b solana_program::account_info::AccountInfo<'a>,
     /// Sol staker authority override
@@ -292,6 +316,7 @@ impl<'a, 'b> InitializeSolStakerStakeCpi<'a, 'b> {
         Self {
             __program: program,
             config: accounts.config,
+            duna_document_pda: accounts.duna_document_pda,
             sol_staker_stake: accounts.sol_staker_stake,
             sol_staker_authority_override: accounts.sol_staker_authority_override,
             validator_stake: accounts.validator_stake,
@@ -334,9 +359,13 @@ impl<'a, 'b> InitializeSolStakerStakeCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(8 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.config.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.duna_document_pda.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -383,9 +412,10 @@ impl<'a, 'b> InitializeSolStakerStakeCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(8 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(9 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.config.clone());
+        account_infos.push(self.duna_document_pda.clone());
         account_infos.push(self.sol_staker_stake.clone());
         account_infos.push(self.sol_staker_authority_override.clone());
         account_infos.push(self.validator_stake.clone());
@@ -410,13 +440,14 @@ impl<'a, 'b> InitializeSolStakerStakeCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[]` config
-///   1. `[writable]` sol_staker_stake
-///   2. `[]` sol_staker_authority_override
-///   3. `[writable]` validator_stake
-///   4. `[]` sol_staker_native_stake
-///   5. `[]` sysvar_stake_history
-///   6. `[]` system_program
-///   7. `[]` sol_stake_view_program
+///   1. `[]` duna_document_pda
+///   2. `[writable]` sol_staker_stake
+///   3. `[]` sol_staker_authority_override
+///   4. `[writable]` validator_stake
+///   5. `[]` sol_staker_native_stake
+///   6. `[]` sysvar_stake_history
+///   7. `[]` system_program
+///   8. `[]` sol_stake_view_program
 #[derive(Clone, Debug)]
 pub struct InitializeSolStakerStakeCpiBuilder<'a, 'b> {
     instruction: Box<InitializeSolStakerStakeCpiBuilderInstruction<'a, 'b>>,
@@ -427,6 +458,7 @@ impl<'a, 'b> InitializeSolStakerStakeCpiBuilder<'a, 'b> {
         let instruction = Box::new(InitializeSolStakerStakeCpiBuilderInstruction {
             __program: program,
             config: None,
+            duna_document_pda: None,
             sol_staker_stake: None,
             sol_staker_authority_override: None,
             validator_stake: None,
@@ -445,6 +477,15 @@ impl<'a, 'b> InitializeSolStakerStakeCpiBuilder<'a, 'b> {
         config: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.config = Some(config);
+        self
+    }
+    /// DUNA document PDA account
+    #[inline(always)]
+    pub fn duna_document_pda(
+        &mut self,
+        duna_document_pda: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.duna_document_pda = Some(duna_document_pda);
         self
     }
     /// Sol staker stake
@@ -556,6 +597,11 @@ impl<'a, 'b> InitializeSolStakerStakeCpiBuilder<'a, 'b> {
 
             config: self.instruction.config.expect("config is not set"),
 
+            duna_document_pda: self
+                .instruction
+                .duna_document_pda
+                .expect("duna_document_pda is not set"),
+
             sol_staker_stake: self
                 .instruction
                 .sol_staker_stake
@@ -602,6 +648,7 @@ impl<'a, 'b> InitializeSolStakerStakeCpiBuilder<'a, 'b> {
 struct InitializeSolStakerStakeCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    duna_document_pda: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     sol_staker_stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     sol_staker_authority_override: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     validator_stake: Option<&'b solana_program::account_info::AccountInfo<'a>>,
