@@ -99,7 +99,7 @@ pub enum StakeError {
     #[error("Invalid holder rewards")]
     InvalidHolderRewards,
 
-    /// 21 - Invalid holder rewards.
+    /// 22 - DUNA document is not initialized
     #[error("DUNA document is not initialized")]
     DunaDocumentNotInitialized,
 }

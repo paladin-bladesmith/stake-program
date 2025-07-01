@@ -63,12 +63,11 @@ pub fn find_sol_staker_stake_pda(
     )
 }
 
-// TODO: Confirm Duna program ID
 #[inline(always)]
 pub fn find_duna_document_pda(signer: &Pubkey, doc_hash: &[u8; 32]) -> (Pubkey, u8) {
     Pubkey::find_program_address(
         &[b"consitution", signer.as_ref(), doc_hash],
-        &pubkey!("Duna1111111111111111111111111111"),
+        &pubkey!("8TwDM3rkxQuFCiS2iPB1HB3Q3qnN7b6J4SCTDCpw9SS1"),
     )
 }
 
