@@ -6,11 +6,12 @@ use solana_program::{
 use spl_discriminator::SplDiscriminate;
 
 use crate::{
+    error::StakeError,
     instruction::accounts::{Context, InitializeValidatorStakeAccounts},
     require,
     state::{
-        find_validator_stake_pda, get_validator_stake_pda_signer_seeds, Config, Delegation,
-        ValidatorStake,
+        find_duna_document_pda, find_validator_stake_pda, get_validator_stake_pda_signer_seeds,
+        Config, Delegation, ValidatorStake,
     },
 };
 
@@ -62,6 +63,26 @@ pub fn process_initialize_validator_stake(
         "validator_vote"
     );
     let withdraw_authority = Pubkey::from(*array_ref!(data, 36, 32));
+
+    // Get duna doc PDA
+    let (duna_document_pda, _) =
+        find_duna_document_pda(&withdraw_authority, &config.duna_document_hash);
+
+    // Check the duna document PDA is correct.
+    require!(
+        ctx.accounts.duna_document_pda.key == &duna_document_pda,
+        ProgramError::InvalidSeeds,
+        "duna document"
+    );
+
+    // Ensure the duna document PDA is initialized.
+    let duna_document_data = ctx.accounts.duna_document_pda.try_borrow_data()?;
+
+    require!(
+        !duna_document_data.is_empty() && duna_document_data[0] == 1,
+        StakeError::DunaDocumentNotInitialized,
+        "duna document"
+    );
 
     // stake
     // - have the correct PDA derivation

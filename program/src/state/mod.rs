@@ -12,7 +12,7 @@ use bytemuck::{Pod, Zeroable};
 use shank::ShankType;
 use solana_program::{
     program_error::ProgramError,
-    pubkey::{Pubkey, PubkeyError},
+    pubkey::{pubkey, Pubkey, PubkeyError},
 };
 use std::mem::size_of;
 
@@ -60,6 +60,15 @@ pub fn find_sol_staker_stake_pda(
             config.as_ref(),
         ],
         program_id,
+    )
+}
+
+// TODO: Confirm Duna program ID
+#[inline(always)]
+pub fn find_duna_document_pda(signer: &Pubkey, doc_hash: &[u8; 32]) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &[b"consitution", signer.as_ref(), doc_hash],
+        &pubkey!("Duna1111111111111111111111111111"),
     )
 }
 

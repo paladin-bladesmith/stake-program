@@ -78,6 +78,7 @@ pub fn process_instruction<'a>(
             cooldown_time_seconds,
             max_deactivation_basis_points,
             sync_rewards_lamports,
+            duna_document_hash,
         } => {
             msg!("Instruction: InitializeConfig");
             initialize_config::process_initialize_config(
@@ -88,6 +89,7 @@ pub fn process_instruction<'a>(
                 cooldown_time_seconds,
                 max_deactivation_basis_points,
                 sync_rewards_lamports,
+                duna_document_hash,
             )
         }
         StakeInstruction::InitializeValidatorStake => {
