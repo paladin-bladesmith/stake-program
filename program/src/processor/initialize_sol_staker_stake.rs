@@ -96,7 +96,7 @@ pub fn process_initialize_sol_staker_stake(
     let duna_document_data = ctx.accounts.duna_document_pda.try_borrow_data()?;
 
     require!(
-        !duna_document_data.is_empty() && duna_document_data[0] == 1,
+        duna_document_data.get(0) == Some(&1),
         StakeError::DunaDocumentNotInitialized,
         "duna document"
     );
