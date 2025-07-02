@@ -18,10 +18,10 @@ use crate::{
     err,
     error::StakeError,
     instruction::accounts::{Context, InitializeSolStakerStakeAccounts},
-    processor::{unpack_initialized, unpack_initialized_mut},
+    processor::{check_duna_document_signed, unpack_initialized, unpack_initialized_mut},
     require,
     state::{
-        find_duna_document_pda, find_sol_staker_authority_override_pda, find_sol_staker_stake_pda,
+        find_sol_staker_authority_override_pda, find_sol_staker_stake_pda,
         find_validator_stake_pda, get_sol_staker_stake_pda_signer_seeds, Config, Delegation,
         SolStakerStake, ValidatorStake,
     },
@@ -82,24 +82,11 @@ pub fn process_initialize_sol_staker_stake(
             return err!(StakeError::UndelegatedSolStakeAccount);
         };
 
-    // Get duna doc PDA
-    let (duna_document_pda, _) = find_duna_document_pda(&withdrawer, &config.duna_document_hash);
-
-    // Check the duna document PDA is correct.
-    require!(
-        ctx.accounts.duna_document_pda.key == &duna_document_pda,
-        ProgramError::InvalidSeeds,
-        "duna document"
-    );
-
-    // Ensure the duna document PDA is initialized.
-    let duna_document_data = ctx.accounts.duna_document_pda.try_borrow_data()?;
-
-    require!(
-        duna_document_data.get(0) == Some(&1),
-        StakeError::DunaDocumentNotInitialized,
-        "duna document"
-    );
+    check_duna_document_signed(
+        &withdrawer,
+        ctx.accounts.duna_document_pda,
+        &config.duna_document_hash,
+    )?;
 
     // validator stake
     // - owner must be the stake program

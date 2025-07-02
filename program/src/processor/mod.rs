@@ -25,8 +25,8 @@ use crate::{
     },
     state::{
         calculate_eligible_rewards, calculate_maximum_stake_for_lamports_amount,
-        calculate_stake_rewards_per_token, find_sol_staker_stake_pda, find_validator_stake_pda,
-        Config, Delegation, SolStakerStake, ValidatorStake,
+        calculate_stake_rewards_per_token, find_duna_document_pda, find_sol_staker_stake_pda,
+        find_validator_stake_pda, Config, Delegation, SolStakerStake, ValidatorStake,
     },
 };
 
@@ -512,6 +512,33 @@ fn process_slash_for_delegation(args: SlashArgs) -> ProgramResult {
             &[signer_seeds],
         )?;
     }
+
+    Ok(())
+}
+
+/// Checks that the provided duna document PDA is signed by the signer and initialized.
+pub(crate) fn check_duna_document_signed<'a>(
+    signer: &Pubkey,
+    doc_pda: &'a AccountInfo,
+    doc_hash: &[u8; 32],
+) -> ProgramResult {
+    let (duna_document_pda, _) = find_duna_document_pda(signer, doc_hash);
+
+    // Check the duna document PDA is correct.
+    require!(
+        doc_pda.key == &duna_document_pda,
+        ProgramError::InvalidSeeds,
+        "duna document"
+    );
+
+    // Ensure the duna document PDA is initialized.
+    let duna_document_data = doc_pda.try_borrow_data()?;
+
+    require!(
+        duna_document_data.get(0) == Some(&1),
+        StakeError::DunaDocumentNotInitialized,
+        "duna document"
+    );
 
     Ok(())
 }
