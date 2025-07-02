@@ -87,6 +87,7 @@ pub struct InitializeConfigInstructionArgs {
     pub cooldown_time_seconds: u64,
     pub max_deactivation_basis_points: u16,
     pub sync_rewards_lamports: u64,
+    pub duna_document_hash: [u8; 32],
 }
 
 /// Instruction builder for `InitializeConfig`.
@@ -108,6 +109,7 @@ pub struct InitializeConfigBuilder {
     cooldown_time_seconds: Option<u64>,
     max_deactivation_basis_points: Option<u16>,
     sync_rewards_lamports: Option<u64>,
+    duna_document_hash: Option<[u8; 32]>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -170,6 +172,11 @@ impl InitializeConfigBuilder {
         self.sync_rewards_lamports = Some(sync_rewards_lamports);
         self
     }
+    #[inline(always)]
+    pub fn duna_document_hash(&mut self, duna_document_hash: [u8; 32]) -> &mut Self {
+        self.duna_document_hash = Some(duna_document_hash);
+        self
+    }
     /// Add an aditional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -219,6 +226,10 @@ impl InitializeConfigBuilder {
                 .sync_rewards_lamports
                 .clone()
                 .expect("sync_rewards_lamports is not set"),
+            duna_document_hash: self
+                .duna_document_hash
+                .clone()
+                .expect("duna_document_hash is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -378,6 +389,7 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
             cooldown_time_seconds: None,
             max_deactivation_basis_points: None,
             sync_rewards_lamports: None,
+            duna_document_hash: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -438,6 +450,11 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn sync_rewards_lamports(&mut self, sync_rewards_lamports: u64) -> &mut Self {
         self.instruction.sync_rewards_lamports = Some(sync_rewards_lamports);
+        self
+    }
+    #[inline(always)]
+    pub fn duna_document_hash(&mut self, duna_document_hash: [u8; 32]) -> &mut Self {
+        self.instruction.duna_document_hash = Some(duna_document_hash);
         self
     }
     /// Add an additional account to the instruction.
@@ -507,6 +524,11 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
                 .sync_rewards_lamports
                 .clone()
                 .expect("sync_rewards_lamports is not set"),
+            duna_document_hash: self
+                .instruction
+                .duna_document_hash
+                .clone()
+                .expect("duna_document_hash is not set"),
         };
         let instruction = InitializeConfigCpi {
             __program: self.instruction.__program,
@@ -542,6 +564,7 @@ struct InitializeConfigCpiBuilderInstruction<'a, 'b> {
     cooldown_time_seconds: Option<u64>,
     max_deactivation_basis_points: Option<u16>,
     sync_rewards_lamports: Option<u64>,
+    duna_document_hash: Option<[u8; 32]>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

@@ -98,6 +98,10 @@ pub enum StakeError {
     /// 21 - Invalid holder rewards.
     #[error("Invalid holder rewards")]
     InvalidHolderRewards,
+
+    /// 22 - DUNA document is not initialized
+    #[error("DUNA document is not initialized")]
+    DunaDocumentNotInitialized,
 }
 
 impl PrintProgramError for StakeError {

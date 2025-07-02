@@ -30,6 +30,7 @@ import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 export type InitializeSolStakerStakeInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
+  TAccountDunaDocumentPda extends string | IAccountMeta<string> = string,
   TAccountSolStakerStake extends string | IAccountMeta<string> = string,
   TAccountSolStakerAuthorityOverride extends
     | string
@@ -51,6 +52,9 @@ export type InitializeSolStakerStakeInstruction<
       TAccountConfig extends string
         ? ReadonlyAccount<TAccountConfig>
         : TAccountConfig,
+      TAccountDunaDocumentPda extends string
+        ? ReadonlyAccount<TAccountDunaDocumentPda>
+        : TAccountDunaDocumentPda,
       TAccountSolStakerStake extends string
         ? WritableAccount<TAccountSolStakerStake>
         : TAccountSolStakerStake,
@@ -103,6 +107,7 @@ export function getInitializeSolStakerStakeInstructionDataCodec(): Codec<
 
 export type InitializeSolStakerStakeInput<
   TAccountConfig extends string = string,
+  TAccountDunaDocumentPda extends string = string,
   TAccountSolStakerStake extends string = string,
   TAccountSolStakerAuthorityOverride extends string = string,
   TAccountValidatorStake extends string = string,
@@ -113,6 +118,8 @@ export type InitializeSolStakerStakeInput<
 > = {
   /** Stake config */
   config: Address<TAccountConfig>;
+  /** DUNA document PDA account */
+  dunaDocumentPda: Address<TAccountDunaDocumentPda>;
   /** Sol staker stake */
   solStakerStake: Address<TAccountSolStakerStake>;
   /** Sol staker authority override */
@@ -131,6 +138,7 @@ export type InitializeSolStakerStakeInput<
 
 export function getInitializeSolStakerStakeInstruction<
   TAccountConfig extends string,
+  TAccountDunaDocumentPda extends string,
   TAccountSolStakerStake extends string,
   TAccountSolStakerAuthorityOverride extends string,
   TAccountValidatorStake extends string,
@@ -141,6 +149,7 @@ export function getInitializeSolStakerStakeInstruction<
 >(
   input: InitializeSolStakerStakeInput<
     TAccountConfig,
+    TAccountDunaDocumentPda,
     TAccountSolStakerStake,
     TAccountSolStakerAuthorityOverride,
     TAccountValidatorStake,
@@ -152,6 +161,7 @@ export function getInitializeSolStakerStakeInstruction<
 ): InitializeSolStakerStakeInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
+  TAccountDunaDocumentPda,
   TAccountSolStakerStake,
   TAccountSolStakerAuthorityOverride,
   TAccountValidatorStake,
@@ -166,6 +176,10 @@ export function getInitializeSolStakerStakeInstruction<
   // Original accounts.
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
+    dunaDocumentPda: {
+      value: input.dunaDocumentPda ?? null,
+      isWritable: false,
+    },
     solStakerStake: { value: input.solStakerStake ?? null, isWritable: true },
     solStakerAuthorityOverride: {
       value: input.solStakerAuthorityOverride ?? null,
@@ -205,6 +219,7 @@ export function getInitializeSolStakerStakeInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.config),
+      getAccountMeta(accounts.dunaDocumentPda),
       getAccountMeta(accounts.solStakerStake),
       getAccountMeta(accounts.solStakerAuthorityOverride),
       getAccountMeta(accounts.validatorStake),
@@ -218,6 +233,7 @@ export function getInitializeSolStakerStakeInstruction<
   } as InitializeSolStakerStakeInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
+    TAccountDunaDocumentPda,
     TAccountSolStakerStake,
     TAccountSolStakerAuthorityOverride,
     TAccountValidatorStake,
@@ -238,20 +254,22 @@ export type ParsedInitializeSolStakerStakeInstruction<
   accounts: {
     /** Stake config */
     config: TAccountMetas[0];
+    /** DUNA document PDA account */
+    dunaDocumentPda: TAccountMetas[1];
     /** Sol staker stake */
-    solStakerStake: TAccountMetas[1];
+    solStakerStake: TAccountMetas[2];
     /** Sol staker authority override */
-    solStakerAuthorityOverride: TAccountMetas[2];
+    solStakerAuthorityOverride: TAccountMetas[3];
     /** Validator stake */
-    validatorStake: TAccountMetas[3];
+    validatorStake: TAccountMetas[4];
     /** Sol staker native stake */
-    solStakerNativeStake: TAccountMetas[4];
+    solStakerNativeStake: TAccountMetas[5];
     /** Sysvar stake history */
-    sysvarStakeHistory: TAccountMetas[5];
+    sysvarStakeHistory: TAccountMetas[6];
     /** System program */
-    systemProgram: TAccountMetas[6];
+    systemProgram: TAccountMetas[7];
     /** Paladin SOL Stake View program */
-    solStakeViewProgram: TAccountMetas[7];
+    solStakeViewProgram: TAccountMetas[8];
   };
   data: InitializeSolStakerStakeInstructionData;
 };
@@ -264,7 +282,7 @@ export function parseInitializeSolStakerStakeInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedInitializeSolStakerStakeInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 8) {
+  if (instruction.accounts.length < 9) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -278,6 +296,7 @@ export function parseInitializeSolStakerStakeInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       config: getNextAccount(),
+      dunaDocumentPda: getNextAccount(),
       solStakerStake: getNextAccount(),
       solStakerAuthorityOverride: getNextAccount(),
       validatorStake: getNextAccount(),

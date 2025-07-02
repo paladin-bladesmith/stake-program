@@ -33,6 +33,7 @@ const VALID_VAULT_TOKEN_EXTENSIONS: &[ExtensionType] = &[
 ///   0. `[w]` Stake config
 ///   1. `[ ]` Mint
 ///   2. `[ ]` Vault
+#[allow(clippy::too_many_arguments)]
 pub fn process_initialize_config(
     program_id: &Pubkey,
     ctx: Context<InitializeConfigAccounts>,
@@ -41,6 +42,7 @@ pub fn process_initialize_config(
     cooldown_time_seconds: u64,
     max_deactivation_basis_points: u16,
     sync_rewards_lamports: u64,
+    duna_document_hash: [u8; 32],
 ) -> ProgramResult {
     // Accounts validation.
 
@@ -185,6 +187,7 @@ pub fn process_initialize_config(
         lamports_last: ctx.accounts.config.lamports(),
         accumulated_stake_rewards_per_token: 0.into(),
         max_deactivation_basis_points,
+        duna_document_hash,
         sync_rewards_lamports,
         vault_authority_bump: signer_bump,
         _padding: [0; 5],

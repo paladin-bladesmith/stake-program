@@ -8,8 +8,12 @@
 
 import {
   combineCodec,
+  fixDecoderSize,
+  fixEncoderSize,
   getAddressDecoder,
   getAddressEncoder,
+  getBytesDecoder,
+  getBytesEncoder,
   getStructDecoder,
   getStructEncoder,
   getU16Decoder,
@@ -28,6 +32,7 @@ import {
   type IInstructionWithAccounts,
   type IInstructionWithData,
   type ReadonlyAccount,
+  type ReadonlyUint8Array,
   type WritableAccount,
 } from '@solana/web3.js';
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
@@ -67,6 +72,7 @@ export type InitializeConfigInstructionData = {
   cooldownTimeSeconds: bigint;
   maxDeactivationBasisPoints: number;
   syncRewardsLamports: bigint;
+  dunaDocumentHash: ReadonlyUint8Array;
 };
 
 export type InitializeConfigInstructionDataArgs = {
@@ -75,6 +81,7 @@ export type InitializeConfigInstructionDataArgs = {
   cooldownTimeSeconds: number | bigint;
   maxDeactivationBasisPoints: number;
   syncRewardsLamports: number | bigint;
+  dunaDocumentHash: ReadonlyUint8Array;
 };
 
 export function getInitializeConfigInstructionDataEncoder(): Encoder<InitializeConfigInstructionDataArgs> {
@@ -86,6 +93,7 @@ export function getInitializeConfigInstructionDataEncoder(): Encoder<InitializeC
       ['cooldownTimeSeconds', getU64Encoder()],
       ['maxDeactivationBasisPoints', getU16Encoder()],
       ['syncRewardsLamports', getU64Encoder()],
+      ['dunaDocumentHash', fixEncoderSize(getBytesEncoder(), 32)],
     ]),
     (value) => ({ ...value, discriminator: 0 })
   );
@@ -99,6 +107,7 @@ export function getInitializeConfigInstructionDataDecoder(): Decoder<InitializeC
     ['cooldownTimeSeconds', getU64Decoder()],
     ['maxDeactivationBasisPoints', getU16Decoder()],
     ['syncRewardsLamports', getU64Decoder()],
+    ['dunaDocumentHash', fixDecoderSize(getBytesDecoder(), 32)],
   ]);
 }
 
@@ -131,6 +140,7 @@ export type InitializeConfigInput<
   cooldownTimeSeconds: InitializeConfigInstructionDataArgs['cooldownTimeSeconds'];
   maxDeactivationBasisPoints: InitializeConfigInstructionDataArgs['maxDeactivationBasisPoints'];
   syncRewardsLamports: InitializeConfigInstructionDataArgs['syncRewardsLamports'];
+  dunaDocumentHash: InitializeConfigInstructionDataArgs['dunaDocumentHash'];
 };
 
 export function getInitializeConfigInstruction<

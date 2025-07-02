@@ -18,7 +18,7 @@ use crate::{
     err,
     error::StakeError,
     instruction::accounts::{Context, InitializeSolStakerStakeAccounts},
-    processor::{unpack_initialized, unpack_initialized_mut},
+    processor::{check_duna_document_signed, unpack_initialized, unpack_initialized_mut},
     require,
     state::{
         find_sol_staker_authority_override_pda, find_sol_staker_stake_pda,
@@ -81,6 +81,12 @@ pub fn process_initialize_sol_staker_stake(
         } else {
             return err!(StakeError::UndelegatedSolStakeAccount);
         };
+
+    check_duna_document_signed(
+        &withdrawer,
+        ctx.accounts.duna_document_pda,
+        &config.duna_document_hash,
+    )?;
 
     // validator stake
     // - owner must be the stake program

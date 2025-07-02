@@ -40,6 +40,9 @@ pub struct Config {
     /// Last seen lamports balance, used to track rewards that were sent between syncs.
     pub lamports_last: u64,
 
+    /// Normalized hash of the DUNA document hash.
+    pub duna_document_hash: [u8; 32],
+
     /// The current stake rewards per token exchange rate.
     ///
     /// Stored as a `u128`, which includes a scaling factor of `1e18` to
