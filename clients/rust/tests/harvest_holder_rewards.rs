@@ -21,7 +21,12 @@ use setup::{
 };
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
-    account::{Account, AccountSharedData}, instruction::InstructionError, msg, pubkey::Pubkey, signature::{Keypair, Signer}, transaction::Transaction, vote::state::VoteState
+    account::{Account, AccountSharedData},
+    instruction::InstructionError,
+    pubkey::Pubkey,
+    signature::{Keypair, Signer},
+    transaction::Transaction,
+    vote::state::VoteState,
 };
 use spl_token_2022::{extension::PodStateWithExtensionsMut, pod::PodAccount};
 
@@ -29,7 +34,6 @@ use crate::setup::sign_duna_document;
 
 #[tokio::test]
 async fn validator_stake_harvest_holder_rewards() {
-    msg!("*****************Running validator_stake_harvest_holder_rewards test");
     let mut program_test = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
