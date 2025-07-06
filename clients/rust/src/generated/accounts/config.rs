@@ -33,7 +33,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub const LEN: usize = 160;
+    pub const LEN: usize = 192;
 
     #[inline(always)]
     pub fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {

@@ -123,6 +123,8 @@ impl ConfigManager {
             .banks_client
             .process_transaction_with_metadata(tx)
             .await
+            .unwrap()
+            .result
             .unwrap();
 
         manager.config = config.pubkey();

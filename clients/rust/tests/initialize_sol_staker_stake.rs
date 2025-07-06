@@ -26,6 +26,8 @@ use solana_sdk::{
     transaction::Transaction,
 };
 
+use crate::setup::sign_duna_document;
+
 #[tokio::test]
 async fn initialize_sol_staker_stake_base() {
     let mut program_test = ProgramTest::new(
@@ -66,6 +68,9 @@ async fn initialize_sol_staker_stake_base() {
     )
     .await;
 
+    // Sign duna document PDA.
+    let duna_document_pda = sign_duna_document(&mut context, &withdrawer.pubkey());
+
     // When we initialize the SOL staker stake account.
     let (stake_pda, _) = find_sol_staker_stake_pda(&stake_state, &config_manager.config);
     let transfer_ix = system_instruction::transfer(
@@ -87,6 +92,7 @@ async fn initialize_sol_staker_stake_base() {
         .validator_stake(validator_stake_manager.stake)
         .sol_staker_native_stake(stake_state)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
+        .duna_document_pda(duna_document_pda)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
         &[transfer_ix, initialize_ix],
@@ -169,6 +175,9 @@ async fn fail_initialize_sol_staker_stake_with_initialized_account() {
     )
     .await;
 
+    // Sign duna document PDA.
+    let duna_document_pda = sign_duna_document(&mut context, &withdrawer.pubkey());
+
     // And we initialize the SOL staker stake account.
     let (stake_pda, _) = find_sol_staker_stake_pda(&stake_state, &config_manager.config);
     let transfer_ix = system_instruction::transfer(
@@ -190,6 +199,7 @@ async fn fail_initialize_sol_staker_stake_with_initialized_account() {
         .validator_stake(validator_stake_manager.stake)
         .sol_staker_native_stake(stake_state)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
+        .duna_document_pda(duna_document_pda)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -215,6 +225,7 @@ async fn fail_initialize_sol_staker_stake_with_initialized_account() {
         .validator_stake(validator_stake_manager.stake)
         .sol_staker_native_stake(stake_state)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
+        .duna_document_pda(duna_document_pda)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -278,6 +289,9 @@ async fn fail_initialize_sol_staker_stake_with_invalid_derivation() {
     )
     .await;
 
+    // Sign duna document PDA.
+    let duna_document_pda = sign_duna_document(&mut context, &withdrawer.pubkey());
+
     // When we try to initialize the SOL staker stake account with the wrong derivation
     // (different address as the stake state account).
 
@@ -303,6 +317,7 @@ async fn fail_initialize_sol_staker_stake_with_invalid_derivation() {
         .validator_stake(validator_stake_manager.stake)
         .sol_staker_native_stake(stake_state)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
+        .duna_document_pda(duna_document_pda)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -354,6 +369,9 @@ async fn fail_initialize_stake_with_invalid_stake_state() {
         }),
     );
 
+    // Sign duna document PDA.
+    let duna_document_pda = sign_duna_document(&mut context, &Pubkey::new_unique());
+
     // When we try initialize the SOL staker stake account with an invalid stake state account.
     let (stake_pda, _) = find_sol_staker_stake_pda(&fake_stake_state, &config_manager.config);
     let transfer_ix = system_instruction::transfer(
@@ -375,6 +393,7 @@ async fn fail_initialize_stake_with_invalid_stake_state() {
         .validator_stake(validator_stake_manager.stake)
         .sol_staker_native_stake(fake_stake_state)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
+        .duna_document_pda(duna_document_pda)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
         &[transfer_ix, initialize_ix],
@@ -448,6 +467,9 @@ async fn fail_initialize_sol_staker_stake_with_uninitialized_config() {
         }),
     );
 
+    // Sign duna document PDA.
+    let duna_document_pda = sign_duna_document(&mut context, &withdrawer.pubkey());
+
     // When we try initialize the SOL staker stake account with an uninitialized config account.
     let (stake_pda, _) = find_sol_staker_stake_pda(&stake_state, &config_manager.config);
     let transfer_ix = system_instruction::transfer(
@@ -469,6 +491,7 @@ async fn fail_initialize_sol_staker_stake_with_uninitialized_config() {
         .validator_stake(validator_stake_manager.stake)
         .sol_staker_native_stake(stake_state)
         .sol_stake_view_program(paladin_sol_stake_view_program_client::ID)
+        .duna_document_pda(duna_document_pda)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
         &[transfer_ix, initialize_ix],
@@ -537,6 +560,9 @@ async fn fail_initialize_sol_staker_stake_with_invalid_sol_stake_view_program() 
     )
     .await;
 
+    // Sign duna document PDA.
+    let duna_document_pda = sign_duna_document(&mut context, &withdrawer.pubkey());
+
     // When we try initialize the SOL staker stake account with an invalid SOL stake view program.
 
     let (stake_pda, _) = find_sol_staker_stake_pda(&stake_state, &config_manager.config);
@@ -561,6 +587,7 @@ async fn fail_initialize_sol_staker_stake_with_invalid_sol_stake_view_program() 
         .validator_stake(validator_stake_manager.stake)
         .sol_staker_native_stake(stake_state)
         .sol_stake_view_program(fake_sol_stake_view_program) // <-- Invalid program
+        .duna_document_pda(duna_document_pda)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(

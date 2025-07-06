@@ -44,6 +44,11 @@ pub async fn setup(program_overrides: &[(&'static str, Pubkey)]) -> ProgramTestC
         paladin_rewards_program_client::ID,
         None,
     );
+    program_test.add_program(
+        "paladin_sol_stake_view_program",
+        paladin_sol_stake_view_program_client::ID,
+        None,
+    );
 
     for (name, program_id) in program_overrides {
         program_test.add_program(name, *program_id, None);
@@ -217,13 +222,25 @@ pub fn sign_duna_document(context: &mut ProgramTestContext, acc: &Pubkey) -> Pub
     sign_duna_document_with_data(context, acc, vec![1; 1])
 }
 
+pub async fn sign_duna_document_with_vote(
+    context: &mut ProgramTestContext,
+    vote: Pubkey,
+) -> Pubkey {
+    let account = get_account!(context, vote);
+    let withdrawer = VoteState::deserialize(&account.data)
+        .expect("Failed to deserialize vote state")
+        .authorized_withdrawer;
+
+    sign_duna_document_with_data(context, &withdrawer, vec![1; 1])
+}
+
 pub fn sign_duna_document_with_data(
     context: &mut ProgramTestContext,
     acc: &Pubkey,
     data: Vec<u8>,
 ) -> Pubkey {
     let doc_hash = get_duna_hash();
-    let duna_acc = find_duna_document_pda(acc, &doc_hash).0;
+    let (duna_acc, _) = find_duna_document_pda(acc, &doc_hash);
 
     context.set_account(
         &duna_acc,

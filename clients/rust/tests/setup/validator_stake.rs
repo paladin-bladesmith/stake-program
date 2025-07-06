@@ -5,13 +5,10 @@ use paladin_stake_program_client::{
 use solana_program_test::ProgramTestContext;
 use solana_sdk::{
     pubkey::Pubkey, signature::Keypair, signer::Signer, system_instruction,
-    transaction::Transaction, vote::state::VoteState,
+    transaction::Transaction,
 };
 
-use crate::{
-    get_account,
-    setup::{get_duna_pda_from_vote, sign_duna_document},
-};
+use crate::setup::sign_duna_document_with_vote;
 
 use super::vote::create_vote_account;
 
@@ -22,8 +19,6 @@ pub struct ValidatorStakeManager {
     pub authority: Keypair,
     // Validator account.
     pub validator: Pubkey,
-    // Duna document PDA.
-    pub duna_doc: Pubkey,
     // Validator vote account.
     pub vote: Pubkey,
 }
@@ -36,9 +31,6 @@ impl ValidatorStakeManager {
         // Creates the validator vote account.
         let vote = create_vote_account(context, &validator, &authority.pubkey()).await;
 
-        // Sign duna doc PDA
-        let duna_doc = sign_duna_document(context, &authority.pubkey());
-
         // And a stake account.
         let stake = create_validator_stake(context, &vote, config).await;
 
@@ -46,7 +38,6 @@ impl ValidatorStakeManager {
             stake,
             authority,
             validator,
-            duna_doc,
             vote,
         }
     }
@@ -59,13 +50,6 @@ impl ValidatorStakeManager {
         let authority = Keypair::new();
         let validator = Pubkey::new_unique();
 
-        // Sign duna doc PDA
-        let account = get_account!(context, vote);
-        let vote_state =
-            VoteState::deserialize(&account.data).expect("Failed to deserialize vote state");
-
-        let duna_doc = sign_duna_document(context, &vote_state.authorized_withdrawer);
-
         // And a stake account.
         let stake = create_validator_stake(context, &vote, config).await;
 
@@ -73,7 +57,6 @@ impl ValidatorStakeManager {
             stake,
             authority,
             validator,
-            duna_doc,
             vote,
         }
     }
@@ -101,7 +84,7 @@ pub async fn create_validator_stake(
         .config(*config)
         .validator_stake(stake_pda)
         .validator_vote(*vote)
-        .duna_document_pda(get_duna_pda_from_vote(context, *vote).await)
+        .duna_document_pda(sign_duna_document_with_vote(context, *vote).await)
         .instruction();
 
     context.get_new_latest_blockhash().await.unwrap();

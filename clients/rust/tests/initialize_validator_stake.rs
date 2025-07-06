@@ -9,6 +9,7 @@ use paladin_stake_program_client::{
 };
 use setup::{
     config::create_config,
+    sign_duna_document,
     vote::{create_vote_account, create_vote_account_with_program_id},
 };
 use solana_program_test::{tokio, ProgramTest};
@@ -35,6 +36,8 @@ async fn initialize_stake_with_validator_vote() {
     let validator = Pubkey::new_unique();
     let validator_vote = create_vote_account(&mut context, &validator, &validator).await;
 
+    let duna_document_pda = sign_duna_document(&mut context, &validator);
+
     // When we initialize the stake account.
     let (stake_pda, _) = find_validator_stake_pda(&validator_vote, &config);
     let transfer_ix = system_instruction::transfer(
@@ -52,6 +55,7 @@ async fn initialize_stake_with_validator_vote() {
         .config(config)
         .validator_stake(stake_pda)
         .validator_vote(validator_vote)
+        .duna_document_pda(duna_document_pda)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -112,10 +116,13 @@ async fn fail_initialize_stake_with_initialized_account() {
             .minimum_balance(ValidatorStake::LEN),
     );
 
+    let duna_document_pda = sign_duna_document(&mut context, &validator);
+
     let initialize_ix = InitializeValidatorStakeBuilder::new()
         .config(config)
         .validator_stake(stake_pda)
         .validator_vote(validator_vote)
+        .duna_document_pda(duna_document_pda)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -135,6 +142,7 @@ async fn fail_initialize_stake_with_initialized_account() {
         .config(config)
         .validator_stake(stake_pda)
         .validator_vote(validator_vote)
+        .duna_document_pda(duna_document_pda)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -170,6 +178,7 @@ async fn fail_initialize_stake_with_invalid_derivation() {
     let validator = Pubkey::new_unique();
     let validator_vote = create_vote_account(&mut context, &validator, &validator).await;
 
+    let duna_document_pda = sign_duna_document(&mut context, &validator);
     // When we try initialize the stake account with an invalid derivation.
 
     let (stake_pda, _) = find_validator_stake_pda(&Pubkey::new_unique(), &config);
@@ -178,6 +187,7 @@ async fn fail_initialize_stake_with_invalid_derivation() {
         .config(config)
         .validator_stake(stake_pda)
         .validator_vote(validator_vote)
+        .duna_document_pda(duna_document_pda)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -219,6 +229,8 @@ async fn fail_initialize_stake_with_invalid_vote_account() {
     )
     .await;
 
+    let duna_document_pda = sign_duna_document(&mut context, &validator);
+
     // When we try initialize the stake account with an invalid validator vote account
     // (the validator vote account is owned by system program).
 
@@ -228,6 +240,7 @@ async fn fail_initialize_stake_with_invalid_vote_account() {
         .config(config)
         .validator_stake(stake_pda)
         .validator_vote(validator_vote)
+        .duna_document_pda(duna_document_pda)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -283,6 +296,8 @@ async fn fail_initialize_stake_with_uninitialized_config_account() {
     )
     .await;
 
+    let duna_document_pda = sign_duna_document(&mut context, &validator);
+
     // When we try initialize the stake account with an invalid derivation.
 
     let (stake_pda, _) =
@@ -292,6 +307,7 @@ async fn fail_initialize_stake_with_uninitialized_config_account() {
         .config(uninitialized_config.pubkey())
         .validator_stake(stake_pda)
         .validator_vote(validator_vote)
+        .duna_document_pda(duna_document_pda)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
