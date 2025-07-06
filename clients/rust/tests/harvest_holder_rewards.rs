@@ -21,16 +21,15 @@ use setup::{
 };
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
-    account::{Account, AccountSharedData},
-    instruction::InstructionError,
-    pubkey::Pubkey,
-    signature::{Keypair, Signer},
-    transaction::Transaction,
+    account::{Account, AccountSharedData}, instruction::InstructionError, msg, pubkey::Pubkey, signature::{Keypair, Signer}, transaction::Transaction, vote::state::VoteState
 };
 use spl_token_2022::{extension::PodStateWithExtensionsMut, pod::PodAccount};
 
+use crate::setup::sign_duna_document;
+
 #[tokio::test]
 async fn validator_stake_harvest_holder_rewards() {
+    msg!("*****************Running validator_stake_harvest_holder_rewards test");
     let mut program_test = ProgramTest::new(
         "paladin_stake_program",
         paladin_stake_program_client::ID,
@@ -68,6 +67,11 @@ async fn validator_stake_harvest_holder_rewards() {
     stake_account.delegation.effective_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
+
+    // Sign DUNA document for validator stake account.
+    let account = get_account!(context, stake_manager.vote);
+    let vote_account = VoteState::deserialize(&account.data).unwrap();
+    sign_duna_document(&mut context, &vote_account.authorized_withdrawer);
 
     // And we initialize the holder rewards accounts.
     let holder_rewards_pool = create_holder_rewards_pool(

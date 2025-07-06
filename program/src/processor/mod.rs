@@ -517,9 +517,9 @@ fn process_slash_for_delegation(args: SlashArgs) -> ProgramResult {
 }
 
 /// Checks that the provided duna document PDA is signed by the signer and initialized.
-pub(crate) fn check_duna_document_signed<'a>(
+pub(crate) fn check_duna_document_signed(
     signer: &Pubkey,
-    doc_pda: &'a AccountInfo,
+    doc_pda: &AccountInfo,
     doc_hash: &[u8; 32],
 ) -> ProgramResult {
     let (duna_document_pda, _) = find_duna_document_pda(signer, doc_hash);
@@ -535,7 +535,7 @@ pub(crate) fn check_duna_document_signed<'a>(
     let duna_document_data = doc_pda.try_borrow_data()?;
 
     require!(
-        duna_document_data.get(0) == Some(&1),
+        duna_document_data.first() == Some(&1),
         StakeError::DunaDocumentNotInitialized,
         "duna document"
     );

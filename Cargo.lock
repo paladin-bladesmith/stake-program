@@ -2711,6 +2711,7 @@ dependencies = [
  "num-traits",
  "paladin-rewards-program-client",
  "paladin-sol-stake-view-program-client",
+ "paladin-stake-program",
  "serde",
  "serde_with",
  "solana-program",

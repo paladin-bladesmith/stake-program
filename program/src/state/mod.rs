@@ -33,6 +33,8 @@ pub const STAKE_SCALING_FACTOR: u128 = 10;
 pub const EMPTY_RETURN_DATA: [u8; size_of::<GetStakeActivatingAndDeactivatingReturnData>()] =
     [0; size_of::<GetStakeActivatingAndDeactivatingReturnData>()];
 
+pub const DUNA_PROGRAM_ID: Pubkey = pubkey!("8TwDM3rkxQuFCiS2iPB1HB3Q3qnN7b6J4SCTDCpw9SS1");
+
 #[inline(always)]
 pub fn create_vault_pda<'a>(
     config: &'a Pubkey,
@@ -60,14 +62,6 @@ pub fn find_sol_staker_stake_pda(
             config.as_ref(),
         ],
         program_id,
-    )
-}
-
-#[inline(always)]
-pub fn find_duna_document_pda(signer: &Pubkey, doc_hash: &[u8; 32]) -> (Pubkey, u8) {
-    Pubkey::find_program_address(
-        &[b"consitution", signer.as_ref(), doc_hash],
-        &pubkey!("8TwDM3rkxQuFCiS2iPB1HB3Q3qnN7b6J4SCTDCpw9SS1"),
     )
 }
 
@@ -206,6 +200,14 @@ pub fn calculate_maximum_stake_for_lamports_amount(
             .and_then(|product| product.try_into().ok())
             .ok_or(ProgramError::ArithmeticOverflow)
     }
+}
+
+#[inline(always)]
+pub fn find_duna_document_pda(signer: &Pubkey, doc_hash: &[u8; 32]) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &[b"consitution", signer.as_ref(), doc_hash],
+        &DUNA_PROGRAM_ID,
+    )
 }
 
 /// Struct to hold information about a delegation.
