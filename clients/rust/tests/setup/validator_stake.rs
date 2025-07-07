@@ -80,11 +80,14 @@ pub async fn create_validator_stake(
             .minimum_balance(ValidatorStake::LEN),
     );
 
+    // Sign the DUNA document PDA
+    let duna_pda = sign_duna_document_with_vote(context, *vote).await;
+
     let initialize_ix = InitializeValidatorStakeBuilder::new()
         .config(*config)
         .validator_stake(stake_pda)
         .validator_vote(*vote)
-        .duna_document_pda(sign_duna_document_with_vote(context, *vote).await)
+        .duna_document_pda(duna_pda)
         .instruction();
 
     context.get_new_latest_blockhash().await.unwrap();

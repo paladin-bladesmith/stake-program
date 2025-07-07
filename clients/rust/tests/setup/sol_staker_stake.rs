@@ -107,12 +107,11 @@ pub async fn create_sol_staker_stake(
             .minimum_balance(SolStakerStake::LEN),
     );
 
-    // Sign the duna document PDA
+    // Sign the DUNA document PDA
     let duna_pda = sign_duna_document(context, &original_authority);
 
     let initialize_ix = InitializeSolStakerStakeBuilder::new()
         .config(*config)
-        // .duna_document_pda(find_duna_document_pda(original_authority, &get_duna_hash()).0)
         .duna_document_pda(duna_pda)
         .sol_staker_stake(stake_pda)
         .sol_staker_authority_override(

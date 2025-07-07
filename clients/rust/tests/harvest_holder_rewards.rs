@@ -69,11 +69,6 @@ async fn validator_stake_harvest_holder_rewards() {
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&stake_manager.stake, &account.into());
 
-    // Sign DUNA document for validator stake account.
-    // let account = get_account!(context, stake_manager.vote);
-    // let vote_account = VoteState::deserialize(&account.data).unwrap();
-    // sign_duna_document(&mut context, &vote_account.authorized_withdrawer);
-
     // And we initialize the holder rewards accounts.
     let holder_rewards_pool = create_holder_rewards_pool(
         &mut context,
