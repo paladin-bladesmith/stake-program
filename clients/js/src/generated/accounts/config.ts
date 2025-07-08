@@ -13,10 +13,14 @@ import {
   decodeAccount,
   fetchEncodedAccount,
   fetchEncodedAccounts,
+  fixDecoderSize,
+  fixEncoderSize,
   getAddressDecoder,
   getAddressEncoder,
   getArrayDecoder,
   getArrayEncoder,
+  getBytesDecoder,
+  getBytesEncoder,
   getStructDecoder,
   getStructEncoder,
   getU128Decoder,
@@ -37,6 +41,7 @@ import {
   type FetchAccountsConfig,
   type MaybeAccount,
   type MaybeEncodedAccount,
+  type ReadonlyUint8Array,
 } from '@solana/web3.js';
 import {
   getNullableAddressDecoder,
@@ -54,6 +59,7 @@ export type Config = {
   tokenAmountEffective: bigint;
   syncRewardsLamports: bigint;
   lamportsLast: bigint;
+  dunaDocumentHash: ReadonlyUint8Array;
   accumulatedStakeRewardsPerToken: bigint;
   maxDeactivationBasisPoints: number;
   vaultAuthorityBump: number;
@@ -69,6 +75,7 @@ export type ConfigArgs = {
   tokenAmountEffective: number | bigint;
   syncRewardsLamports: number | bigint;
   lamportsLast: number | bigint;
+  dunaDocumentHash: ReadonlyUint8Array;
   accumulatedStakeRewardsPerToken: number | bigint;
   maxDeactivationBasisPoints: number;
   vaultAuthorityBump: number;
@@ -85,6 +92,7 @@ export function getConfigEncoder(): Encoder<ConfigArgs> {
     ['tokenAmountEffective', getU64Encoder()],
     ['syncRewardsLamports', getU64Encoder()],
     ['lamportsLast', getU64Encoder()],
+    ['dunaDocumentHash', fixEncoderSize(getBytesEncoder(), 32)],
     ['accumulatedStakeRewardsPerToken', getU128Encoder()],
     ['maxDeactivationBasisPoints', getU16Encoder()],
     ['vaultAuthorityBump', getU8Encoder()],
@@ -102,6 +110,7 @@ export function getConfigDecoder(): Decoder<Config> {
     ['tokenAmountEffective', getU64Decoder()],
     ['syncRewardsLamports', getU64Decoder()],
     ['lamportsLast', getU64Decoder()],
+    ['dunaDocumentHash', fixDecoderSize(getBytesDecoder(), 32)],
     ['accumulatedStakeRewardsPerToken', getU128Decoder()],
     ['maxDeactivationBasisPoints', getU16Decoder()],
     ['vaultAuthorityBump', getU8Decoder()],
@@ -167,5 +176,5 @@ export async function fetchAllMaybeConfig(
 }
 
 export function getConfigSize(): number {
-  return 160;
+  return 192;
 }

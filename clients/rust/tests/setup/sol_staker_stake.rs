@@ -13,6 +13,8 @@ use solana_sdk::{
     transaction::Transaction,
 };
 
+use crate::setup::sign_duna_document;
+
 use super::stake::{create_stake_account, delegate_stake_account};
 
 pub struct SolStakerStakeManager {
@@ -105,8 +107,12 @@ pub async fn create_sol_staker_stake(
             .minimum_balance(SolStakerStake::LEN),
     );
 
+    // Sign the DUNA document PDA
+    let duna_pda = sign_duna_document(context, &original_authority);
+
     let initialize_ix = InitializeSolStakerStakeBuilder::new()
         .config(*config)
+        .duna_document_pda(duna_pda)
         .sol_staker_stake(stake_pda)
         .sol_staker_authority_override(
             find_sol_staker_authority_override_pda(original_authority, config).0,
@@ -128,6 +134,8 @@ pub async fn create_sol_staker_stake(
         .banks_client
         .process_transaction_with_metadata(tx)
         .await
+        .unwrap()
+        .result
         .unwrap();
 
     stake_pda

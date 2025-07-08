@@ -7,6 +7,7 @@ use spl_discriminator::SplDiscriminate;
 
 use crate::{
     instruction::accounts::{Context, InitializeValidatorStakeAccounts},
+    processor::check_duna_document_signed,
     require,
     state::{
         find_validator_stake_pda, get_validator_stake_pda_signer_seeds, Config, Delegation,
@@ -62,6 +63,12 @@ pub fn process_initialize_validator_stake(
         "validator_vote"
     );
     let withdraw_authority = Pubkey::from(*array_ref!(data, 36, 32));
+
+    check_duna_document_signed(
+        &withdraw_authority,
+        ctx.accounts.duna_document_pda,
+        &config.duna_document_hash,
+    )?;
 
     // stake
     // - have the correct PDA derivation

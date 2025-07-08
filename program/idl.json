@@ -58,6 +58,15 @@
         {
           "name": "syncRewardsLamports",
           "type": "u64"
+        },
+        {
+          "name": "dunaDocumentHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
         }
       ],
       "discriminant": {
@@ -74,6 +83,14 @@
           "isSigner": false,
           "docs": [
             "Stake config account"
+          ]
+        },
+        {
+          "name": "dunaDocumentPda",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "DUNA document PDA account"
           ]
         },
         {
@@ -488,6 +505,14 @@
           "isSigner": false,
           "docs": [
             "Stake config"
+          ]
+        },
+        {
+          "name": "dunaDocumentPda",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "DUNA document PDA account"
           ]
         },
         {
@@ -1200,6 +1225,15 @@
             "type": "u64"
           },
           {
+            "name": "dunaDocumentHash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
             "name": "accumulatedStakeRewardsPerToken",
             "type": {
               "defined": "PodU128"
@@ -1480,12 +1514,17 @@
       "code": 21,
       "name": "InvalidHolderRewards",
       "msg": "Invalid holder rewards"
+    },
+    {
+      "code": 22,
+      "name": "DunaDocumentNotInitialized",
+      "msg": "DUNA document is not initialized"
     }
   ],
   "metadata": {
     "origin": "shank",
     "address": "GQurxHCYQCNfYR37nHNb6ZiLWg3jpbh2fWv2RpzwGqRK",
-    "binaryVersion": "0.4.2",
+    "binaryVersion": "0.4.3",
     "libVersion": "^0.4.2"
   }
 }
