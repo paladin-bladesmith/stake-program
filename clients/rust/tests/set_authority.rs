@@ -22,6 +22,8 @@ use solana_sdk::{
     transaction::Transaction,
 };
 
+use crate::setup::config::get_duna_hash;
+
 #[tokio::test]
 async fn set_config_authority_on_config() {
     let mut context = ProgramTest::new(
@@ -254,6 +256,7 @@ async fn fail_set_config_authority_when_authority_none() {
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
+        .duna_document_hash(get_duna_hash())
         .instruction();
 
     // And we initialize a config.
@@ -359,6 +362,7 @@ async fn fail_set_slash_authority_when_authority_none() {
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
+        .duna_document_hash(get_duna_hash())
         .instruction();
 
     // And we initialize a config.

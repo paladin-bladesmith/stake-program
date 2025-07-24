@@ -24,6 +24,8 @@ use solana_sdk::{
 };
 use spl_token::state::{Account as TokenAccount, Mint};
 
+use crate::setup::config::get_duna_hash;
+
 #[tokio::test]
 async fn initialize_config_with_mint_and_token() {
     let mut context = ProgramTest::new(
@@ -79,6 +81,7 @@ async fn initialize_config_with_mint_and_token() {
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
+        .duna_document_hash(get_duna_hash())
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -151,6 +154,7 @@ async fn fail_initialize_config_with_wrong_token_authority() {
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
+        .duna_document_hash(get_duna_hash())
         .instruction();
 
     // When we try to initialize the config with the wrong token authority.
@@ -238,6 +242,7 @@ async fn fail_initialize_config_with_non_empty_token() {
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
+        .duna_document_hash(get_duna_hash())
         .instruction();
 
     // When we try to initialize the config with a non-empty token account.
@@ -320,6 +325,7 @@ async fn fail_initialize_config_with_unitialized_mint() {
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
+        .duna_document_hash(get_duna_hash())
         .instruction();
 
     // When we try to initialize the config with an uninitialized mint.
@@ -399,6 +405,7 @@ async fn fail_initialize_config_with_wrong_account_length() {
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
+        .duna_document_hash(get_duna_hash())
         .instruction();
 
     // When we try to initialize the config with an incorrectly-sized account.
@@ -472,6 +479,7 @@ async fn fail_initialize_config_with_initialized_account() {
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
+        .duna_document_hash(get_duna_hash())
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -497,6 +505,7 @@ async fn fail_initialize_config_with_initialized_account() {
         .cooldown_time_seconds(1)
         .max_deactivation_basis_points(500)
         .sync_rewards_lamports(1_000_000)
+        .duna_document_hash(get_duna_hash())
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -595,6 +604,7 @@ async fn fail_initialize_config_with_token_delegate() {
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
+        .duna_document_hash(get_duna_hash())
         .instruction();
 
     // When we try to initialize the config with a delegated token account.
@@ -692,6 +702,7 @@ async fn fail_initialize_config_with_token_close_authority() {
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
+        .duna_document_hash(get_duna_hash())
         .instruction();
 
     // When we try to initialize the config with a "closeable" token account.
@@ -763,6 +774,7 @@ async fn fail_initialize_config_with_invalid_max_deactivation_basis_points() {
         .cooldown_time_seconds(1)
         .max_deactivation_basis_points(20_000) // <- invalid (200%)
         .sync_rewards_lamports(1_000_000)
+        .duna_document_hash(get_duna_hash())
         .instruction();
 
     // When we try to initialize the config with an invalid max_deactivation_basis_points value.
@@ -841,6 +853,7 @@ async fn fail_initialize_config_with_invalid_holder_rewards() {
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
+        .duna_document_hash(get_duna_hash())
         .instruction();
     let tx = Transaction::new_signed_with_payer(
         &[create_ix, initialize_ix],
@@ -915,6 +928,7 @@ async fn fail_initialize_config_with_wrong_vault_seeds() {
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
+        .duna_document_hash(get_duna_hash())
         .instruction();
 
     // When we try to initialize the config with an incorrectly-sized account.

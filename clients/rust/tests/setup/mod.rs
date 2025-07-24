@@ -2,8 +2,16 @@
 #![allow(dead_code)]
 
 use paladin_rewards_program_client::accounts::HolderRewards;
+use paladin_stake_program::state::find_duna_document_pda;
+use solana_program::pubkey;
 use solana_program_test::{ProgramTest, ProgramTestContext};
-use solana_sdk::{account::Account, pubkey::Pubkey};
+use solana_sdk::{
+    account::{Account, AccountSharedData},
+    pubkey::Pubkey,
+    vote::state::VoteState,
+};
+
+use crate::setup::config::get_duna_hash;
 
 pub mod config;
 pub mod harvest;
@@ -18,6 +26,8 @@ pub mod vote;
 pub const REWARDS_PER_TOKEN_SCALING_FACTOR: u128 = 1_000_000_000_000_000_000;
 
 pub const SWAD: u64 = 10u64.pow(9);
+
+pub const DUNA_PROGRAM_ID: Pubkey = pubkey!("8TwDM3rkxQuFCiS2iPB1HB3Q3qnN7b6J4SCTDCpw9SS1");
 
 pub async fn setup(program_overrides: &[(&'static str, Pubkey)]) -> ProgramTestContext {
     let mut program_test = ProgramTest::new(
@@ -154,4 +164,50 @@ pub async fn setup_holder_rewards(
     );
 
     vault_holder_rewards
+}
+
+pub async fn get_duna_pda_from_vote(context: &mut ProgramTestContext, vote: Pubkey) -> Pubkey {
+    let account = get_account!(context, vote);
+    let vote_state =
+        VoteState::deserialize(&account.data).expect("Failed to deserialize vote state");
+    let (duna_doc, _) = find_duna_document_pda(&vote_state.authorized_withdrawer, &get_duna_hash());
+
+    duna_doc
+}
+
+pub fn sign_duna_document(context: &mut ProgramTestContext, acc: &Pubkey) -> Pubkey {
+    sign_duna_document_with_data(context, acc, vec![1; 1])
+}
+
+pub async fn sign_duna_document_with_vote(
+    context: &mut ProgramTestContext,
+    vote: Pubkey,
+) -> Pubkey {
+    let account = get_account!(context, vote);
+    let withdrawer = VoteState::deserialize(&account.data)
+        .expect("Failed to deserialize vote state")
+        .authorized_withdrawer;
+
+    sign_duna_document_with_data(context, &withdrawer, vec![1; 1])
+}
+
+pub fn sign_duna_document_with_data(
+    context: &mut ProgramTestContext,
+    acc: &Pubkey,
+    data: Vec<u8>,
+) -> Pubkey {
+    let doc_hash = get_duna_hash();
+    let (duna_acc, _) = find_duna_document_pda(acc, &doc_hash);
+
+    context.set_account(
+        &duna_acc,
+        &AccountSharedData::from(Account {
+            lamports: 100_000_000,
+            data,
+            owner: DUNA_PROGRAM_ID,
+            ..Default::default()
+        }),
+    );
+
+    duna_acc
 }

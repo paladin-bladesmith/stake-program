@@ -30,6 +30,7 @@ import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 export type InitializeValidatorStakeInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
+  TAccountDunaDocumentPda extends string | IAccountMeta<string> = string,
   TAccountValidatorStake extends string | IAccountMeta<string> = string,
   TAccountValidatorVote extends string | IAccountMeta<string> = string,
   TAccountSystemProgram extends
@@ -43,6 +44,9 @@ export type InitializeValidatorStakeInstruction<
       TAccountConfig extends string
         ? ReadonlyAccount<TAccountConfig>
         : TAccountConfig,
+      TAccountDunaDocumentPda extends string
+        ? ReadonlyAccount<TAccountDunaDocumentPda>
+        : TAccountDunaDocumentPda,
       TAccountValidatorStake extends string
         ? WritableAccount<TAccountValidatorStake>
         : TAccountValidatorStake,
@@ -83,12 +87,15 @@ export function getInitializeValidatorStakeInstructionDataCodec(): Codec<
 
 export type InitializeValidatorStakeInput<
   TAccountConfig extends string = string,
+  TAccountDunaDocumentPda extends string = string,
   TAccountValidatorStake extends string = string,
   TAccountValidatorVote extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
+  /** DUNA document PDA account */
+  dunaDocumentPda: Address<TAccountDunaDocumentPda>;
   /** Validator stake account */
   validatorStake: Address<TAccountValidatorStake>;
   /** Validator vote account */
@@ -99,12 +106,14 @@ export type InitializeValidatorStakeInput<
 
 export function getInitializeValidatorStakeInstruction<
   TAccountConfig extends string,
+  TAccountDunaDocumentPda extends string,
   TAccountValidatorStake extends string,
   TAccountValidatorVote extends string,
   TAccountSystemProgram extends string,
 >(
   input: InitializeValidatorStakeInput<
     TAccountConfig,
+    TAccountDunaDocumentPda,
     TAccountValidatorStake,
     TAccountValidatorVote,
     TAccountSystemProgram
@@ -112,6 +121,7 @@ export function getInitializeValidatorStakeInstruction<
 ): InitializeValidatorStakeInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
+  TAccountDunaDocumentPda,
   TAccountValidatorStake,
   TAccountValidatorVote,
   TAccountSystemProgram
@@ -122,6 +132,10 @@ export function getInitializeValidatorStakeInstruction<
   // Original accounts.
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: false },
+    dunaDocumentPda: {
+      value: input.dunaDocumentPda ?? null,
+      isWritable: false,
+    },
     validatorStake: { value: input.validatorStake ?? null, isWritable: true },
     validatorVote: { value: input.validatorVote ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
@@ -141,6 +155,7 @@ export function getInitializeValidatorStakeInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.config),
+      getAccountMeta(accounts.dunaDocumentPda),
       getAccountMeta(accounts.validatorStake),
       getAccountMeta(accounts.validatorVote),
       getAccountMeta(accounts.systemProgram),
@@ -150,6 +165,7 @@ export function getInitializeValidatorStakeInstruction<
   } as InitializeValidatorStakeInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
+    TAccountDunaDocumentPda,
     TAccountValidatorStake,
     TAccountValidatorVote,
     TAccountSystemProgram
@@ -166,12 +182,14 @@ export type ParsedInitializeValidatorStakeInstruction<
   accounts: {
     /** Stake config account */
     config: TAccountMetas[0];
+    /** DUNA document PDA account */
+    dunaDocumentPda: TAccountMetas[1];
     /** Validator stake account */
-    validatorStake: TAccountMetas[1];
+    validatorStake: TAccountMetas[2];
     /** Validator vote account */
-    validatorVote: TAccountMetas[2];
+    validatorVote: TAccountMetas[3];
     /** System program */
-    systemProgram: TAccountMetas[3];
+    systemProgram: TAccountMetas[4];
   };
   data: InitializeValidatorStakeInstructionData;
 };
@@ -184,7 +202,7 @@ export function parseInitializeValidatorStakeInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedInitializeValidatorStakeInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 4) {
+  if (instruction.accounts.length < 5) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -198,6 +216,7 @@ export function parseInitializeValidatorStakeInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       config: getNextAccount(),
+      dunaDocumentPda: getNextAccount(),
       validatorStake: getNextAccount(),
       validatorVote: getNextAccount(),
       systemProgram: getNextAccount(),

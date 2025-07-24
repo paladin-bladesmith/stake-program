@@ -22,6 +22,8 @@ use solana_sdk::{
     transaction::Transaction,
 };
 
+use crate::setup::config::get_duna_hash;
+
 #[tokio::test]
 async fn update_cooldown_time_config() {
     let mut context = ProgramTest::new(
@@ -84,6 +86,7 @@ async fn update_cooldown_time_config() {
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
+        .duna_document_hash(get_duna_hash())
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -184,6 +187,7 @@ async fn update_max_deactivation_basis_points_config() {
         .cooldown_time_seconds(1)
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
+        .duna_document_hash(get_duna_hash())
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -284,6 +288,7 @@ async fn update_sync_rewards_lamports() {
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
+        .duna_document_hash(get_duna_hash())
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -385,6 +390,7 @@ async fn fail_update_max_deactivation_basis_points_config_with_invalid_value() {
         .cooldown_time_seconds(1)
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
+        .duna_document_hash(get_duna_hash())
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -487,6 +493,7 @@ async fn fail_update_config_with_wrong_authority() {
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
+        .duna_document_hash(get_duna_hash())
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -685,6 +692,7 @@ async fn fail_update_config_with_no_authority_set() {
         .cooldown_time_seconds(1)
         .max_deactivation_basis_points(500)
         .sync_rewards_lamports(1_000_000)
+        .duna_document_hash(get_duna_hash())
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(

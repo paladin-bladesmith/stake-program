@@ -39,6 +39,7 @@ pub enum StakeInstruction {
         cooldown_time_seconds: u64,
         max_deactivation_basis_points: u16,
         sync_rewards_lamports: u64,
+        duna_document_hash: [u8; 32],
     },
 
     /// Initializes stake account data for a validator.
@@ -53,17 +54,22 @@ pub enum StakeInstruction {
     )]
     #[account(
         1,
+        name = "duna_document_pda",
+        desc = "DUNA document PDA account"
+    )]
+    #[account(
+        2,
         writable,
         name = "validator_stake",
         desc = "Validator stake account"
     )]
     #[account(
-        2,
+        3,
         name = "validator_vote",
         desc = "Validator vote account"
     )]
     #[account(
-        3,
+        4,
         name = "system_program",
         desc = "System program"
     )]
@@ -329,38 +335,43 @@ pub enum StakeInstruction {
     )]
     #[account(
         1,
+        name = "duna_document_pda",
+        desc = "DUNA document PDA account"
+    )]
+    #[account(
+        2,
         writable,
         name = "sol_staker_stake",
         desc = "Sol staker stake"
     )]
     #[account(
-        2,
+        3,
         name = "sol_staker_authority_override",
         desc = "Sol staker authority override"
     )]
     #[account(
-        3,
+        4,
         writable,
         name = "validator_stake",
         desc = "Validator stake"
     )]
     #[account(
-        4,
+        5,
         name = "sol_staker_native_stake",
         desc = "Sol staker native stake"
     )]
     #[account(
-        5,
+        6,
         name = "sysvar_stake_history",
         desc = "Sysvar stake history"
     )]
     #[account(
-        6,
+        7,
         name = "system_program",
         desc = "System program"
     )]
     #[account(
-        7,
+        8,
         name = "sol_stake_view_program",
         desc = "Paladin SOL Stake View program"
     )]
@@ -762,6 +773,7 @@ impl StakeInstruction {
                 cooldown_time_seconds,
                 max_deactivation_basis_points,
                 sync_rewards_lamports,
+                duna_document_hash,
             } => {
                 let mut data = Vec::with_capacity(11);
                 data.push(0);
@@ -770,6 +782,7 @@ impl StakeInstruction {
                 data.extend_from_slice(&cooldown_time_seconds.to_le_bytes());
                 data.extend_from_slice(&max_deactivation_basis_points.to_le_bytes());
                 data.extend_from_slice(&sync_rewards_lamports.to_le_bytes());
+                data.extend_from_slice(duna_document_hash);
                 data
             }
             StakeInstruction::InitializeValidatorStake => vec![1],
@@ -866,12 +879,13 @@ impl StakeInstruction {
     pub fn unpack(input: &[u8]) -> Result<Self, ProgramError> {
         match input.split_first() {
             // 0 - InitializeConfig: u64 (8) + u16 (2) + u64 (8)
-            Some((&0, rest)) if rest.len() == 32 + 32 + 8 + 2 + 8 => {
+            Some((&0, rest)) if rest.len() == 32 + 32 + 8 + 2 + 8 + 32 => {
                 let slash_authority = Pubkey::new_from_array(*array_ref![rest, 0, 32]);
                 let config_authority = Pubkey::new_from_array(*array_ref![rest, 32, 32]);
                 let cooldown_time_seconds = u64::from_le_bytes(*array_ref![rest, 64, 8]);
                 let max_deactivation_basis_points = u16::from_le_bytes(*array_ref![rest, 72, 2]);
                 let sync_rewards_lamports = u64::from_le_bytes(*array_ref![rest, 74, 8]);
+                let duna_document_hash = *array_ref![rest, 82, 32];
 
                 Ok(StakeInstruction::InitializeConfig {
                     slash_authority,
@@ -879,6 +893,7 @@ impl StakeInstruction {
                     cooldown_time_seconds,
                     max_deactivation_basis_points,
                     sync_rewards_lamports,
+                    duna_document_hash,
                 })
             }
             // 1 - InitializeValidatorStake
@@ -1011,6 +1026,7 @@ mod tests {
             cooldown_time_seconds: 120,
             max_deactivation_basis_points: 500,
             sync_rewards_lamports: 100,
+            duna_document_hash: [8; 32],
         };
         let packed = original.pack();
         let unpacked = StakeInstruction::unpack(&packed).unwrap();

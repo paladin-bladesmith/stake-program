@@ -76,6 +76,9 @@ pub enum PaladinStakeProgramError {
     /// 21 - Invalid holder rewards
     #[error("Invalid holder rewards")]
     InvalidHolderRewards = 0x15,
+    /// 22 - DUNA document is not initialized
+    #[error("DUNA document is not initialized")]
+    DunaDocumentNotInitialized = 0x16,
 }
 
 impl solana_program::program_error::PrintProgramError for PaladinStakeProgramError {
