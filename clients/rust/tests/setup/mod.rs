@@ -3,10 +3,7 @@
 
 use paladin_rewards_program_client::accounts::HolderRewards;
 use solana_program_test::{ProgramTest, ProgramTestContext};
-use solana_sdk::{account::Account, instruction::Instruction, pubkey::Pubkey};
-use spl_transfer_hook_interface::{
-    get_extra_account_metas_address, offchain::add_extra_account_metas_for_execute,
-};
+use solana_sdk::{account::Account, pubkey::Pubkey};
 
 pub mod config;
 pub mod harvest;
@@ -109,41 +106,6 @@ macro_rules! get_account {
     }};
 }
 
-#[allow(clippy::too_many_arguments)]
-pub async fn add_extra_account_metas_for_transfer(
-    context: &mut ProgramTestContext,
-    instruction: &mut Instruction,
-    program_id: &Pubkey,
-    source_pubkey: &Pubkey,
-    mint_pubkey: &Pubkey,
-    destination_pubkey: &Pubkey,
-    authority_pubkey: &Pubkey,
-    amount: u64,
-) {
-    let extra_metas_address = get_extra_account_metas_address(mint_pubkey, program_id);
-    let extra_metas_account = get_account!(context, extra_metas_address);
-
-    add_extra_account_metas_for_execute(
-        instruction,
-        program_id,
-        source_pubkey,
-        mint_pubkey,
-        destination_pubkey,
-        authority_pubkey,
-        amount,
-        |key| {
-            let data = if key.eq(&extra_metas_address) {
-                Some(extra_metas_account.data.clone())
-            } else {
-                None
-            };
-            async move { Ok(data) }
-        },
-    )
-    .await
-    .unwrap();
-}
-
 pub fn calculate_stake_rewards_per_token(rewards: u64, stake_amount: u64) -> u128 {
     if stake_amount == 0 {
         0
@@ -170,27 +132,23 @@ where
 
 pub async fn setup_holder_rewards(
     context: &mut ProgramTestContext,
-    token_account: &Pubkey,
+    vault_autority: &Pubkey,
 ) -> Pubkey {
     // Create the holder rewards account for the vault.
     let rent = context.banks_client.get_rent().await.unwrap();
-    let vault_holder_rewards = HolderRewards::find_pda(token_account).0;
+    let vault_holder_rewards = HolderRewards::find_pda(vault_autority).0;
     context.set_account(
         &vault_holder_rewards,
         &Account {
             lamports: rent.minimum_balance(HolderRewards::LEN),
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
-                unharvested_rewards: 0,
-                rent_sponsor: Pubkey::default(),
-                rent_debt: 0,
-                minimum_balance: 0,
+                deposited: 0,
                 padding: 0,
             })
             .unwrap(),
             owner: paladin_rewards_program_client::ID,
-            executable: false,
-            rent_epoch: 0,
+            ..Default::default()
         }
         .into(),
     );

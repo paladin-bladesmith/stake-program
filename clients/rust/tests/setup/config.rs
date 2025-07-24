@@ -12,7 +12,7 @@ use solana_sdk::{
 
 use super::{
     setup_holder_rewards,
-    token::{create_mint, create_token_account, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS},
+    token::{create_mint, create_token_account},
 };
 
 pub struct ConfigManager {
@@ -61,7 +61,6 @@ impl ConfigManager {
             &manager.mint_authority.pubkey(),
             Some(&manager.mint_authority.pubkey()),
             0,
-            MINT_EXTENSIONS,
         )
         .await
         .unwrap();
@@ -75,7 +74,6 @@ impl ConfigManager {
             &find_vault_pda(&config.pubkey()).0,
             &vault,
             &manager.mint,
-            TOKEN_ACCOUNT_EXTENSIONS,
         )
         .await
         .unwrap();

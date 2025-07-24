@@ -10,10 +10,9 @@ use paladin_stake_program_client::{
     pdas::find_validator_stake_pda,
 };
 use setup::{
-    add_extra_account_metas_for_transfer,
     config::ConfigManager,
     rewards::{create_holder_rewards, RewardsManager},
-    token::{create_token_account, mint_to, TOKEN_ACCOUNT_EXTENSIONS},
+    token::{create_token_account, mint_to},
     validator_stake::ValidatorStakeManager,
     vote::create_vote_account,
 };
@@ -21,11 +20,12 @@ use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
     account::AccountSharedData,
     instruction::InstructionError,
+    program_pack::Pack,
     pubkey::Pubkey,
     signature::{Keypair, Signer},
     transaction::Transaction,
 };
-use spl_token_2022::{extension::StateWithExtensions, state::Account};
+use spl_token::state::Account as TokenAccount;
 
 #[tokio::test]
 async fn validator_stake_tokens_simple() {
@@ -64,7 +64,6 @@ async fn validator_stake_tokens_simple() {
         &config_manager.mint_authority,
         &rewards_manager.token_account,
         100,
-        0,
     )
     .await
     .unwrap();
@@ -83,7 +82,7 @@ async fn validator_stake_tokens_simple() {
     // - raw amount to be staked: 65
     // - current lamports staked: 50
     // - stake limit: 1.3 * 50 = 65
-    let mut stake_ix = ValidatorStakeTokensBuilder::new()
+    let stake_ix = ValidatorStakeTokensBuilder::new()
         .config(config_manager.config)
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
@@ -92,20 +91,9 @@ async fn validator_stake_tokens_simple() {
         .mint(config_manager.mint)
         .vault(config_manager.vault)
         .vault_holder_rewards(holder_rewards)
-        .token_program(spl_token_2022::ID)
+        .token_program(spl_token::ID)
         .amount(65) // <- stake 65 tokens
         .instruction();
-    add_extra_account_metas_for_transfer(
-        &mut context,
-        &mut stake_ix,
-        &paladin_rewards_program_client::ID,
-        &rewards_manager.token_account,
-        &config_manager.mint,
-        &config_manager.vault,
-        &rewards_manager.owner.pubkey(),
-        50,
-    )
-    .await;
     let tx = Transaction::new_signed_with_payer(
         &[stake_ix],
         Some(&context.payer.pubkey()),
@@ -121,8 +109,8 @@ async fn validator_stake_tokens_simple() {
 
     // Assert - The vault account has 50 tokens.
     let account = get_account!(context, config_manager.vault);
-    let vault = StateWithExtensions::<Account>::unpack(&account.data).unwrap();
-    assert_eq!(vault.base.amount, 65);
+    let vault = TokenAccount::unpack(&account.data).unwrap();
+    assert_eq!(vault.amount, 65);
 
     // Assert - The config account has 65 tokens delegated (staked).
     let account = get_account!(context, config_manager.config);
@@ -161,7 +149,6 @@ async fn fail_validator_stake_tokens_with_wrong_vault_account() {
         &config_manager.mint_authority,
         &rewards_manager.token_account,
         100,
-        0,
     )
     .await
     .unwrap();
@@ -173,7 +160,6 @@ async fn fail_validator_stake_tokens_with_wrong_vault_account() {
         &config_manager.authority.pubkey(),
         &wrong_vault,
         &config_manager.mint,
-        TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
@@ -186,7 +172,7 @@ async fn fail_validator_stake_tokens_with_wrong_vault_account() {
     .await;
 
     // When we try to stake tokens to the fake vault account.
-    let mut stake_ix = ValidatorStakeTokensBuilder::new()
+    let stake_ix = ValidatorStakeTokensBuilder::new()
         .config(config_manager.config)
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
@@ -195,20 +181,9 @@ async fn fail_validator_stake_tokens_with_wrong_vault_account() {
         .mint(config_manager.mint)
         .vault(wrong_vault.pubkey())
         .vault_holder_rewards(holder_rewards)
-        .token_program(spl_token_2022::ID)
+        .token_program(spl_token::ID)
         .amount(50) // <- stake 50 tokens
         .instruction();
-    add_extra_account_metas_for_transfer(
-        &mut context,
-        &mut stake_ix,
-        &paladin_rewards_program_client::ID,
-        &rewards_manager.token_account,
-        &config_manager.mint,
-        &wrong_vault.pubkey(),
-        &rewards_manager.owner.pubkey(),
-        50,
-    )
-    .await;
 
     let tx = Transaction::new_signed_with_payer(
         &[stake_ix],
@@ -257,7 +232,6 @@ async fn fail_validator_stake_tokens_with_wrong_config_account() {
         &config_manager.mint_authority,
         &rewards_manager.token_account,
         100,
-        0,
     )
     .await
     .unwrap();
@@ -273,7 +247,7 @@ async fn fail_validator_stake_tokens_with_wrong_config_account() {
     .await;
 
     // When we try to stake tokens using the wrong config account.
-    let mut stake_ix = ValidatorStakeTokensBuilder::new()
+    let stake_ix = ValidatorStakeTokensBuilder::new()
         .config(another_config.config) // <- wrong config account
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
@@ -282,21 +256,9 @@ async fn fail_validator_stake_tokens_with_wrong_config_account() {
         .source_token_account_authority(rewards_manager.owner.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
-        .token_program(spl_token_2022::ID)
+        .token_program(spl_token::ID)
         .amount(50)
         .instruction();
-
-    add_extra_account_metas_for_transfer(
-        &mut context,
-        &mut stake_ix,
-        &paladin_rewards_program_client::ID,
-        &rewards_manager.token_account,
-        &config_manager.mint,
-        &config_manager.vault,
-        &rewards_manager.owner.pubkey(),
-        50,
-    )
-    .await;
 
     let tx = Transaction::new_signed_with_payer(
         &[stake_ix],
@@ -345,7 +307,6 @@ async fn fail_validator_stake_tokens_with_zero_amount() {
         &config_manager.mint_authority,
         &rewards_manager.token_account,
         100,
-        0,
     )
     .await
     .unwrap();
@@ -360,7 +321,7 @@ async fn fail_validator_stake_tokens_with_zero_amount() {
     .await;
 
     // When we try to stake 0 tokens.
-    let mut stake_ix = ValidatorStakeTokensBuilder::new()
+    let stake_ix = ValidatorStakeTokensBuilder::new()
         .config(config_manager.config)
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
@@ -369,21 +330,9 @@ async fn fail_validator_stake_tokens_with_zero_amount() {
         .mint(config_manager.mint)
         .vault(config_manager.vault)
         .vault_holder_rewards(holder_rewards)
-        .token_program(spl_token_2022::ID)
+        .token_program(spl_token::ID)
         .amount(0) // <- 0 tokens
         .instruction();
-
-    add_extra_account_metas_for_transfer(
-        &mut context,
-        &mut stake_ix,
-        &paladin_rewards_program_client::ID,
-        &rewards_manager.token_account,
-        &config_manager.mint,
-        &config_manager.vault,
-        &rewards_manager.owner.pubkey(),
-        0,
-    )
-    .await;
 
     let tx = Transaction::new_signed_with_payer(
         &[stake_ix],
@@ -431,7 +380,6 @@ async fn fail_validator_stake_tokens_with_uninitialized_stake_account() {
         &config_manager.mint_authority,
         &rewards_manager.token_account,
         100,
-        0,
     )
     .await
     .unwrap();
@@ -464,7 +412,7 @@ async fn fail_validator_stake_tokens_with_uninitialized_stake_account() {
     );
 
     // When we try to stake the tokens to the uninitialized stake account.
-    let mut stake_ix = ValidatorStakeTokensBuilder::new()
+    let stake_ix = ValidatorStakeTokensBuilder::new()
         .config(config_manager.config)
         .validator_stake(stake_pda)
         .validator_stake_authority(Pubkey::new_unique())
@@ -473,21 +421,9 @@ async fn fail_validator_stake_tokens_with_uninitialized_stake_account() {
         .mint(config_manager.mint)
         .vault(config_manager.vault)
         .vault_holder_rewards(holder_rewards)
-        .token_program(spl_token_2022::ID)
+        .token_program(spl_token::ID)
         .amount(50)
         .instruction();
-
-    add_extra_account_metas_for_transfer(
-        &mut context,
-        &mut stake_ix,
-        &paladin_rewards_program_client::ID,
-        &rewards_manager.token_account,
-        &config_manager.mint,
-        &config_manager.vault,
-        &rewards_manager.owner.pubkey(),
-        0,
-    )
-    .await;
 
     let tx = Transaction::new_signed_with_payer(
         &[stake_ix],
@@ -537,7 +473,6 @@ async fn fail_validator_stake_tokens_without_staked_sol() {
         &config_manager.mint_authority,
         &rewards_manager.token_account,
         100,
-        0,
     )
     .await
     .unwrap();
@@ -552,7 +487,7 @@ async fn fail_validator_stake_tokens_without_staked_sol() {
     .await;
 
     // When we try to stake 50 tokens on a validator stake account without staked SOL.
-    let mut stake_ix = ValidatorStakeTokensBuilder::new()
+    let stake_ix = ValidatorStakeTokensBuilder::new()
         .config(config_manager.config)
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
@@ -561,20 +496,9 @@ async fn fail_validator_stake_tokens_without_staked_sol() {
         .mint(config_manager.mint)
         .vault(config_manager.vault)
         .vault_holder_rewards(holder_rewards)
-        .token_program(spl_token_2022::ID)
+        .token_program(spl_token::ID)
         .amount(50) // <- stake 50 tokens
         .instruction();
-    add_extra_account_metas_for_transfer(
-        &mut context,
-        &mut stake_ix,
-        &paladin_rewards_program_client::ID,
-        &rewards_manager.token_account,
-        &config_manager.mint,
-        &config_manager.vault,
-        &rewards_manager.owner.pubkey(),
-        50,
-    )
-    .await;
 
     let tx = Transaction::new_signed_with_payer(
         &[stake_ix],
@@ -629,7 +553,6 @@ async fn validator_stake_tokens_with_insufficient_staked_sol_effective_capped() 
         &config_manager.mint_authority,
         &rewards_manager.token_account,
         2_600_000_001,
-        0, // decimals
     )
     .await
     .unwrap();
@@ -651,7 +574,7 @@ async fn validator_stake_tokens_with_insufficient_staked_sol_effective_capped() 
     //
     // Stake amount exceeds the limit: 2_600_000_001 > 2_600_000_000
 
-    let mut stake_ix = ValidatorStakeTokensBuilder::new()
+    let stake_ix = ValidatorStakeTokensBuilder::new()
         .config(config_manager.config)
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
@@ -660,20 +583,9 @@ async fn validator_stake_tokens_with_insufficient_staked_sol_effective_capped() 
         .mint(config_manager.mint)
         .vault(config_manager.vault)
         .vault_holder_rewards(holder_rewards)
-        .token_program(spl_token_2022::ID)
+        .token_program(spl_token::ID)
         .amount(2_600_000_001) // <- stake 2_600_000_001 tokens (raw value with 9 digits precision)
         .instruction();
-    add_extra_account_metas_for_transfer(
-        &mut context,
-        &mut stake_ix,
-        &paladin_rewards_program_client::ID,
-        &rewards_manager.token_account,
-        &config_manager.mint,
-        &config_manager.vault,
-        &rewards_manager.owner.pubkey(),
-        2_600_000_001,
-    )
-    .await;
 
     let tx = Transaction::new_signed_with_payer(
         &[stake_ix],

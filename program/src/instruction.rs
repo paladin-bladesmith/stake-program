@@ -152,38 +152,43 @@ pub enum StakeInstruction {
     )]
     #[account(
         2,
+        name = "holder_rewards_pool_token_account",
+        desc = "Holder rewards pool account token account"
+    )]
+    #[account(
+        3,
         writable,
         name = "vault",
         desc = "Vault token account"
     )]
     #[account(
-        3,
+        4,
         writable,
         name = "vault_holder_rewards",
         desc = "Holder rewards account for vault token account"
     )]
     #[account(
-        4,
+        5,
         name = "vault_authority",
         desc = "Vault authority"
     )]
     #[account(
-        5,
+        6,
         name = "mint",
         desc = "Stake token mint"
     )]
     #[account(
-        6,
+        7,
         name = "token_program",
         desc = "Token program"
     )]
     #[account(
-        7,
+        8,
         name = "paladin_rewards_program",
         desc = "Paladin rewards program"
     )]
     #[account(
-        8,
+        9,
         name = "system_program",
         desc = "System program"
     )]

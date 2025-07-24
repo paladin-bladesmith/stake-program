@@ -1,11 +1,9 @@
 use solana_program::{
-    clock::Clock, entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey,
-    sysvar::Sysvar,
+    clock::Clock, entrypoint::ProgramResult, program::invoke_signed, program_error::ProgramError,
+    program_pack::Pack, pubkey::Pubkey, sysvar::Sysvar,
 };
-use spl_token_2022::{
-    extension::PodStateWithExtensions,
-    pod::{PodAccount, PodMint},
-};
+use spl_token::state::Account as TokenAccount;
+use spl_token::{instruction::transfer_checked, state::Mint};
 
 use crate::{
     error::StakeError,
@@ -48,7 +46,7 @@ pub fn process_unstake_tokens<'info>(
         "vault matches destination token account"
     );
     let vault_borrow = ctx.accounts.vault.try_borrow_data()?;
-    let vault = PodStateWithExtensions::<PodAccount>::unpack(&vault_borrow)?;
+    let vault = TokenAccount::unpack(&vault_borrow)?;
 
     // vault authority
     // - derivation must match
@@ -123,13 +121,13 @@ pub fn process_unstake_tokens<'info>(
     // mint
     // - must match the stake vault mint
     require!(
-        &vault.base.mint == ctx.accounts.mint.key,
+        &vault.mint == ctx.accounts.mint.key,
         StakeError::InvalidMint,
         "mint"
     );
     let mint_borrow = ctx.accounts.mint.try_borrow_data()?;
-    let mint = PodStateWithExtensions::<PodMint>::unpack(&mint_borrow)?;
-    let decimals = mint.base.decimals;
+    let mint = Mint::unpack(&mint_borrow)?;
+    let decimals = mint.decimals;
 
     // Harvest rewards & update last claim tracking.
     harvest(
@@ -139,6 +137,7 @@ pub fn process_unstake_tokens<'info>(
             authority: ctx.accounts.stake_authority,
         },
         config,
+        &vault_signer,
         delegation,
         None,
     )?;
@@ -180,17 +179,26 @@ pub fn process_unstake_tokens<'info>(
 
     drop(mint_borrow);
     drop(vault_borrow);
-    spl_token_2022::onchain::invoke_transfer_checked(
-        &spl_token_2022::ID,
-        ctx.accounts.vault.clone(),
-        ctx.accounts.mint.clone(),
-        ctx.accounts.destination_token_account.clone(),
-        ctx.accounts.vault_authority.clone(),
-        ctx.remaining_accounts,
-        amount,
-        decimals,
+    invoke_signed(
+        &transfer_checked(
+            &spl_token::ID,
+            ctx.accounts.vault.key,
+            ctx.accounts.mint.key,
+            ctx.accounts.destination_token_account.key,
+            ctx.accounts.vault_authority.key,
+            &[ctx.accounts.vault_authority.key],
+            amount,
+            decimals,
+        )?,
+        &[
+            ctx.accounts.vault.clone(),
+            ctx.accounts.mint.clone(),
+            ctx.accounts.destination_token_account.clone(),
+            ctx.accounts.vault_authority.clone(),
+        ],
         &[&signer_seeds],
     )?;
 
+    // TODO: Withdraw the amount from holder rewards
     Ok(())
 }

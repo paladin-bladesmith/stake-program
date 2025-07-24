@@ -10,26 +10,19 @@ use paladin_stake_program_client::{
 };
 use setup::{
     setup_holder_rewards,
-    token::{
-        create_mint, create_token_account, mint_to, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS,
-    },
+    token::{create_mint, create_token_account, mint_to},
 };
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
-    account::{Account, AccountSharedData},
+    account::Account,
     instruction::InstructionError,
-    pubkey::Pubkey,
+    program_option::COption,
+    program_pack::Pack,
     signature::{Keypair, Signer},
     system_instruction,
-    transaction::Transaction,
+    transaction::{Transaction, TransactionError},
 };
-use spl_token_2022::{
-    extension::{
-        memo_transfer::instruction::enable_required_transfer_memos, ExtensionType,
-        PodStateWithExtensionsMut,
-    },
-    pod::{PodAccount, PodCOption},
-};
+use spl_token::state::{Account as TokenAccount, Mint};
 
 #[tokio::test]
 async fn initialize_config_with_mint_and_token() {
@@ -42,33 +35,26 @@ async fn initialize_config_with_mint_and_token() {
     .await;
 
     // Given an empty config account with an associated vault and a mint.
-
     let config = Keypair::new();
-    let authority = Keypair::new().pubkey();
+    let mint_authority = Keypair::new().pubkey();
 
     let mint = Keypair::new();
     create_mint(
         &mut context,
         &mint,
-        &authority,
-        Some(&authority),
+        &mint_authority,
+        Some(&mint_authority),
         0,
-        MINT_EXTENSIONS,
     )
     .await
     .unwrap();
 
     let vault = Keypair::new();
-    create_token_account(
-        &mut context,
-        &find_vault_pda(&config.pubkey()).0,
-        &vault,
-        &mint.pubkey(),
-        TOKEN_ACCOUNT_EXTENSIONS,
-    )
-    .await
-    .unwrap();
-    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
+    let vault_authority = find_vault_pda(&config.pubkey()).0;
+    create_token_account(&mut context, &vault_authority, &vault, &mint.pubkey())
+        .await
+        .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault_authority).await;
 
     let create_ix = system_instruction::create_account(
         &context.payer.pubkey(),
@@ -88,14 +74,12 @@ async fn initialize_config_with_mint_and_token() {
         .mint(mint.pubkey())
         .vault(vault.pubkey())
         .vault_holder_rewards(vault_holder_rewards)
-        .slash_authority(authority)
-        .config_authority(authority)
+        .slash_authority(mint_authority)
+        .config_authority(mint_authority)
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
         .instruction();
-
-    // When we create a config.
 
     let tx = Transaction::new_signed_with_payer(
         &[create_ix, initialize_ix],
@@ -129,16 +113,9 @@ async fn fail_initialize_config_with_wrong_token_authority() {
     let authority = Keypair::new().pubkey();
 
     let mint = Keypair::new();
-    create_mint(
-        &mut context,
-        &mint,
-        &authority,
-        Some(&authority),
-        0,
-        MINT_EXTENSIONS,
-    )
-    .await
-    .unwrap();
+    create_mint(&mut context, &mint, &authority, Some(&authority), 0)
+        .await
+        .unwrap();
 
     let vault = Keypair::new();
     create_token_account(
@@ -146,7 +123,6 @@ async fn fail_initialize_config_with_wrong_token_authority() {
         &authority, // <-- wrong authority
         &vault,
         &mint.pubkey(),
-        TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
@@ -219,7 +195,6 @@ async fn fail_initialize_config_with_non_empty_token() {
         &authority_pubkey,
         Some(&authority_pubkey),
         0,
-        MINT_EXTENSIONS,
     )
     .await
     .unwrap();
@@ -230,24 +205,15 @@ async fn fail_initialize_config_with_non_empty_token() {
         &find_vault_pda(&config.pubkey()).0,
         &vault,
         &mint.pubkey(),
-        TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
     let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
 
     // And we mint a token.
-
-    mint_to(
-        &mut context,
-        &mint.pubkey(),
-        &authority,
-        &vault.pubkey(),
-        1,
-        0,
-    )
-    .await
-    .unwrap();
+    mint_to(&mut context, &mint.pubkey(), &authority, &vault.pubkey(), 1)
+        .await
+        .unwrap();
 
     let create_ix = system_instruction::create_account(
         &context.payer.pubkey(),
@@ -295,91 +261,6 @@ async fn fail_initialize_config_with_non_empty_token() {
 }
 
 #[tokio::test]
-async fn fail_initialize_config_without_transfer_hook() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
-
-    // Given an empty config account and a mint without a transfer hook.
-
-    let config = Keypair::new();
-    let authority = Keypair::new();
-    let authority_pubkey = authority.pubkey();
-
-    let mint = Keypair::new();
-    create_mint(
-        &mut context,
-        &mint,
-        &authority_pubkey,
-        Some(&authority_pubkey),
-        0,
-        &[], // <-- no transfer hook
-    )
-    .await
-    .unwrap();
-
-    let vault = Keypair::new();
-    create_token_account(
-        &mut context,
-        &find_vault_pda(&config.pubkey()).0,
-        &vault,
-        &mint.pubkey(),
-        TOKEN_ACCOUNT_EXTENSIONS,
-    )
-    .await
-    .unwrap();
-    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
-
-    let create_ix = system_instruction::create_account(
-        &context.payer.pubkey(),
-        &config.pubkey(),
-        context
-            .banks_client
-            .get_rent()
-            .await
-            .unwrap()
-            .minimum_balance(Config::LEN),
-        Config::LEN as u64,
-        &paladin_stake_program_client::ID,
-    );
-
-    let initialize_ix = InitializeConfigBuilder::new()
-        .config(config.pubkey())
-        .config_authority(authority_pubkey)
-        .slash_authority(authority_pubkey)
-        .mint(mint.pubkey())
-        .vault(vault.pubkey())
-        .vault_holder_rewards(vault_holder_rewards)
-        .cooldown_time_seconds(1) // 1 second
-        .max_deactivation_basis_points(500) // 5%
-        .sync_rewards_lamports(1_000_000) // 0.001 SOL
-        .instruction();
-
-    // When we try to initialize the config with the mint without a transfer hook.
-
-    let tx = Transaction::new_signed_with_payer(
-        &[create_ix, initialize_ix],
-        Some(&context.payer.pubkey()),
-        &[&context.payer, &config],
-        context.last_blockhash,
-    );
-
-    let err = context
-        .banks_client
-        .process_transaction(tx)
-        .await
-        .unwrap_err();
-
-    // Then we expect an error.
-
-    assert_custom_error!(err, PaladinStakeProgramError::MissingTransferHook);
-}
-
-#[tokio::test]
 async fn fail_initialize_config_with_unitialized_mint() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
@@ -395,16 +276,25 @@ async fn fail_initialize_config_with_unitialized_mint() {
     let authority = Keypair::new().pubkey();
 
     let mint = Keypair::new();
-    let vault = Keypair::new();
-    let rent = context.banks_client.get_rent().await.unwrap();
-    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
+    create_mint(&mut context, &mint, &authority, Some(&authority), 0)
+        .await
+        .unwrap();
 
+    let vault = Keypair::new();
+    let vault_authority = find_vault_pda(&config.pubkey()).0;
+    let rent = context.banks_client.get_rent().await.unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault_authority).await;
+    create_token_account(&mut context, &vault_authority, &vault, &mint.pubkey())
+        .await
+        .unwrap();
+
+    let random_mint = Keypair::new();
     let create_mint_ix = system_instruction::create_account(
         &context.payer.pubkey(),
-        &mint.pubkey(),
-        rent.minimum_balance(Config::LEN),
-        Config::LEN as u64,
-        &spl_token_2022::ID,
+        &random_mint.pubkey(),
+        rent.minimum_balance(Mint::LEN),
+        Mint::LEN as u64,
+        &spl_token::ID,
     );
 
     let create_ix = system_instruction::create_account(
@@ -424,7 +314,7 @@ async fn fail_initialize_config_with_unitialized_mint() {
         .config(config.pubkey())
         .config_authority(authority)
         .slash_authority(authority)
-        .mint(mint.pubkey())
+        .mint(random_mint.pubkey())
         .vault(vault.pubkey())
         .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1) // 1 second
@@ -437,7 +327,7 @@ async fn fail_initialize_config_with_unitialized_mint() {
     let tx = Transaction::new_signed_with_payer(
         &[create_mint_ix, create_ix, initialize_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &mint, &config],
+        &[&context.payer, &random_mint, &config],
         context.last_blockhash,
     );
 
@@ -475,22 +365,16 @@ async fn fail_initialize_config_with_wrong_account_length() {
         &authority_pubkey,
         Some(&authority_pubkey),
         0,
-        MINT_EXTENSIONS,
     )
     .await
     .unwrap();
 
     let vault = Keypair::new();
-    create_token_account(
-        &mut context,
-        &find_vault_pda(&config.pubkey()).0,
-        &vault,
-        &mint.pubkey(),
-        TOKEN_ACCOUNT_EXTENSIONS,
-    )
-    .await
-    .unwrap();
-    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
+    let vault_authority = find_vault_pda(&config.pubkey()).0;
+    create_token_account(&mut context, &vault_authority, &vault, &mint.pubkey())
+        .await
+        .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault_authority).await;
 
     let create_ix = system_instruction::create_account(
         &context.payer.pubkey(),
@@ -553,28 +437,16 @@ async fn fail_initialize_config_with_initialized_account() {
     let authority = Keypair::new().pubkey();
 
     let mint = Keypair::new();
-    create_mint(
-        &mut context,
-        &mint,
-        &authority,
-        Some(&authority),
-        0,
-        MINT_EXTENSIONS,
-    )
-    .await
-    .unwrap();
+    create_mint(&mut context, &mint, &authority, Some(&authority), 0)
+        .await
+        .unwrap();
 
     let vault = Keypair::new();
-    create_token_account(
-        &mut context,
-        &find_vault_pda(&config.pubkey()).0,
-        &vault,
-        &mint.pubkey(),
-        TOKEN_ACCOUNT_EXTENSIONS,
-    )
-    .await
-    .unwrap();
-    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
+    let vault_authority = find_vault_pda(&config.pubkey()).0;
+    create_token_account(&mut context, &vault_authority, &vault, &mint.pubkey())
+        .await
+        .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault_authority).await;
 
     let create_ix = system_instruction::create_account(
         &context.payer.pubkey(),
@@ -667,7 +539,6 @@ async fn fail_initialize_config_with_token_delegate() {
         &authority_pubkey,
         Some(&authority_pubkey),
         0,
-        MINT_EXTENSIONS,
     )
     .await
     .unwrap();
@@ -675,34 +546,31 @@ async fn fail_initialize_config_with_token_delegate() {
     // And a token account with a delegate.
 
     let vault = Keypair::new();
-    create_token_account(
-        &mut context,
-        &find_vault_pda(&config.pubkey()).0,
-        &vault,
-        &mint.pubkey(),
-        TOKEN_ACCOUNT_EXTENSIONS,
-    )
-    .await
-    .unwrap();
-    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
+    let vault_authority = find_vault_pda(&config.pubkey()).0;
+    create_token_account(&mut context, &vault_authority, &vault, &mint.pubkey())
+        .await
+        .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault_authority).await;
 
     let account = get_account!(context, vault.pubkey());
     let mut data = account.data;
 
-    let token_account = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut data).unwrap();
+    let mut token_account = TokenAccount::unpack(&mut data).unwrap();
     // "manually" set the delegate
-    token_account.base.delegate = PodCOption::some(mint.pubkey());
-    token_account.base.delegated_amount = 1u64.into();
+    token_account.delegate = COption::Some(mint.pubkey());
+    token_account.delegated_amount = 1u64.into();
+
+    let mut new_data = vec![0; TokenAccount::LEN];
+    TokenAccount::pack(token_account, &mut new_data).unwrap();
 
     let delegated_token_account = Account {
         lamports: account.lamports,
-        data,
+        data: new_data,
         owner: account.owner,
         executable: false,
         rent_epoch: account.rent_epoch,
     };
-    let account_shared_data: AccountSharedData = delegated_token_account.into();
-    context.set_account(&vault.pubkey(), &account_shared_data);
+    context.set_account(&vault.pubkey(), &delegated_token_account.into());
 
     let create_ix = system_instruction::create_account(
         &context.payer.pubkey(),
@@ -772,41 +640,34 @@ async fn fail_initialize_config_with_token_close_authority() {
         &authority_pubkey,
         Some(&authority_pubkey),
         0,
-        MINT_EXTENSIONS,
     )
     .await
     .unwrap();
 
     // And a token account with a close authority.
-
     let vault = Keypair::new();
-    create_token_account(
-        &mut context,
-        &find_vault_pda(&config.pubkey()).0,
-        &vault,
-        &mint.pubkey(),
-        TOKEN_ACCOUNT_EXTENSIONS,
-    )
-    .await
-    .unwrap();
-    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
+    let vault_authority = find_vault_pda(&config.pubkey()).0;
+    create_token_account(&mut context, &vault_authority, &vault, &mint.pubkey())
+        .await
+        .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault_authority).await;
 
     let account = get_account!(context, vault.pubkey());
-    let mut data = account.data;
-
-    let token_account = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut data).unwrap();
+    let mut token_account = TokenAccount::unpack(&account.data).unwrap();
     // "manually" set the close authority
-    token_account.base.close_authority = PodCOption::some(mint.pubkey());
+    token_account.close_authority = COption::Some(mint.pubkey());
+
+    let mut new_data = vec![0; TokenAccount::LEN];
+    TokenAccount::pack(token_account, &mut new_data).unwrap();
 
     let closeable_token_account = Account {
         lamports: account.lamports,
-        data,
+        data: new_data,
         owner: account.owner,
         executable: false,
         rent_epoch: account.rent_epoch,
     };
-    let account_shared_data: AccountSharedData = closeable_token_account.into();
-    context.set_account(&vault.pubkey(), &account_shared_data);
+    context.set_account(&vault.pubkey(), &closeable_token_account.into());
 
     let create_ix = system_instruction::create_account(
         &context.payer.pubkey(),
@@ -834,7 +695,6 @@ async fn fail_initialize_config_with_token_close_authority() {
         .instruction();
 
     // When we try to initialize the config with a "closeable" token account.
-
     let tx = Transaction::new_signed_with_payer(
         &[create_ix, initialize_ix],
         Some(&context.payer.pubkey()),
@@ -854,127 +714,6 @@ async fn fail_initialize_config_with_token_close_authority() {
 }
 
 #[tokio::test]
-async fn fail_initialize_config_with_invalid_token_extensions() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
-
-    // Given an empty config account and a mint.
-
-    let config = Keypair::new();
-    let authority = Keypair::new();
-    let authority_pubkey = authority.pubkey();
-
-    let mint = Keypair::new();
-    create_mint(
-        &mut context,
-        &mint,
-        &authority_pubkey,
-        Some(&authority_pubkey),
-        0,
-        MINT_EXTENSIONS,
-    )
-    .await
-    .unwrap();
-
-    // And a token account with invalid Memo extensions.
-
-    let vault = Keypair::new();
-    let owner = Keypair::new();
-
-    create_token_account(
-        &mut context,
-        &owner.pubkey(),
-        &vault,
-        &mint.pubkey(),
-        &[
-            ExtensionType::MemoTransfer, // <- invalid extension
-            ExtensionType::TransferHookAccount,
-        ],
-    )
-    .await
-    .unwrap();
-    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
-
-    let enable_memo_ix =
-        enable_required_transfer_memos(&spl_token_2022::ID, &vault.pubkey(), &owner.pubkey(), &[])
-            .unwrap();
-
-    let tx = Transaction::new_signed_with_payer(
-        &[enable_memo_ix],
-        Some(&context.payer.pubkey()),
-        &[&context.payer, &owner],
-        context.last_blockhash,
-    );
-    context.banks_client.process_transaction(tx).await.unwrap();
-
-    let account = get_account!(context, vault.pubkey());
-    let mut data = account.data;
-
-    let token_account = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut data).unwrap();
-    // "manually" set the owner of the token account
-    token_account.base.owner = find_vault_pda(&config.pubkey()).0;
-
-    let memo_token_account = Account {
-        lamports: account.lamports,
-        data,
-        owner: account.owner,
-        executable: false,
-        rent_epoch: account.rent_epoch,
-    };
-    let account_shared_data: AccountSharedData = memo_token_account.into();
-    context.set_account(&vault.pubkey(), &account_shared_data);
-
-    // When we try to initialize the config with a memo-enabled token account.
-
-    let create_ix = system_instruction::create_account(
-        &context.payer.pubkey(),
-        &config.pubkey(),
-        context
-            .banks_client
-            .get_rent()
-            .await
-            .unwrap()
-            .minimum_balance(Config::LEN),
-        Config::LEN as u64,
-        &paladin_stake_program_client::ID,
-    );
-
-    let initialize_ix = InitializeConfigBuilder::new()
-        .config(config.pubkey())
-        .config_authority(authority_pubkey)
-        .slash_authority(authority_pubkey)
-        .mint(mint.pubkey())
-        .vault(vault.pubkey())
-        .vault_holder_rewards(vault_holder_rewards)
-        .cooldown_time_seconds(1) // 1 second
-        .max_deactivation_basis_points(500) // 5%
-        .sync_rewards_lamports(1_000_000) // 0.001 SOL
-        .instruction();
-
-    let tx = Transaction::new_signed_with_payer(
-        &[create_ix, initialize_ix],
-        Some(&context.payer.pubkey()),
-        &[&context.payer, &config],
-        context.last_blockhash,
-    );
-
-    let err = context
-        .banks_client
-        .process_transaction(tx)
-        .await
-        .unwrap_err();
-
-    // Then we expect an error.
-
-    assert_custom_error!(err, PaladinStakeProgramError::InvalidTokenAccountExtension);
-}
-
-#[tokio::test]
 async fn fail_initialize_config_with_invalid_max_deactivation_basis_points() {
     let mut context = ProgramTest::new(
         "paladin_stake_program",
@@ -990,28 +729,16 @@ async fn fail_initialize_config_with_invalid_max_deactivation_basis_points() {
     let authority = Keypair::new().pubkey();
 
     let mint = Keypair::new();
-    create_mint(
-        &mut context,
-        &mint,
-        &authority,
-        Some(&authority),
-        0,
-        MINT_EXTENSIONS,
-    )
-    .await
-    .unwrap();
+    create_mint(&mut context, &mint, &authority, Some(&authority), 0)
+        .await
+        .unwrap();
 
     let vault = Keypair::new();
-    create_token_account(
-        &mut context,
-        &find_vault_pda(&config.pubkey()).0,
-        &vault,
-        &mint.pubkey(),
-        TOKEN_ACCOUNT_EXTENSIONS,
-    )
-    .await
-    .unwrap();
-    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
+    let vault_authority = find_vault_pda(&config.pubkey()).0;
+    create_token_account(&mut context, &vault_authority, &vault, &mint.pubkey())
+        .await
+        .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault_authority).await;
 
     let create_ix = system_instruction::create_account(
         &context.payer.pubkey(),
@@ -1072,34 +799,22 @@ async fn fail_initialize_config_with_invalid_holder_rewards() {
     let authority = Keypair::new().pubkey();
 
     let mint = Keypair::new();
-    create_mint(
-        &mut context,
-        &mint,
-        &authority,
-        Some(&authority),
-        0,
-        MINT_EXTENSIONS,
-    )
-    .await
-    .unwrap();
+    create_mint(&mut context, &mint, &authority, Some(&authority), 0)
+        .await
+        .unwrap();
 
     let vault = Keypair::new();
-    create_token_account(
-        &mut context,
-        &find_vault_pda(&config.pubkey()).0,
-        &vault,
-        &mint.pubkey(),
-        TOKEN_ACCOUNT_EXTENSIONS,
-    )
-    .await
-    .unwrap();
-    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
+    let vault_authority = find_vault_pda(&config.pubkey()).0;
+    create_token_account(&mut context, &vault_authority, &vault, &mint.pubkey())
+        .await
+        .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault_authority).await;
 
-    // Set a sponsor on the holder rewards.
+    // Set some deposited amount which should be 0
     let mut vault_holder_rewards_account = get_account!(context, vault_holder_rewards);
     let mut vault_holder_rewards_state =
         HolderRewards::from_bytes(&vault_holder_rewards_account.data).unwrap();
-    vault_holder_rewards_state.rent_sponsor = Pubkey::new_unique();
+    vault_holder_rewards_state.deposited = 1;
     vault_holder_rewards_account.data = vault_holder_rewards_state.try_to_vec().unwrap();
     context.set_account(&vault_holder_rewards, &vault_holder_rewards_account.into());
 
@@ -1141,4 +856,86 @@ async fn fail_initialize_config_with_invalid_holder_rewards() {
 
     // Then we expect an error.
     assert_custom_error!(err, PaladinStakeProgramError::InvalidHolderRewards);
+}
+
+#[tokio::test]
+async fn fail_initialize_config_with_wrong_vault_seeds() {
+    let mut context = ProgramTest::new(
+        "paladin_stake_program",
+        paladin_stake_program_client::ID,
+        None,
+    )
+    .start_with_context()
+    .await;
+
+    // Given an empty config account and a mint.
+
+    let config = Keypair::new();
+    let authority = Keypair::new();
+    let authority_pubkey = authority.pubkey();
+
+    let mint = Keypair::new();
+    create_mint(
+        &mut context,
+        &mint,
+        &authority_pubkey,
+        Some(&authority_pubkey),
+        0,
+    )
+    .await
+    .unwrap();
+
+    let vault = Keypair::new();
+    let vault_authority = find_vault_pda(&config.pubkey()).0;
+    create_token_account(&mut context, &vault_authority, &vault, &mint.pubkey())
+        .await
+        .unwrap();
+    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
+
+    let create_ix = system_instruction::create_account(
+        &context.payer.pubkey(),
+        &config.pubkey(),
+        context
+            .banks_client
+            .get_rent()
+            .await
+            .unwrap()
+            .minimum_balance(Config::LEN + 100),
+        Config::LEN as u64,
+        &paladin_stake_program_client::ID,
+    );
+
+    let initialize_ix = InitializeConfigBuilder::new()
+        .config(config.pubkey())
+        .config_authority(authority_pubkey)
+        .slash_authority(authority_pubkey)
+        .mint(mint.pubkey())
+        .vault(vault.pubkey())
+        .vault_holder_rewards(vault_holder_rewards)
+        .cooldown_time_seconds(1) // 1 second
+        .max_deactivation_basis_points(500) // 5%
+        .sync_rewards_lamports(1_000_000) // 0.001 SOL
+        .instruction();
+
+    // When we try to initialize the config with an incorrectly-sized account.
+
+    let tx = Transaction::new_signed_with_payer(
+        &[create_ix, initialize_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, &config],
+        context.last_blockhash,
+    );
+
+    let err = context
+        .banks_client
+        .process_transaction(tx)
+        .await
+        .unwrap_err()
+        .unwrap();
+
+    // Then we expect an error.
+    assert_eq!(
+        err,
+        TransactionError::InstructionError(1, InstructionError::InvalidSeeds)
+    );
 }

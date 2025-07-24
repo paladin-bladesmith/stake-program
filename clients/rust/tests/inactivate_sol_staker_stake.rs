@@ -22,13 +22,13 @@ use solana_sdk::{
     account::{Account, AccountSharedData},
     clock::Clock,
     instruction::{AccountMeta, InstructionError},
+    program_pack::Pack,
     pubkey::Pubkey,
     signature::Signer,
     sysvar::SysvarId,
     transaction::Transaction,
 };
-use spl_token_2022::{extension::PodStateWithExtensions, pod::PodAccount};
-use spl_transfer_hook_interface::get_extra_account_metas_address;
+use spl_token::state::Account as TokenAccount;
 
 struct Fixture {
     config_manager: ConfigManager,
@@ -54,7 +54,6 @@ async fn setup_fixture(context: &mut ProgramTestContext, active_cooldown: Option
         &config_manager.mint_authority,
         &config_manager.vault,
         100,
-        0,
     )
     .await
     .unwrap();
@@ -132,14 +131,6 @@ async fn inactivate_sol_staker_stake_base() {
         .amount(5)
         .add_remaining_accounts(&[
             AccountMeta {
-                pubkey: get_extra_account_metas_address(
-                    &config_manager.mint,
-                    &paladin_rewards_program_client::ID,
-                ),
-                is_signer: false,
-                is_writable: false,
-            },
-            AccountMeta {
                 pubkey: rewards_manager.pool,
                 is_signer: false,
                 is_writable: false,
@@ -185,8 +176,8 @@ async fn inactivate_sol_staker_stake_base() {
 
     // Assert - The destination token account received the amount.
     let account = get_account!(context, destination_token_account);
-    let account = PodStateWithExtensions::<PodAccount>::unpack(&account.data).unwrap();
-    assert_eq!(u64::from(account.base.amount), 5);
+    let account = TokenAccount::unpack(&account.data).unwrap();
+    assert_eq!(u64::from(account.amount), 5);
 
     // Assert - The total delegated on the config was updated.
     let account = get_account!(context, config_manager.config);

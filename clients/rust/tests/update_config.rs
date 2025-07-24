@@ -11,7 +11,7 @@ use paladin_stake_program_client::{
 };
 use setup::{
     setup_holder_rewards,
-    token::{create_mint, create_token_account, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS},
+    token::{create_mint, create_token_account},
 };
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
@@ -44,7 +44,6 @@ async fn update_cooldown_time_config() {
         &authority.pubkey(),
         Some(&authority.pubkey()),
         0,
-        MINT_EXTENSIONS,
     )
     .await
     .unwrap();
@@ -55,7 +54,6 @@ async fn update_cooldown_time_config() {
         &find_vault_pda(&config.pubkey()).0,
         &vault,
         &mint.pubkey(),
-        TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
@@ -146,7 +144,6 @@ async fn update_max_deactivation_basis_points_config() {
         &authority.pubkey(),
         Some(&authority.pubkey()),
         0,
-        MINT_EXTENSIONS,
     )
     .await
     .unwrap();
@@ -157,7 +154,6 @@ async fn update_max_deactivation_basis_points_config() {
         &find_vault_pda(&config.pubkey()).0,
         &vault,
         &mint.pubkey(),
-        TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
@@ -248,7 +244,6 @@ async fn update_sync_rewards_lamports() {
         &authority.pubkey(),
         Some(&authority.pubkey()),
         0,
-        MINT_EXTENSIONS,
     )
     .await
     .unwrap();
@@ -259,7 +254,6 @@ async fn update_sync_rewards_lamports() {
         &find_vault_pda(&config.pubkey()).0,
         &vault,
         &mint.pubkey(),
-        TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
@@ -351,7 +345,6 @@ async fn fail_update_max_deactivation_basis_points_config_with_invalid_value() {
         &authority.pubkey(),
         Some(&authority.pubkey()),
         0,
-        MINT_EXTENSIONS,
     )
     .await
     .unwrap();
@@ -362,7 +355,6 @@ async fn fail_update_max_deactivation_basis_points_config_with_invalid_value() {
         &find_vault_pda(&config.pubkey()).0,
         &vault,
         &mint.pubkey(),
-        TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
@@ -455,7 +447,6 @@ async fn fail_update_config_with_wrong_authority() {
         &authority.pubkey(),
         Some(&authority.pubkey()),
         0,
-        MINT_EXTENSIONS,
     )
     .await
     .unwrap();
@@ -466,7 +457,6 @@ async fn fail_update_config_with_wrong_authority() {
         &find_vault_pda(&config.pubkey()).0,
         &vault,
         &mint.pubkey(),
-        TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
@@ -655,7 +645,6 @@ async fn fail_update_config_with_no_authority_set() {
         &authority.pubkey(),
         Some(&authority.pubkey()),
         0,
-        MINT_EXTENSIONS,
     )
     .await
     .unwrap();
@@ -666,7 +655,6 @@ async fn fail_update_config_with_no_authority_set() {
         &find_vault_pda(&config.pubkey()).0,
         &vault,
         &mint.pubkey(),
-        TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();

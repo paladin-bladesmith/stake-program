@@ -1,18 +1,14 @@
 use paladin_rewards_program_client::accounts::HolderRewards;
 use solana_program::{
-    entrypoint::ProgramResult,
-    program::{invoke, invoke_signed},
-    program_error::ProgramError,
-    pubkey::Pubkey,
+    entrypoint::ProgramResult, program::invoke_signed, program_error::ProgramError,
+    program_pack::Pack, pubkey::Pubkey,
 };
-use spl_token_2022::{
-    extension::PodStateWithExtensions, instruction::withdraw_excess_lamports, pod::PodAccount,
-};
+use spl_token::state::Account as TokenAccount;
 
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, HarvestHolderRewardsAccounts},
-    processor::{sync_config_lamports, unpack_initialized_mut},
+    processor::{sync_config_lamports, transfer_excess_lamports, unpack_initialized_mut},
     require,
     state::{get_vault_pda_signer_seeds, Config},
 };
@@ -62,12 +58,12 @@ pub fn process_harvest_holder_rewards(
         StakeError::IncorrectVaultAccount,
     );
     let vault_data = ctx.accounts.vault.try_borrow_data()?;
-    let vault = PodStateWithExtensions::<PodAccount>::unpack(&vault_data)?;
+    let vault = TokenAccount::unpack(&vault_data)?;
 
     // mint
     // - must match the stake vault mint
     require!(
-        &vault.base.mint == ctx.accounts.mint.key,
+        &vault.mint == ctx.accounts.mint.key,
         StakeError::InvalidMint,
         "mint"
     );
@@ -91,7 +87,7 @@ pub fn process_harvest_holder_rewards(
         ProgramError::InvalidAccountOwner,
         "holder rewards",
     );
-    let (derivation, _) = HolderRewards::find_pda(&config.vault);
+    let (derivation, _) = HolderRewards::find_pda(ctx.accounts.vault_authority.key);
     require!(
         ctx.accounts.vault_holder_rewards.key == &derivation,
         ProgramError::InvalidSeeds,
@@ -104,41 +100,31 @@ pub fn process_harvest_holder_rewards(
     // Harvest latest holder rewards.
     drop(vault_data);
     drop(config_data);
-    invoke(
+    invoke_signed(
         &paladin_rewards_program_client::instructions::HarvestRewards {
             // NB: Account correctness validated by paladin rewards program.
             holder_rewards_pool: *ctx.accounts.holder_rewards_pool.key,
+            holder_rewards_pool_token_account_info: *ctx
+                .accounts
+                .holder_rewards_pool_token_account
+                .key,
             holder_rewards: *ctx.accounts.vault_holder_rewards.key,
-            token_account: *ctx.accounts.vault.key,
             mint: *ctx.accounts.mint.key,
-            sponsor: None,
+            owner: *ctx.accounts.vault_authority.key,
         }
         .instruction(),
         &[
             ctx.accounts.holder_rewards_pool.clone(),
+            ctx.accounts.holder_rewards_pool_token_account.clone(),
             ctx.accounts.vault_holder_rewards.clone(),
-            ctx.accounts.vault.clone(),
             ctx.accounts.mint.clone(),
-        ],
-    )?;
-
-    // Withdraw the excess lamports from the vault to config.
-    invoke_signed(
-        &withdraw_excess_lamports(
-            &spl_token_2022::ID,
-            ctx.accounts.vault.key,
-            ctx.accounts.config.key,
-            ctx.accounts.vault_authority.key,
-            &[],
-        )?,
-        &[
-            ctx.accounts.token_program.clone(),
-            ctx.accounts.vault.clone(),
-            ctx.accounts.config.clone(),
             ctx.accounts.vault_authority.clone(),
         ],
-        &[vault_seeds.as_slice()],
+        &[&vault_seeds],
     )?;
+
+    // Withdraw the excess lamports from the vault authority to config.
+    transfer_excess_lamports(ctx.accounts.vault_authority, ctx.accounts.config)?;
 
     // Update the configs last seen lamports again.
     let mut config = ctx.accounts.config.try_borrow_mut_data()?;

@@ -12,7 +12,7 @@ use paladin_stake_program_client::{
 use setup::{
     config::ConfigManager,
     setup_holder_rewards,
-    token::{create_mint, create_token_account, MINT_EXTENSIONS, TOKEN_ACCOUNT_EXTENSIONS},
+    token::{create_mint, create_token_account},
 };
 use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
@@ -216,7 +216,6 @@ async fn fail_set_config_authority_when_authority_none() {
         &authority_pubkey,
         Some(&authority_pubkey),
         0,
-        MINT_EXTENSIONS,
     )
     .await
     .unwrap();
@@ -227,7 +226,6 @@ async fn fail_set_config_authority_when_authority_none() {
         &find_vault_pda(&config.pubkey()).0,
         &vault,
         &mint.pubkey(),
-        TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();
@@ -323,7 +321,6 @@ async fn fail_set_slash_authority_when_authority_none() {
         &authority_pubkey,
         Some(&authority_pubkey),
         0,
-        MINT_EXTENSIONS,
     )
     .await
     .unwrap();
@@ -334,7 +331,6 @@ async fn fail_set_slash_authority_when_authority_none() {
         &find_vault_pda(&config.pubkey()).0,
         &vault,
         &mint.pubkey(),
-        TOKEN_ACCOUNT_EXTENSIONS,
     )
     .await
     .unwrap();

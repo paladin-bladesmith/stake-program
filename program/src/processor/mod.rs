@@ -2,11 +2,11 @@ use bytemuck::Pod;
 use paladin_rewards_program_client::accounts::HolderRewards;
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, msg, program::invoke_signed,
-    program_error::ProgramError, program_pack::IsInitialized, pubkey::Pubkey, rent::Rent,
-    sysvar::Sysvar,
+    program_error::ProgramError, program_pack::IsInitialized, program_pack::Pack, pubkey::Pubkey,
+    rent::Rent, sysvar::Sysvar,
 };
 use spl_discriminator::{ArrayDiscriminator, SplDiscriminate};
-use spl_token_2022::{extension::PodStateWithExtensions, instruction::burn_checked, pod::PodMint};
+use spl_token::{instruction::burn_checked, state::Mint};
 
 use crate::{
     error::StakeError,
@@ -319,6 +319,7 @@ pub(crate) struct HarvestAccounts<'a, 'info> {
 pub(crate) fn harvest(
     accounts: HarvestAccounts,
     config_state: &mut Config,
+    vault_authority: &Pubkey,
     delegation: &mut Delegation,
     keeper: Option<&AccountInfo>,
 ) -> ProgramResult {
@@ -340,7 +341,7 @@ pub(crate) fn harvest(
     )?;
 
     // Compute the holder reward.
-    let (derivation, _) = HolderRewards::find_pda(&config_state.vault);
+    let (derivation, _) = HolderRewards::find_pda(&vault_authority);
     require!(
         accounts.vault_holder_rewards.key == &derivation,
         ProgramError::InvalidSeeds,
@@ -449,7 +450,7 @@ fn process_slash_for_delegation(args: SlashArgs) -> ProgramResult {
     } = args;
 
     require!(
-        token_program_info.key == &spl_token_2022::ID,
+        token_program_info.key == &spl_token::ID,
         ProgramError::IncorrectProgramId,
         "token program"
     );
@@ -486,8 +487,8 @@ fn process_slash_for_delegation(args: SlashArgs) -> ProgramResult {
     // Burn the tokens from the vault account (if there are tokens to slash).
     if actual_slash > 0 {
         let mint_data = mint_info.try_borrow_data()?;
-        let mint = PodStateWithExtensions::<PodMint>::unpack(&mint_data)?;
-        let decimals = mint.base.decimals;
+        let mint = Mint::unpack(&mint_data)?;
+        let decimals = mint.decimals;
 
         drop(mint_data);
         let burn_ix = burn_checked(
@@ -510,6 +511,33 @@ fn process_slash_for_delegation(args: SlashArgs) -> ProgramResult {
             &[signer_seeds],
         )?;
     }
+
+    Ok(())
+}
+
+pub fn transfer_excess_lamports(
+    source_account_info: &AccountInfo,
+    dest_account_info: &AccountInfo,
+) -> ProgramResult {
+    // Check source has enough lamports
+    let source_lamports = source_account_info.lamports();
+
+    // Get rent to ensure we don't go below rent-exempt minimum
+    let rent = Rent::get()?;
+    let source_data_len = source_account_info.data_len();
+    let min_rent = rent.minimum_balance(source_data_len);
+
+    // Ensure source will still be rent-exempt after transfer
+    if source_lamports < min_rent {
+        return Err(ProgramError::InsufficientFunds);
+    }
+
+    // Excess is what we currently have minus rent
+    let excess_lamports = source_lamports - min_rent;
+
+    // Perform the transfer
+    **source_account_info.try_borrow_mut_lamports()? -= excess_lamports;
+    **dest_account_info.try_borrow_mut_lamports()? += excess_lamports;
 
     Ok(())
 }

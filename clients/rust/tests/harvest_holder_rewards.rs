@@ -23,11 +23,12 @@ use solana_program_test::{tokio, ProgramTest};
 use solana_sdk::{
     account::{Account, AccountSharedData},
     instruction::InstructionError,
+    program_pack::Pack,
     pubkey::Pubkey,
     signature::{Keypair, Signer},
     transaction::Transaction,
 };
-use spl_token_2022::{extension::PodStateWithExtensionsMut, pod::PodAccount};
+use spl_token::state::Account as TokenAccount;
 
 #[tokio::test]
 async fn validator_stake_harvest_holder_rewards() {
@@ -54,8 +55,8 @@ async fn validator_stake_harvest_holder_rewards() {
 
     // Set vault token balance to match the total staked (100).
     let mut account = get_account!(context, config_manager.vault);
-    let vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
-    vault.base.amount = 100.into();
+    let mut vault = TokenAccount::unpack(&mut account.data).unwrap();
+    vault.amount = 100;
     context.set_account(&config_manager.vault, &account.into());
 
     // And a stake account with a 50 staked amount.
@@ -112,7 +113,7 @@ async fn validator_stake_harvest_holder_rewards() {
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
-        .token_program(spl_token_2022::ID)
+        .token_program(spl_token::ID)
         .paladin_rewards_program(paladin_rewards_program_client::ID)
         .instruction();
     let harvest_validator = HarvestValidatorRewardsBuilder::new()
@@ -182,8 +183,8 @@ async fn validator_stake_harvest_holder_rewards_wrapped() {
 
     // Set vault token balance to match the total staked (100).
     let mut account = get_account!(context, config_manager.vault);
-    let vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
-    vault.base.amount = 100.into();
+    let mut vault = TokenAccount::unpack(&mut account.data).unwrap();
+    vault.amount = 100;
     context.set_account(&config_manager.vault, &account.into());
 
     // And a stake account wiht a 50 staked amount.
@@ -260,7 +261,7 @@ async fn validator_stake_harvest_holder_rewards_wrapped() {
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
-        .token_program(spl_token_2022::ID)
+        .token_program(spl_token::ID)
         .paladin_rewards_program(paladin_rewards_program_client::ID)
         .instruction();
     let harvest_validator = HarvestValidatorRewardsBuilder::new()
@@ -335,8 +336,8 @@ async fn validator_stake_harvest_holder_rewards_with_no_rewards_available() {
 
     // Set vault token balance to match the total staked (100).
     let mut account = get_account!(context, config_manager.vault);
-    let vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
-    vault.base.amount = 100.into();
+    let mut vault = TokenAccount::unpack(&mut account.data).unwrap();
+    vault.amount = 100;
     context.set_account(&config_manager.vault, &account.into());
 
     // And a stake account wiht a no staked amount.
@@ -377,7 +378,7 @@ async fn validator_stake_harvest_holder_rewards_with_no_rewards_available() {
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
-        .token_program(spl_token_2022::ID)
+        .token_program(spl_token::ID)
         .paladin_rewards_program(paladin_rewards_program_client::ID)
         .instruction();
     let harvest_validator = HarvestValidatorRewardsBuilder::new()
@@ -436,8 +437,8 @@ async fn validator_stake_harvest_holder_rewards_after_harvesting() {
 
     // Set vault token balance to match the total staked (100).
     let mut account = get_account!(context, config_manager.vault);
-    let vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
-    vault.base.amount = 100.into();
+    let mut vault = TokenAccount::unpack(&mut account.data).unwrap();
+    vault.amount = 100;
     context.set_account(&config_manager.vault, &account.into());
 
     // And a stake account wiht a 50 staked amount.
@@ -483,7 +484,7 @@ async fn validator_stake_harvest_holder_rewards_after_harvesting() {
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
-        .token_program(spl_token_2022::ID)
+        .token_program(spl_token::ID)
         .paladin_rewards_program(paladin_rewards_program_client::ID)
         .instruction();
     let harvest_validator = HarvestValidatorRewardsBuilder::new()
@@ -512,7 +513,7 @@ async fn validator_stake_harvest_holder_rewards_after_harvesting() {
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
-        .token_program(spl_token_2022::ID)
+        .token_program(spl_token::ID)
         .paladin_rewards_program(paladin_rewards_program_client::ID)
         .instruction();
     let harvest_validator = HarvestValidatorRewardsBuilder::new()
@@ -573,8 +574,8 @@ async fn validator_stake_fail_harvest_holder_rewards_with_wrong_authority() {
 
     // Set vault token balance to match the total staked (100).
     let mut account = get_account!(context, config_manager.vault);
-    let vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
-    vault.base.amount = 100.into();
+    let mut vault = TokenAccount::unpack(&mut account.data).unwrap();
+    vault.amount = 100;
     context.set_account(&config_manager.vault, &account.into());
 
     // And a stake account with a 50 staked amount.
@@ -620,7 +621,7 @@ async fn validator_stake_fail_harvest_holder_rewards_with_wrong_authority() {
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
-        .token_program(spl_token_2022::ID)
+        .token_program(spl_token::ID)
         .paladin_rewards_program(paladin_rewards_program_client::ID)
         .instruction();
     let harvest_validator = HarvestValidatorRewardsBuilder::new()
@@ -697,7 +698,7 @@ async fn fail_harvest_holder_rewards_with_uninitialized_config() {
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
-        .token_program(spl_token_2022::ID)
+        .token_program(spl_token::ID)
         .paladin_rewards_program(paladin_rewards_program_client::ID)
         .instruction();
     let harvest_validator = HarvestValidatorRewardsBuilder::new()
@@ -747,8 +748,8 @@ async fn fail_harvest_holder_rewards_with_uninitialized_stake() {
 
     // Set vault token balance to match the total staked (100).
     let mut account = get_account!(context, config_manager.vault);
-    let vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
-    vault.base.amount = 100.into();
+    let mut vault = TokenAccount::unpack(&mut account.data).unwrap();
+    vault.amount = 100;
     context.set_account(&config_manager.vault, &account.into());
 
     // And an uninitialized stake account.
@@ -787,7 +788,7 @@ async fn fail_harvest_holder_rewards_with_uninitialized_stake() {
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
-        .token_program(spl_token_2022::ID)
+        .token_program(spl_token::ID)
         .paladin_rewards_program(paladin_rewards_program_client::ID)
         .instruction();
     let harvest_validator = HarvestValidatorRewardsBuilder::new()
@@ -836,8 +837,8 @@ async fn fail_harvest_holder_rewards_with_wrong_config() {
 
     // Set vault token balance to match the total staked (100).
     let mut account = get_account!(context, config_manager.vault);
-    let vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
-    vault.base.amount = 100.into();
+    let mut vault = TokenAccount::unpack(&mut account.data).unwrap();
+    vault.amount = 100;
     context.set_account(&config_manager.vault, &account.into());
 
     // And a stake account wiht a 50 staked amount.
@@ -885,7 +886,7 @@ async fn fail_harvest_holder_rewards_with_wrong_config() {
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&another_config_manager.config).0)
         .mint(config_manager.mint)
-        .token_program(spl_token_2022::ID)
+        .token_program(spl_token::ID)
         .paladin_rewards_program(paladin_rewards_program_client::ID)
         .instruction();
     let harvest_validator = HarvestValidatorRewardsBuilder::new()
@@ -925,8 +926,8 @@ async fn sol_staker_stake_harvest_holder_rewards() {
 
     // Set vault token balance to match the total staked (100).
     let mut account = get_account!(context, config_manager.vault);
-    let vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
-    vault.base.amount = 100.into();
+    let mut vault = TokenAccount::unpack(&mut account.data).unwrap();
+    vault.amount = 100;
     context.set_account(&config_manager.vault, &account.into());
 
     // Add a validator stake account
@@ -991,7 +992,7 @@ async fn sol_staker_stake_harvest_holder_rewards() {
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
-        .token_program(spl_token_2022::ID)
+        .token_program(spl_token::ID)
         .paladin_rewards_program(paladin_rewards_program_client::ID)
         .instruction();
     let harvest_staker = HarvestSolStakerRewardsBuilder::new()
@@ -1057,8 +1058,8 @@ async fn sol_staker_stake_harvest_holder_rewards_with_no_rewards_available() {
 
     // Set vault token balance to match the total staked (100).
     let mut account = get_account!(context, config_manager.vault);
-    let vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
-    vault.base.amount = 100.into();
+    let mut vault = TokenAccount::unpack(&mut account.data).unwrap();
+    vault.amount = 100;
     context.set_account(&config_manager.vault, &account.into());
 
     // And a stake account wiht no staked amount.
@@ -1109,7 +1110,7 @@ async fn sol_staker_stake_harvest_holder_rewards_with_no_rewards_available() {
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
-        .token_program(spl_token_2022::ID)
+        .token_program(spl_token::ID)
         .paladin_rewards_program(paladin_rewards_program_client::ID)
         .instruction();
     let harvest_staker = HarvestSolStakerRewardsBuilder::new()
@@ -1163,8 +1164,8 @@ async fn sol_staker_stake_harvest_holder_rewards_after_harvesting() {
 
     // Set vault token balance to match the total staked (100).
     let mut account = get_account!(context, config_manager.vault);
-    let vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
-    vault.base.amount = 100.into();
+    let mut vault = TokenAccount::unpack(&mut account.data).unwrap();
+    vault.amount = 100;
     context.set_account(&config_manager.vault, &account.into());
 
     // And a stake account wiht a 50 staked amount.
@@ -1220,7 +1221,7 @@ async fn sol_staker_stake_harvest_holder_rewards_after_harvesting() {
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
-        .token_program(spl_token_2022::ID)
+        .token_program(spl_token::ID)
         .paladin_rewards_program(paladin_rewards_program_client::ID)
         .instruction();
     let harvest_staker = HarvestSolStakerRewardsBuilder::new()
@@ -1255,7 +1256,7 @@ async fn sol_staker_stake_harvest_holder_rewards_after_harvesting() {
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
-        .token_program(spl_token_2022::ID)
+        .token_program(spl_token::ID)
         .paladin_rewards_program(paladin_rewards_program_client::ID)
         .instruction();
     let harvest_staker = HarvestSolStakerRewardsBuilder::new()
@@ -1312,8 +1313,8 @@ async fn sol_staker_stake_fail_harvest_holder_rewards_with_wrong_authority() {
 
     // Set vault token balance to match the total staked (100).
     let mut account = get_account!(context, config_manager.vault);
-    let vault = PodStateWithExtensionsMut::<PodAccount>::unpack(&mut account.data).unwrap();
-    vault.base.amount = 100.into();
+    let mut vault = TokenAccount::unpack(&mut account.data).unwrap();
+    vault.amount = 100;
     context.set_account(&config_manager.vault, &account.into());
 
     // And a validator stake account.
@@ -1370,7 +1371,7 @@ async fn sol_staker_stake_fail_harvest_holder_rewards_with_wrong_authority() {
         .vault(config_manager.vault)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .mint(config_manager.mint)
-        .token_program(spl_token_2022::ID)
+        .token_program(spl_token::ID)
         .paladin_rewards_program(paladin_rewards_program_client::ID)
         .instruction();
     let harvest_staker = HarvestSolStakerRewardsBuilder::new()

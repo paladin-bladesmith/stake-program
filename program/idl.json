@@ -214,6 +214,14 @@
           ]
         },
         {
+          "name": "holderRewardsPoolTokenAccount",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Holder rewards pool account token account"
+          ]
+        },
+        {
           "name": "vault",
           "isMut": true,
           "isSigner": false,
@@ -1485,7 +1493,7 @@
   "metadata": {
     "origin": "shank",
     "address": "GQurxHCYQCNfYR37nHNb6ZiLWg3jpbh2fWv2RpzwGqRK",
-    "binaryVersion": "0.4.2",
+    "binaryVersion": "0.4.3",
     "libVersion": "^0.4.2"
   }
 }

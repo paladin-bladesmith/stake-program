@@ -74,10 +74,7 @@ async fn harvest_validator_rewards() {
             lamports: rent.minimum_balance(HolderRewards::LEN),
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
-                unharvested_rewards: 0,
-                rent_sponsor: Pubkey::default(),
-                rent_debt: 0,
-                minimum_balance: 0,
+                deposited: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -200,10 +197,7 @@ async fn harvest_validator_rewards_wrapped() {
             lamports: rent.minimum_balance(HolderRewards::LEN),
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
-                unharvested_rewards: 0,
-                rent_sponsor: Pubkey::default(),
-                rent_debt: 0,
-                minimum_balance: 0,
+                deposited: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -308,10 +302,7 @@ async fn harvest_validator_rewards_with_no_rewards_available() {
             lamports: rent.minimum_balance(HolderRewards::LEN),
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
-                unharvested_rewards: 0,
-                rent_sponsor: Pubkey::default(),
-                rent_debt: 0,
-                minimum_balance: 0,
+                deposited: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -413,10 +404,7 @@ async fn harvest_validator_rewards_after_harvesting() {
             lamports: rent.minimum_balance(HolderRewards::LEN),
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
-                unharvested_rewards: 0,
-                rent_sponsor: Pubkey::default(),
-                rent_debt: 0,
-                minimum_balance: 0,
+                deposited: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -527,10 +515,7 @@ async fn fail_harvest_validator_rewards_with_wrong_authority() {
             lamports: rent.minimum_balance(HolderRewards::LEN),
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
-                unharvested_rewards: 0,
-                rent_sponsor: Pubkey::default(),
-                rent_debt: 0,
-                minimum_balance: 0,
+                deposited: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -591,10 +576,7 @@ async fn fail_harvest_validator_rewards_with_uninitialized_config_account() {
             lamports: rent.minimum_balance(HolderRewards::LEN),
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
-                unharvested_rewards: 0,
-                rent_sponsor: Pubkey::default(),
-                rent_debt: 0,
-                minimum_balance: 0,
+                deposited: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -683,10 +665,7 @@ async fn fail_harvest_validator_rewards_with_uninitialized_stake_account() {
             lamports: rent.minimum_balance(HolderRewards::LEN),
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
-                unharvested_rewards: 0,
-                rent_sponsor: Pubkey::default(),
-                rent_debt: 0,
-                minimum_balance: 0,
+                deposited: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -765,10 +744,7 @@ async fn fail_harvest_validator_rewards_with_wrong_config_account() {
             lamports: rent.minimum_balance(HolderRewards::LEN),
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
-                unharvested_rewards: 0,
-                rent_sponsor: Pubkey::default(),
-                rent_debt: 0,
-                minimum_balance: 0,
+                deposited: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -852,10 +828,7 @@ async fn fail_harvest_validator_rewards_with_wrong_holder_rewards() {
             lamports: rent.minimum_balance(HolderRewards::LEN),
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
-                unharvested_rewards: 0,
-                rent_sponsor: Pubkey::default(),
-                rent_debt: 0,
-                minimum_balance: 0,
+                deposited: 0,
                 padding: 0,
             })
             .unwrap(),
@@ -888,10 +861,7 @@ async fn fail_harvest_validator_rewards_with_wrong_holder_rewards() {
             lamports: rent.minimum_balance(HolderRewards::LEN),
             data: borsh::to_vec(&HolderRewards {
                 last_accumulated_rewards_per_token: 0,
-                unharvested_rewards: 0,
-                rent_sponsor: Pubkey::default(),
-                rent_debt: 0,
-                minimum_balance: 0,
+                deposited: 0,
                 padding: 0,
             })
             .unwrap(),

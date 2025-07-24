@@ -7,8 +7,6 @@ use solana_sdk::{
     pubkey::Pubkey, signature::Keypair, signer::Signer, system_instruction,
     transaction::Transaction,
 };
-use spl_tlv_account_resolution::state::ExtraAccountMetaList;
-use spl_transfer_hook_interface::get_extra_account_metas_address;
 
 use super::token::create_associated_token_account;
 
@@ -54,9 +52,6 @@ pub async fn create_holder_rewards_pool(
 
     // rewards pool
     let (holder_rewards_pool, _) = HolderRewardsPool::find_pda(mint);
-    // extra account metas
-    let extra_account_metas =
-        get_extra_account_metas_address(mint, &paladin_rewards_program_client::ID);
 
     // Initialize the holder rewards pool.
 
@@ -66,16 +61,9 @@ pub async fn create_holder_rewards_pool(
             &holder_rewards_pool,
             rent.minimum_balance(HolderRewardsPool::LEN),
         ),
-        system_instruction::transfer(
-            &context.payer.pubkey(),
-            &extra_account_metas,
-            rent.minimum_balance(ExtraAccountMetaList::size_of(3).unwrap()),
-        ),
         InitializeHolderRewardsPoolBuilder::new()
             .holder_rewards_pool(holder_rewards_pool)
-            .extra_account_metas(extra_account_metas)
             .mint(*mint)
-            .mint_authority(mint_authority.pubkey())
             .instruction(),
     ];
 
@@ -117,7 +105,6 @@ pub async fn create_holder_rewards(
             .holder_rewards(holder_rewards)
             .token_account(*token_account)
             .mint(*mint)
-            .sponsor(Pubkey::default())
             .instruction(),
     ];
 

@@ -6,7 +6,7 @@ use crate::{
     instruction::accounts::{Context, HarvestValidatorRewardsAccounts},
     processor::{harvest, unpack_initialized_mut, HarvestAccounts},
     require,
-    state::{find_validator_stake_pda, Config, ValidatorStake},
+    state::{find_validator_stake_pda, find_vault_pda, Config, ValidatorStake},
 };
 
 /// Harvests stake SOL rewards earned by the given validator stake account.
@@ -68,7 +68,8 @@ pub fn process_harvest_validator_rewards(
 
     // Holder rewards.
     // - Must be derived from the vault account.
-    let derivation = HolderRewards::find_pda(&config.vault).0;
+    let vault_authority = find_vault_pda(ctx.accounts.config.key, program_id).0;
+    let derivation = HolderRewards::find_pda(&vault_authority).0;
     require!(
         ctx.accounts.vault_holder_rewards.key == &derivation,
         ProgramError::InvalidSeeds,
@@ -83,6 +84,7 @@ pub fn process_harvest_validator_rewards(
             authority: ctx.accounts.validator_stake_authority,
         },
         config,
+        &vault_authority,
         &mut validator_stake.delegation,
         None,
     )?;
