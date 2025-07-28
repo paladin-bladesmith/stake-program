@@ -55,9 +55,7 @@ async fn initialize_config_with_mint_and_token() {
     let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
 
     // Fund vault pda
-    fund_account(&mut context, &vault_pda, 0)
-        .await
-        .unwrap();
+    fund_account(&mut context, &vault_pda, 0).await.unwrap();
     // Fund vault holder rewards
     fund_account(&mut context, &vault_holder_rewards, HolderRewards::LEN)
         .await
@@ -141,9 +139,7 @@ async fn fail_initialize_config_with_wrong_vault_pda() {
     let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
 
     // Fund vault pda
-    fund_account(&mut context, &vault_pda, 0)
-        .await
-        .unwrap();
+    fund_account(&mut context, &vault_pda, 0).await.unwrap();
     // Fund vault holder rewards
     fund_account(&mut context, &vault_holder_rewards, HolderRewards::LEN)
         .await
@@ -235,9 +231,7 @@ async fn fail_initialize_config_with_non_empty_token() {
         .unwrap();
 
     // Fund vault pda
-    fund_account(&mut context, &vault_pda, 0)
-        .await
-        .unwrap();
+    fund_account(&mut context, &vault_pda, 0).await.unwrap();
     // Fund vault holder rewards
     fund_account(&mut context, &vault_holder_rewards, HolderRewards::LEN)
         .await
@@ -332,9 +326,7 @@ async fn fail_initialize_config_with_unitialized_mint() {
     );
 
     // Fund vault pda
-    fund_account(&mut context, &vault_pda, 0)
-        .await
-        .unwrap();
+    fund_account(&mut context, &vault_pda, 0).await.unwrap();
     // Fund vault holder rewards
     fund_account(&mut context, &vault_holder_rewards, HolderRewards::LEN)
         .await
@@ -423,9 +415,7 @@ async fn fail_initialize_config_with_wrong_account_length() {
     let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
 
     // Fund vault pda
-    fund_account(&mut context, &vault_pda, 0)
-        .await
-        .unwrap();
+    fund_account(&mut context, &vault_pda, 0).await.unwrap();
     // Fund vault holder rewards
     fund_account(&mut context, &vault_holder_rewards, HolderRewards::LEN)
         .await
@@ -507,9 +497,7 @@ async fn fail_initialize_config_with_initialized_account() {
     let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
 
     // Fund vault pda
-    fund_account(&mut context, &vault_pda, 0)
-        .await
-        .unwrap();
+    fund_account(&mut context, &vault_pda, 0).await.unwrap();
     // Fund vault holder rewards
     fund_account(&mut context, &vault_holder_rewards, HolderRewards::LEN)
         .await
@@ -625,9 +613,7 @@ async fn fail_initialize_config_with_token_delegate() {
     let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
 
     // Fund vault pda
-    fund_account(&mut context, &vault_pda, 0)
-        .await
-        .unwrap();
+    fund_account(&mut context, &vault_pda, 0).await.unwrap();
     // Fund vault holder rewards
     fund_account(&mut context, &vault_holder_rewards, HolderRewards::LEN)
         .await
@@ -737,9 +723,7 @@ async fn fail_initialize_config_with_token_close_authority() {
     let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
 
     // Fund vault pda
-    fund_account(&mut context, &vault_pda, 0)
-        .await
-        .unwrap();
+    fund_account(&mut context, &vault_pda, 0).await.unwrap();
     // Fund vault holder rewards
     fund_account(&mut context, &vault_holder_rewards, HolderRewards::LEN)
         .await
@@ -837,9 +821,7 @@ async fn fail_initialize_config_with_invalid_max_deactivation_basis_points() {
     let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
 
     // Fund vault pda
-    fund_account(&mut context, &vault_pda, 0)
-        .await
-        .unwrap();
+    fund_account(&mut context, &vault_pda, 0).await.unwrap();
     // Fund vault holder rewards
     fund_account(&mut context, &vault_holder_rewards, HolderRewards::LEN)
         .await

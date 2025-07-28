@@ -55,7 +55,7 @@ pub fn find_config_pda(program_id: &Pubkey) -> (Pubkey, u8) {
 }
 
 #[inline(always)]
-pub fn get_config_pda_signer_seeds<'a>(bump_seed: &'a [u8]) -> [&'a [u8]; 2] {
+pub fn get_config_pda_signer_seeds(bump_seed: &[u8]) -> [&[u8]; 2] {
     [b"config", bump_seed]
 }
 

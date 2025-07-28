@@ -35,11 +35,7 @@ pub async fn create_associated_token_account(
         context.last_blockhash,
     );
 
-    context
-        .banks_client
-        .process_transaction(tx)
-        .await
-        .unwrap();
+    context.banks_client.process_transaction(tx).await.unwrap();
 
     get_associated_token_address_with_program_id(owner, mint, &spl_token::ID)
 }

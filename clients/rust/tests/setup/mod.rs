@@ -211,4 +211,3 @@ pub fn sign_duna_document_with_data(
 
     duna_acc
 }
-

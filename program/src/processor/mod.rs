@@ -55,7 +55,6 @@ pub fn process_instruction<'a>(
     accounts: &'a [AccountInfo<'a>],
     instruction_data: &[u8],
 ) -> ProgramResult {
-
     let instruction = StakeInstruction::unpack(instruction_data)?;
 
     match instruction {
@@ -344,7 +343,7 @@ pub(crate) fn harvest(
     )?;
 
     // Compute the holder reward.
-    let (derivation, _) = HolderRewards::find_pda(&vault_authority);
+    let (derivation, _) = HolderRewards::find_pda(vault_authority);
     require!(
         accounts.vault_holder_rewards.key == &derivation,
         ProgramError::InvalidSeeds,

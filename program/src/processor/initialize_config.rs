@@ -88,8 +88,11 @@ pub fn process_initialize_config(
         StakeError::InvalidMint,
         "vault"
     );
-    let amount: u64 = vault.amount.into();
-    require!(amount == 0, StakeError::AmountGreaterThanZero, "vault");
+    require!(
+        vault.amount == 0,
+        StakeError::AmountGreaterThanZero,
+        "vault"
+    );
 
     // config
     // - owner must be this program

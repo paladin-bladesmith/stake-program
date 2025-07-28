@@ -2599,7 +2599,7 @@ async fn fail_harvest_sync_rewards_with_wrong_vault_holder_rewards() {
         }
         .into(),
     );
-    
+
     // Setup another (wrong) holder rewards.
     let wrong_holder_rewards = HolderRewards::find_pda(&Pubkey::new_unique()).0;
     context.set_account(
