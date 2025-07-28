@@ -38,7 +38,7 @@ async fn validator_override_staked_lamports_ok() {
     // Act - Update the authority.
     let sol_staker_update_authority = ValidatorOverrideStakedLamports {
         config: config.config,
-        config_authority: config.authority.pubkey(),
+        config_authority: config.config_authority.pubkey(),
         validator_stake: validator_stake_manager.stake,
         validator_stake_authority: validator_stake_manager.authority.pubkey(),
         vault_holder_rewards: config.vault_holder_rewards,
@@ -49,7 +49,7 @@ async fn validator_override_staked_lamports_ok() {
     let tx = Transaction::new_signed_with_payer(
         &[sol_staker_update_authority],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &config.authority],
+        &[&context.payer, &config.config_authority],
         context.last_blockhash,
     );
     context.banks_client.process_transaction(tx).await.unwrap();
@@ -92,7 +92,7 @@ async fn validator_override_staked_lamports_err_config() {
     // Act - Update the authority.
     let sol_staker_update_authority = ValidatorOverrideStakedLamports {
         config: Pubkey::new_unique(),
-        config_authority: config.authority.pubkey(),
+        config_authority: config.config_authority.pubkey(),
         validator_stake: validator_stake_manager.stake,
         validator_stake_authority: validator_stake_manager.authority.pubkey(),
         vault_holder_rewards: config.vault_holder_rewards,
@@ -103,7 +103,7 @@ async fn validator_override_staked_lamports_err_config() {
     let tx = Transaction::new_signed_with_payer(
         &[sol_staker_update_authority],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &config.authority],
+        &[&context.payer, &config.config_authority],
         context.last_blockhash,
     );
     let err = context
@@ -187,7 +187,7 @@ async fn validator_override_staked_lamports_err_validator_stake_owner() {
     // Act - Update the authority.
     let sol_staker_update_authority = ValidatorOverrideStakedLamports {
         config: config.config,
-        config_authority: config.authority.pubkey(),
+        config_authority: config.config_authority.pubkey(),
         validator_stake: Pubkey::new_unique(),
         validator_stake_authority: validator_stake_manager.authority.pubkey(),
         vault_holder_rewards: config.vault_holder_rewards,
@@ -198,7 +198,7 @@ async fn validator_override_staked_lamports_err_validator_stake_owner() {
     let tx = Transaction::new_signed_with_payer(
         &[sol_staker_update_authority],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &config.authority],
+        &[&context.payer, &config.config_authority],
         context.last_blockhash,
     );
     let err = context

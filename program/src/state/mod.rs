@@ -46,7 +46,17 @@ pub fn create_vault_pda<'a>(
 
 #[inline(always)]
 pub fn find_vault_pda(config: &Pubkey, program_id: &Pubkey) -> (Pubkey, u8) {
-    Pubkey::find_program_address(&["token-owner".as_bytes(), config.as_ref()], program_id)
+    Pubkey::find_program_address(&[b"token-owner", config.as_ref()], program_id)
+}
+
+#[inline(always)]
+pub fn find_config_pda(program_id: &Pubkey) -> (Pubkey, u8) {
+    Pubkey::find_program_address(&[b"config"], program_id)
+}
+
+#[inline(always)]
+pub fn get_config_pda_signer_seeds<'a>(bump_seed: &'a [u8]) -> [&'a [u8]; 2] {
+    [b"config", bump_seed]
 }
 
 #[inline(always)]

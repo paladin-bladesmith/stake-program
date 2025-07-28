@@ -179,6 +179,7 @@ pub fn process_unstake_tokens<'info>(
 
     drop(mint_borrow);
     drop(vault_borrow);
+
     invoke_signed(
         &transfer_checked(
             &spl_token::ID,
@@ -186,7 +187,7 @@ pub fn process_unstake_tokens<'info>(
             ctx.accounts.mint.key,
             ctx.accounts.destination_token_account.key,
             ctx.accounts.vault_authority.key,
-            &[ctx.accounts.vault_authority.key],
+            &[],
             amount,
             decimals,
         )?,
@@ -195,6 +196,7 @@ pub fn process_unstake_tokens<'info>(
             ctx.accounts.mint.clone(),
             ctx.accounts.destination_token_account.clone(),
             ctx.accounts.vault_authority.clone(),
+            ctx.accounts.token_program.clone(),
         ],
         &[&signer_seeds],
     )?;

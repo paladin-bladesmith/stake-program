@@ -55,6 +55,7 @@ pub fn process_instruction<'a>(
     accounts: &'a [AccountInfo<'a>],
     instruction_data: &[u8],
 ) -> ProgramResult {
+
     let instruction = StakeInstruction::unpack(instruction_data)?;
 
     match instruction {

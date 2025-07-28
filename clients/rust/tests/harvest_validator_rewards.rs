@@ -12,9 +12,10 @@ use paladin_stake_program_client::{
 };
 use setup::{
     config::{create_config, ConfigManager},
+    setup,
     validator_stake::ValidatorStakeManager,
 };
-use solana_program_test::{tokio, ProgramTest};
+use solana_program_test::tokio;
 use solana_sdk::{
     account::{Account, AccountSharedData},
     instruction::InstructionError,
@@ -39,13 +40,7 @@ fn calculate_stake_rewards_per_token(rewards: u64, stake_amount: u64) -> u128 {
 
 #[tokio::test]
 async fn harvest_validator_rewards() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
+    let mut context = setup(&[]).await;
 
     // Given a config account with 26 lamports rewards and 130 staked amount.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -64,26 +59,6 @@ async fn harvest_validator_rewards() {
 
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&validator_stake_manager.stake, &account.into());
-
-    // Setup a holder rewards account with 0 accrued rewards.
-    let rent = context.banks_client.get_rent().await.unwrap();
-    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
-    context.set_account(
-        &holder_rewards,
-        &Account {
-            lamports: rent.minimum_balance(HolderRewards::LEN),
-            data: borsh::to_vec(&HolderRewards {
-                last_accumulated_rewards_per_token: 0,
-                deposited: 0,
-                padding: 0,
-            })
-            .unwrap(),
-            owner: paladin_rewards_program_client::ID,
-            executable: false,
-            rent_epoch: 0,
-        }
-        .into(),
-    );
 
     // When we harvest the stake rewards.
     //
@@ -119,7 +94,7 @@ async fn harvest_validator_rewards() {
 
     let harvest_stake_rewards_ix = HarvestValidatorRewardsBuilder::new()
         .config(config)
-        .vault_holder_rewards(holder_rewards)
+        .vault_holder_rewards(config_manager.vault_holder_rewards)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .instruction();
@@ -146,13 +121,7 @@ async fn harvest_validator_rewards() {
 
 #[tokio::test]
 async fn harvest_validator_rewards_wrapped() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
+    let mut context = setup(&[]).await;
 
     // Given a config account with 26 lamports rewards and 130 staked amount.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -188,26 +157,6 @@ async fn harvest_validator_rewards_wrapped() {
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&validator_stake_manager.stake, &account.into());
 
-    // Setup a holder rewards account with 0 accrued rewards.
-    let rent = context.banks_client.get_rent().await.unwrap();
-    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
-    context.set_account(
-        &holder_rewards,
-        &Account {
-            lamports: rent.minimum_balance(HolderRewards::LEN),
-            data: borsh::to_vec(&HolderRewards {
-                last_accumulated_rewards_per_token: 0,
-                deposited: 0,
-                padding: 0,
-            })
-            .unwrap(),
-            owner: paladin_rewards_program_client::ID,
-            executable: false,
-            rent_epoch: 0,
-        }
-        .into(),
-    );
-
     // When we harvest the stake rewards.
     //
     // We are expecting the rewards to be 13 lamports.
@@ -231,7 +180,7 @@ async fn harvest_validator_rewards_wrapped() {
 
     let harvest_stake_rewards_ix = HarvestValidatorRewardsBuilder::new()
         .config(config)
-        .vault_holder_rewards(holder_rewards)
+        .vault_holder_rewards(config_manager.vault_holder_rewards)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .instruction();
@@ -258,13 +207,7 @@ async fn harvest_validator_rewards_wrapped() {
 
 #[tokio::test]
 async fn harvest_validator_rewards_with_no_rewards_available() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
+    let mut context = setup(&[]).await;
 
     // Given a config account with 100 staked amount and no rewards accumulated.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -293,26 +236,6 @@ async fn harvest_validator_rewards_with_no_rewards_available() {
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&validator_stake_manager.stake, &account.into());
 
-    // Setup a holder rewards account with 0 accrued rewards.
-    let rent = context.banks_client.get_rent().await.unwrap();
-    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
-    context.set_account(
-        &holder_rewards,
-        &Account {
-            lamports: rent.minimum_balance(HolderRewards::LEN),
-            data: borsh::to_vec(&HolderRewards {
-                last_accumulated_rewards_per_token: 0,
-                deposited: 0,
-                padding: 0,
-            })
-            .unwrap(),
-            owner: paladin_rewards_program_client::ID,
-            executable: false,
-            rent_epoch: 0,
-        }
-        .into(),
-    );
-
     // Make the authority account rent exempt.
     context.set_account(
         &validator_stake_manager.authority.pubkey(),
@@ -325,7 +248,7 @@ async fn harvest_validator_rewards_with_no_rewards_available() {
 
     let harvest_stake_rewards_ix = HarvestValidatorRewardsBuilder::new()
         .config(config)
-        .vault_holder_rewards(holder_rewards)
+        .vault_holder_rewards(config_manager.vault_holder_rewards)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .instruction();
@@ -350,13 +273,7 @@ async fn harvest_validator_rewards_with_no_rewards_available() {
 
 #[tokio::test]
 async fn harvest_validator_rewards_after_harvesting() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
+    let mut context = setup(&[]).await;
 
     // Given a config account with 4 SOL rewards and 100 staked amount.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -395,26 +312,6 @@ async fn harvest_validator_rewards_after_harvesting() {
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&validator_stake_manager.stake, &account.into());
 
-    // Setup a holder rewards account with 0 accrued rewards.
-    let rent = context.banks_client.get_rent().await.unwrap();
-    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
-    context.set_account(
-        &holder_rewards,
-        &Account {
-            lamports: rent.minimum_balance(HolderRewards::LEN),
-            data: borsh::to_vec(&HolderRewards {
-                last_accumulated_rewards_per_token: 0,
-                deposited: 0,
-                padding: 0,
-            })
-            .unwrap(),
-            owner: paladin_rewards_program_client::ID,
-            executable: false,
-            rent_epoch: 0,
-        }
-        .into(),
-    );
-
     // When we harvest the stake rewards when there are no rewards available.
     //
     // We are expecting the rewards to be 0 SOL.
@@ -431,7 +328,7 @@ async fn harvest_validator_rewards_after_harvesting() {
 
     let harvest_stake_rewards_ix = HarvestValidatorRewardsBuilder::new()
         .config(config)
-        .vault_holder_rewards(holder_rewards)
+        .vault_holder_rewards(config_manager.vault_holder_rewards)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .instruction();
@@ -469,13 +366,7 @@ async fn harvest_validator_rewards_after_harvesting() {
 
 #[tokio::test]
 async fn fail_harvest_validator_rewards_with_wrong_authority() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
+    let mut context = setup(&[]).await;
 
     // Given a config account with 4 SOL rewards and 100 staked amount.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -506,33 +397,13 @@ async fn fail_harvest_validator_rewards_with_wrong_authority() {
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&validator_stake_manager.stake, &account.into());
 
-    // Setup a holder rewards account with 0 accrued rewards.
-    let rent = context.banks_client.get_rent().await.unwrap();
-    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
-    context.set_account(
-        &holder_rewards,
-        &Account {
-            lamports: rent.minimum_balance(HolderRewards::LEN),
-            data: borsh::to_vec(&HolderRewards {
-                last_accumulated_rewards_per_token: 0,
-                deposited: 0,
-                padding: 0,
-            })
-            .unwrap(),
-            owner: paladin_rewards_program_client::ID,
-            executable: false,
-            rent_epoch: 0,
-        }
-        .into(),
-    );
-
     // When we try to harvest the stake rewards with the wrong authority.
 
     let fake_authority = Keypair::new();
 
     let harvest_stake_rewards_ix = HarvestValidatorRewardsBuilder::new()
         .config(config)
-        .vault_holder_rewards(holder_rewards)
+        .vault_holder_rewards(config_manager.vault_holder_rewards)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(fake_authority.pubkey())
         .instruction();
@@ -554,38 +425,12 @@ async fn fail_harvest_validator_rewards_with_wrong_authority() {
 
 #[tokio::test]
 async fn fail_harvest_validator_rewards_with_uninitialized_config_account() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
+    let mut context = setup(&[]).await;
 
     // Given a config and validator stake accounts.
     let config_manager = ConfigManager::new(&mut context).await;
     let config = config_manager.config;
     let validator_stake_manager = ValidatorStakeManager::new(&mut context, &config).await;
-
-    // Setup a holder rewards account with 0 accrued rewards.
-    let rent = context.banks_client.get_rent().await.unwrap();
-    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
-    context.set_account(
-        &holder_rewards,
-        &Account {
-            lamports: rent.minimum_balance(HolderRewards::LEN),
-            data: borsh::to_vec(&HolderRewards {
-                last_accumulated_rewards_per_token: 0,
-                deposited: 0,
-                padding: 0,
-            })
-            .unwrap(),
-            owner: paladin_rewards_program_client::ID,
-            executable: false,
-            rent_epoch: 0,
-        }
-        .into(),
-    );
 
     // And we uninitialize the config account.
     context.set_account(
@@ -611,7 +456,7 @@ async fn fail_harvest_validator_rewards_with_uninitialized_config_account() {
     // When we try to harvest stake rewards from an uninitialized config account.
     let harvest_stake_rewards_ix = HarvestValidatorRewardsBuilder::new()
         .config(config)
-        .vault_holder_rewards(holder_rewards)
+        .vault_holder_rewards(config_manager.vault_holder_rewards)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .instruction();
@@ -633,13 +478,7 @@ async fn fail_harvest_validator_rewards_with_uninitialized_config_account() {
 
 #[tokio::test]
 async fn fail_harvest_validator_rewards_with_uninitialized_stake_account() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
+    let mut context = setup(&[]).await;
 
     // Given a config account and an uninitialized stake account.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -656,26 +495,6 @@ async fn fail_harvest_validator_rewards_with_uninitialized_stake_account() {
         }),
     );
 
-    // Setup a holder rewards account with 0 accrued rewards.
-    let rent = context.banks_client.get_rent().await.unwrap();
-    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
-    context.set_account(
-        &holder_rewards,
-        &Account {
-            lamports: rent.minimum_balance(HolderRewards::LEN),
-            data: borsh::to_vec(&HolderRewards {
-                last_accumulated_rewards_per_token: 0,
-                deposited: 0,
-                padding: 0,
-            })
-            .unwrap(),
-            owner: paladin_rewards_program_client::ID,
-            executable: false,
-            rent_epoch: 0,
-        }
-        .into(),
-    );
-
     // Make the authority account rent exempt.
     let authority = Keypair::new();
     context.set_account(
@@ -690,7 +509,7 @@ async fn fail_harvest_validator_rewards_with_uninitialized_stake_account() {
     // When we try to harvest stake rewards from an uninitialized stake account.
     let harvest_stake_rewards_ix = HarvestValidatorRewardsBuilder::new()
         .config(config)
-        .vault_holder_rewards(holder_rewards)
+        .vault_holder_rewards(config_manager.vault_holder_rewards)
         .validator_stake(stake_pda)
         .validator_stake_authority(authority.pubkey())
         .instruction();
@@ -712,13 +531,7 @@ async fn fail_harvest_validator_rewards_with_uninitialized_stake_account() {
 
 #[tokio::test]
 async fn fail_harvest_validator_rewards_with_wrong_config_account() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
+    let mut context = setup(&[]).await;
 
     // Given a config account with 4 SOL rewards and 100 staked amount.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -734,26 +547,6 @@ async fn fail_harvest_validator_rewards_with_wrong_config_account() {
     config_account.lamports_last = account.lamports;
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config, &account.into());
-
-    // Setup a holder rewards account with 0 accrued rewards.
-    let rent = context.banks_client.get_rent().await.unwrap();
-    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
-    context.set_account(
-        &holder_rewards,
-        &Account {
-            lamports: rent.minimum_balance(HolderRewards::LEN),
-            data: borsh::to_vec(&HolderRewards {
-                last_accumulated_rewards_per_token: 0,
-                deposited: 0,
-                padding: 0,
-            })
-            .unwrap(),
-            owner: paladin_rewards_program_client::ID,
-            executable: false,
-            rent_epoch: 0,
-        }
-        .into(),
-    );
 
     // And a validator stake account wiht a 50 staked amount.
 
@@ -774,7 +567,7 @@ async fn fail_harvest_validator_rewards_with_wrong_config_account() {
     let wrong_config = create_config(&mut context).await;
     let harvest_stake_rewards_ix = HarvestValidatorRewardsBuilder::new()
         .config(wrong_config)
-        .vault_holder_rewards(holder_rewards)
+        .vault_holder_rewards(config_manager.vault_holder_rewards)
         .validator_stake(validator_stake_manager.stake)
         .validator_stake_authority(validator_stake_manager.authority.pubkey())
         .instruction();
@@ -796,13 +589,7 @@ async fn fail_harvest_validator_rewards_with_wrong_config_account() {
 
 #[tokio::test]
 async fn fail_harvest_validator_rewards_with_wrong_holder_rewards() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
+    let mut context = setup(&[]).await;
 
     // Given a config account with 4 SOL rewards and 100 staked amount.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -819,26 +606,6 @@ async fn fail_harvest_validator_rewards_with_wrong_holder_rewards() {
     account.data = config_account.try_to_vec().unwrap();
     context.set_account(&config, &account.into());
 
-    // Setup a holder rewards account with 0 accrued rewards.
-    let rent = context.banks_client.get_rent().await.unwrap();
-    let holder_rewards = HolderRewards::find_pda(&config_manager.vault).0;
-    context.set_account(
-        &holder_rewards,
-        &Account {
-            lamports: rent.minimum_balance(HolderRewards::LEN),
-            data: borsh::to_vec(&HolderRewards {
-                last_accumulated_rewards_per_token: 0,
-                deposited: 0,
-                padding: 0,
-            })
-            .unwrap(),
-            owner: paladin_rewards_program_client::ID,
-            executable: false,
-            rent_epoch: 0,
-        }
-        .into(),
-    );
-
     // And a validator stake account wiht a 50 staked amount.
 
     let validator_stake_manager = ValidatorStakeManager::new(&mut context, &config).await;
@@ -854,6 +621,7 @@ async fn fail_harvest_validator_rewards_with_wrong_holder_rewards() {
     context.set_account(&validator_stake_manager.stake, &account.into());
 
     // Setup a wrong holder rewards account.
+    let rent = context.banks_client.get_rent().await.unwrap();
     let wrong_holder_rewards = HolderRewards::find_pda(&Pubkey::new_unique()).0;
     context.set_account(
         &wrong_holder_rewards,

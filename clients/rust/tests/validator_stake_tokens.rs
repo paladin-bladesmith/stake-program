@@ -3,6 +3,7 @@
 mod setup;
 
 use borsh::BorshSerialize;
+use paladin_rewards_program_client::accounts::HolderRewards;
 use paladin_stake_program_client::{
     accounts::{Config, ValidatorStake},
     errors::PaladinStakeProgramError,
@@ -11,12 +12,13 @@ use paladin_stake_program_client::{
 };
 use setup::{
     config::ConfigManager,
-    rewards::{create_holder_rewards, RewardsManager},
+    rewards::create_holder_rewards,
+    setup,
     token::{create_token_account, mint_to},
     validator_stake::ValidatorStakeManager,
     vote::create_vote_account,
 };
-use solana_program_test::{tokio, ProgramTest};
+use solana_program_test::tokio;
 use solana_sdk::{
     account::AccountSharedData,
     instruction::InstructionError,
@@ -29,17 +31,7 @@ use spl_token::state::Account as TokenAccount;
 
 #[tokio::test]
 async fn validator_stake_tokens_simple() {
-    let mut program_test = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    );
-    program_test.add_program(
-        "paladin_rewards_program",
-        paladin_rewards_program_client::ID,
-        None,
-    );
-    let mut context = program_test.start_with_context().await;
+    let mut context = setup(&[]).await;
 
     // Given a config account and a validator stake with 50 SOL staked.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -52,30 +44,15 @@ async fn validator_stake_tokens_simple() {
     context.set_account(&stake_manager.stake, &account.into());
 
     // And we initialize the holder rewards accounts and mint 100 tokens.
-    let rewards_manager = RewardsManager::new(
-        &mut context,
-        &config_manager.mint,
-        &config_manager.mint_authority,
-    )
-    .await;
     mint_to(
         &mut context,
         &config_manager.mint,
         &config_manager.mint_authority,
-        &rewards_manager.token_account,
+        &config_manager.rewards_manager.owner_token_account,
         100,
     )
     .await
     .unwrap();
-
-    // And we create the holder rewards account for the vault account.
-    let holder_rewards = create_holder_rewards(
-        &mut context,
-        &rewards_manager.pool,
-        &config_manager.mint,
-        &config_manager.vault,
-    )
-    .await;
 
     // When we stake 65 tokens.
     //
@@ -86,18 +63,18 @@ async fn validator_stake_tokens_simple() {
         .config(config_manager.config)
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
-        .source_token_account(rewards_manager.token_account)
-        .source_token_account_authority(rewards_manager.owner.pubkey())
+        .source_token_account(config_manager.rewards_manager.owner_token_account)
+        .source_token_account_authority(config_manager.rewards_manager.owner.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
-        .vault_holder_rewards(holder_rewards)
+        .vault_holder_rewards(config_manager.vault_holder_rewards)
         .token_program(spl_token::ID)
         .amount(65) // <- stake 65 tokens
         .instruction();
     let tx = Transaction::new_signed_with_payer(
         &[stake_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &rewards_manager.owner],
+        &[&context.payer, &config_manager.rewards_manager.owner],
         context.last_blockhash,
     );
     context.banks_client.process_transaction(tx).await.unwrap();
@@ -120,34 +97,18 @@ async fn validator_stake_tokens_simple() {
 
 #[tokio::test]
 async fn fail_validator_stake_tokens_with_wrong_vault_account() {
-    let mut program_test = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    );
-    program_test.add_program(
-        "paladin_rewards_program",
-        paladin_rewards_program_client::ID,
-        None,
-    );
-    let mut context = program_test.start_with_context().await;
+    let mut context = setup(&[]).await;
 
     // Given a config and stake accounts.
     let config_manager = ConfigManager::new(&mut context).await;
     let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we initialize the holder rewards accounts and mint 100 tokens.
-    let rewards_manager = RewardsManager::new(
-        &mut context,
-        &config_manager.mint,
-        &config_manager.mint_authority,
-    )
-    .await;
     mint_to(
         &mut context,
         &config_manager.mint,
         &config_manager.mint_authority,
-        &rewards_manager.token_account,
+        &config_manager.rewards_manager.owner_token_account,
         100,
     )
     .await
@@ -155,32 +116,33 @@ async fn fail_validator_stake_tokens_with_wrong_vault_account() {
 
     // And we create a fake vault token account.
     let wrong_vault = Keypair::new();
+    let wrong_vault_holder_rewards = HolderRewards::find_pda(&wrong_vault.pubkey()).0;
+    create_holder_rewards(
+        &mut context,
+        &config_manager.rewards_manager.pool,
+        &config_manager.mint,
+        wrong_vault.insecure_clone(),
+    )
+    .await;
     create_token_account(
         &mut context,
-        &config_manager.authority.pubkey(),
+        &config_manager.mint_authority.pubkey(),
         &wrong_vault,
         &config_manager.mint,
     )
     .await
     .unwrap();
-    let holder_rewards = create_holder_rewards(
-        &mut context,
-        &rewards_manager.pool,
-        &config_manager.mint,
-        &wrong_vault.pubkey(),
-    )
-    .await;
 
     // When we try to stake tokens to the fake vault account.
     let stake_ix = ValidatorStakeTokensBuilder::new()
         .config(config_manager.config)
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
-        .source_token_account(rewards_manager.token_account)
-        .source_token_account_authority(rewards_manager.owner.pubkey())
+        .source_token_account(config_manager.rewards_manager.owner_token_account)
+        .source_token_account_authority(config_manager.rewards_manager.owner.pubkey())
         .mint(config_manager.mint)
         .vault(wrong_vault.pubkey())
-        .vault_holder_rewards(holder_rewards)
+        .vault_holder_rewards(wrong_vault_holder_rewards)
         .token_program(spl_token::ID)
         .amount(50) // <- stake 50 tokens
         .instruction();
@@ -188,7 +150,7 @@ async fn fail_validator_stake_tokens_with_wrong_vault_account() {
     let tx = Transaction::new_signed_with_payer(
         &[stake_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &rewards_manager.owner],
+        &[&context.payer, &config_manager.rewards_manager.owner],
         context.last_blockhash,
     );
     let err = context
@@ -203,34 +165,18 @@ async fn fail_validator_stake_tokens_with_wrong_vault_account() {
 
 #[tokio::test]
 async fn fail_validator_stake_tokens_with_wrong_config_account() {
-    let mut program_test = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    );
-    program_test.add_program(
-        "paladin_rewards_program",
-        paladin_rewards_program_client::ID,
-        None,
-    );
-    let mut context = program_test.start_with_context().await;
+    let mut context = setup(&[]).await;
 
     // Given a config and stake accounts.
     let config_manager = ConfigManager::new(&mut context).await;
     let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we initialize the holder rewards accounts and mint 100 tokens.
-    let rewards_manager = RewardsManager::new(
-        &mut context,
-        &config_manager.mint,
-        &config_manager.mint_authority,
-    )
-    .await;
     mint_to(
         &mut context,
         &config_manager.mint,
         &config_manager.mint_authority,
-        &rewards_manager.token_account,
+        &config_manager.rewards_manager.owner_token_account,
         100,
     )
     .await
@@ -238,22 +184,15 @@ async fn fail_validator_stake_tokens_with_wrong_config_account() {
 
     // And we create another config account.
     let another_config = ConfigManager::new(&mut context).await;
-    let holder_rewards = create_holder_rewards(
-        &mut context,
-        &rewards_manager.pool,
-        &config_manager.mint,
-        &config_manager.vault,
-    )
-    .await;
 
     // When we try to stake tokens using the wrong config account.
     let stake_ix = ValidatorStakeTokensBuilder::new()
         .config(another_config.config) // <- wrong config account
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
-        .vault_holder_rewards(holder_rewards)
-        .source_token_account(rewards_manager.token_account)
-        .source_token_account_authority(rewards_manager.owner.pubkey())
+        .vault_holder_rewards(config_manager.vault_holder_rewards)
+        .source_token_account(config_manager.rewards_manager.owner_token_account)
+        .source_token_account_authority(config_manager.rewards_manager.owner.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
         .token_program(spl_token::ID)
@@ -263,7 +202,7 @@ async fn fail_validator_stake_tokens_with_wrong_config_account() {
     let tx = Transaction::new_signed_with_payer(
         &[stake_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &rewards_manager.owner],
+        &[&context.payer, &config_manager.rewards_manager.owner],
         context.last_blockhash,
     );
     let err = context
@@ -278,58 +217,33 @@ async fn fail_validator_stake_tokens_with_wrong_config_account() {
 
 #[tokio::test]
 async fn fail_validator_stake_tokens_with_zero_amount() {
-    let mut program_test = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    );
-    program_test.add_program(
-        "paladin_rewards_program",
-        paladin_rewards_program_client::ID,
-        None,
-    );
-    let mut context = program_test.start_with_context().await;
+    let mut context = setup(&[]).await;
 
     // Given a config and stake accounts.
     let config_manager = ConfigManager::new(&mut context).await;
     let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we initialize the holder rewards accounts and mint 100 tokens.
-    let rewards_manager = RewardsManager::new(
-        &mut context,
-        &config_manager.mint,
-        &config_manager.mint_authority,
-    )
-    .await;
     mint_to(
         &mut context,
         &config_manager.mint,
         &config_manager.mint_authority,
-        &rewards_manager.token_account,
+        &config_manager.rewards_manager.owner_token_account,
         100,
     )
     .await
     .unwrap();
-
-    // And we create the holder rewards account for the vault account.
-    let holder_rewards = create_holder_rewards(
-        &mut context,
-        &rewards_manager.pool,
-        &config_manager.mint,
-        &config_manager.vault,
-    )
-    .await;
 
     // When we try to stake 0 tokens.
     let stake_ix = ValidatorStakeTokensBuilder::new()
         .config(config_manager.config)
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
-        .source_token_account(rewards_manager.token_account)
-        .source_token_account_authority(rewards_manager.owner.pubkey())
+        .source_token_account(config_manager.rewards_manager.owner_token_account)
+        .source_token_account_authority(config_manager.rewards_manager.owner.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
-        .vault_holder_rewards(holder_rewards)
+        .vault_holder_rewards(config_manager.vault_holder_rewards)
         .token_program(spl_token::ID)
         .amount(0) // <- 0 tokens
         .instruction();
@@ -337,7 +251,7 @@ async fn fail_validator_stake_tokens_with_zero_amount() {
     let tx = Transaction::new_signed_with_payer(
         &[stake_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &rewards_manager.owner],
+        &[&context.payer, &config_manager.rewards_manager.owner],
         context.last_blockhash,
     );
     let err = context
@@ -352,52 +266,27 @@ async fn fail_validator_stake_tokens_with_zero_amount() {
 
 #[tokio::test]
 async fn fail_validator_stake_tokens_with_uninitialized_stake_account() {
-    let mut program_test = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    );
-    program_test.add_program(
-        "paladin_rewards_program",
-        paladin_rewards_program_client::ID,
-        None,
-    );
-    let mut context = program_test.start_with_context().await;
+    let mut context = setup(&[]).await;
 
     // Given a config.
     let config_manager = ConfigManager::new(&mut context).await;
 
     // And we initialize a holder rewards accounts and mint 100 tokens.
-    let rewards_manager = RewardsManager::new(
-        &mut context,
-        &config_manager.mint,
-        &config_manager.mint_authority,
-    )
-    .await;
     mint_to(
         &mut context,
         &config_manager.mint,
         &config_manager.mint_authority,
-        &rewards_manager.token_account,
+        &config_manager.rewards_manager.owner_token_account,
         100,
     )
     .await
     .unwrap();
 
-    // And we create the holder rewards account for the vault account.
-    let holder_rewards = create_holder_rewards(
-        &mut context,
-        &rewards_manager.pool,
-        &config_manager.mint,
-        &config_manager.vault,
-    )
-    .await;
-
     // And an uninitialized stake account.
     let validator_vote = create_vote_account(
         &mut context,
         &Pubkey::new_unique(),
-        &config_manager.authority.pubkey(),
+        &config_manager.mint_authority.pubkey(),
     )
     .await;
     let (stake_pda, _) = find_validator_stake_pda(&validator_vote, &config_manager.config);
@@ -416,11 +305,11 @@ async fn fail_validator_stake_tokens_with_uninitialized_stake_account() {
         .config(config_manager.config)
         .validator_stake(stake_pda)
         .validator_stake_authority(Pubkey::new_unique())
-        .source_token_account(rewards_manager.token_account)
-        .source_token_account_authority(rewards_manager.owner.pubkey())
+        .source_token_account(config_manager.rewards_manager.owner_token_account)
+        .source_token_account_authority(config_manager.rewards_manager.owner.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
-        .vault_holder_rewards(holder_rewards)
+        .vault_holder_rewards(config_manager.vault_holder_rewards)
         .token_program(spl_token::ID)
         .amount(50)
         .instruction();
@@ -428,7 +317,7 @@ async fn fail_validator_stake_tokens_with_uninitialized_stake_account() {
     let tx = Transaction::new_signed_with_payer(
         &[stake_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &rewards_manager.owner],
+        &[&context.payer, &config_manager.rewards_manager.owner],
         context.last_blockhash,
     );
     let err = context
@@ -444,58 +333,33 @@ async fn fail_validator_stake_tokens_with_uninitialized_stake_account() {
 
 #[tokio::test]
 async fn fail_validator_stake_tokens_without_staked_sol() {
-    let mut program_test = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    );
-    program_test.add_program(
-        "paladin_rewards_program",
-        paladin_rewards_program_client::ID,
-        None,
-    );
-    let mut context = program_test.start_with_context().await;
+    let mut context = setup(&[]).await;
 
     // Given a config and stake accounts.
     let config_manager = ConfigManager::new(&mut context).await;
     let stake_manager = ValidatorStakeManager::new(&mut context, &config_manager.config).await;
 
     // And we initialize the holder rewards accounts and mint 100 tokens.
-    let rewards_manager = RewardsManager::new(
-        &mut context,
-        &config_manager.mint,
-        &config_manager.mint_authority,
-    )
-    .await;
     mint_to(
         &mut context,
         &config_manager.mint,
         &config_manager.mint_authority,
-        &rewards_manager.token_account,
+        &config_manager.rewards_manager.owner_token_account,
         100,
     )
     .await
     .unwrap();
-
-    // And we create the holder rewards account for the vault account.
-    let holder_rewards = create_holder_rewards(
-        &mut context,
-        &rewards_manager.pool,
-        &config_manager.mint,
-        &config_manager.vault,
-    )
-    .await;
 
     // When we try to stake 50 tokens on a validator stake account without staked SOL.
     let stake_ix = ValidatorStakeTokensBuilder::new()
         .config(config_manager.config)
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
-        .source_token_account(rewards_manager.token_account)
-        .source_token_account_authority(rewards_manager.owner.pubkey())
+        .source_token_account(config_manager.rewards_manager.owner_token_account)
+        .source_token_account_authority(config_manager.rewards_manager.owner.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
-        .vault_holder_rewards(holder_rewards)
+        .vault_holder_rewards(config_manager.vault_holder_rewards)
         .token_program(spl_token::ID)
         .amount(50) // <- stake 50 tokens
         .instruction();
@@ -503,7 +367,7 @@ async fn fail_validator_stake_tokens_without_staked_sol() {
     let tx = Transaction::new_signed_with_payer(
         &[stake_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &rewards_manager.owner],
+        &[&context.payer, &config_manager.rewards_manager.owner],
         context.last_blockhash,
     );
     context.banks_client.process_transaction(tx).await.unwrap();
@@ -518,17 +382,7 @@ async fn fail_validator_stake_tokens_without_staked_sol() {
 
 #[tokio::test]
 async fn validator_stake_tokens_with_insufficient_staked_sol_effective_capped() {
-    let mut program_test = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    );
-    program_test.add_program(
-        "paladin_rewards_program",
-        paladin_rewards_program_client::ID,
-        None,
-    );
-    let mut context = program_test.start_with_context().await;
+    let mut context = setup(&[]).await;
 
     // Given a config account and a validator stake with 2 SOL staked.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -541,30 +395,15 @@ async fn validator_stake_tokens_with_insufficient_staked_sol_effective_capped() 
     context.set_account(&stake_manager.stake, &account.into());
 
     // And we initialize the holder rewards accounts and mint 100 tokens.
-    let rewards_manager = RewardsManager::new(
-        &mut context,
-        &config_manager.mint,
-        &config_manager.mint_authority,
-    )
-    .await;
     mint_to(
         &mut context,
         &config_manager.mint,
         &config_manager.mint_authority,
-        &rewards_manager.token_account,
+        &config_manager.rewards_manager.owner_token_account,
         2_600_000_001,
     )
     .await
     .unwrap();
-
-    // And we create the holder rewards account for the vault account.
-    let holder_rewards = create_holder_rewards(
-        &mut context,
-        &rewards_manager.pool,
-        &config_manager.mint,
-        &config_manager.vault,
-    )
-    .await;
 
     // When we try to stake 50 tokens on a validator stake account with only 2 SOL staked.
     //
@@ -578,11 +417,11 @@ async fn validator_stake_tokens_with_insufficient_staked_sol_effective_capped() 
         .config(config_manager.config)
         .validator_stake(stake_manager.stake)
         .validator_stake_authority(stake_manager.authority.pubkey())
-        .source_token_account(rewards_manager.token_account)
-        .source_token_account_authority(rewards_manager.owner.pubkey())
+        .source_token_account(config_manager.rewards_manager.owner_token_account)
+        .source_token_account_authority(config_manager.rewards_manager.owner.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
-        .vault_holder_rewards(holder_rewards)
+        .vault_holder_rewards(config_manager.vault_holder_rewards)
         .token_program(spl_token::ID)
         .amount(2_600_000_001) // <- stake 2_600_000_001 tokens (raw value with 9 digits precision)
         .instruction();
@@ -590,7 +429,7 @@ async fn validator_stake_tokens_with_insufficient_staked_sol_effective_capped() 
     let tx = Transaction::new_signed_with_payer(
         &[stake_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &rewards_manager.owner],
+        &[&context.payer, &config_manager.rewards_manager.owner],
         context.last_blockhash,
     );
     context.banks_client.process_transaction(tx).await.unwrap();

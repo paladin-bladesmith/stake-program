@@ -2,6 +2,7 @@
 
 mod setup;
 
+use paladin_rewards_program_client::accounts::HolderRewards;
 use paladin_stake_program_client::{
     accounts::Config,
     errors::PaladinStakeProgramError,
@@ -9,11 +10,8 @@ use paladin_stake_program_client::{
     pdas::find_vault_pda,
     types::ConfigField,
 };
-use setup::{
-    setup_holder_rewards,
-    token::{create_mint, create_token_account},
-};
-use solana_program_test::{tokio, ProgramTest};
+use setup::{setup, token::create_mint};
+use solana_program_test::tokio;
 use solana_sdk::{
     instruction::InstructionError,
     pubkey::Pubkey,
@@ -21,18 +19,16 @@ use solana_sdk::{
     system_instruction,
     transaction::Transaction,
 };
+use spl_associated_token_account::get_associated_token_address;
 
-use crate::setup::config::get_duna_hash;
+use crate::setup::{
+    config::{create_ata, fund_account, get_duna_hash},
+    rewards::RewardsManager,
+};
 
 #[tokio::test]
 async fn update_cooldown_time_config() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
+    let mut context = setup(&[]).await;
 
     // Given an empty config account and a mint.
 
@@ -50,16 +46,23 @@ async fn update_cooldown_time_config() {
     .await
     .unwrap();
 
-    let vault = Keypair::new();
-    create_token_account(
-        &mut context,
-        &find_vault_pda(&config.pubkey()).0,
-        &vault,
-        &mint.pubkey(),
-    )
-    .await
-    .unwrap();
-    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
+    // Create vault DPA
+    let (vault_pda, _) = find_vault_pda(&config.pubkey());
+    let vault = get_associated_token_address(&vault_pda, &mint.pubkey());
+
+    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
+
+    // Fund vault pda
+    fund_account(&mut context, &vault_pda, 0).await.unwrap();
+    // Fund vault holder rewards
+    fund_account(&mut context, &vault_holder_rewards, HolderRewards::LEN)
+        .await
+        .unwrap();
+    // create vault ATA
+    create_ata(&mut context, &vault_pda, &mint.pubkey())
+        .await
+        .unwrap();
 
     // And we create a config.
 
@@ -78,11 +81,15 @@ async fn update_cooldown_time_config() {
 
     let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
+        .holder_rewards_pool(rewards_manager.pool)
+        .holder_rewards_pool_token_account(rewards_manager.pool_token_account)
+        .mint(mint.pubkey())
+        .vault(vault)
+        .vault_pda(vault_pda)
+        .vault_holder_rewards(vault_holder_rewards)
+        .rewards_program(paladin_rewards_program_client::ID)
         .config_authority(authority.pubkey())
         .slash_authority(authority.pubkey())
-        .mint(mint.pubkey())
-        .vault(vault.pubkey())
-        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
@@ -127,13 +134,7 @@ async fn update_cooldown_time_config() {
 
 #[tokio::test]
 async fn update_max_deactivation_basis_points_config() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
+    let mut context = setup(&[]).await;
 
     // Given an empty config account and a mint.
 
@@ -151,16 +152,23 @@ async fn update_max_deactivation_basis_points_config() {
     .await
     .unwrap();
 
-    let vault = Keypair::new();
-    create_token_account(
-        &mut context,
-        &find_vault_pda(&config.pubkey()).0,
-        &vault,
-        &mint.pubkey(),
-    )
-    .await
-    .unwrap();
-    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
+    // Create vault DPA
+    let (vault_pda, _) = find_vault_pda(&config.pubkey());
+    let vault = get_associated_token_address(&vault_pda, &mint.pubkey());
+
+    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
+
+    // Fund vault pda
+    fund_account(&mut context, &vault_pda, 0).await.unwrap();
+    // Fund vault holder rewards
+    fund_account(&mut context, &vault_holder_rewards, HolderRewards::LEN)
+        .await
+        .unwrap();
+    // create vault ATA
+    create_ata(&mut context, &vault_pda, &mint.pubkey())
+        .await
+        .unwrap();
 
     // And we create a config.
 
@@ -179,11 +187,15 @@ async fn update_max_deactivation_basis_points_config() {
 
     let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
+        .holder_rewards_pool(rewards_manager.pool)
+        .holder_rewards_pool_token_account(rewards_manager.pool_token_account)
+        .mint(mint.pubkey())
+        .vault(vault)
+        .vault_pda(vault_pda)
+        .vault_holder_rewards(vault_holder_rewards)
+        .rewards_program(paladin_rewards_program_client::ID)
         .config_authority(authority.pubkey())
         .slash_authority(authority.pubkey())
-        .mint(mint.pubkey())
-        .vault(vault.pubkey())
-        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1)
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
@@ -228,13 +240,7 @@ async fn update_max_deactivation_basis_points_config() {
 
 #[tokio::test]
 async fn update_sync_rewards_lamports() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
+    let mut context = setup(&[]).await;
 
     // Given an empty config account and a mint.
 
@@ -252,16 +258,23 @@ async fn update_sync_rewards_lamports() {
     .await
     .unwrap();
 
-    let vault = Keypair::new();
-    create_token_account(
-        &mut context,
-        &find_vault_pda(&config.pubkey()).0,
-        &vault,
-        &mint.pubkey(),
-    )
-    .await
-    .unwrap();
-    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
+    // Create vault DPA
+    let (vault_pda, _) = find_vault_pda(&config.pubkey());
+    let vault = get_associated_token_address(&vault_pda, &mint.pubkey());
+
+    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
+
+    // Fund vault pda
+    fund_account(&mut context, &vault_pda, 0).await.unwrap();
+    // Fund vault holder rewards
+    fund_account(&mut context, &vault_holder_rewards, HolderRewards::LEN)
+        .await
+        .unwrap();
+    // create vault ATA
+    create_ata(&mut context, &vault_pda, &mint.pubkey())
+        .await
+        .unwrap();
 
     // And we create a config.
 
@@ -280,11 +293,15 @@ async fn update_sync_rewards_lamports() {
 
     let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
+        .holder_rewards_pool(rewards_manager.pool)
+        .holder_rewards_pool_token_account(rewards_manager.pool_token_account)
+        .mint(mint.pubkey())
+        .vault(vault)
+        .vault_pda(vault_pda)
+        .vault_holder_rewards(vault_holder_rewards)
+        .rewards_program(paladin_rewards_program_client::ID)
         .config_authority(authority.pubkey())
         .slash_authority(authority.pubkey())
-        .mint(mint.pubkey())
-        .vault(vault.pubkey())
-        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
@@ -330,13 +347,7 @@ async fn update_sync_rewards_lamports() {
 
 #[tokio::test]
 async fn fail_update_max_deactivation_basis_points_config_with_invalid_value() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
+    let mut context = setup(&[]).await;
 
     // Given an empty config account and a mint.
 
@@ -354,16 +365,23 @@ async fn fail_update_max_deactivation_basis_points_config_with_invalid_value() {
     .await
     .unwrap();
 
-    let vault = Keypair::new();
-    create_token_account(
-        &mut context,
-        &find_vault_pda(&config.pubkey()).0,
-        &vault,
-        &mint.pubkey(),
-    )
-    .await
-    .unwrap();
-    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
+    // Create vault DPA
+    let (vault_pda, _) = find_vault_pda(&config.pubkey());
+    let vault = get_associated_token_address(&vault_pda, &mint.pubkey());
+
+    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
+
+    // Fund vault pda
+    fund_account(&mut context, &vault_pda, 0).await.unwrap();
+    // Fund vault holder rewards
+    fund_account(&mut context, &vault_holder_rewards, HolderRewards::LEN)
+        .await
+        .unwrap();
+    // create vault ATA
+    create_ata(&mut context, &vault_pda, &mint.pubkey())
+        .await
+        .unwrap();
 
     // And we create a config.
 
@@ -382,11 +400,15 @@ async fn fail_update_max_deactivation_basis_points_config_with_invalid_value() {
 
     let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
+        .holder_rewards_pool(rewards_manager.pool)
+        .holder_rewards_pool_token_account(rewards_manager.pool_token_account)
+        .mint(mint.pubkey())
+        .vault(vault)
+        .vault_pda(vault_pda)
+        .vault_holder_rewards(vault_holder_rewards)
+        .rewards_program(paladin_rewards_program_client::ID)
         .config_authority(authority.pubkey())
         .slash_authority(authority.pubkey())
-        .mint(mint.pubkey())
-        .vault(vault.pubkey())
-        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1)
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
@@ -433,13 +455,7 @@ async fn fail_update_max_deactivation_basis_points_config_with_invalid_value() {
 
 #[tokio::test]
 async fn fail_update_config_with_wrong_authority() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
+    let mut context = setup(&[]).await;
 
     // Given an empty config account and a mint.
 
@@ -457,16 +473,23 @@ async fn fail_update_config_with_wrong_authority() {
     .await
     .unwrap();
 
-    let vault = Keypair::new();
-    create_token_account(
-        &mut context,
-        &find_vault_pda(&config.pubkey()).0,
-        &vault,
-        &mint.pubkey(),
-    )
-    .await
-    .unwrap();
-    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
+    // Create vault DPA
+    let (vault_pda, _) = find_vault_pda(&config.pubkey());
+    let vault = get_associated_token_address(&vault_pda, &mint.pubkey());
+
+    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
+
+    // Fund vault pda
+    fund_account(&mut context, &vault_pda, 0).await.unwrap();
+    // Fund vault holder rewards
+    fund_account(&mut context, &vault_holder_rewards, HolderRewards::LEN)
+        .await
+        .unwrap();
+    // create vault ATA
+    create_ata(&mut context, &vault_pda, &mint.pubkey())
+        .await
+        .unwrap();
 
     // And we create a config.
 
@@ -485,11 +508,15 @@ async fn fail_update_config_with_wrong_authority() {
 
     let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
+        .holder_rewards_pool(rewards_manager.pool)
+        .holder_rewards_pool_token_account(rewards_manager.pool_token_account)
+        .mint(mint.pubkey())
+        .vault(vault)
+        .vault_pda(vault_pda)
+        .vault_holder_rewards(vault_holder_rewards)
+        .rewards_program(paladin_rewards_program_client::ID)
         .config_authority(authority.pubkey())
         .slash_authority(authority.pubkey())
-        .mint(mint.pubkey())
-        .vault(vault.pubkey())
-        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
@@ -537,13 +564,7 @@ async fn fail_update_config_with_wrong_authority() {
 
 #[tokio::test]
 async fn fail_update_config_non_existing() {
-    let context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
+    let context = setup(&[]).await;
 
     // Given an non-existing config account.
 
@@ -578,13 +599,7 @@ async fn fail_update_config_non_existing() {
 
 #[tokio::test]
 async fn fail_update_with_uninitialized_config() {
-    let context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
+    let context = setup(&[]).await;
 
     // Given an empty config account.
 
@@ -605,7 +620,6 @@ async fn fail_update_with_uninitialized_config() {
     );
 
     // When we try to update the empty config.
-
     let update_ix = UpdateConfigBuilder::new()
         .config(config.pubkey())
         .config_authority(authority.pubkey())
@@ -632,13 +646,7 @@ async fn fail_update_with_uninitialized_config() {
 
 #[tokio::test]
 async fn fail_update_config_with_no_authority_set() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
+    let mut context = setup(&[]).await;
 
     // Given an empty config account and a mint.
 
@@ -656,16 +664,23 @@ async fn fail_update_config_with_no_authority_set() {
     .await
     .unwrap();
 
-    let vault = Keypair::new();
-    create_token_account(
-        &mut context,
-        &find_vault_pda(&config.pubkey()).0,
-        &vault,
-        &mint.pubkey(),
-    )
-    .await
-    .unwrap();
-    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
+    // Create vault DPA
+    let (vault_pda, _) = find_vault_pda(&config.pubkey());
+    let vault = get_associated_token_address(&vault_pda, &mint.pubkey());
+
+    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
+
+    // Fund vault pda
+    fund_account(&mut context, &vault_pda, 0).await.unwrap();
+    // Fund vault holder rewards
+    fund_account(&mut context, &vault_holder_rewards, HolderRewards::LEN)
+        .await
+        .unwrap();
+    // create vault ATA
+    create_ata(&mut context, &vault_pda, &mint.pubkey())
+        .await
+        .unwrap();
 
     // And we create a config.
 
@@ -684,11 +699,15 @@ async fn fail_update_config_with_no_authority_set() {
 
     let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
+        .holder_rewards_pool(rewards_manager.pool)
+        .holder_rewards_pool_token_account(rewards_manager.pool_token_account)
+        .mint(mint.pubkey())
+        .vault(vault)
+        .vault_pda(vault_pda)
+        .vault_holder_rewards(vault_holder_rewards)
+        .rewards_program(paladin_rewards_program_client::ID)
         .config_authority(Pubkey::default()) // <- no authority
         .slash_authority(authority.pubkey())
-        .mint(mint.pubkey())
-        .vault(vault.pubkey())
-        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1)
         .max_deactivation_basis_points(500)
         .sync_rewards_lamports(1_000_000)

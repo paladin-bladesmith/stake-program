@@ -31,7 +31,6 @@ use spl_token::state::Account as TokenAccount;
 #[tokio::test]
 async fn slash_sol_staker_stake() {
     let mut context = setup(&[]).await;
-    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account with 100 delegated tokens on its vault.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -70,34 +69,15 @@ async fn slash_sol_staker_stake() {
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
 
-    // And we create the holder rewards account for the vault account.
-    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
-    let vault_holder_rewards_state = HolderRewards {
-        last_accumulated_rewards_per_token: 0,
-        deposited: 0,
-        padding: 0,
-    };
-    context.set_account(
-        &vault_holder_rewards,
-        &Account {
-            lamports: rent.minimum_balance(HolderRewards::LEN),
-            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
-            owner: paladin_rewards_program_client::ID,
-            executable: false,
-            rent_epoch: 0,
-        }
-        .into(),
-    );
-
     // When we slash 50 tokens.
     let slash_ix = SlashSolStakerStakeBuilder::new()
         .config(config_manager.config)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .slash_authority(config_manager.authority.pubkey())
+        .slash_authority(config_manager.config_authority.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
-        .vault_holder_rewards(vault_holder_rewards)
+        .vault_holder_rewards(config_manager.vault_holder_rewards)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .token_program(spl_token::ID)
         .amount(50) // <- slash 50 tokens
@@ -106,7 +86,7 @@ async fn slash_sol_staker_stake() {
     let tx = Transaction::new_signed_with_payer(
         &[slash_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &config_manager.authority],
+        &[&context.payer, &config_manager.config_authority],
         context.last_blockhash,
     );
     context.banks_client.process_transaction(tx).await.unwrap();
@@ -131,7 +111,6 @@ async fn slash_sol_staker_stake() {
 #[tokio::test]
 async fn fail_slash_sol_staker_stake_with_zero_amount() {
     let mut context = setup(&[]).await;
-    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account with 100 delegated tokens on its vault.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -170,34 +149,15 @@ async fn fail_slash_sol_staker_stake_with_zero_amount() {
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
 
-    // And we create the holder rewards account for the vault account.
-    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
-    let vault_holder_rewards_state = HolderRewards {
-        last_accumulated_rewards_per_token: 0,
-        deposited: 0,
-        padding: 0,
-    };
-    context.set_account(
-        &vault_holder_rewards,
-        &Account {
-            lamports: rent.minimum_balance(HolderRewards::LEN),
-            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
-            owner: paladin_rewards_program_client::ID,
-            executable: false,
-            rent_epoch: 0,
-        }
-        .into(),
-    );
-
     // When we try to slash 0 tokens.
     let slash_ix = SlashSolStakerStakeBuilder::new()
         .config(config_manager.config)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .slash_authority(config_manager.authority.pubkey())
+        .slash_authority(config_manager.config_authority.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
-        .vault_holder_rewards(vault_holder_rewards)
+        .vault_holder_rewards(config_manager.vault_holder_rewards)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .token_program(spl_token::ID)
         .amount(0) // <- 0 tokens
@@ -205,7 +165,7 @@ async fn fail_slash_sol_staker_stake_with_zero_amount() {
     let tx = Transaction::new_signed_with_payer(
         &[slash_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &config_manager.authority],
+        &[&context.payer, &config_manager.config_authority],
         context.last_blockhash,
     );
     let err = context
@@ -221,7 +181,6 @@ async fn fail_slash_sol_staker_stake_with_zero_amount() {
 #[tokio::test]
 async fn slash_sol_staker_stake_with_no_staked_amount() {
     let mut context = setup(&[]).await;
-    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account with 100 delegated tokens on its vault.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -254,34 +213,15 @@ async fn slash_sol_staker_stake_with_no_staked_amount() {
     )
     .await;
 
-    // And we create the holder rewards account for the vault account.
-    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
-    let vault_holder_rewards_state = HolderRewards {
-        last_accumulated_rewards_per_token: 0,
-        deposited: 0,
-        padding: 0,
-    };
-    context.set_account(
-        &vault_holder_rewards,
-        &Account {
-            lamports: rent.minimum_balance(HolderRewards::LEN),
-            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
-            owner: paladin_rewards_program_client::ID,
-            executable: false,
-            rent_epoch: 0,
-        }
-        .into(),
-    );
-
     // When we slash 50 tokens from the sol staker stake account without staked tokens.
     let slash_ix = SlashSolStakerStakeBuilder::new()
         .config(config_manager.config)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .slash_authority(config_manager.authority.pubkey())
+        .slash_authority(config_manager.config_authority.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
-        .vault_holder_rewards(vault_holder_rewards)
+        .vault_holder_rewards(config_manager.vault_holder_rewards)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .token_program(spl_token::ID)
         .amount(50) // <- 50 tokens
@@ -289,7 +229,7 @@ async fn slash_sol_staker_stake_with_no_staked_amount() {
     let tx = Transaction::new_signed_with_payer(
         &[slash_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &config_manager.authority],
+        &[&context.payer, &config_manager.config_authority],
         context.last_blockhash,
     );
     context.banks_client.process_transaction(tx).await.unwrap();
@@ -303,7 +243,6 @@ async fn slash_sol_staker_stake_with_no_staked_amount() {
 #[tokio::test]
 async fn fail_slash_sol_staker_stake_with_invalid_slash_authority() {
     let mut context = setup(&[]).await;
-    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account with 100 delegated tokens on its vault.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -342,25 +281,6 @@ async fn fail_slash_sol_staker_stake_with_invalid_slash_authority() {
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
 
-    // And we create the holder rewards account for the vault account.
-    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
-    let vault_holder_rewards_state = HolderRewards {
-        last_accumulated_rewards_per_token: 0,
-        deposited: 0,
-        padding: 0,
-    };
-    context.set_account(
-        &vault_holder_rewards,
-        &Account {
-            lamports: rent.minimum_balance(HolderRewards::LEN),
-            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
-            owner: paladin_rewards_program_client::ID,
-            executable: false,
-            rent_epoch: 0,
-        }
-        .into(),
-    );
-
     // When we try to slash with a "fake" slash authority.
     let fake_authority = Keypair::new();
     let slash_ix = SlashSolStakerStakeBuilder::new()
@@ -370,7 +290,7 @@ async fn fail_slash_sol_staker_stake_with_invalid_slash_authority() {
         .slash_authority(fake_authority.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
-        .vault_holder_rewards(vault_holder_rewards)
+        .vault_holder_rewards(config_manager.vault_holder_rewards)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .token_program(spl_token::ID)
         .amount(50) // <- slash 50 tokens
@@ -394,7 +314,6 @@ async fn fail_slash_sol_staker_stake_with_invalid_slash_authority() {
 #[tokio::test]
 async fn fail_slash_sol_staker_stake_with_incorrect_vault_account() {
     let mut context = setup(&[]).await;
-    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account with 100 delegated tokens on its vault.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -432,25 +351,6 @@ async fn fail_slash_sol_staker_stake_with_incorrect_vault_account() {
     stake_account.delegation.effective_amount = 50;
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
-
-    // And we create the holder rewards account for the vault account.
-    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
-    let vault_holder_rewards_state = HolderRewards {
-        last_accumulated_rewards_per_token: 0,
-        deposited: 0,
-        padding: 0,
-    };
-    context.set_account(
-        &vault_holder_rewards,
-        &Account {
-            lamports: rent.minimum_balance(HolderRewards::LEN),
-            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
-            owner: paladin_rewards_program_client::ID,
-            executable: false,
-            rent_epoch: 0,
-        }
-        .into(),
-    );
 
     // And we create a fake vault account with 100 tokens.
     let fake_vault_account = Keypair::new();
@@ -477,10 +377,10 @@ async fn fail_slash_sol_staker_stake_with_incorrect_vault_account() {
         .config(config_manager.config)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .slash_authority(config_manager.authority.pubkey())
+        .slash_authority(config_manager.config_authority.pubkey())
         .mint(config_manager.mint)
         .vault(fake_vault_account.pubkey())
-        .vault_holder_rewards(vault_holder_rewards)
+        .vault_holder_rewards(config_manager.vault_holder_rewards)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .token_program(spl_token::ID)
         .amount(50) // <- slash 50 tokens
@@ -489,7 +389,7 @@ async fn fail_slash_sol_staker_stake_with_incorrect_vault_account() {
     let tx = Transaction::new_signed_with_payer(
         &[slash_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &config_manager.authority],
+        &[&context.payer, &config_manager.config_authority],
         context.last_blockhash,
     );
     let err = context
@@ -562,7 +462,7 @@ async fn fail_slash_sol_staker_stake_with_uninitialized_stake_account() {
         .config(config_manager.config)
         .sol_staker_stake(stake)
         .sol_staker_stake_authority(Pubkey::new_unique())
-        .slash_authority(config_manager.authority.pubkey())
+        .slash_authority(config_manager.mint_authority.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
         .vault_holder_rewards(vault_holder_rewards)
@@ -573,7 +473,7 @@ async fn fail_slash_sol_staker_stake_with_uninitialized_stake_account() {
     let tx = Transaction::new_signed_with_payer(
         &[slash_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &config_manager.authority],
+        &[&context.payer, &config_manager.mint_authority],
         context.last_blockhash,
     );
     let err = context
@@ -663,7 +563,7 @@ async fn fail_slash_sol_staker_stake_with_uninitialized_config_account() {
         .config(config_manager.config)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .slash_authority(config_manager.authority.pubkey())
+        .slash_authority(config_manager.mint_authority.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
         .vault_holder_rewards(vault_holder_rewards)
@@ -675,7 +575,7 @@ async fn fail_slash_sol_staker_stake_with_uninitialized_config_account() {
     let tx = Transaction::new_signed_with_payer(
         &[slash_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &config_manager.authority],
+        &[&context.payer, &config_manager.mint_authority],
         context.last_blockhash,
     );
     let err = context
@@ -758,7 +658,7 @@ async fn fail_slash_validator_stake_with_wrong_config_account() {
         .config(another_config_manager.config)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .slash_authority(another_config_manager.authority.pubkey())
+        .slash_authority(another_config_manager.mint_authority.pubkey())
         .mint(another_config_manager.mint)
         .vault(another_config_manager.vault)
         .vault_holder_rewards(vault_holder_rewards)
@@ -769,7 +669,7 @@ async fn fail_slash_validator_stake_with_wrong_config_account() {
     let tx = Transaction::new_signed_with_payer(
         &[slash_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &another_config_manager.authority],
+        &[&context.payer, &another_config_manager.mint_authority],
         context.last_blockhash,
     );
     let err = context
@@ -785,7 +685,6 @@ async fn fail_slash_validator_stake_with_wrong_config_account() {
 #[tokio::test]
 async fn fail_slash_sol_staker_stake_with_insufficient_total_amount_delegated() {
     let mut context = setup(&[]).await;
-    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account with 100 delegated tokens on its vault.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -824,34 +723,15 @@ async fn fail_slash_sol_staker_stake_with_insufficient_total_amount_delegated() 
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
 
-    // And we create the holder rewards account for the vault account.
-    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
-    let vault_holder_rewards_state = HolderRewards {
-        last_accumulated_rewards_per_token: 0,
-        deposited: 0,
-        padding: 0,
-    };
-    context.set_account(
-        &vault_holder_rewards,
-        &Account {
-            lamports: rent.minimum_balance(HolderRewards::LEN),
-            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
-            owner: paladin_rewards_program_client::ID,
-            executable: false,
-            rent_epoch: 0,
-        }
-        .into(),
-    );
-
     // When we try to slash 200 tokens from the stake account.
     let slash_ix = SlashSolStakerStakeBuilder::new()
         .config(config_manager.config)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .slash_authority(config_manager.authority.pubkey())
+        .slash_authority(config_manager.config_authority.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
-        .vault_holder_rewards(vault_holder_rewards)
+        .vault_holder_rewards(config_manager.vault_holder_rewards)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .token_program(spl_token::ID)
         .amount(200) // <- 200 tokens
@@ -859,7 +739,7 @@ async fn fail_slash_sol_staker_stake_with_insufficient_total_amount_delegated() 
     let tx = Transaction::new_signed_with_payer(
         &[slash_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &config_manager.authority],
+        &[&context.payer, &config_manager.config_authority],
         context.last_blockhash,
     );
     let err = context
@@ -875,7 +755,6 @@ async fn fail_slash_sol_staker_stake_with_insufficient_total_amount_delegated() 
 #[tokio::test]
 async fn slash_sol_staker_stake_with_insufficient_stake_amount() {
     let mut context = setup(&[]).await;
-    let rent = context.banks_client.get_rent().await.unwrap();
 
     // Given a config account with 900 delegated tokens on its vault.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -914,34 +793,15 @@ async fn slash_sol_staker_stake_with_insufficient_stake_amount() {
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
 
-    // And we create the holder rewards account for the vault account.
-    let (vault_holder_rewards, _) = HolderRewards::find_pda(&config_manager.vault);
-    let vault_holder_rewards_state = HolderRewards {
-        last_accumulated_rewards_per_token: 0,
-        deposited: 0,
-        padding: 0,
-    };
-    context.set_account(
-        &vault_holder_rewards,
-        &Account {
-            lamports: rent.minimum_balance(HolderRewards::LEN),
-            data: borsh::to_vec(&vault_holder_rewards_state).unwrap(),
-            owner: paladin_rewards_program_client::ID,
-            executable: false,
-            rent_epoch: 0,
-        }
-        .into(),
-    );
-
     // When we try to slash 600 tokens from the stake account.
     let slash_ix = SlashSolStakerStakeBuilder::new()
         .config(config_manager.config)
         .sol_staker_stake(sol_staker_stake_manager.stake)
         .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
-        .slash_authority(config_manager.authority.pubkey())
+        .slash_authority(config_manager.config_authority.pubkey())
         .mint(config_manager.mint)
         .vault(config_manager.vault)
-        .vault_holder_rewards(vault_holder_rewards)
+        .vault_holder_rewards(config_manager.vault_holder_rewards)
         .vault_authority(find_vault_pda(&config_manager.config).0)
         .token_program(spl_token::ID)
         .amount(600) // <- 600 tokens
@@ -949,7 +809,7 @@ async fn slash_sol_staker_stake_with_insufficient_stake_amount() {
     let tx = Transaction::new_signed_with_payer(
         &[slash_ix],
         Some(&context.payer.pubkey()),
-        &[&context.payer, &config_manager.authority],
+        &[&context.payer, &config_manager.config_authority],
         context.last_blockhash,
     );
     context.banks_client.process_transaction(tx).await.unwrap();

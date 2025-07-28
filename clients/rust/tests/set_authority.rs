@@ -2,6 +2,7 @@
 
 mod setup;
 
+use paladin_rewards_program_client::accounts::HolderRewards;
 use paladin_stake_program_client::{
     accounts::Config,
     errors::PaladinStakeProgramError,
@@ -9,35 +10,29 @@ use paladin_stake_program_client::{
     pdas::find_vault_pda,
     types::AuthorityType,
 };
-use setup::{
-    config::ConfigManager,
-    setup_holder_rewards,
-    token::{create_mint, create_token_account},
-};
-use solana_program_test::{tokio, ProgramTest};
+use setup::{config::ConfigManager, setup, token::create_mint};
+use solana_program_test::tokio;
 use solana_sdk::{
     pubkey::Pubkey,
     signature::{Keypair, Signer},
     system_instruction,
     transaction::Transaction,
 };
+use spl_associated_token_account::get_associated_token_address;
 
-use crate::setup::config::get_duna_hash;
+use crate::setup::{
+    config::{create_ata, fund_account, get_duna_hash},
+    rewards::RewardsManager,
+};
 
 #[tokio::test]
 async fn set_config_authority_on_config() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
+    let mut context = setup(&[]).await;
 
     // Given config account with an authority.
 
     let config_manager = ConfigManager::new(&mut context).await;
-    let authority = config_manager.authority;
+    let authority = config_manager.config_authority;
 
     // When we set a new authority on the config.
 
@@ -67,18 +62,12 @@ async fn set_config_authority_on_config() {
 
 #[tokio::test]
 async fn set_slash_authority_on_config() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
+    let mut context = setup(&[]).await;
 
     // Given config account with an slash authority.
 
     let config_manager = ConfigManager::new(&mut context).await;
-    let slash_authority = config_manager.authority;
+    let slash_authority = config_manager.config_authority;
 
     // When we set a new slash authority on the config.
 
@@ -111,13 +100,7 @@ async fn set_slash_authority_on_config() {
 
 #[tokio::test]
 async fn fail_set_config_authority_with_wrong_authority() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
+    let mut context = setup(&[]).await;
 
     // Given config account with an authority.
 
@@ -154,13 +137,7 @@ async fn fail_set_config_authority_with_wrong_authority() {
 
 #[tokio::test]
 async fn fail_set_slash_authority_with_wrong_authority() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
+    let mut context = setup(&[]).await;
 
     // Given a config account.
 
@@ -197,13 +174,7 @@ async fn fail_set_slash_authority_with_wrong_authority() {
 
 #[tokio::test]
 async fn fail_set_config_authority_when_authority_none() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
+    let mut context = setup(&[]).await;
 
     // Given an empty config account and a mint.
 
@@ -222,16 +193,23 @@ async fn fail_set_config_authority_when_authority_none() {
     .await
     .unwrap();
 
-    let vault = Keypair::new();
-    create_token_account(
-        &mut context,
-        &find_vault_pda(&config.pubkey()).0,
-        &vault,
-        &mint.pubkey(),
-    )
-    .await
-    .unwrap();
-    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
+    // Create vault DPA
+    let (vault_pda, _) = find_vault_pda(&config.pubkey());
+    let vault = get_associated_token_address(&vault_pda, &mint.pubkey());
+
+    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
+
+    // Fund vault pda
+    fund_account(&mut context, &vault_pda, 0).await.unwrap();
+    // Fund vault holder rewards
+    fund_account(&mut context, &vault_holder_rewards, HolderRewards::LEN)
+        .await
+        .unwrap();
+    // create vault ATA
+    create_ata(&mut context, &vault_pda, &mint.pubkey())
+        .await
+        .unwrap();
 
     let create_ix = system_instruction::create_account(
         &context.payer.pubkey(),
@@ -248,11 +226,15 @@ async fn fail_set_config_authority_when_authority_none() {
 
     let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
+        .holder_rewards_pool(rewards_manager.pool)
+        .holder_rewards_pool_token_account(rewards_manager.pool_token_account)
+        .mint(mint.pubkey())
+        .vault(vault)
+        .vault_pda(vault_pda)
+        .vault_holder_rewards(vault_holder_rewards)
+        .rewards_program(paladin_rewards_program_client::ID)
         .config_authority(Pubkey::default()) // <- None
         .slash_authority(authority_pubkey)
-        .mint(mint.pubkey())
-        .vault(vault.pubkey())
-        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL
@@ -303,13 +285,7 @@ async fn fail_set_config_authority_when_authority_none() {
 
 #[tokio::test]
 async fn fail_set_slash_authority_when_authority_none() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
+    let mut context = setup(&[]).await;
 
     // Given an empty config account and a mint.
 
@@ -328,16 +304,23 @@ async fn fail_set_slash_authority_when_authority_none() {
     .await
     .unwrap();
 
-    let vault = Keypair::new();
-    create_token_account(
-        &mut context,
-        &find_vault_pda(&config.pubkey()).0,
-        &vault,
-        &mint.pubkey(),
-    )
-    .await
-    .unwrap();
-    let vault_holder_rewards = setup_holder_rewards(&mut context, &vault.pubkey()).await;
+    // Create vault DPA
+    let (vault_pda, _) = find_vault_pda(&config.pubkey());
+    let vault = get_associated_token_address(&vault_pda, &mint.pubkey());
+
+    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
+
+    // Fund vault pda
+    fund_account(&mut context, &vault_pda, 0).await.unwrap();
+    // Fund vault holder rewards
+    fund_account(&mut context, &vault_holder_rewards, HolderRewards::LEN)
+        .await
+        .unwrap();
+    // create vault ATA
+    create_ata(&mut context, &vault_pda, &mint.pubkey())
+        .await
+        .unwrap();
 
     let create_ix = system_instruction::create_account(
         &context.payer.pubkey(),
@@ -354,11 +337,15 @@ async fn fail_set_slash_authority_when_authority_none() {
 
     let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
+        .holder_rewards_pool(rewards_manager.pool)
+        .holder_rewards_pool_token_account(rewards_manager.pool_token_account)
+        .mint(mint.pubkey())
+        .vault(vault)
+        .vault_pda(vault_pda)
+        .vault_holder_rewards(vault_holder_rewards)
+        .rewards_program(paladin_rewards_program_client::ID)
         .config_authority(authority_pubkey)
         .slash_authority(Pubkey::default()) // <- None
-        .mint(mint.pubkey())
-        .vault(vault.pubkey())
-        .vault_holder_rewards(vault_holder_rewards)
         .cooldown_time_seconds(1) // 1 second
         .max_deactivation_basis_points(500) // 5%
         .sync_rewards_lamports(1_000_000) // 0.001 SOL

@@ -22,6 +22,30 @@
           ]
         },
         {
+          "name": "holderRewardsPool",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Holder rewards pool account"
+          ]
+        },
+        {
+          "name": "holderRewardsPoolTokenAccount",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Holder rewards pool account token account"
+          ]
+        },
+        {
+          "name": "vaultPda",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Stake vault pda"
+          ]
+        },
+        {
           "name": "vault",
           "isMut": false,
           "isSigner": false,
@@ -31,10 +55,26 @@
         },
         {
           "name": "vaultHolderRewards",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false,
           "docs": [
             "Stake vault holder rewards account"
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "System program."
+          ]
+        },
+        {
+          "name": "rewardsProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Paladin rewards program"
           ]
         }
       ],
@@ -1527,6 +1567,16 @@
       "code": 22,
       "name": "DunaDocumentNotInitialized",
       "msg": "DUNA document is not initialized"
+    },
+    {
+      "code": 23,
+      "name": "IncorrectVaultPdaAccount",
+      "msg": "Incorrect vault PDA account"
+    },
+    {
+      "code": 24,
+      "name": "InvalidVaultPdaOwner",
+      "msg": "Invalid vault pda  owner"
     }
   ],
   "metadata": {

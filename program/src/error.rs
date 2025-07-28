@@ -102,6 +102,14 @@ pub enum StakeError {
     /// 22 - DUNA document is not initialized
     #[error("DUNA document is not initialized")]
     DunaDocumentNotInitialized,
+
+    /// 23 - Incorrect vault PDA account
+    #[error("Incorrect vault PDA account")]
+    IncorrectVaultPdaAccount,
+
+    /// 24 - Invalid vault pda owner
+    #[error("Invalid vault pda  owner")]
+    InvalidVaultPdaOwner,
 }
 
 impl PrintProgramError for StakeError {

@@ -1,12 +1,10 @@
 #![cfg(feature = "test-sbf")]
 #![allow(dead_code)]
 
-use solana_program_test::{
-    BanksClientError, BanksTransactionResultWithMetadata, ProgramTestContext,
-};
+use solana_program_test::{BanksClientError, ProgramTestContext};
 use solana_sdk::{
-    program_pack::Pack, pubkey::Pubkey, signature::Keypair, signer::Signer, system_instruction,
-    transaction::Transaction,
+    instruction::Instruction, program_error::ProgramError, program_pack::Pack, pubkey::Pubkey,
+    signature::Keypair, signer::Signer, system_instruction, transaction::Transaction,
 };
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_token::{
@@ -39,7 +37,7 @@ pub async fn create_associated_token_account(
 
     context
         .banks_client
-        .process_transaction_with_metadata(tx)
+        .process_transaction(tx)
         .await
         .unwrap();
 
@@ -119,32 +117,43 @@ pub async fn create_token_account(
     context.banks_client.process_transaction(tx).await
 }
 
+pub async fn mint_to_instruction(
+    context: &mut ProgramTestContext,
+    mint: &Pubkey,
+    mint_authority: &Keypair,
+    token: &Pubkey,
+    amount: u64,
+) -> Result<Instruction, ProgramError> {
+    context.get_new_latest_blockhash().await.unwrap();
+
+    spl_mint_to(
+        &spl_token::ID,
+        mint,
+        token,
+        &mint_authority.pubkey(),
+        &[],
+        amount,
+    )
+}
 pub async fn mint_to(
     context: &mut ProgramTestContext,
     mint: &Pubkey,
     mint_authority: &Keypair,
     token: &Pubkey,
     amount: u64,
-) -> Result<BanksTransactionResultWithMetadata, BanksClientError> {
+) -> Result<(), BanksClientError> {
     context.get_new_latest_blockhash().await.unwrap();
 
+    let ix = mint_to_instruction(context, mint, mint_authority, token, amount)
+        .await
+        .unwrap();
+
     let tx = Transaction::new_signed_with_payer(
-        &[spl_mint_to(
-            &spl_token::ID,
-            mint,
-            token,
-            &mint_authority.pubkey(),
-            &[],
-            amount,
-        )
-        .unwrap()],
+        &[ix],
         Some(&context.payer.pubkey()),
         &[&context.payer, mint_authority],
         context.last_blockhash,
     );
 
-    context
-        .banks_client
-        .process_transaction_with_metadata(tx)
-        .await
+    context.banks_client.process_transaction(tx).await
 }
