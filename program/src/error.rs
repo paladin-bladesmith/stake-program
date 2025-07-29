@@ -108,8 +108,12 @@ pub enum StakeError {
     IncorrectVaultPdaAccount,
 
     /// 24 - Invalid vault pda owner
-    #[error("Invalid vault pda  owner")]
+    #[error("Invalid vault pda owner")]
     InvalidVaultPdaOwner,
+
+    /// 25 - Invalid vault holder rewards seeds
+    #[error("Invalid vault holder rewards seeds")]
+    InvalidVaultHolderRewardsSeeds,
 }
 
 impl PrintProgramError for StakeError {

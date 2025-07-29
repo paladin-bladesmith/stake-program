@@ -176,6 +176,22 @@
           ]
         },
         {
+          "name": "holderRewardsPool",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Holder rewards pool account"
+          ]
+        },
+        {
+          "name": "holderRewardsPoolTokenAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Holder rewards pool account token account"
+          ]
+        },
+        {
           "name": "validatorStake",
           "isMut": true,
           "isSigner": false,
@@ -216,6 +232,14 @@
           ]
         },
         {
+          "name": "vaultPda",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Stake vault pda"
+          ]
+        },
+        {
           "name": "vault",
           "isMut": true,
           "isSigner": false,
@@ -237,6 +261,14 @@
           "isSigner": false,
           "docs": [
             "Token program"
+          ]
+        },
+        {
+          "name": "rewardsProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Paladin rewards program"
           ]
         }
       ],
@@ -1608,7 +1640,12 @@
     {
       "code": 24,
       "name": "InvalidVaultPdaOwner",
-      "msg": "Invalid vault pda  owner"
+      "msg": "Invalid vault pda owner"
+    },
+    {
+      "code": 25,
+      "name": "InvalidVaultHolderRewardsSeeds",
+      "msg": "Invalid vault holder rewards seeds"
     }
   ],
   "metadata": {

@@ -82,9 +82,12 @@ pub enum PaladinStakeProgramError {
     /// 23 - Incorrect vault PDA account
     #[error("Incorrect vault PDA account")]
     IncorrectVaultPdaAccount = 0x17,
-    /// 24 - Invalid vault pda  owner
-    #[error("Invalid vault pda  owner")]
+    /// 24 - Invalid vault pda owner
+    #[error("Invalid vault pda owner")]
     InvalidVaultPdaOwner = 0x18,
+    /// 25 - Invalid vault holder rewards seeds
+    #[error("Invalid vault holder rewards seeds")]
+    InvalidVaultHolderRewardsSeeds = 0x19,
 }
 
 impl solana_program::program_error::PrintProgramError for PaladinStakeProgramError {
