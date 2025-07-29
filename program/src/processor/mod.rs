@@ -535,7 +535,7 @@ pub fn transfer_excess_lamports(
     }
 
     // Excess is what we currently have minus rent
-    let excess_lamports = source_lamports - min_rent;
+    let excess_lamports = source_lamports.checked_sub(min_rent).ok_or(ProgramError::InsufficientFunds);
 
     // Perform the transfer
     **source_account_info.try_borrow_mut_lamports()? -= excess_lamports;
