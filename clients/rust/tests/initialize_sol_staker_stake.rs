@@ -12,7 +12,7 @@ use setup::{
     stake::{create_stake_account, delegate_stake_account},
     validator_stake::ValidatorStakeManager,
 };
-use solana_program_test::{tokio, ProgramTest};
+use solana_program_test::tokio;
 use solana_sdk::{
     account::{Account, AccountSharedData},
     instruction::InstructionError,
@@ -26,21 +26,11 @@ use solana_sdk::{
     transaction::Transaction,
 };
 
-use crate::setup::sign_duna_document;
+use crate::setup::{setup, sign_duna_document};
 
 #[tokio::test]
 async fn initialize_sol_staker_stake_base() {
-    let mut program_test = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    );
-    program_test.add_program(
-        "paladin_sol_stake_view_program",
-        paladin_sol_stake_view_program_client::ID,
-        None,
-    );
-    let mut context = program_test.start_with_context().await;
+    let mut context = setup(&[]).await;
 
     // Given a config and a validator stake accounts.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -136,17 +126,7 @@ async fn initialize_sol_staker_stake_base() {
 
 #[tokio::test]
 async fn fail_initialize_sol_staker_stake_with_initialized_account() {
-    let mut program_test = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    );
-    program_test.add_program(
-        "paladin_sol_stake_view_program",
-        paladin_sol_stake_view_program_client::ID,
-        None,
-    );
-    let mut context = program_test.start_with_context().await;
+    let mut context = setup(&[]).await;
 
     // Given a config and a validator stake accounts.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -247,17 +227,7 @@ async fn fail_initialize_sol_staker_stake_with_initialized_account() {
 
 #[tokio::test]
 async fn fail_initialize_sol_staker_stake_with_invalid_derivation() {
-    let mut program_test = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    );
-    program_test.add_program(
-        "paladin_sol_stake_view_program",
-        paladin_sol_stake_view_program_client::ID,
-        None,
-    );
-    let mut context = program_test.start_with_context().await;
+    let mut context = setup(&[]).await;
 
     // Given a config and a validator stake accounts.
 
@@ -339,17 +309,7 @@ async fn fail_initialize_sol_staker_stake_with_invalid_derivation() {
 
 #[tokio::test]
 async fn fail_initialize_stake_with_invalid_stake_state() {
-    let mut program_test = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    );
-    program_test.add_program(
-        "paladin_sol_stake_view_program",
-        paladin_sol_stake_view_program_client::ID,
-        None,
-    );
-    let mut context = program_test.start_with_context().await;
+    let mut context = setup(&[]).await;
 
     // Given a config and a validator stake accounts.
 
@@ -413,17 +373,7 @@ async fn fail_initialize_stake_with_invalid_stake_state() {
 
 #[tokio::test]
 async fn fail_initialize_sol_staker_stake_with_uninitialized_config() {
-    let mut program_test = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    );
-    program_test.add_program(
-        "paladin_sol_stake_view_program",
-        paladin_sol_stake_view_program_client::ID,
-        None,
-    );
-    let mut context = program_test.start_with_context().await;
+    let mut context = setup(&[]).await;
 
     // Given a config and a validator stake accounts.
 
@@ -511,24 +461,12 @@ async fn fail_initialize_sol_staker_stake_with_uninitialized_config() {
 
 #[tokio::test]
 async fn fail_initialize_sol_staker_stake_with_invalid_sol_stake_view_program() {
-    let mut program_test = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    );
-    program_test.add_program(
-        "paladin_sol_stake_view_program",
-        paladin_sol_stake_view_program_client::ID,
-        None,
-    );
-
     let fake_sol_stake_view_program = Pubkey::new_unique();
-    program_test.add_program(
+    let mut context = setup(&[(
         "paladin_sol_stake_view_program",
         fake_sol_stake_view_program,
-        None,
-    );
-    let mut context = program_test.start_with_context().await;
+    )])
+    .await;
 
     // Given a config and a validator stake accounts.
 

@@ -37,7 +37,7 @@ async fn config_authority_signature_err() {
     let authority_override = Pubkey::new_unique();
     let mut sol_staker_update_authority = SolStakerSetAuthorityOverride {
         config: config_manager.config,
-        config_authority: config_manager.authority.pubkey(),
+        config_authority: config_manager.config_authority.pubkey(),
         sol_staker_authority_override: authority_override,
         system_program: Some(system_program::ID),
     }

@@ -14,6 +14,8 @@ pub struct HarvestHolderRewards {
     pub config: solana_program::pubkey::Pubkey,
     /// Holder rewards pool account
     pub holder_rewards_pool: solana_program::pubkey::Pubkey,
+    /// Holder rewards pool account token account
+    pub holder_rewards_pool_token_account: solana_program::pubkey::Pubkey,
     /// Vault token account
     pub vault: solana_program::pubkey::Pubkey,
     /// Holder rewards account for vault token account
@@ -39,13 +41,17 @@ impl HarvestHolderRewards {
         &self,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.config,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.holder_rewards_pool,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.holder_rewards_pool_token_account,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -110,17 +116,19 @@ impl Default for HarvestHolderRewardsInstructionData {
 ///
 ///   0. `[writable]` config
 ///   1. `[writable]` holder_rewards_pool
-///   2. `[writable]` vault
-///   3. `[writable]` vault_holder_rewards
-///   4. `[]` vault_authority
-///   5. `[]` mint
-///   6. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
-///   7. `[]` paladin_rewards_program
-///   8. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   2. `[]` holder_rewards_pool_token_account
+///   3. `[writable]` vault
+///   4. `[writable]` vault_holder_rewards
+///   5. `[]` vault_authority
+///   6. `[]` mint
+///   7. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
+///   8. `[]` paladin_rewards_program
+///   9. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
 pub struct HarvestHolderRewardsBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
     holder_rewards_pool: Option<solana_program::pubkey::Pubkey>,
+    holder_rewards_pool_token_account: Option<solana_program::pubkey::Pubkey>,
     vault: Option<solana_program::pubkey::Pubkey>,
     vault_holder_rewards: Option<solana_program::pubkey::Pubkey>,
     vault_authority: Option<solana_program::pubkey::Pubkey>,
@@ -148,6 +156,15 @@ impl HarvestHolderRewardsBuilder {
         holder_rewards_pool: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
         self.holder_rewards_pool = Some(holder_rewards_pool);
+        self
+    }
+    /// Holder rewards pool account token account
+    #[inline(always)]
+    pub fn holder_rewards_pool_token_account(
+        &mut self,
+        holder_rewards_pool_token_account: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.holder_rewards_pool_token_account = Some(holder_rewards_pool_token_account);
         self
     }
     /// Vault token account
@@ -228,6 +245,9 @@ impl HarvestHolderRewardsBuilder {
             holder_rewards_pool: self
                 .holder_rewards_pool
                 .expect("holder_rewards_pool is not set"),
+            holder_rewards_pool_token_account: self
+                .holder_rewards_pool_token_account
+                .expect("holder_rewards_pool_token_account is not set"),
             vault: self.vault.expect("vault is not set"),
             vault_holder_rewards: self
                 .vault_holder_rewards
@@ -255,6 +275,8 @@ pub struct HarvestHolderRewardsCpiAccounts<'a, 'b> {
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
     /// Holder rewards pool account
     pub holder_rewards_pool: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Holder rewards pool account token account
+    pub holder_rewards_pool_token_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// Vault token account
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
     /// Holder rewards account for vault token account
@@ -279,6 +301,8 @@ pub struct HarvestHolderRewardsCpi<'a, 'b> {
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
     /// Holder rewards pool account
     pub holder_rewards_pool: &'b solana_program::account_info::AccountInfo<'a>,
+    /// Holder rewards pool account token account
+    pub holder_rewards_pool_token_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// Vault token account
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
     /// Holder rewards account for vault token account
@@ -304,6 +328,7 @@ impl<'a, 'b> HarvestHolderRewardsCpi<'a, 'b> {
             __program: program,
             config: accounts.config,
             holder_rewards_pool: accounts.holder_rewards_pool,
+            holder_rewards_pool_token_account: accounts.holder_rewards_pool_token_account,
             vault: accounts.vault,
             vault_holder_rewards: accounts.vault_holder_rewards,
             vault_authority: accounts.vault_authority,
@@ -346,13 +371,17 @@ impl<'a, 'b> HarvestHolderRewardsCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.config.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.holder_rewards_pool.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.holder_rewards_pool_token_account.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -399,10 +428,11 @@ impl<'a, 'b> HarvestHolderRewardsCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(9 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(10 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.config.clone());
         account_infos.push(self.holder_rewards_pool.clone());
+        account_infos.push(self.holder_rewards_pool_token_account.clone());
         account_infos.push(self.vault.clone());
         account_infos.push(self.vault_holder_rewards.clone());
         account_infos.push(self.vault_authority.clone());
@@ -428,13 +458,14 @@ impl<'a, 'b> HarvestHolderRewardsCpi<'a, 'b> {
 ///
 ///   0. `[writable]` config
 ///   1. `[writable]` holder_rewards_pool
-///   2. `[writable]` vault
-///   3. `[writable]` vault_holder_rewards
-///   4. `[]` vault_authority
-///   5. `[]` mint
-///   6. `[]` token_program
-///   7. `[]` paladin_rewards_program
-///   8. `[]` system_program
+///   2. `[]` holder_rewards_pool_token_account
+///   3. `[writable]` vault
+///   4. `[writable]` vault_holder_rewards
+///   5. `[]` vault_authority
+///   6. `[]` mint
+///   7. `[]` token_program
+///   8. `[]` paladin_rewards_program
+///   9. `[]` system_program
 #[derive(Clone, Debug)]
 pub struct HarvestHolderRewardsCpiBuilder<'a, 'b> {
     instruction: Box<HarvestHolderRewardsCpiBuilderInstruction<'a, 'b>>,
@@ -446,6 +477,7 @@ impl<'a, 'b> HarvestHolderRewardsCpiBuilder<'a, 'b> {
             __program: program,
             config: None,
             holder_rewards_pool: None,
+            holder_rewards_pool_token_account: None,
             vault: None,
             vault_holder_rewards: None,
             vault_authority: None,
@@ -473,6 +505,16 @@ impl<'a, 'b> HarvestHolderRewardsCpiBuilder<'a, 'b> {
         holder_rewards_pool: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.holder_rewards_pool = Some(holder_rewards_pool);
+        self
+    }
+    /// Holder rewards pool account token account
+    #[inline(always)]
+    pub fn holder_rewards_pool_token_account(
+        &mut self,
+        holder_rewards_pool_token_account: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.holder_rewards_pool_token_account =
+            Some(holder_rewards_pool_token_account);
         self
     }
     /// Vault token account
@@ -583,6 +625,11 @@ impl<'a, 'b> HarvestHolderRewardsCpiBuilder<'a, 'b> {
                 .holder_rewards_pool
                 .expect("holder_rewards_pool is not set"),
 
+            holder_rewards_pool_token_account: self
+                .instruction
+                .holder_rewards_pool_token_account
+                .expect("holder_rewards_pool_token_account is not set"),
+
             vault: self.instruction.vault.expect("vault is not set"),
 
             vault_holder_rewards: self
@@ -624,6 +671,7 @@ struct HarvestHolderRewardsCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     holder_rewards_pool: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    holder_rewards_pool_token_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault_holder_rewards: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault_authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,

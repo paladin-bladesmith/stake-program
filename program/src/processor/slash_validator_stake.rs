@@ -1,5 +1,7 @@
-use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey};
-use spl_token_2022::{extension::PodStateWithExtensions, pod::PodAccount};
+use solana_program::{
+    entrypoint::ProgramResult, program_error::ProgramError, program_pack::Pack, pubkey::Pubkey,
+};
+use spl_token::state::Account as TokenAccount;
 
 use crate::{
     err,
@@ -73,6 +75,17 @@ pub fn process_slash_validator_stake(
         "stake",
     );
 
+    // vault authority
+    // - derivation must match
+    let signer_bump = [config.vault_authority_bump];
+    let derivation = create_vault_pda(ctx.accounts.config.key, &signer_bump, program_id)?;
+    require!(
+        ctx.accounts.vault_authority.key == &derivation,
+        StakeError::InvalidAuthority,
+        "vault authority",
+    );
+    let signer_seeds = get_vault_pda_signer_seeds(ctx.accounts.config.key, &signer_bump);
+
     // Harvest rewards & update last claim tracking.
     harvest(
         HarvestAccounts {
@@ -81,6 +94,7 @@ pub fn process_slash_validator_stake(
             authority: ctx.accounts.validator_stake_authority,
         },
         config,
+        ctx.accounts.vault_authority.key,
         &mut validator_stake.delegation,
         None,
     )?;
@@ -105,17 +119,6 @@ pub fn process_slash_validator_stake(
         "slash authority",
     );
 
-    // vault authority
-    // - derivation must match
-    let signer_bump = [config.vault_authority_bump];
-    let derivation = create_vault_pda(ctx.accounts.config.key, &signer_bump, program_id)?;
-    require!(
-        ctx.accounts.vault_authority.key == &derivation,
-        StakeError::InvalidAuthority,
-        "vault authority",
-    );
-    let signer_seeds = get_vault_pda_signer_seeds(ctx.accounts.config.key, &signer_bump);
-
     // vault
     // - must be the token account on the stake config account
     require!(
@@ -123,12 +126,12 @@ pub fn process_slash_validator_stake(
         StakeError::IncorrectVaultAccount,
     );
     let vault_data = ctx.accounts.vault.try_borrow_data()?;
-    let vault = PodStateWithExtensions::<PodAccount>::unpack(&vault_data)?;
+    let vault = TokenAccount::unpack(&vault_data)?;
 
     // mint
     // - must match the stake vault mint
     require!(
-        &vault.base.mint == ctx.accounts.mint.key,
+        &vault.mint == ctx.accounts.mint.key,
         StakeError::InvalidMint,
         "mint"
     );

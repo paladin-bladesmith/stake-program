@@ -1,25 +1,16 @@
 #![cfg(feature = "test-sbf")]
 #![allow(dead_code)]
 
-use solana_program_test::{
-    BanksClientError, BanksTransactionResultWithMetadata, ProgramTestContext,
-};
+use solana_program_test::{BanksClientError, ProgramTestContext};
 use solana_sdk::{
-    pubkey::Pubkey, signature::Keypair, signer::Signer, system_instruction,
-    transaction::Transaction,
+    instruction::Instruction, program_error::ProgramError, program_pack::Pack, pubkey::Pubkey,
+    signature::Keypair, signer::Signer, system_instruction, transaction::Transaction,
 };
 use spl_associated_token_account::get_associated_token_address_with_program_id;
-use spl_token_2022::{
-    extension::{transfer_hook, ExtensionType},
-    state::{Account, Mint},
+use spl_token::{
+    instruction::{initialize_account3, initialize_mint, mint_to as spl_mint_to},
+    state::{Account as TokenAccount, Mint},
 };
-
-/// Default extension for a mint account.
-pub const MINT_EXTENSIONS: &[ExtensionType] = &[ExtensionType::TransferHook];
-
-/// Default extension for a token account.
-pub const TOKEN_ACCOUNT_EXTENSIONS: &[ExtensionType] =
-    &[ExtensionType::TransferHook, ExtensionType::ImmutableOwner];
 
 pub async fn create_associated_token_account(
     context: &mut ProgramTestContext,
@@ -31,7 +22,7 @@ pub async fn create_associated_token_account(
             &context.payer.pubkey(),
             owner,
             mint,
-            &spl_token_2022::ID,
+            &spl_token::ID,
         ),
     ];
 
@@ -44,13 +35,9 @@ pub async fn create_associated_token_account(
         context.last_blockhash,
     );
 
-    context
-        .banks_client
-        .process_transaction_with_metadata(tx)
-        .await
-        .unwrap();
+    context.banks_client.process_transaction(tx).await.unwrap();
 
-    get_associated_token_address_with_program_id(owner, mint, &spl_token_2022::ID)
+    get_associated_token_address_with_program_id(owner, mint, &spl_token::ID)
 }
 
 pub async fn create_mint(
@@ -59,34 +46,20 @@ pub async fn create_mint(
     mint_authority: &Pubkey,
     freeze_authority: Option<&Pubkey>,
     decimals: u8,
-    extensions: &[ExtensionType],
-) -> Result<BanksTransactionResultWithMetadata, BanksClientError> {
-    let account_size = ExtensionType::try_calculate_account_len::<Mint>(extensions).unwrap();
+) -> Result<(), BanksClientError> {
     let rent = context.banks_client.get_rent().await.unwrap();
 
     let mut instructions = vec![system_instruction::create_account(
         &context.payer.pubkey(),
         &mint.pubkey(),
-        rent.minimum_balance(account_size),
-        account_size as u64,
-        &spl_token_2022::ID,
+        rent.minimum_balance(Mint::LEN),
+        Mint::LEN as u64,
+        &spl_token::ID,
     )];
 
-    if extensions.contains(&ExtensionType::TransferHook) {
-        instructions.push(
-            transfer_hook::instruction::initialize(
-                &spl_token_2022::ID,
-                &mint.pubkey(),
-                Some(*mint_authority),
-                Some(paladin_rewards_program_client::ID),
-            )
-            .unwrap(),
-        );
-    }
-
     instructions.push(
-        spl_token_2022::instruction::initialize_mint(
-            &spl_token_2022::ID,
+        initialize_mint(
+            &spl_token::ID,
             &mint.pubkey(),
             mint_authority,
             freeze_authority,
@@ -104,10 +77,7 @@ pub async fn create_mint(
         context.last_blockhash,
     );
 
-    context
-        .banks_client
-        .process_transaction_with_metadata(tx)
-        .await
+    context.banks_client.process_transaction(tx).await
 }
 
 pub async fn create_token_account(
@@ -115,9 +85,7 @@ pub async fn create_token_account(
     owner: &Pubkey,
     token_account: &Keypair,
     mint: &Pubkey,
-    extensions: &[ExtensionType],
-) -> Result<BanksTransactionResultWithMetadata, BanksClientError> {
-    let length = ExtensionType::try_calculate_account_len::<Account>(extensions).unwrap();
+) -> Result<(), BanksClientError> {
     let rent = context.banks_client.get_rent().await.unwrap();
 
     let mut instructions = vec![];
@@ -125,30 +93,13 @@ pub async fn create_token_account(
     instructions.push(system_instruction::create_account(
         &context.payer.pubkey(),
         &token_account.pubkey(),
-        rent.minimum_balance(length),
-        length as u64,
-        &spl_token_2022::ID,
+        rent.minimum_balance(TokenAccount::LEN),
+        TokenAccount::LEN as u64,
+        &spl_token::ID,
     ));
 
-    if extensions.contains(&ExtensionType::ImmutableOwner) {
-        instructions.push(
-            spl_token_2022::instruction::initialize_immutable_owner(
-                &spl_token_2022::ID,
-                &token_account.pubkey(),
-            )
-            .unwrap(),
-        );
-    }
-
-    instructions.push(
-        spl_token_2022::instruction::initialize_account3(
-            &spl_token_2022::ID,
-            &token_account.pubkey(),
-            mint,
-            owner,
-        )
-        .unwrap(),
-    );
+    instructions
+        .push(initialize_account3(&spl_token::ID, &token_account.pubkey(), mint, owner).unwrap());
 
     context.get_new_latest_blockhash().await.unwrap();
 
@@ -159,40 +110,46 @@ pub async fn create_token_account(
         context.last_blockhash,
     );
 
-    context
-        .banks_client
-        .process_transaction_with_metadata(tx)
-        .await
+    context.banks_client.process_transaction(tx).await
 }
 
+pub async fn mint_to_instruction(
+    context: &mut ProgramTestContext,
+    mint: &Pubkey,
+    mint_authority: &Keypair,
+    token: &Pubkey,
+    amount: u64,
+) -> Result<Instruction, ProgramError> {
+    context.get_new_latest_blockhash().await.unwrap();
+
+    spl_mint_to(
+        &spl_token::ID,
+        mint,
+        token,
+        &mint_authority.pubkey(),
+        &[],
+        amount,
+    )
+}
 pub async fn mint_to(
     context: &mut ProgramTestContext,
     mint: &Pubkey,
     mint_authority: &Keypair,
     token: &Pubkey,
     amount: u64,
-    decimals: u8,
-) -> Result<BanksTransactionResultWithMetadata, BanksClientError> {
+) -> Result<(), BanksClientError> {
     context.get_new_latest_blockhash().await.unwrap();
 
+    let ix = mint_to_instruction(context, mint, mint_authority, token, amount)
+        .await
+        .unwrap();
+
     let tx = Transaction::new_signed_with_payer(
-        &[spl_token_2022::instruction::mint_to_checked(
-            &spl_token_2022::ID,
-            mint,
-            token,
-            &mint_authority.pubkey(),
-            &[],
-            amount,
-            decimals,
-        )
-        .unwrap()],
+        &[ix],
         Some(&context.payer.pubkey()),
         &[&context.payer, mint_authority],
         context.last_blockhash,
     );
 
-    context
-        .banks_client
-        .process_transaction_with_metadata(tx)
-        .await
+    context.banks_client.process_transaction(tx).await
 }

@@ -21,11 +21,11 @@ arrayref = "0.3.7"
 bytemuck = "1.16.0"
 num-derive = "^0.3"
 num-traits = "^0.2"
-paladin-rewards-program-client = { git = "https://github.com/paladin-bladesmith/rewards-program" }
-paladin-sol-stake-view-program-client = { git = "https://github.com/paladin-bladesmith/sol-stake-view-program" }
+paladin-rewards-program-client = { git = "https://github.com/Art3miX/rewards-program", branch = "art3mix/token22-removal" }
+paladin-sol-stake-view-program-client = { git = "https://github.com/Art3miX/sol-stake-view-program", branch = "art3mix/dep-versions" }
 shank = "^0.4.2"
-solana-program = "2.1.4"
+solana-program = "=2.1.4"
 spl-discriminator = "0.3.0"
 spl-pod = "0.3.1"
-spl-token-2022 = { version = "4.0.0", features = ["no-entrypoint"] }
+spl-token = { version = "6.0.0", features = ["no-entrypoint"] }
 thiserror = "^1.0"

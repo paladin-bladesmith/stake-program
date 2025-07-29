@@ -25,13 +25,41 @@ pub enum StakeInstruction {
     )]
     #[account(
         2,
+        writable,
+        name = "holder_rewards_pool",
+        desc = "Holder rewards pool account"
+    )]
+    #[account(
+        3,
+        name = "holder_rewards_pool_token_account",
+        desc = "Holder rewards pool account token account"
+    )]
+    #[account(
+        4,
+        writable,
+        name = "vault_pda",
+        desc = "Stake vault pda"
+    )]
+    #[account(
+        5,
         name = "vault",
         desc = "Stake vault token account"
     )]
     #[account(
-        3,
+        6,
+        writable,
         name = "vault_holder_rewards",
         desc = "Stake vault holder rewards account"
+    )]
+    #[account(
+        7,
+        name = "system_program",
+        desc = "System program.",
+    )]
+    #[account(
+        8,
+        name = "rewards_program", 
+        desc = "Paladin rewards program",
     )]
     InitializeConfig {
         slash_authority: Pubkey,
@@ -158,38 +186,43 @@ pub enum StakeInstruction {
     )]
     #[account(
         2,
+        name = "holder_rewards_pool_token_account",
+        desc = "Holder rewards pool account token account"
+    )]
+    #[account(
+        3,
         writable,
         name = "vault",
         desc = "Vault token account"
     )]
     #[account(
-        3,
+        4,
         writable,
         name = "vault_holder_rewards",
         desc = "Holder rewards account for vault token account"
     )]
     #[account(
-        4,
+        5,
         name = "vault_authority",
         desc = "Vault authority"
     )]
     #[account(
-        5,
+        6,
         name = "mint",
         desc = "Stake token mint"
     )]
     #[account(
-        6,
+        7,
         name = "token_program",
         desc = "Token program"
     )]
     #[account(
-        7,
+        8,
         name = "paladin_rewards_program",
         desc = "Paladin rewards program"
     )]
     #[account(
-        8,
+        9,
         name = "system_program",
         desc = "System program"
     )]

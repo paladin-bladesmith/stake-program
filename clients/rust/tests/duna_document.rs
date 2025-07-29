@@ -10,8 +10,8 @@ use paladin_stake_program_client::{
         find_sol_staker_authority_override_pda, find_sol_staker_stake_pda, find_validator_stake_pda,
     },
 };
-use setup::{config::create_config, vote::create_vote_account};
-use solana_program_test::{tokio, ProgramTest};
+use setup::{config::create_config, setup, vote::create_vote_account};
+use solana_program_test::tokio;
 use solana_sdk::{
     account::{Account, AccountSharedData},
     instruction::InstructionError,
@@ -31,13 +31,7 @@ use crate::setup::{
 
 #[tokio::test]
 async fn fail_initialize_validator_stake_unintialized_duna_pda() {
-    let mut context = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    )
-    .start_with_context()
-    .await;
+    let mut context = setup(&[]).await;
 
     // Given a config account and a validator's vote account.
     let config = create_config(&mut context).await;
@@ -94,17 +88,7 @@ async fn fail_initialize_validator_stake_unintialized_duna_pda() {
 
 #[tokio::test]
 async fn fail_initialize_sol_staker_unintialized_duna_pda() {
-    let mut program_test = ProgramTest::new(
-        "paladin_stake_program",
-        paladin_stake_program_client::ID,
-        None,
-    );
-    program_test.add_program(
-        "paladin_sol_stake_view_program",
-        paladin_sol_stake_view_program_client::ID,
-        None,
-    );
-    let mut context = program_test.start_with_context().await;
+    let mut context = setup(&[]).await;
 
     // Given a config and a validator stake accounts.
     let config_manager = ConfigManager::new(&mut context).await;

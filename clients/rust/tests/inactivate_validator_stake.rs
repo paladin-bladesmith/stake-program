@@ -11,7 +11,6 @@ use paladin_stake_program_client::{
 };
 use setup::{
     config::{create_config, ConfigManager},
-    rewards::RewardsManager,
     setup,
     token::{create_associated_token_account, mint_to},
     validator_stake::create_validator_stake,
@@ -21,19 +20,18 @@ use solana_program_test::{tokio, ProgramTestContext};
 use solana_sdk::{
     account::{Account, AccountSharedData},
     clock::Clock,
-    instruction::{AccountMeta, InstructionError},
+    instruction::InstructionError,
+    program_pack::Pack,
     pubkey::Pubkey,
     signature::{Keypair, Signer},
     sysvar::SysvarId,
     transaction::Transaction,
 };
-use spl_token_2022::{extension::PodStateWithExtensions, pod::PodAccount};
-use spl_transfer_hook_interface::get_extra_account_metas_address;
+use spl_token::state::Account as TokenAccount;
 
 struct Fixture {
     config_manager: ConfigManager,
     config_account: Config,
-    rewards_manager: RewardsManager,
     authority: Keypair,
     stake_pda: Pubkey,
     destination_token_account: Pubkey,
@@ -55,18 +53,9 @@ async fn setup_fixture(context: &mut ProgramTestContext, active_cooldown: Option
         &config_manager.mint_authority,
         &config_manager.vault,
         100,
-        0,
     )
     .await
     .unwrap();
-
-    // Setup rewards pool.
-    let rewards_manager = RewardsManager::new(
-        context,
-        &config_manager.mint,
-        &config_manager.mint_authority,
-    )
-    .await;
 
     // And a validator stake account (amount = 100).
     let validator = Pubkey::new_unique();
@@ -93,7 +82,6 @@ async fn setup_fixture(context: &mut ProgramTestContext, active_cooldown: Option
     Fixture {
         config_manager,
         config_account,
-        rewards_manager,
         authority,
         stake_pda,
         destination_token_account,
@@ -106,7 +94,6 @@ async fn inactivate_validator_stake() {
     let Fixture {
         config_manager,
         config_account,
-        rewards_manager,
         authority,
         stake_pda,
         destination_token_account,
@@ -122,40 +109,8 @@ async fn inactivate_validator_stake() {
         .vault_holder_rewards(config_manager.vault_holder_rewards)
         .mint(config_manager.mint)
         .destination_token_account(destination_token_account)
+        .token_program(spl_token::ID)
         .amount(5)
-        .add_remaining_accounts(&[
-            AccountMeta {
-                pubkey: get_extra_account_metas_address(
-                    &config_manager.mint,
-                    &paladin_rewards_program_client::ID,
-                ),
-                is_signer: false,
-                is_writable: false,
-            },
-            AccountMeta {
-                pubkey: rewards_manager.pool,
-                is_signer: false,
-                is_writable: false,
-            },
-            AccountMeta {
-                pubkey: config_manager.vault_holder_rewards,
-                is_signer: false,
-                is_writable: true,
-            },
-            AccountMeta {
-                pubkey: paladin_rewards_program_client::accounts::HolderRewards::find_pda(
-                    &destination_token_account,
-                )
-                .0,
-                is_signer: false,
-                is_writable: true,
-            },
-            AccountMeta {
-                pubkey: paladin_rewards_program_client::ID,
-                is_signer: false,
-                is_writable: false,
-            },
-        ])
         .instruction();
     let tx = Transaction::new_signed_with_payer(
         &[inactivate_ix],
@@ -185,8 +140,8 @@ async fn inactivate_validator_stake() {
 
     // Assert - The authority token account now has 5 PAL.
     let account = get_account!(context, destination_token_account);
-    let account = PodStateWithExtensions::<PodAccount>::unpack(&account.data).unwrap();
-    assert_eq!(u64::from(account.base.amount), 5);
+    let account = TokenAccount::unpack(&account.data).unwrap();
+    assert_eq!(u64::from(account.amount), 5);
 }
 
 #[tokio::test]
@@ -210,6 +165,7 @@ async fn fail_inactivate_validator_stake_with_cooldown() {
         .vault_holder_rewards(config_manager.vault_holder_rewards)
         .mint(config_manager.mint)
         .destination_token_account(destination_token_account)
+        .token_program(spl_token::ID)
         .amount(50)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
@@ -252,6 +208,7 @@ async fn fail_inactivate_validator_stake_with_wrong_config_for_vault() {
         .vault_holder_rewards(config_manager.vault_holder_rewards)
         .mint(config_manager.mint)
         .destination_token_account(destination_token_account)
+        .token_program(spl_token::ID)
         .amount(50)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
@@ -293,6 +250,7 @@ async fn fail_inactivate_validator_stake_with_wrong_config_for_stake() {
         .vault_holder_rewards(wrong_config.vault_holder_rewards)
         .mint(wrong_config.mint)
         .destination_token_account(destination_token_account)
+        .token_program(spl_token::ID)
         .amount(50)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
@@ -343,6 +301,7 @@ async fn fail_inactivate_validator_stake_with_uninitialized_stake_account() {
         .vault_holder_rewards(config_manager.vault_holder_rewards)
         .mint(config_manager.mint)
         .destination_token_account(destination_token_account)
+        .token_program(spl_token::ID)
         .amount(50)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
@@ -383,6 +342,7 @@ async fn fail_inactivate_validator_stake_with_active_cooldown() {
         .vault_holder_rewards(config_manager.vault_holder_rewards)
         .mint(config_manager.mint)
         .destination_token_account(destination_token_account)
+        .token_program(spl_token::ID)
         .amount(50)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
@@ -422,6 +382,7 @@ async fn fail_validator_stake_deactivate_stake_with_amount_greater_than_stake_am
         .vault_holder_rewards(config_manager.vault_holder_rewards)
         .mint(config_manager.mint)
         .destination_token_account(destination_token_account)
+        .token_program(spl_token::ID)
         .amount(150)
         .instruction();
 
@@ -462,6 +423,7 @@ async fn fail_validator_stake_deactivate_stake_with_maximum_deactivation_amount_
         .vault_holder_rewards(config_manager.vault_holder_rewards)
         .mint(config_manager.mint)
         .destination_token_account(destination_token_account)
+        .token_program(spl_token::ID)
         .amount(100) // 100% of stake.
         .instruction();
 

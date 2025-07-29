@@ -6,7 +6,7 @@ use crate::{
     instruction::accounts::{Context, ValidatorOverrideStakedLamportsAccounts},
     processor::{harvest, sync_effective, unpack_initialized_mut, HarvestAccounts},
     require,
-    state::{find_validator_stake_pda, Config, ValidatorStake},
+    state::{find_validator_stake_pda, find_vault_pda, Config, ValidatorStake},
 };
 
 pub(crate) fn process_validator_override_staked_lamports(
@@ -66,6 +66,7 @@ pub(crate) fn process_validator_override_staked_lamports(
     );
 
     // Harvest rewards & update last claim tracking.
+    let vault_authority = find_vault_pda(ctx.accounts.config.key, program_id).0;
     harvest(
         HarvestAccounts {
             config: ctx.accounts.config,
@@ -73,6 +74,7 @@ pub(crate) fn process_validator_override_staked_lamports(
             authority: ctx.accounts.validator_stake_authority,
         },
         config,
+        &vault_authority,
         &mut stake.delegation,
         None,
     )?;

@@ -42,8 +42,17 @@ export type InitializeConfigInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
+  TAccountHolderRewardsPool extends string | IAccountMeta<string> = string,
+  TAccountHolderRewardsPoolTokenAccount extends
+    | string
+    | IAccountMeta<string> = string,
+  TAccountVaultPda extends string | IAccountMeta<string> = string,
   TAccountVault extends string | IAccountMeta<string> = string,
   TAccountVaultHolderRewards extends string | IAccountMeta<string> = string,
+  TAccountSystemProgram extends
+    | string
+    | IAccountMeta<string> = '11111111111111111111111111111111',
+  TAccountRewardsProgram extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -55,12 +64,27 @@ export type InitializeConfigInstruction<
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
+      TAccountHolderRewardsPool extends string
+        ? WritableAccount<TAccountHolderRewardsPool>
+        : TAccountHolderRewardsPool,
+      TAccountHolderRewardsPoolTokenAccount extends string
+        ? ReadonlyAccount<TAccountHolderRewardsPoolTokenAccount>
+        : TAccountHolderRewardsPoolTokenAccount,
+      TAccountVaultPda extends string
+        ? WritableAccount<TAccountVaultPda>
+        : TAccountVaultPda,
       TAccountVault extends string
         ? ReadonlyAccount<TAccountVault>
         : TAccountVault,
       TAccountVaultHolderRewards extends string
-        ? ReadonlyAccount<TAccountVaultHolderRewards>
+        ? WritableAccount<TAccountVaultHolderRewards>
         : TAccountVaultHolderRewards,
+      TAccountSystemProgram extends string
+        ? ReadonlyAccount<TAccountSystemProgram>
+        : TAccountSystemProgram,
+      TAccountRewardsProgram extends string
+        ? ReadonlyAccount<TAccountRewardsProgram>
+        : TAccountRewardsProgram,
       ...TRemainingAccounts,
     ]
   >;
@@ -124,17 +148,32 @@ export function getInitializeConfigInstructionDataCodec(): Codec<
 export type InitializeConfigInput<
   TAccountConfig extends string = string,
   TAccountMint extends string = string,
+  TAccountHolderRewardsPool extends string = string,
+  TAccountHolderRewardsPoolTokenAccount extends string = string,
+  TAccountVaultPda extends string = string,
   TAccountVault extends string = string,
   TAccountVaultHolderRewards extends string = string,
+  TAccountSystemProgram extends string = string,
+  TAccountRewardsProgram extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
   /** Stake token mint */
   mint: Address<TAccountMint>;
+  /** Holder rewards pool account */
+  holderRewardsPool: Address<TAccountHolderRewardsPool>;
+  /** Holder rewards pool account token account */
+  holderRewardsPoolTokenAccount: Address<TAccountHolderRewardsPoolTokenAccount>;
+  /** Stake vault pda */
+  vaultPda: Address<TAccountVaultPda>;
   /** Stake vault token account */
   vault: Address<TAccountVault>;
   /** Stake vault holder rewards account */
   vaultHolderRewards: Address<TAccountVaultHolderRewards>;
+  /** System program. */
+  systemProgram?: Address<TAccountSystemProgram>;
+  /** Paladin rewards program */
+  rewardsProgram: Address<TAccountRewardsProgram>;
   slashAuthority: InitializeConfigInstructionDataArgs['slashAuthority'];
   configAuthority: InitializeConfigInstructionDataArgs['configAuthority'];
   cooldownTimeSeconds: InitializeConfigInstructionDataArgs['cooldownTimeSeconds'];
@@ -146,21 +185,36 @@ export type InitializeConfigInput<
 export function getInitializeConfigInstruction<
   TAccountConfig extends string,
   TAccountMint extends string,
+  TAccountHolderRewardsPool extends string,
+  TAccountHolderRewardsPoolTokenAccount extends string,
+  TAccountVaultPda extends string,
   TAccountVault extends string,
   TAccountVaultHolderRewards extends string,
+  TAccountSystemProgram extends string,
+  TAccountRewardsProgram extends string,
 >(
   input: InitializeConfigInput<
     TAccountConfig,
     TAccountMint,
+    TAccountHolderRewardsPool,
+    TAccountHolderRewardsPoolTokenAccount,
+    TAccountVaultPda,
     TAccountVault,
-    TAccountVaultHolderRewards
+    TAccountVaultHolderRewards,
+    TAccountSystemProgram,
+    TAccountRewardsProgram
   >
 ): InitializeConfigInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountMint,
+  TAccountHolderRewardsPool,
+  TAccountHolderRewardsPoolTokenAccount,
+  TAccountVaultPda,
   TAccountVault,
-  TAccountVaultHolderRewards
+  TAccountVaultHolderRewards,
+  TAccountSystemProgram,
+  TAccountRewardsProgram
 > {
   // Program address.
   const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
@@ -169,11 +223,22 @@ export function getInitializeConfigInstruction<
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
+    holderRewardsPool: {
+      value: input.holderRewardsPool ?? null,
+      isWritable: true,
+    },
+    holderRewardsPoolTokenAccount: {
+      value: input.holderRewardsPoolTokenAccount ?? null,
+      isWritable: false,
+    },
+    vaultPda: { value: input.vaultPda ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: false },
     vaultHolderRewards: {
       value: input.vaultHolderRewards ?? null,
-      isWritable: false,
+      isWritable: true,
     },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    rewardsProgram: { value: input.rewardsProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -183,13 +248,24 @@ export function getInitializeConfigInstruction<
   // Original args.
   const args = { ...input };
 
+  // Resolve default values.
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
       getAccountMeta(accounts.config),
       getAccountMeta(accounts.mint),
+      getAccountMeta(accounts.holderRewardsPool),
+      getAccountMeta(accounts.holderRewardsPoolTokenAccount),
+      getAccountMeta(accounts.vaultPda),
       getAccountMeta(accounts.vault),
       getAccountMeta(accounts.vaultHolderRewards),
+      getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.rewardsProgram),
     ],
     programAddress,
     data: getInitializeConfigInstructionDataEncoder().encode(
@@ -199,8 +275,13 @@ export function getInitializeConfigInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountMint,
+    TAccountHolderRewardsPool,
+    TAccountHolderRewardsPoolTokenAccount,
+    TAccountVaultPda,
     TAccountVault,
-    TAccountVaultHolderRewards
+    TAccountVaultHolderRewards,
+    TAccountSystemProgram,
+    TAccountRewardsProgram
   >;
 
   return instruction;
@@ -216,10 +297,20 @@ export type ParsedInitializeConfigInstruction<
     config: TAccountMetas[0];
     /** Stake token mint */
     mint: TAccountMetas[1];
+    /** Holder rewards pool account */
+    holderRewardsPool: TAccountMetas[2];
+    /** Holder rewards pool account token account */
+    holderRewardsPoolTokenAccount: TAccountMetas[3];
+    /** Stake vault pda */
+    vaultPda: TAccountMetas[4];
     /** Stake vault token account */
-    vault: TAccountMetas[2];
+    vault: TAccountMetas[5];
     /** Stake vault holder rewards account */
-    vaultHolderRewards: TAccountMetas[3];
+    vaultHolderRewards: TAccountMetas[6];
+    /** System program. */
+    systemProgram: TAccountMetas[7];
+    /** Paladin rewards program */
+    rewardsProgram: TAccountMetas[8];
   };
   data: InitializeConfigInstructionData;
 };
@@ -232,7 +323,7 @@ export function parseInitializeConfigInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedInitializeConfigInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 4) {
+  if (instruction.accounts.length < 9) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -247,8 +338,13 @@ export function parseInitializeConfigInstruction<
     accounts: {
       config: getNextAccount(),
       mint: getNextAccount(),
+      holderRewardsPool: getNextAccount(),
+      holderRewardsPoolTokenAccount: getNextAccount(),
+      vaultPda: getNextAccount(),
       vault: getNextAccount(),
       vaultHolderRewards: getNextAccount(),
+      systemProgram: getNextAccount(),
+      rewardsProgram: getNextAccount(),
     },
     data: getInitializeConfigInstructionDataDecoder().decode(instruction.data),
   };

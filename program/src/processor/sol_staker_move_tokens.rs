@@ -5,7 +5,7 @@ use crate::{
     instruction::accounts::{Context, SolStakerMoveTokensAccounts},
     processor::{harvest, sync_effective, unpack_initialized_mut, HarvestAccounts},
     require,
-    state::{find_sol_staker_stake_pda, Config, SolStakerStake},
+    state::{find_sol_staker_stake_pda, find_vault_pda, Config, SolStakerStake},
 };
 
 pub(crate) fn process_sol_staker_move_tokens(
@@ -62,6 +62,7 @@ pub(crate) fn process_sol_staker_move_tokens(
         "sol staker authority"
     );
 
+    let vault_authority = find_vault_pda(ctx.accounts.config.key, program_id).0;
     harvest(
         HarvestAccounts {
             config: ctx.accounts.config,
@@ -69,6 +70,7 @@ pub(crate) fn process_sol_staker_move_tokens(
             authority: ctx.accounts.sol_staker_authority,
         },
         config,
+        &vault_authority,
         &mut source_sol_staker_stake.delegation,
         None,
     )?;
@@ -106,6 +108,7 @@ pub(crate) fn process_sol_staker_move_tokens(
             authority: ctx.accounts.sol_staker_authority,
         },
         config,
+        &vault_authority,
         &mut destination_sol_staker_stake.delegation,
         None,
     )?;

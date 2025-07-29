@@ -1,38 +1,20 @@
-use paladin_rewards_program_client::accounts::HolderRewards;
 use solana_program::{
-    entrypoint::ProgramResult, msg, program_error::ProgramError, pubkey::Pubkey, rent::Rent,
+    entrypoint::ProgramResult, program::invoke_signed, program_error::ProgramError,
+    program_option::COption, program_pack::Pack, pubkey::Pubkey, rent::Rent, system_instruction,
     sysvar::Sysvar,
 };
 use spl_discriminator::SplDiscriminate;
 use spl_pod::optional_keys::OptionalNonZeroPubkey;
-use spl_token_2022::{
-    extension::{
-        transfer_hook::TransferHook, BaseStateWithExtensions, ExtensionType, PodStateWithExtensions,
-    },
-    pod::{PodAccount, PodCOption, PodMint},
-};
+use spl_token::state::{Account as TokenAccount, Mint};
 
 use crate::{
-    err,
     error::StakeError,
     instruction::accounts::{Context, InitializeConfigAccounts},
     require,
-    state::{find_vault_pda, Config, MAX_BASIS_POINTS},
+    state::{find_vault_pda, get_vault_pda_signer_seeds, Config, MAX_BASIS_POINTS},
 };
 
-/// List of extensions that must be present in the vault token account.
-const VALID_VAULT_TOKEN_EXTENSIONS: &[ExtensionType] = &[
-    ExtensionType::ImmutableOwner,
-    ExtensionType::TransferHookAccount,
-];
-
 /// Creates Stake config account which controls staking parameters.
-///
-/// ### Accounts:
-///
-///   0. `[w]` Stake config
-///   1. `[ ]` Mint
-///   2. `[ ]` Vault
 #[allow(clippy::too_many_arguments)]
 pub fn process_initialize_config(
     program_id: &Pubkey,
@@ -50,94 +32,66 @@ pub fn process_initialize_config(
     // - must be initialized (checked by unpack)
     // - have rewards transfer hook
     let mint_data = ctx.accounts.mint.try_borrow_data()?;
-    let mint = PodStateWithExtensions::<PodMint>::unpack(&mint_data)?;
+    Mint::unpack(&mint_data)?;
 
-    // Ensure the mint is configured with the expected `TransferHook` extension.
-    if let Ok(transfer_hook) = mint.get_extension::<TransferHook>() {
-        let hook_program_id: Option<Pubkey> = transfer_hook.program_id.into();
+    // Verify vault PDA
+    let (vault_signer, signer_bump) = find_vault_pda(ctx.accounts.config.key, program_id);
+    let signer_bump = [signer_bump];
+    let vault_seeds = get_vault_pda_signer_seeds(ctx.accounts.config.key, &signer_bump);
 
-        require!(
-            hook_program_id == Some(paladin_rewards_program_client::ID),
-            StakeError::InvalidTransferHookProgramId,
-            "expected {:?}, found {:?}",
-            Some(paladin_rewards_program_client::ID),
-            hook_program_id
-        );
-    } else {
-        return err!(StakeError::MissingTransferHook);
-    }
+    // Ensure the provided vault pda address is the correct address
+    require!(
+        ctx.accounts.vault_pda.key == &vault_signer,
+        StakeError::IncorrectVaultPdaAccount,
+        "vault pda"
+    );
+
+    // Create empty vault PDA account
+    require!(
+        ctx.accounts.vault_pda.data_is_empty(),
+        ProgramError::AccountAlreadyInitialized,
+        "vault pda"
+    );
+
+    invoke_signed(
+        &system_instruction::assign(&vault_signer, program_id),
+        &[ctx.accounts.vault_pda.clone()],
+        &[&vault_seeds],
+    )?;
 
     // vault (token account)
     // - must be initialized (checked by unpack)
     // - have the vault signer (PDA) as owner
     // - no close authority
     // - no delegate
-    // - no other extension apart from `ImmutableOwner` and `TransferHookAccount`
     // - have the correct mint
     // - amount equal to 0
     let vault_data = ctx.accounts.vault.try_borrow_data()?;
-    let vault = PodStateWithExtensions::<PodAccount>::unpack(&vault_data)?;
-    let (vault_signer, signer_bump) = find_vault_pda(ctx.accounts.config.key, program_id);
+    let vault = TokenAccount::unpack(&vault_data)?;
     require!(
-        vault.base.owner == vault_signer,
+        vault.owner == vault_signer,
         StakeError::InvalidTokenOwner,
         "vault"
     );
     require!(
-        vault.base.close_authority == PodCOption::none(),
+        vault.close_authority == COption::None,
         StakeError::CloseAuthorityNotNone,
         "vault"
     );
     require!(
-        vault.base.delegate == PodCOption::none(),
+        vault.delegate == COption::None,
         StakeError::DelegateNotNone,
         "vault"
     );
-    vault
-        .get_extension_types()?
-        .iter()
-        .try_for_each(|extension_type| {
-            if !VALID_VAULT_TOKEN_EXTENSIONS.contains(extension_type) {
-                msg!("Invalid token extension: {:?}", extension_type);
-                return Err(StakeError::InvalidTokenAccountExtension);
-            }
-            Ok(())
-        })?;
     require!(
-        &vault.base.mint == ctx.accounts.mint.key,
+        &vault.mint == ctx.accounts.mint.key,
         StakeError::InvalidMint,
         "vault"
     );
-    let amount: u64 = vault.base.amount.into();
-    require!(amount == 0, StakeError::AmountGreaterThanZero, "vault");
-
-    // Vault (holder rewards).
-    // - Must match derivation.
-    // - Must be owned by the rewards program.
-    // - Must be initialized.
-    // - Must have no sponsor.
-    let (vault_holder_rewards, _) = HolderRewards::find_pda(ctx.accounts.vault.key);
     require!(
-        ctx.accounts.vault_holder_rewards.key == &vault_holder_rewards,
-        ProgramError::InvalidSeeds,
-        "vault holder rewards"
-    );
-    require!(
-        ctx.accounts.vault_holder_rewards.owner == &paladin_rewards_program_client::ID,
-        ProgramError::IllegalOwner,
-        "vault holder rewards"
-    );
-    require!(
-        ctx.accounts.vault_holder_rewards.data_len() == HolderRewards::LEN,
-        ProgramError::UninitializedAccount,
-        "vault holder rewards"
-    );
-    let holder_rewards =
-        HolderRewards::from_bytes(&ctx.accounts.vault_holder_rewards.data.borrow()).unwrap();
-    require!(
-        holder_rewards.rent_sponsor == Pubkey::default(),
-        StakeError::InvalidHolderRewards,
-        "vault holder rewards"
+        vault.amount == 0,
+        StakeError::AmountGreaterThanZero,
+        "vault"
     );
 
     // config
@@ -176,6 +130,33 @@ pub fn process_initialize_config(
         MAX_BASIS_POINTS
     );
 
+    // Create the vault holder rewards account
+    invoke_signed(
+        &paladin_rewards_program_client::instructions::InitializeHolderRewards {
+            // NB: Account correctness validated by paladin rewards program.
+            holder_rewards_pool: *ctx.accounts.holder_rewards_pool.key,
+            holder_rewards_pool_token_account_info: *ctx
+                .accounts
+                .holder_rewards_pool_token_account
+                .key,
+            owner: *ctx.accounts.vault_pda.key,
+            holder_rewards: *ctx.accounts.vault_holder_rewards.key,
+            mint: *ctx.accounts.mint.key,
+            system_program: *ctx.accounts.system_program.key,
+        }
+        .instruction(),
+        &[
+            ctx.accounts.holder_rewards_pool.clone(),
+            ctx.accounts.holder_rewards_pool_token_account.clone(),
+            ctx.accounts.vault_pda.clone(),
+            ctx.accounts.vault_holder_rewards.clone(),
+            ctx.accounts.mint.clone(),
+            ctx.accounts.system_program.clone(),
+            ctx.accounts.rewards_program.clone(),
+        ],
+        &[&vault_seeds],
+    )?;
+
     // Initialize the stake config account.
     *config = Config {
         discriminator: Config::SPL_DISCRIMINATOR.into(),
@@ -189,7 +170,7 @@ pub fn process_initialize_config(
         max_deactivation_basis_points,
         duna_document_hash,
         sync_rewards_lamports,
-        vault_authority_bump: signer_bump,
+        vault_authority_bump: signer_bump[0],
         _padding: [0; 5],
     };
 

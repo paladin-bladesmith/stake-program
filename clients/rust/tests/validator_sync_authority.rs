@@ -1,8 +1,7 @@
 #![cfg(feature = "test-sbf")]
 use paladin_stake_program_client::accounts::ValidatorStake;
 use paladin_stake_program_client::instructions::ValidatorSyncAuthority;
-use setup::config::ConfigManager;
-use setup::validator_stake::ValidatorStakeManager;
+use setup::{config::ConfigManager, setup, validator_stake::ValidatorStakeManager};
 use solana_program_test::tokio;
 use solana_sdk::instruction::InstructionError;
 use solana_sdk::pubkey::Pubkey;
@@ -13,7 +12,7 @@ mod setup;
 
 #[tokio::test]
 async fn update_validator_authority_ok() {
-    let mut context = setup::setup(&[]).await;
+    let mut context = setup(&[]).await;
 
     // Setup the relevant accounts.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -49,7 +48,7 @@ async fn update_validator_authority_ok() {
 
 #[tokio::test]
 async fn update_validator_authority_err_invalid_config() {
-    let mut context = setup::setup(&[]).await;
+    let mut context = setup(&[]).await;
 
     // Setup the relevant accounts.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -87,7 +86,7 @@ async fn update_validator_authority_err_invalid_config() {
 
 #[tokio::test]
 async fn update_validator_authority_err_vote_mismatch() {
-    let mut context = setup::setup(&[]).await;
+    let mut context = setup(&[]).await;
 
     // Setup the relevant accounts.
     let config_manager = ConfigManager::new(&mut context).await;
@@ -130,7 +129,7 @@ async fn update_validator_authority_err_vote_mismatch() {
 
 #[tokio::test]
 async fn update_validator_authority_err_stake_mismatch() {
-    let mut context = setup::setup(&[]).await;
+    let mut context = setup(&[]).await;
 
     // Setup the relevant accounts.
     let config_manager = ConfigManager::new(&mut context).await;

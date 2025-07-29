@@ -1,15 +1,16 @@
-use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey};
-use spl_token_2022::{
-    extension::PodStateWithExtensions,
-    pod::{PodAccount, PodMint},
+use solana_program::{
+    entrypoint::ProgramResult, program::invoke, program_error::ProgramError, program_pack::Pack,
+    pubkey::Pubkey,
 };
+use spl_token::state::Account as TokenAccount;
+use spl_token::{instruction::transfer_checked, state::Mint};
 
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, ValidatorStakeTokensAccounts},
     processor::{harvest, sync_effective, unpack_initialized_mut, HarvestAccounts},
     require,
-    state::{find_validator_stake_pda, Config, ValidatorStake},
+    state::{find_validator_stake_pda, find_vault_pda, Config, ValidatorStake},
 };
 
 /// Stakes tokens with the given config.
@@ -70,6 +71,7 @@ pub fn process_validator_stake_tokens<'a>(
     );
 
     // Harvest rewards & update last claim tracking.
+    let vault_authority = find_vault_pda(ctx.accounts.config.key, program_id).0;
     harvest(
         HarvestAccounts {
             config: ctx.accounts.config,
@@ -77,6 +79,7 @@ pub fn process_validator_stake_tokens<'a>(
             authority: ctx.accounts.validator_stake_authority,
         },
         config,
+        &vault_authority,
         &mut stake.delegation,
         None,
     )?;
@@ -88,18 +91,18 @@ pub fn process_validator_stake_tokens<'a>(
         StakeError::IncorrectVaultAccount,
     );
     let vault_data = ctx.accounts.vault.try_borrow_data()?;
-    let vault = PodStateWithExtensions::<PodAccount>::unpack(&vault_data)?;
+    let vault = TokenAccount::unpack(&vault_data)?;
 
     // mint
     // - must match the stake vault mint
     require!(
-        &vault.base.mint == ctx.accounts.mint.key,
+        &vault.mint == ctx.accounts.mint.key,
         StakeError::InvalidMint,
         "mint"
     );
     let mint_data = ctx.accounts.mint.try_borrow_data()?;
-    let mint = PodStateWithExtensions::<PodMint>::unpack(&mint_data)?;
-    let decimals = mint.base.decimals;
+    let mint = Mint::unpack(&mint_data)?;
+    let decimals = mint.decimals;
 
     // Compute the new total & effective stakes.
     require!(amount > 0, StakeError::InvalidAmount);
@@ -123,15 +126,25 @@ pub fn process_validator_stake_tokens<'a>(
     // Transfer the tokens to the vault (stakes them).
     drop(mint_data);
     drop(vault_data);
-    spl_token_2022::onchain::invoke_transfer_checked(
-        &spl_token_2022::ID,
-        ctx.accounts.source_token_account.clone(),
-        ctx.accounts.mint.clone(),
-        ctx.accounts.vault.clone(),
-        ctx.accounts.source_token_account_authority.clone(),
-        ctx.remaining_accounts,
-        amount,
-        decimals,
-        &[],
-    )
+    invoke(
+        &transfer_checked(
+            &spl_token::ID,
+            ctx.accounts.source_token_account.key,
+            ctx.accounts.mint.key,
+            ctx.accounts.vault.key,
+            ctx.accounts.source_token_account_authority.key,
+            &[],
+            amount,
+            decimals,
+        )?,
+        &[
+            ctx.accounts.source_token_account.clone(),
+            ctx.accounts.mint.clone(),
+            ctx.accounts.vault.clone(),
+            ctx.accounts.source_token_account_authority.clone(),
+        ],
+    )?;
+
+    // TODO: Deposit tokens into holder rewards
+    Ok(())
 }

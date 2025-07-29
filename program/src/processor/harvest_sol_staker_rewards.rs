@@ -14,7 +14,8 @@ use crate::{
     processor::{harvest, sync_effective, unpack_initialized_mut, HarvestAccounts},
     require,
     state::{
-        find_sol_staker_stake_pda, find_validator_stake_pda, Config, SolStakerStake, ValidatorStake,
+        find_sol_staker_stake_pda, find_validator_stake_pda, find_vault_pda, Config,
+        SolStakerStake, ValidatorStake,
     },
 };
 
@@ -93,7 +94,8 @@ pub fn process_harvest_sol_staker_rewards(
 
     // Holder rewards.
     // - Must be derived from the vault account.
-    let derivation = HolderRewards::find_pda(&config.vault).0;
+    let vault_authority = find_vault_pda(ctx.accounts.config.key, program_id).0;
+    let derivation = HolderRewards::find_pda(&vault_authority).0;
     require!(
         ctx.accounts.vault_holder_rewards.key == &derivation,
         ProgramError::InvalidSeeds,
@@ -131,6 +133,7 @@ pub fn process_harvest_sol_staker_rewards(
             authority: ctx.accounts.sol_staker_stake_authority,
         },
         config,
+        &vault_authority,
         &mut sol_staker_stake.delegation,
         match requires_sync {
             true => Some(
@@ -185,6 +188,7 @@ pub fn process_harvest_sol_staker_rewards(
                 authority: ctx.accounts.previous_validator_stake_authority,
             },
             config,
+            &vault_authority,
             &mut previous_validator_stake.delegation,
             None,
         )?;
@@ -239,6 +243,7 @@ pub fn process_harvest_sol_staker_rewards(
                     authority: ctx.accounts.current_validator_stake_authority,
                 },
                 config,
+                &vault_authority,
                 &mut current_validator_stake.delegation,
                 None,
             )?;
