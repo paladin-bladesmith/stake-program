@@ -46,7 +46,7 @@ pub fn process_initialize_config(
         "vault pda"
     );
 
-    // Create empty vault PDA account
+    // Confirm vault PDA account is empty
     require!(
         ctx.accounts.vault_pda.data_is_empty(),
         ProgramError::AccountAlreadyInitialized,

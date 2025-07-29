@@ -420,47 +420,70 @@ pub enum StakeInstruction {
     #[account(
         1,
         writable,
+        name = "holder_rewards_pool",
+        desc = "Holder rewards pool account"
+    )]
+    #[account(
+        2,
+        writable,
+        name = "holder_rewards_pool_token_account",
+        desc = "Holder rewards pool account token account"
+    )]
+    #[account(
+        3,
+        writable,
         name = "sol_staker_stake",
         desc = "SOL staker stake account"
     )]
     #[account(
-        2,
+        4,
         writable,
         name = "sol_staker_stake_authority",
         desc = "SOL staker stake authority account"
     )]
     #[account(
-        3,
+        5,
         writable,
         name = "source_token_account",
         desc = "Token account"
     )]
     #[account(
-        4,
+        6,
         signer,
         name = "source_token_account_authority",
         desc = "Owner or delegate of the token account"
     )]
     #[account(
-        5,
+        7,
         name = "mint",
         desc = "Stake Token Mint"
     )]
     #[account(
-        6,
+        8,
+        name = "vault_pda",
+        desc = "Stake vault pda"
+    )]
+    #[account(
+        9,
         writable,
         name = "vault",
         desc = "Stake token Vault"
     )]
     #[account(
-        7,
+        10,
+        writable,
         name = "vault_holder_rewards",
         desc = "Stake token Vault"
     )]
     #[account(
-        8,
+        11,
         name = "token_program",
         desc = "Token program"
+    )]
+    #[account(
+        12,
+        name = "rewards_program", 
+        desc = "Paladin rewards program",
     )]
     SolStakerStakeTokens(u64),
 

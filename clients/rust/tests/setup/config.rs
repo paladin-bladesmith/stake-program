@@ -26,6 +26,8 @@ pub struct ConfigManager {
     // Vault token account.
     pub vault: Pubkey,
     // Vault token account.
+    pub vault_pda: Pubkey,
+    // Vault token account.
     pub vault_holder_rewards: Pubkey,
     // Mint account.
     pub mint: Pubkey,
@@ -69,6 +71,7 @@ impl ConfigManager {
             config: config.pubkey(),
             config_authority: Keypair::new(),
             vault: Pubkey::default(),
+            vault_pda: Pubkey::default(),
             vault_holder_rewards: Pubkey::default(),
             mint: mint.pubkey(),
             mint_authority,
@@ -78,6 +81,7 @@ impl ConfigManager {
         // Create vault DPA
         let (vault_pda, _) = find_vault_pda(&config.pubkey());
         let vault = get_associated_token_address(&vault_pda, &mint.pubkey());
+        manager.vault_pda = vault_pda;
         manager.vault = vault;
 
         // Create the holder rewards account for the vault.

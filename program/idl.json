@@ -638,6 +638,22 @@
           ]
         },
         {
+          "name": "holderRewardsPool",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Holder rewards pool account"
+          ]
+        },
+        {
+          "name": "holderRewardsPoolTokenAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Holder rewards pool account token account"
+          ]
+        },
+        {
           "name": "solStakerStake",
           "isMut": true,
           "isSigner": false,
@@ -678,6 +694,14 @@
           ]
         },
         {
+          "name": "vaultPda",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Stake vault pda"
+          ]
+        },
+        {
           "name": "vault",
           "isMut": true,
           "isSigner": false,
@@ -687,7 +711,7 @@
         },
         {
           "name": "vaultHolderRewards",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false,
           "docs": [
             "Stake token Vault"
@@ -699,6 +723,14 @@
           "isSigner": false,
           "docs": [
             "Token program"
+          ]
+        },
+        {
+          "name": "rewardsProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Paladin rewards program"
           ]
         }
       ],
