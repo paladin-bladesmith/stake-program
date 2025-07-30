@@ -121,7 +121,7 @@ impl Default for HarvestHolderRewardsInstructionData {
 ///   4. `[writable]` vault_holder_rewards
 ///   5. `[]` vault_authority
 ///   6. `[]` mint
-///   7. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
+///   7. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 ///   8. `[]` paladin_rewards_program
 ///   9. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Clone, Debug, Default)]
@@ -197,7 +197,7 @@ impl HarvestHolderRewardsBuilder {
         self.mint = Some(mint);
         self
     }
-    /// `[optional account, default to 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb']`
+    /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
     /// Token program
     #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
@@ -255,7 +255,7 @@ impl HarvestHolderRewardsBuilder {
             vault_authority: self.vault_authority.expect("vault_authority is not set"),
             mint: self.mint.expect("mint is not set"),
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
-                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
             )),
             paladin_rewards_program: self
                 .paladin_rewards_program

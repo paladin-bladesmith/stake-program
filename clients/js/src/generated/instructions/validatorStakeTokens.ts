@@ -53,7 +53,7 @@ export type ValidatorStakeTokensInstruction<
   TAccountVaultHolderRewards extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
-    | IAccountMeta<string> = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
+    | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
   TAccountRewardsProgram extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
@@ -73,7 +73,7 @@ export type ValidatorStakeTokensInstruction<
         ? WritableAccount<TAccountValidatorStake>
         : TAccountValidatorStake,
       TAccountValidatorStakeAuthority extends string
-        ? WritableAccount<TAccountValidatorStakeAuthority>
+        ? ReadonlyAccount<TAccountValidatorStakeAuthority>
         : TAccountValidatorStakeAuthority,
       TAccountSourceTokenAccount extends string
         ? WritableAccount<TAccountSourceTokenAccount>
@@ -86,7 +86,7 @@ export type ValidatorStakeTokensInstruction<
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
       TAccountVaultPda extends string
-        ? ReadonlyAccount<TAccountVaultPda>
+        ? WritableAccount<TAccountVaultPda>
         : TAccountVaultPda,
       TAccountVault extends string
         ? WritableAccount<TAccountVault>
@@ -247,7 +247,7 @@ export function getValidatorStakeTokensInstruction<
     validatorStake: { value: input.validatorStake ?? null, isWritable: true },
     validatorStakeAuthority: {
       value: input.validatorStakeAuthority ?? null,
-      isWritable: true,
+      isWritable: false,
     },
     sourceTokenAccount: {
       value: input.sourceTokenAccount ?? null,
@@ -258,7 +258,7 @@ export function getValidatorStakeTokensInstruction<
       isWritable: false,
     },
     mint: { value: input.mint ?? null, isWritable: false },
-    vaultPda: { value: input.vaultPda ?? null, isWritable: false },
+    vaultPda: { value: input.vaultPda ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
     vaultHolderRewards: {
       value: input.vaultHolderRewards ?? null,
@@ -278,7 +278,7 @@ export function getValidatorStakeTokensInstruction<
   // Resolve default values.
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
-      'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' as Address<'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'>;
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');

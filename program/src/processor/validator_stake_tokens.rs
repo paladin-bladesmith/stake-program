@@ -182,5 +182,6 @@ pub fn process_validator_stake_tokens<'a>(
         ],
         &[&vault_seeds],
     )?;
+
     Ok(())
 }

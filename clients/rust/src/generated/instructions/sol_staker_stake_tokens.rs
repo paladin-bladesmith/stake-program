@@ -83,7 +83,7 @@ impl SolStakerStakeTokens {
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.mint, false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             self.vault_pda,
             false,
         ));
@@ -152,10 +152,10 @@ pub struct SolStakerStakeTokensInstructionArgs {
 ///   5. `[writable]` source_token_account
 ///   6. `[signer]` source_token_account_authority
 ///   7. `[]` mint
-///   8. `[]` vault_pda
+///   8. `[writable]` vault_pda
 ///   9. `[writable]` vault
 ///   10. `[writable]` vault_holder_rewards
-///   11. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
+///   11. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 ///   12. `[]` rewards_program
 #[derive(Clone, Debug, Default)]
 pub struct SolStakerStakeTokensBuilder {
@@ -267,7 +267,7 @@ impl SolStakerStakeTokensBuilder {
         self.vault_holder_rewards = Some(vault_holder_rewards);
         self
     }
-    /// `[optional account, default to 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb']`
+    /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
     /// Token program
     #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
@@ -333,7 +333,7 @@ impl SolStakerStakeTokensBuilder {
                 .vault_holder_rewards
                 .expect("vault_holder_rewards is not set"),
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
-                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
             )),
             rewards_program: self.rewards_program.expect("rewards_program is not set"),
         };
@@ -499,7 +499,7 @@ impl<'a, 'b> SolStakerStakeTokensCpi<'a, 'b> {
             *self.mint.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             *self.vault_pda.key,
             false,
         ));
@@ -576,7 +576,7 @@ impl<'a, 'b> SolStakerStakeTokensCpi<'a, 'b> {
 ///   5. `[writable]` source_token_account
 ///   6. `[signer]` source_token_account_authority
 ///   7. `[]` mint
-///   8. `[]` vault_pda
+///   8. `[writable]` vault_pda
 ///   9. `[writable]` vault
 ///   10. `[writable]` vault_holder_rewards
 ///   11. `[]` token_program

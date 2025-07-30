@@ -135,7 +135,6 @@ pub enum StakeInstruction {
     )]
     #[account(
         4,
-        writable,
         name = "validator_stake_authority",
         desc = "Validator stake account"
     )]
@@ -158,6 +157,7 @@ pub enum StakeInstruction {
     )]
     #[account(
         8,
+        writable,
         name = "vault_pda",
         desc = "Stake vault pda"
     )]
@@ -482,6 +482,7 @@ pub enum StakeInstruction {
     )]
     #[account(
         8,
+        writable,
         name = "vault_pda",
         desc = "Stake vault pda"
     )]
@@ -601,49 +602,66 @@ pub enum StakeInstruction {
     #[account(
         1,
         writable,
+        name = "holder_rewards_pool",
+        desc = "Holder rewards pool account"
+    )]
+    #[account(
+        2,
+        writable,
+        name = "holder_rewards_pool_token_account",
+        desc = "Holder rewards pool account token account"
+    )]
+    #[account(
+        3,
+        writable,
         name = "stake",
         desc = "Sol staker/validator stake account"
     )]
     #[account(
-        2,
+        4,
         signer,
         writable,
         name = "stake_authority",
         desc = "Stake authority account"
     )]
     #[account(
-        3,
+        5,
         writable,
         name = "vault",
         desc = "Vault account"
     )]
     #[account(
-        4,
+        6,
         writable,
-        name = "vault_authority",
+        name = "vault_pda",
         desc = "Vault authority"
     )]
     #[account(
-        5,
+        7,
         writable,
         name = "vault_holder_rewards",
         desc = "Vault holder rewards account"
     )]
     #[account(
-        6,
+        8,
         name = "mint",
         desc = "Mint account"
     )]
     #[account(
-        7,
+        9,
         writable,
         name = "destination_token_account",
         desc = "Destination token account"
     )]
     #[account(
-        8,
+        10,
         name = "token_program",
         desc = "Token program"
+    )]
+    #[account(
+        11,
+        name = "rewards_program", 
+        desc = "Paladin rewards program",
     )]
     UnstakeTokens { amount: u64 },
 

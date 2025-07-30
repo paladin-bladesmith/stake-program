@@ -128,7 +128,7 @@ pub struct SlashValidatorStakeInstructionArgs {
 ///   5. `[]` vault_holder_rewards
 ///   6. `[]` vault_authority
 ///   7. `[writable]` mint
-///   8. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
+///   8. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 #[derive(Clone, Debug, Default)]
 pub struct SlashValidatorStakeBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
@@ -211,7 +211,7 @@ impl SlashValidatorStakeBuilder {
         self.mint = Some(mint);
         self
     }
-    /// `[optional account, default to 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb']`
+    /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
     /// Token program
     #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
@@ -257,7 +257,7 @@ impl SlashValidatorStakeBuilder {
             vault_authority: self.vault_authority.expect("vault_authority is not set"),
             mint: self.mint.expect("mint is not set"),
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
-                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
             )),
         };
         let args = SlashValidatorStakeInstructionArgs {

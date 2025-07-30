@@ -191,7 +191,10 @@ async fn fail_sol_staker_stake_tokens_with_wrong_vault_account() {
         .unwrap_err();
 
     // Then we expect an error.
-    assert_instruction_error!(err, InstructionError::InvalidSeeds);
+    assert_custom_error!(
+        err,
+        PaladinStakeProgramError::InvalidVaultHolderRewardsSeeds
+    );
 }
 
 #[tokio::test]

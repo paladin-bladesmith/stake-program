@@ -46,8 +46,8 @@ kinobi.update(
     {
       account: "tokenProgram",
       defaultValue: k.publicKeyValueNode(
-        "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-        "spl-token-2022"
+        "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+        "spl-token"
       ),
     },
     {

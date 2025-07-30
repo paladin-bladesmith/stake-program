@@ -68,7 +68,7 @@ impl ValidatorStakeTokens {
             self.validator_stake,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.validator_stake_authority,
             false,
         ));
@@ -83,7 +83,7 @@ impl ValidatorStakeTokens {
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.mint, false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             self.vault_pda,
             false,
         ));
@@ -148,14 +148,14 @@ pub struct ValidatorStakeTokensInstructionArgs {
 ///   1. `[writable]` holder_rewards_pool
 ///   2. `[writable]` holder_rewards_pool_token_account
 ///   3. `[writable]` validator_stake
-///   4. `[writable]` validator_stake_authority
+///   4. `[]` validator_stake_authority
 ///   5. `[writable]` source_token_account
 ///   6. `[signer]` source_token_account_authority
 ///   7. `[]` mint
-///   8. `[]` vault_pda
+///   8. `[writable]` vault_pda
 ///   9. `[writable]` vault
 ///   10. `[writable]` vault_holder_rewards
-///   11. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
+///   11. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 ///   12. `[]` rewards_program
 #[derive(Clone, Debug, Default)]
 pub struct ValidatorStakeTokensBuilder {
@@ -267,7 +267,7 @@ impl ValidatorStakeTokensBuilder {
         self.vault_holder_rewards = Some(vault_holder_rewards);
         self
     }
-    /// `[optional account, default to 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb']`
+    /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
     /// Token program
     #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
@@ -333,7 +333,7 @@ impl ValidatorStakeTokensBuilder {
                 .vault_holder_rewards
                 .expect("vault_holder_rewards is not set"),
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
-                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
             )),
             rewards_program: self.rewards_program.expect("rewards_program is not set"),
         };
@@ -483,7 +483,7 @@ impl<'a, 'b> ValidatorStakeTokensCpi<'a, 'b> {
             *self.validator_stake.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.validator_stake_authority.key,
             false,
         ));
@@ -499,7 +499,7 @@ impl<'a, 'b> ValidatorStakeTokensCpi<'a, 'b> {
             *self.mint.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             *self.vault_pda.key,
             false,
         ));
@@ -572,11 +572,11 @@ impl<'a, 'b> ValidatorStakeTokensCpi<'a, 'b> {
 ///   1. `[writable]` holder_rewards_pool
 ///   2. `[writable]` holder_rewards_pool_token_account
 ///   3. `[writable]` validator_stake
-///   4. `[writable]` validator_stake_authority
+///   4. `[]` validator_stake_authority
 ///   5. `[writable]` source_token_account
 ///   6. `[signer]` source_token_account_authority
 ///   7. `[]` mint
-///   8. `[]` vault_pda
+///   8. `[writable]` vault_pda
 ///   9. `[writable]` vault
 ///   10. `[writable]` vault_holder_rewards
 ///   11. `[]` token_program

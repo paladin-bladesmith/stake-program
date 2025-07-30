@@ -104,7 +104,7 @@ pub fn process_harvest_holder_rewards(
         &paladin_rewards_program_client::instructions::HarvestRewards {
             // NB: Account correctness validated by paladin rewards program.
             holder_rewards_pool: *ctx.accounts.holder_rewards_pool.key,
-            holder_rewards_pool_token_account_info: *ctx
+            holder_rewards_pool_token_account: *ctx
                 .accounts
                 .holder_rewards_pool_token_account
                 .key,

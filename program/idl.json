@@ -201,7 +201,7 @@
         },
         {
           "name": "validatorStakeAuthority",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false,
           "docs": [
             "Validator stake account"
@@ -233,7 +233,7 @@
         },
         {
           "name": "vaultPda",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false,
           "docs": [
             "Stake vault pda"
@@ -727,7 +727,7 @@
         },
         {
           "name": "vaultPda",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false,
           "docs": [
             "Stake vault pda"
@@ -896,6 +896,22 @@
           ]
         },
         {
+          "name": "holderRewardsPool",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Holder rewards pool account"
+          ]
+        },
+        {
+          "name": "holderRewardsPoolTokenAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Holder rewards pool account token account"
+          ]
+        },
+        {
           "name": "stake",
           "isMut": true,
           "isSigner": false,
@@ -920,7 +936,7 @@
           ]
         },
         {
-          "name": "vaultAuthority",
+          "name": "vaultPda",
           "isMut": true,
           "isSigner": false,
           "docs": [
@@ -957,6 +973,14 @@
           "isSigner": false,
           "docs": [
             "Token program"
+          ]
+        },
+        {
+          "name": "rewardsProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Paladin rewards program"
           ]
         }
       ],
