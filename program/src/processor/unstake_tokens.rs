@@ -120,7 +120,7 @@ pub fn process_unstake_tokens<'info>(
         StakeError::InvalidAuthority,
         "stake_authority"
     );
-    
+
     // mint
     // - must match the stake vault mint
     require!(

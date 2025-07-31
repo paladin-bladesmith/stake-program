@@ -2703,7 +2703,7 @@ dependencies = [
 [[package]]
 name = "paladin-rewards-program-client"
 version = "0.0.1"
-source = "git+https://github.com/Art3miX/rewards-program?branch=art3mix/fix#1469d28a0105ce9b3d14c7955e338bf93f27d468"
+source = "git+https://github.com/paladin-bladesmith/rewards-program#daf05937fae1073ebcfbca3f173aa5f44309b78f"
 dependencies = [
  "borsh 0.10.4",
  "num-derive 0.3.3",

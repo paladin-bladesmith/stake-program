@@ -225,8 +225,9 @@ pub enum StakeInstruction {
     )]
     #[account(
         5,
-        name = "vault_authority",
-        desc = "Vault authority"
+        writable,
+        name = "vault_pda",
+        desc = "Vault pda"
     )]
     #[account(
         6,

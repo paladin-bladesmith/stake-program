@@ -10,7 +10,6 @@ use paladin_stake_program_client::{
         find_sol_staker_authority_override_pda, find_sol_staker_stake_pda, find_validator_stake_pda,
     },
 };
-use setup::{config::create_config, setup, vote::create_vote_account};
 use solana_program_test::tokio;
 use solana_sdk::{
     account::{Account, AccountSharedData},
@@ -24,8 +23,10 @@ use solana_sdk::{
 
 use crate::setup::{
     config::{get_duna_hash, ConfigManager},
+    setup,
     stake::{create_stake_account, delegate_stake_account},
     validator_stake::ValidatorStakeManager,
+    vote::create_vote_account,
     DUNA_PROGRAM_ID,
 };
 
@@ -34,12 +35,13 @@ async fn fail_initialize_validator_stake_unintialized_duna_pda() {
     let mut context = setup(&[]).await;
 
     // Given a config account and a validator's vote account.
-    let config = create_config(&mut context).await;
+    let config_manager = ConfigManager::new(&mut context).await;
+    let authority = Keypair::new();
     let validator = Pubkey::new_unique();
-    let validator_vote = create_vote_account(&mut context, &validator, &validator).await;
+    let validator_vote = create_vote_account(&mut context, &validator, &authority.pubkey()).await;
 
     // Set duna document PDA uninitialized.
-    let (duna_document_pda, _) = find_duna_document_pda(&validator, &get_duna_hash());
+    let (duna_document_pda, _) = find_duna_document_pda(&authority.pubkey(), &get_duna_hash());
 
     context.set_account(
         &duna_document_pda,
@@ -52,7 +54,7 @@ async fn fail_initialize_validator_stake_unintialized_duna_pda() {
     );
 
     // When we initialize the stake account.
-    let (stake_pda, _) = find_validator_stake_pda(&validator_vote, &config);
+    let (stake_pda, _) = find_validator_stake_pda(&validator_vote, &config_manager.config);
     let transfer_ix = system_instruction::transfer(
         &context.payer.pubkey(),
         &stake_pda,
@@ -65,7 +67,7 @@ async fn fail_initialize_validator_stake_unintialized_duna_pda() {
     );
 
     let initialize_ix = InitializeValidatorStakeBuilder::new()
-        .config(config)
+        .config(config_manager.config)
         .validator_stake(stake_pda)
         .validator_vote(validator_vote)
         .duna_document_pda(duna_document_pda)

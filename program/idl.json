@@ -327,11 +327,11 @@
           ]
         },
         {
-          "name": "vaultAuthority",
-          "isMut": false,
+          "name": "vaultPda",
+          "isMut": true,
           "isSigner": false,
           "docs": [
-            "Vault authority"
+            "Vault pda"
           ]
         },
         {
