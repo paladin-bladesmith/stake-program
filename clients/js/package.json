@@ -41,6 +41,7 @@
     "@solana/eslint-config-solana": "^3.0.0",
     "@solana/web3.js": "2.0.0-preview.3",
     "@solana/webcrypto-ed25519-polyfill": "2.0.0-preview.3",
+    "@types/node": "^24.1.0",
     "@typescript-eslint/eslint-plugin": "^7.3.1",
     "@typescript-eslint/parser": "^7.3.1",
     "ava": "^6.1.2",
@@ -53,7 +54,9 @@
     "typescript": "^5.4.2"
   },
   "ava": {
-    "nodeArguments": ["--no-warnings"],
+    "nodeArguments": [
+      "--no-warnings"
+    ],
     "require": [
       "@solana/webcrypto-ed25519-polyfill"
     ],
