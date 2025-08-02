@@ -3,14 +3,14 @@ import {
   Commitment,
   CompilableTransactionMessage,
   TransactionMessageWithBlockhashLifetime,
-  ProgramDerivedAddress,
+  // ProgramDerivedAddress,
   Rpc,
   RpcSubscriptions,
   SolanaRpcApi,
   SolanaRpcSubscriptionsApi,
   TransactionSigner,
   airdropFactory,
-  appendTransactionMessageInstruction,
+  // appendTransactionMessageInstruction,
   createSolanaRpc,
   createSolanaRpcSubscriptions,
   createTransactionMessage,
@@ -23,7 +23,7 @@ import {
   setTransactionMessageLifetimeUsingBlockhash,
   signTransactionMessageWithSigners,
 } from '@solana/web3.js';
-import { findCounterPda, getCreateInstructionAsync } from '../src';
+// import { findCounterPda, getCreateInstructionAsync } from '../src';
 
 type Client = {
   rpc: Rpc<SolanaRpcApi>;
@@ -82,19 +82,19 @@ export const getBalance = async (client: Client, address: Address) =>
   (await client.rpc.getBalance(address, { commitment: 'confirmed' }).send())
     .value;
 
-export const createCounterForAuthority = async (
-  client: Client,
-  authority: TransactionSigner
-): Promise<ProgramDerivedAddress> => {
-  const [transaction, counterPda, createIx] = await Promise.all([
-    createDefaultTransaction(client, authority),
-    findCounterPda({ authority: authority.address }),
-    getCreateInstructionAsync({ authority }),
-  ]);
-  await pipe(
-    transaction,
-    (tx) => appendTransactionMessageInstruction(createIx, tx),
-    (tx) => signAndSendTransaction(client, tx)
-  );
-  return counterPda;
-};
+// export const createCounterForAuthority = async (
+//   client: Client,
+//   authority: TransactionSigner
+// ): Promise<ProgramDerivedAddress> => {
+//   const [transaction, counterPda, createIx] = await Promise.all([
+//     createDefaultTransaction(client, authority),
+//     findCounterPda({ authority: authority.address }),
+//     getCreateInstructionAsync({ authority }),
+//   ]);
+//   await pipe(
+//     transaction,
+//     (tx) => appendTransactionMessageInstruction(createIx, tx),
+//     (tx) => signAndSendTransaction(client, tx)
+//   );
+//   return counterPda;
+// };
