@@ -32,6 +32,12 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
+export const UNSTAKE_TOKENS_DISCRIMINATOR = 11;
+
+export function getUnstakeTokensDiscriminatorBytes() {
+  return getU8Encoder().encode(UNSTAKE_TOKENS_DISCRIMINATOR);
+}
+
 export type UnstakeTokensInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
@@ -111,7 +117,7 @@ export function getUnstakeTokensInstructionDataEncoder(): Encoder<UnstakeTokensI
       ['discriminator', getU8Encoder()],
       ['amount', getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 11 })
+    (value) => ({ ...value, discriminator: UNSTAKE_TOKENS_DISCRIMINATOR })
   );
 }
 
@@ -186,6 +192,8 @@ export function getUnstakeTokensInstruction<
   TAccountDestinationTokenAccount extends string,
   TAccountTokenProgram extends string,
   TAccountRewardsProgram extends string,
+  TProgramAddress extends
+    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: UnstakeTokensInput<
     TAccountConfig,
@@ -200,9 +208,10 @@ export function getUnstakeTokensInstruction<
     TAccountDestinationTokenAccount,
     TAccountTokenProgram,
     TAccountRewardsProgram
-  >
+  >,
+  config?: { programAddress?: TProgramAddress }
 ): UnstakeTokensInstruction<
-  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+  TProgramAddress,
   TAccountConfig,
   TAccountHolderRewardsPool,
   TAccountHolderRewardsPoolTokenAccount,
@@ -217,7 +226,8 @@ export function getUnstakeTokensInstruction<
   TAccountRewardsProgram
 > {
   // Program address.
-  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -281,7 +291,7 @@ export function getUnstakeTokensInstruction<
       args as UnstakeTokensInstructionDataArgs
     ),
   } as UnstakeTokensInstruction<
-    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+    TProgramAddress,
     TAccountConfig,
     TAccountHolderRewardsPool,
     TAccountHolderRewardsPoolTokenAccount,

@@ -35,6 +35,12 @@ import {
   type ConfigFieldArgs,
 } from '../types';
 
+export const UPDATE_CONFIG_DISCRIMINATOR = 7;
+
+export function getUpdateConfigDiscriminatorBytes() {
+  return getU8Encoder().encode(UPDATE_CONFIG_DISCRIMINATOR);
+}
+
 export type UpdateConfigInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
@@ -68,7 +74,7 @@ export function getUpdateConfigInstructionDataEncoder(): Encoder<UpdateConfigIns
       ['discriminator', getU8Encoder()],
       ['configField', getConfigFieldEncoder()],
     ]),
-    (value) => ({ ...value, discriminator: 7 })
+    (value) => ({ ...value, discriminator: UPDATE_CONFIG_DISCRIMINATOR })
   );
 }
 
@@ -103,15 +109,19 @@ export type UpdateConfigInput<
 export function getUpdateConfigInstruction<
   TAccountConfig extends string,
   TAccountConfigAuthority extends string,
+  TProgramAddress extends
+    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
-  input: UpdateConfigInput<TAccountConfig, TAccountConfigAuthority>
+  input: UpdateConfigInput<TAccountConfig, TAccountConfigAuthority>,
+  config?: { programAddress?: TProgramAddress }
 ): UpdateConfigInstruction<
-  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+  TProgramAddress,
   TAccountConfig,
   TAccountConfigAuthority
 > {
   // Program address.
-  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -140,7 +150,7 @@ export function getUpdateConfigInstruction<
       args as UpdateConfigInstructionDataArgs
     ),
   } as UpdateConfigInstruction<
-    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+    TProgramAddress,
     TAccountConfig,
     TAccountConfigAuthority
   >;

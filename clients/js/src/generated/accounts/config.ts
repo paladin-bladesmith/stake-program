@@ -48,7 +48,7 @@ import {
   getNullableAddressEncoder,
   type NullableAddress,
   type NullableAddressArgs,
-} from '../../hooked';
+} from '../types';
 
 export type Config = {
   discriminator: Array<number>;

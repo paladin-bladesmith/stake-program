@@ -38,6 +38,12 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
+export const INITIALIZE_CONFIG_DISCRIMINATOR = 0;
+
+export function getInitializeConfigDiscriminatorBytes() {
+  return getU8Encoder().encode(INITIALIZE_CONFIG_DISCRIMINATOR);
+}
+
 export type InitializeConfigInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
@@ -119,7 +125,7 @@ export function getInitializeConfigInstructionDataEncoder(): Encoder<InitializeC
       ['syncRewardsLamports', getU64Encoder()],
       ['dunaDocumentHash', fixEncoderSize(getBytesEncoder(), 32)],
     ]),
-    (value) => ({ ...value, discriminator: 0 })
+    (value) => ({ ...value, discriminator: INITIALIZE_CONFIG_DISCRIMINATOR })
   );
 }
 
@@ -192,6 +198,8 @@ export function getInitializeConfigInstruction<
   TAccountVaultHolderRewards extends string,
   TAccountSystemProgram extends string,
   TAccountRewardsProgram extends string,
+  TProgramAddress extends
+    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: InitializeConfigInput<
     TAccountConfig,
@@ -203,9 +211,10 @@ export function getInitializeConfigInstruction<
     TAccountVaultHolderRewards,
     TAccountSystemProgram,
     TAccountRewardsProgram
-  >
+  >,
+  config?: { programAddress?: TProgramAddress }
 ): InitializeConfigInstruction<
-  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+  TProgramAddress,
   TAccountConfig,
   TAccountMint,
   TAccountHolderRewardsPool,
@@ -217,7 +226,8 @@ export function getInitializeConfigInstruction<
   TAccountRewardsProgram
 > {
   // Program address.
-  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -272,7 +282,7 @@ export function getInitializeConfigInstruction<
       args as InitializeConfigInstructionDataArgs
     ),
   } as InitializeConfigInstruction<
-    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+    TProgramAddress,
     TAccountConfig,
     TAccountMint,
     TAccountHolderRewardsPool,

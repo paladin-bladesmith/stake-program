@@ -32,6 +32,12 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
+export const VALIDATOR_STAKE_TOKENS_DISCRIMINATOR = 2;
+
+export function getValidatorStakeTokensDiscriminatorBytes() {
+  return getU8Encoder().encode(VALIDATOR_STAKE_TOKENS_DISCRIMINATOR);
+}
+
 export type ValidatorStakeTokensInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
@@ -119,7 +125,10 @@ export function getValidatorStakeTokensInstructionDataEncoder(): Encoder<Validat
       ['discriminator', getU8Encoder()],
       ['amount', getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 2 })
+    (value) => ({
+      ...value,
+      discriminator: VALIDATOR_STAKE_TOKENS_DISCRIMINATOR,
+    })
   );
 }
 
@@ -198,6 +207,8 @@ export function getValidatorStakeTokensInstruction<
   TAccountVaultHolderRewards extends string,
   TAccountTokenProgram extends string,
   TAccountRewardsProgram extends string,
+  TProgramAddress extends
+    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: ValidatorStakeTokensInput<
     TAccountConfig,
@@ -213,9 +224,10 @@ export function getValidatorStakeTokensInstruction<
     TAccountVaultHolderRewards,
     TAccountTokenProgram,
     TAccountRewardsProgram
-  >
+  >,
+  config?: { programAddress?: TProgramAddress }
 ): ValidatorStakeTokensInstruction<
-  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+  TProgramAddress,
   TAccountConfig,
   TAccountHolderRewardsPool,
   TAccountHolderRewardsPoolTokenAccount,
@@ -231,7 +243,8 @@ export function getValidatorStakeTokensInstruction<
   TAccountRewardsProgram
 > {
   // Program address.
-  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -303,7 +316,7 @@ export function getValidatorStakeTokensInstruction<
       args as ValidatorStakeTokensInstructionDataArgs
     ),
   } as ValidatorStakeTokensInstruction<
-    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+    TProgramAddress,
     TAccountConfig,
     TAccountHolderRewardsPool,
     TAccountHolderRewardsPoolTokenAccount,

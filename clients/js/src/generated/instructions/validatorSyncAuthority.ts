@@ -26,6 +26,12 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
+export const VALIDATOR_SYNC_AUTHORITY_DISCRIMINATOR = 17;
+
+export function getValidatorSyncAuthorityDiscriminatorBytes() {
+  return getU8Encoder().encode(VALIDATOR_SYNC_AUTHORITY_DISCRIMINATOR);
+}
+
 export type ValidatorSyncAuthorityInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
@@ -56,7 +62,10 @@ export type ValidatorSyncAuthorityInstructionDataArgs = {};
 export function getValidatorSyncAuthorityInstructionDataEncoder(): Encoder<ValidatorSyncAuthorityInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', getU8Encoder()]]),
-    (value) => ({ ...value, discriminator: 17 })
+    (value) => ({
+      ...value,
+      discriminator: VALIDATOR_SYNC_AUTHORITY_DISCRIMINATOR,
+    })
   );
 }
 
@@ -91,20 +100,24 @@ export function getValidatorSyncAuthorityInstruction<
   TAccountConfig extends string,
   TAccountValidatorStake extends string,
   TAccountValidatorVote extends string,
+  TProgramAddress extends
+    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: ValidatorSyncAuthorityInput<
     TAccountConfig,
     TAccountValidatorStake,
     TAccountValidatorVote
-  >
+  >,
+  config?: { programAddress?: TProgramAddress }
 ): ValidatorSyncAuthorityInstruction<
-  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+  TProgramAddress,
   TAccountConfig,
   TAccountValidatorStake,
   TAccountValidatorVote
 > {
   // Program address.
-  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -127,7 +140,7 @@ export function getValidatorSyncAuthorityInstruction<
     programAddress,
     data: getValidatorSyncAuthorityInstructionDataEncoder().encode({}),
   } as ValidatorSyncAuthorityInstruction<
-    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+    TProgramAddress,
     TAccountConfig,
     TAccountValidatorStake,
     TAccountValidatorVote

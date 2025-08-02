@@ -32,6 +32,12 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
+export const SOL_STAKER_SET_AUTHORITY_OVERRIDE_DISCRIMINATOR = 15;
+
+export function getSolStakerSetAuthorityOverrideDiscriminatorBytes() {
+  return getU8Encoder().encode(SOL_STAKER_SET_AUTHORITY_OVERRIDE_DISCRIMINATOR);
+}
+
 export type SolStakerSetAuthorityOverrideInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
@@ -80,7 +86,10 @@ export function getSolStakerSetAuthorityOverrideInstructionDataEncoder(): Encode
       ['authorityOriginal', getAddressEncoder()],
       ['authorityOverride', getAddressEncoder()],
     ]),
-    (value) => ({ ...value, discriminator: 15 })
+    (value) => ({
+      ...value,
+      discriminator: SOL_STAKER_SET_AUTHORITY_OVERRIDE_DISCRIMINATOR,
+    })
   );
 }
 
@@ -125,22 +134,26 @@ export function getSolStakerSetAuthorityOverrideInstruction<
   TAccountConfigAuthority extends string,
   TAccountSolStakerAuthorityOverride extends string,
   TAccountSystemProgram extends string,
+  TProgramAddress extends
+    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: SolStakerSetAuthorityOverrideInput<
     TAccountConfig,
     TAccountConfigAuthority,
     TAccountSolStakerAuthorityOverride,
     TAccountSystemProgram
-  >
+  >,
+  config?: { programAddress?: TProgramAddress }
 ): SolStakerSetAuthorityOverrideInstruction<
-  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+  TProgramAddress,
   TAccountConfig,
   TAccountConfigAuthority,
   TAccountSolStakerAuthorityOverride,
   TAccountSystemProgram
 > {
   // Program address.
-  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -176,7 +189,7 @@ export function getSolStakerSetAuthorityOverrideInstruction<
       args as SolStakerSetAuthorityOverrideInstructionDataArgs
     ),
   } as SolStakerSetAuthorityOverrideInstruction<
-    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+    TProgramAddress,
     TAccountConfig,
     TAccountConfigAuthority,
     TAccountSolStakerAuthorityOverride,

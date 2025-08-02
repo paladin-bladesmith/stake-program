@@ -32,6 +32,12 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
+export const SLASH_SOL_STAKER_STAKE_DISCRIMINATOR = 12;
+
+export function getSlashSolStakerStakeDiscriminatorBytes() {
+  return getU8Encoder().encode(SLASH_SOL_STAKER_STAKE_DISCRIMINATOR);
+}
+
 export type SlashSolStakerStakeInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
@@ -99,7 +105,10 @@ export function getSlashSolStakerStakeInstructionDataEncoder(): Encoder<SlashSol
       ['discriminator', getU8Encoder()],
       ['amount', getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 12 })
+    (value) => ({
+      ...value,
+      discriminator: SLASH_SOL_STAKER_STAKE_DISCRIMINATOR,
+    })
   );
 }
 
@@ -162,6 +171,8 @@ export function getSlashSolStakerStakeInstruction<
   TAccountVaultHolderRewards extends string,
   TAccountVaultAuthority extends string,
   TAccountTokenProgram extends string,
+  TProgramAddress extends
+    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: SlashSolStakerStakeInput<
     TAccountConfig,
@@ -173,9 +184,10 @@ export function getSlashSolStakerStakeInstruction<
     TAccountVaultHolderRewards,
     TAccountVaultAuthority,
     TAccountTokenProgram
-  >
+  >,
+  config?: { programAddress?: TProgramAddress }
 ): SlashSolStakerStakeInstruction<
-  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+  TProgramAddress,
   TAccountConfig,
   TAccountSolStakerStake,
   TAccountSolStakerStakeAuthority,
@@ -187,7 +199,8 @@ export function getSlashSolStakerStakeInstruction<
   TAccountTokenProgram
 > {
   // Program address.
-  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -239,7 +252,7 @@ export function getSlashSolStakerStakeInstruction<
       args as SlashSolStakerStakeInstructionDataArgs
     ),
   } as SlashSolStakerStakeInstruction<
-    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+    TProgramAddress,
     TAccountConfig,
     TAccountSolStakerStake,
     TAccountSolStakerStakeAuthority,

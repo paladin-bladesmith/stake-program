@@ -32,6 +32,12 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
+export const SOL_STAKER_STAKE_TOKENS_DISCRIMINATOR = 9;
+
+export function getSolStakerStakeTokensDiscriminatorBytes() {
+  return getU8Encoder().encode(SOL_STAKER_STAKE_TOKENS_DISCRIMINATOR);
+}
+
 export type SolStakerStakeTokensInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
@@ -119,7 +125,10 @@ export function getSolStakerStakeTokensInstructionDataEncoder(): Encoder<SolStak
       ['discriminator', getU8Encoder()],
       ['amount', getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 9 })
+    (value) => ({
+      ...value,
+      discriminator: SOL_STAKER_STAKE_TOKENS_DISCRIMINATOR,
+    })
   );
 }
 
@@ -198,6 +207,8 @@ export function getSolStakerStakeTokensInstruction<
   TAccountVaultHolderRewards extends string,
   TAccountTokenProgram extends string,
   TAccountRewardsProgram extends string,
+  TProgramAddress extends
+    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: SolStakerStakeTokensInput<
     TAccountConfig,
@@ -213,9 +224,10 @@ export function getSolStakerStakeTokensInstruction<
     TAccountVaultHolderRewards,
     TAccountTokenProgram,
     TAccountRewardsProgram
-  >
+  >,
+  config?: { programAddress?: TProgramAddress }
 ): SolStakerStakeTokensInstruction<
-  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+  TProgramAddress,
   TAccountConfig,
   TAccountHolderRewardsPool,
   TAccountHolderRewardsPoolTokenAccount,
@@ -231,7 +243,8 @@ export function getSolStakerStakeTokensInstruction<
   TAccountRewardsProgram
 > {
   // Program address.
-  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -303,7 +316,7 @@ export function getSolStakerStakeTokensInstruction<
       args as SolStakerStakeTokensInstructionDataArgs
     ),
   } as SolStakerStakeTokensInstruction<
-    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+    TProgramAddress,
     TAccountConfig,
     TAccountHolderRewardsPool,
     TAccountHolderRewardsPoolTokenAccount,

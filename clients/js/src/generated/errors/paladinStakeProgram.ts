@@ -6,6 +6,14 @@
  * @see https://github.com/kinobi-so/kinobi
  */
 
+import {
+  isProgramError,
+  type Address,
+  type SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM,
+  type SolanaError,
+} from '@solana/web3.js';
+import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
+
 /** AmountGreaterThanZero: Amount cannot be greater than zero */
 export const PALADIN_STAKE_PROGRAM_ERROR__AMOUNT_GREATER_THAN_ZERO = 0x0; // 0
 /** InvalidTokenOwner: Invalid token owner */
@@ -90,7 +98,7 @@ export type PaladinStakeProgramError =
 let paladinStakeProgramErrorMessages:
   | Record<PaladinStakeProgramError, string>
   | undefined;
-if (__DEV__) {
+if (process.env.NODE_ENV !== 'production') {
   paladinStakeProgramErrorMessages = {
     [PALADIN_STAKE_PROGRAM_ERROR__ACTIVE_UNSTAKE_COOLDOWN]: `Active unstake cooldown`,
     [PALADIN_STAKE_PROGRAM_ERROR__AMOUNT_GREATER_THAN_ZERO]: `Amount cannot be greater than zero`,
@@ -124,7 +132,7 @@ if (__DEV__) {
 export function getPaladinStakeProgramErrorMessage(
   code: PaladinStakeProgramError
 ): string {
-  if (__DEV__) {
+  if (process.env.NODE_ENV !== 'production') {
     return (
       paladinStakeProgramErrorMessages as Record<
         PaladinStakeProgramError,
@@ -133,5 +141,23 @@ export function getPaladinStakeProgramErrorMessage(
     )[code];
   }
 
-  return 'Error message not available in production bundles. Compile with `__DEV__` set to true to see more information.';
+  return 'Error message not available in production bundles.';
+}
+
+export function isPaladinStakeProgramError<
+  TProgramErrorCode extends PaladinStakeProgramError,
+>(
+  error: unknown,
+  transactionMessage: {
+    instructions: Record<number, { programAddress: Address }>;
+  },
+  code?: TProgramErrorCode
+): error is SolanaError<typeof SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM> &
+  Readonly<{ context: Readonly<{ code: TProgramErrorCode }> }> {
+  return isProgramError<TProgramErrorCode>(
+    error,
+    transactionMessage,
+    PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+    code
+  );
 }

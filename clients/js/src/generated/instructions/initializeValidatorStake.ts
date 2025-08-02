@@ -27,6 +27,12 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
+export const INITIALIZE_VALIDATOR_STAKE_DISCRIMINATOR = 1;
+
+export function getInitializeValidatorStakeDiscriminatorBytes() {
+  return getU8Encoder().encode(INITIALIZE_VALIDATOR_STAKE_DISCRIMINATOR);
+}
+
 export type InitializeValidatorStakeInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
@@ -67,7 +73,10 @@ export type InitializeValidatorStakeInstructionDataArgs = {};
 export function getInitializeValidatorStakeInstructionDataEncoder(): Encoder<InitializeValidatorStakeInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', getU8Encoder()]]),
-    (value) => ({ ...value, discriminator: 1 })
+    (value) => ({
+      ...value,
+      discriminator: INITIALIZE_VALIDATOR_STAKE_DISCRIMINATOR,
+    })
   );
 }
 
@@ -110,6 +119,8 @@ export function getInitializeValidatorStakeInstruction<
   TAccountValidatorStake extends string,
   TAccountValidatorVote extends string,
   TAccountSystemProgram extends string,
+  TProgramAddress extends
+    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: InitializeValidatorStakeInput<
     TAccountConfig,
@@ -117,9 +128,10 @@ export function getInitializeValidatorStakeInstruction<
     TAccountValidatorStake,
     TAccountValidatorVote,
     TAccountSystemProgram
-  >
+  >,
+  config?: { programAddress?: TProgramAddress }
 ): InitializeValidatorStakeInstruction<
-  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+  TProgramAddress,
   TAccountConfig,
   TAccountDunaDocumentPda,
   TAccountValidatorStake,
@@ -127,7 +139,8 @@ export function getInitializeValidatorStakeInstruction<
   TAccountSystemProgram
 > {
   // Program address.
-  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -163,7 +176,7 @@ export function getInitializeValidatorStakeInstruction<
     programAddress,
     data: getInitializeValidatorStakeInstructionDataEncoder().encode({}),
   } as InitializeValidatorStakeInstruction<
-    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+    TProgramAddress,
     TAccountConfig,
     TAccountDunaDocumentPda,
     TAccountValidatorStake,

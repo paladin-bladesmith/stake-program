@@ -32,6 +32,12 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
+export const SOL_STAKER_MOVE_TOKENS_DISCRIMINATOR = 13;
+
+export function getSolStakerMoveTokensDiscriminatorBytes() {
+  return getU8Encoder().encode(SOL_STAKER_MOVE_TOKENS_DISCRIMINATOR);
+}
+
 export type SolStakerMoveTokensInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
@@ -81,7 +87,10 @@ export function getSolStakerMoveTokensInstructionDataEncoder(): Encoder<SolStake
       ['discriminator', getU8Encoder()],
       ['amount', getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 13 })
+    (value) => ({
+      ...value,
+      discriminator: SOL_STAKER_MOVE_TOKENS_DISCRIMINATOR,
+    })
   );
 }
 
@@ -128,6 +137,8 @@ export function getSolStakerMoveTokensInstruction<
   TAccountSolStakerAuthority extends string,
   TAccountSourceSolStakerStake extends string,
   TAccountDestinationSolStakerStake extends string,
+  TProgramAddress extends
+    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: SolStakerMoveTokensInput<
     TAccountConfig,
@@ -135,9 +146,10 @@ export function getSolStakerMoveTokensInstruction<
     TAccountSolStakerAuthority,
     TAccountSourceSolStakerStake,
     TAccountDestinationSolStakerStake
-  >
+  >,
+  config?: { programAddress?: TProgramAddress }
 ): SolStakerMoveTokensInstruction<
-  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+  TProgramAddress,
   TAccountConfig,
   TAccountVaultHolderRewards,
   TAccountSolStakerAuthority,
@@ -145,7 +157,8 @@ export function getSolStakerMoveTokensInstruction<
   TAccountDestinationSolStakerStake
 > {
   // Program address.
-  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -189,7 +202,7 @@ export function getSolStakerMoveTokensInstruction<
       args as SolStakerMoveTokensInstructionDataArgs
     ),
   } as SolStakerMoveTokensInstruction<
-    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+    TProgramAddress,
     TAccountConfig,
     TAccountVaultHolderRewards,
     TAccountSolStakerAuthority,

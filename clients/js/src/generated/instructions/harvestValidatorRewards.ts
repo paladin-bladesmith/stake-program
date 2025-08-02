@@ -27,6 +27,12 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
+export const HARVEST_VALIDATOR_REWARDS_DISCRIMINATOR = 4;
+
+export function getHarvestValidatorRewardsDiscriminatorBytes() {
+  return getU8Encoder().encode(HARVEST_VALIDATOR_REWARDS_DISCRIMINATOR);
+}
+
 export type HarvestValidatorRewardsInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
@@ -63,7 +69,10 @@ export type HarvestValidatorRewardsInstructionDataArgs = {};
 export function getHarvestValidatorRewardsInstructionDataEncoder(): Encoder<HarvestValidatorRewardsInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', getU8Encoder()]]),
-    (value) => ({ ...value, discriminator: 4 })
+    (value) => ({
+      ...value,
+      discriminator: HARVEST_VALIDATOR_REWARDS_DISCRIMINATOR,
+    })
   );
 }
 
@@ -102,22 +111,26 @@ export function getHarvestValidatorRewardsInstruction<
   TAccountVaultHolderRewards extends string,
   TAccountValidatorStake extends string,
   TAccountValidatorStakeAuthority extends string,
+  TProgramAddress extends
+    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: HarvestValidatorRewardsInput<
     TAccountConfig,
     TAccountVaultHolderRewards,
     TAccountValidatorStake,
     TAccountValidatorStakeAuthority
-  >
+  >,
+  config?: { programAddress?: TProgramAddress }
 ): HarvestValidatorRewardsInstruction<
-  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+  TProgramAddress,
   TAccountConfig,
   TAccountVaultHolderRewards,
   TAccountValidatorStake,
   TAccountValidatorStakeAuthority
 > {
   // Program address.
-  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -148,7 +161,7 @@ export function getHarvestValidatorRewardsInstruction<
     programAddress,
     data: getHarvestValidatorRewardsInstructionDataEncoder().encode({}),
   } as HarvestValidatorRewardsInstruction<
-    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+    TProgramAddress,
     TAccountConfig,
     TAccountVaultHolderRewards,
     TAccountValidatorStake,

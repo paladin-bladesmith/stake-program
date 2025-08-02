@@ -32,6 +32,12 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
+export const SLASH_VALIDATOR_STAKE_DISCRIMINATOR = 5;
+
+export function getSlashValidatorStakeDiscriminatorBytes() {
+  return getU8Encoder().encode(SLASH_VALIDATOR_STAKE_DISCRIMINATOR);
+}
+
 export type SlashValidatorStakeInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
@@ -99,7 +105,10 @@ export function getSlashValidatorStakeInstructionDataEncoder(): Encoder<SlashVal
       ['discriminator', getU8Encoder()],
       ['amount', getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 5 })
+    (value) => ({
+      ...value,
+      discriminator: SLASH_VALIDATOR_STAKE_DISCRIMINATOR,
+    })
   );
 }
 
@@ -162,6 +171,8 @@ export function getSlashValidatorStakeInstruction<
   TAccountVaultAuthority extends string,
   TAccountMint extends string,
   TAccountTokenProgram extends string,
+  TProgramAddress extends
+    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: SlashValidatorStakeInput<
     TAccountConfig,
@@ -173,9 +184,10 @@ export function getSlashValidatorStakeInstruction<
     TAccountVaultAuthority,
     TAccountMint,
     TAccountTokenProgram
-  >
+  >,
+  config?: { programAddress?: TProgramAddress }
 ): SlashValidatorStakeInstruction<
-  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+  TProgramAddress,
   TAccountConfig,
   TAccountValidatorStake,
   TAccountValidatorStakeAuthority,
@@ -187,7 +199,8 @@ export function getSlashValidatorStakeInstruction<
   TAccountTokenProgram
 > {
   // Program address.
-  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -239,7 +252,7 @@ export function getSlashValidatorStakeInstruction<
       args as SlashValidatorStakeInstructionDataArgs
     ),
   } as SlashValidatorStakeInstruction<
-    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+    TProgramAddress,
     TAccountConfig,
     TAccountValidatorStake,
     TAccountValidatorStakeAuthority,

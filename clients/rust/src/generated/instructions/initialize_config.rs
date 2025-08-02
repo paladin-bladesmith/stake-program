@@ -257,7 +257,7 @@ impl InitializeConfigBuilder {
         self.duna_document_hash = Some(duna_document_hash);
         self
     }
-    /// Add an aditional account to the instruction.
+    /// Add an additional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
         &mut self,

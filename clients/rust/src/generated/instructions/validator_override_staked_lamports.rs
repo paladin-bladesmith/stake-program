@@ -165,7 +165,7 @@ impl ValidatorOverrideStakedLamportsBuilder {
         self.amount_min = Some(amount_min);
         self
     }
-    /// Add an aditional account to the instruction.
+    /// Add an additional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
         &mut self,

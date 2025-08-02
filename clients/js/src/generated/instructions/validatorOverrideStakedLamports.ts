@@ -31,6 +31,14 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
+export const VALIDATOR_OVERRIDE_STAKED_LAMPORTS_DISCRIMINATOR = 16;
+
+export function getValidatorOverrideStakedLamportsDiscriminatorBytes() {
+  return getU8Encoder().encode(
+    VALIDATOR_OVERRIDE_STAKED_LAMPORTS_DISCRIMINATOR
+  );
+}
+
 export type ValidatorOverrideStakedLamportsInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
@@ -80,7 +88,10 @@ export function getValidatorOverrideStakedLamportsInstructionDataEncoder(): Enco
       ['discriminator', getU8Encoder()],
       ['amountMin', getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 16 })
+    (value) => ({
+      ...value,
+      discriminator: VALIDATOR_OVERRIDE_STAKED_LAMPORTS_DISCRIMINATOR,
+    })
   );
 }
 
@@ -127,6 +138,8 @@ export function getValidatorOverrideStakedLamportsInstruction<
   TAccountValidatorStake extends string,
   TAccountValidatorStakeAuthority extends string,
   TAccountVaultHolderRewards extends string,
+  TProgramAddress extends
+    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: ValidatorOverrideStakedLamportsInput<
     TAccountConfig,
@@ -134,9 +147,10 @@ export function getValidatorOverrideStakedLamportsInstruction<
     TAccountValidatorStake,
     TAccountValidatorStakeAuthority,
     TAccountVaultHolderRewards
-  >
+  >,
+  config?: { programAddress?: TProgramAddress }
 ): ValidatorOverrideStakedLamportsInstruction<
-  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+  TProgramAddress,
   TAccountConfig,
   TAccountConfigAuthority,
   TAccountValidatorStake,
@@ -144,7 +158,8 @@ export function getValidatorOverrideStakedLamportsInstruction<
   TAccountVaultHolderRewards
 > {
   // Program address.
-  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -185,7 +200,7 @@ export function getValidatorOverrideStakedLamportsInstruction<
       args as ValidatorOverrideStakedLamportsInstructionDataArgs
     ),
   } as ValidatorOverrideStakedLamportsInstruction<
-    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+    TProgramAddress,
     TAccountConfig,
     TAccountConfigAuthority,
     TAccountValidatorStake,

@@ -27,6 +27,12 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
+export const HARVEST_SOL_STAKER_REWARDS_DISCRIMINATOR = 10;
+
+export function getHarvestSolStakerRewardsDiscriminatorBytes() {
+  return getU8Encoder().encode(HARVEST_SOL_STAKER_REWARDS_DISCRIMINATOR);
+}
+
 export type HarvestSolStakerRewardsInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountSolStakeViewProgram extends string | IAccountMeta<string> = string,
@@ -101,7 +107,10 @@ export type HarvestSolStakerRewardsInstructionDataArgs = {};
 export function getHarvestSolStakerRewardsInstructionDataEncoder(): Encoder<HarvestSolStakerRewardsInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', getU8Encoder()]]),
-    (value) => ({ ...value, discriminator: 10 })
+    (value) => ({
+      ...value,
+      discriminator: HARVEST_SOL_STAKER_REWARDS_DISCRIMINATOR,
+    })
   );
 }
 
@@ -172,6 +181,8 @@ export function getHarvestSolStakerRewardsInstruction<
   TAccountCurrentValidatorStakeAuthority extends string,
   TAccountSysvarStakeHistory extends string,
   TAccountKeeperRecipient extends string,
+  TProgramAddress extends
+    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: HarvestSolStakerRewardsInput<
     TAccountSolStakeViewProgram,
@@ -186,9 +197,10 @@ export function getHarvestSolStakerRewardsInstruction<
     TAccountCurrentValidatorStakeAuthority,
     TAccountSysvarStakeHistory,
     TAccountKeeperRecipient
-  >
+  >,
+  config?: { programAddress?: TProgramAddress }
 ): HarvestSolStakerRewardsInstruction<
-  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+  TProgramAddress,
   TAccountSolStakeViewProgram,
   TAccountConfig,
   TAccountVaultHolderRewards,
@@ -203,7 +215,8 @@ export function getHarvestSolStakerRewardsInstruction<
   TAccountKeeperRecipient
 > {
   // Program address.
-  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress =
+    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -277,7 +290,7 @@ export function getHarvestSolStakerRewardsInstruction<
     programAddress,
     data: getHarvestSolStakerRewardsInstructionDataEncoder().encode({}),
   } as HarvestSolStakerRewardsInstruction<
-    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+    TProgramAddress,
     TAccountSolStakeViewProgram,
     TAccountConfig,
     TAccountVaultHolderRewards,
