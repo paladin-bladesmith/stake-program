@@ -78,7 +78,7 @@ kinobi.update(
         k.assertIsNode(node, "structFieldTypeNode");
         return {
           ...node,
-          type: k.definedTypeLinkNode("NullableAddress", "crate"),
+          type: k.definedTypeLinkNode("NullableAddress", "hooked"),
         };
       },
     },
@@ -89,7 +89,7 @@ kinobi.update(
         k.assertIsNode(node, "structFieldTypeNode");
         return {
           ...node,
-          type: k.definedTypeLinkNode("NullableU64", "crate"),
+          type: k.definedTypeLinkNode("NullableU64", "hooked"),
         };
       },
     },
