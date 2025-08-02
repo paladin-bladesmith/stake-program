@@ -36,6 +36,12 @@ import {
   type AuthorityTypeArgs,
 } from '../types';
 
+export const SET_AUTHORITY_DISCRIMINATOR = 6;
+
+export function getSetAuthorityDiscriminatorBytes() {
+  return getU8Encoder().encode(SET_AUTHORITY_DISCRIMINATOR);
+}
+
 export type SetAuthorityInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountAccount extends string | IAccountMeta<string> = string,
@@ -75,7 +81,7 @@ export function getSetAuthorityInstructionDataEncoder(): Encoder<SetAuthorityIns
       ['discriminator', getU8Encoder()],
       ['authorityType', getAuthorityTypeEncoder()],
     ]),
-    (value) => ({ ...value, discriminator: 6 })
+    (value) => ({ ...value, discriminator: SET_AUTHORITY_DISCRIMINATOR })
   );
 }
 

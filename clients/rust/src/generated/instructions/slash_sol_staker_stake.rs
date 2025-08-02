@@ -128,7 +128,7 @@ pub struct SlashSolStakerStakeInstructionArgs {
 ///   5. `[writable]` vault
 ///   6. `[]` vault_holder_rewards
 ///   7. `[]` vault_authority
-///   8. `[optional]` token_program (default to `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb`)
+///   8. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 #[derive(Clone, Debug, Default)]
 pub struct SlashSolStakerStakeBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
@@ -211,7 +211,7 @@ impl SlashSolStakerStakeBuilder {
         self.vault_authority = Some(vault_authority);
         self
     }
-    /// `[optional account, default to 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb']`
+    /// `[optional account, default to 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']`
     /// Token program
     #[inline(always)]
     pub fn token_program(&mut self, token_program: solana_program::pubkey::Pubkey) -> &mut Self {
@@ -223,7 +223,7 @@ impl SlashSolStakerStakeBuilder {
         self.amount = Some(amount);
         self
     }
-    /// Add an aditional account to the instruction.
+    /// Add an additional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
         &mut self,
@@ -257,7 +257,7 @@ impl SlashSolStakerStakeBuilder {
                 .expect("vault_holder_rewards is not set"),
             vault_authority: self.vault_authority.expect("vault_authority is not set"),
             token_program: self.token_program.unwrap_or(solana_program::pubkey!(
-                "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
             )),
         };
         let args = SlashSolStakerStakeInstructionArgs {

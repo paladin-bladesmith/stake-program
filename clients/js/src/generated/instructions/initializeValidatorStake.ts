@@ -27,6 +27,12 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
+export const INITIALIZE_VALIDATOR_STAKE_DISCRIMINATOR = 1;
+
+export function getInitializeValidatorStakeDiscriminatorBytes() {
+  return getU8Encoder().encode(INITIALIZE_VALIDATOR_STAKE_DISCRIMINATOR);
+}
+
 export type InitializeValidatorStakeInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
@@ -67,7 +73,10 @@ export type InitializeValidatorStakeInstructionDataArgs = {};
 export function getInitializeValidatorStakeInstructionDataEncoder(): Encoder<InitializeValidatorStakeInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', getU8Encoder()]]),
-    (value) => ({ ...value, discriminator: 1 })
+    (value) => ({
+      ...value,
+      discriminator: INITIALIZE_VALIDATOR_STAKE_DISCRIMINATOR,
+    })
   );
 }
 

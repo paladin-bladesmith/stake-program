@@ -346,7 +346,7 @@ pub(crate) fn harvest(
     let (derivation, _) = HolderRewards::find_pda(vault_authority);
     require!(
         accounts.vault_holder_rewards.key == &derivation,
-        ProgramError::InvalidSeeds,
+        StakeError::InvalidVaultHolderRewardsSeeds,
         "holder rewards",
     );
     let vault_holder_rewards = HolderRewards::try_from(accounts.vault_holder_rewards)?;

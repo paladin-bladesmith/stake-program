@@ -32,9 +32,19 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
+export const VALIDATOR_STAKE_TOKENS_DISCRIMINATOR = 2;
+
+export function getValidatorStakeTokensDiscriminatorBytes() {
+  return getU8Encoder().encode(VALIDATOR_STAKE_TOKENS_DISCRIMINATOR);
+}
+
 export type ValidatorStakeTokensInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
+  TAccountHolderRewardsPool extends string | IAccountMeta<string> = string,
+  TAccountHolderRewardsPoolTokenAccount extends
+    | string
+    | IAccountMeta<string> = string,
   TAccountValidatorStake extends string | IAccountMeta<string> = string,
   TAccountValidatorStakeAuthority extends
     | string
@@ -44,11 +54,13 @@ export type ValidatorStakeTokensInstruction<
     | string
     | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
+  TAccountVaultPda extends string | IAccountMeta<string> = string,
   TAccountVault extends string | IAccountMeta<string> = string,
   TAccountVaultHolderRewards extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
-    | IAccountMeta<string> = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
+    | IAccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+  TAccountRewardsProgram extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -57,11 +69,17 @@ export type ValidatorStakeTokensInstruction<
       TAccountConfig extends string
         ? WritableAccount<TAccountConfig>
         : TAccountConfig,
+      TAccountHolderRewardsPool extends string
+        ? WritableAccount<TAccountHolderRewardsPool>
+        : TAccountHolderRewardsPool,
+      TAccountHolderRewardsPoolTokenAccount extends string
+        ? WritableAccount<TAccountHolderRewardsPoolTokenAccount>
+        : TAccountHolderRewardsPoolTokenAccount,
       TAccountValidatorStake extends string
         ? WritableAccount<TAccountValidatorStake>
         : TAccountValidatorStake,
       TAccountValidatorStakeAuthority extends string
-        ? WritableAccount<TAccountValidatorStakeAuthority>
+        ? ReadonlyAccount<TAccountValidatorStakeAuthority>
         : TAccountValidatorStakeAuthority,
       TAccountSourceTokenAccount extends string
         ? WritableAccount<TAccountSourceTokenAccount>
@@ -73,6 +91,9 @@ export type ValidatorStakeTokensInstruction<
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
+      TAccountVaultPda extends string
+        ? WritableAccount<TAccountVaultPda>
+        : TAccountVaultPda,
       TAccountVault extends string
         ? WritableAccount<TAccountVault>
         : TAccountVault,
@@ -82,6 +103,9 @@ export type ValidatorStakeTokensInstruction<
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
+      TAccountRewardsProgram extends string
+        ? ReadonlyAccount<TAccountRewardsProgram>
+        : TAccountRewardsProgram,
       ...TRemainingAccounts,
     ]
   >;
@@ -101,7 +125,10 @@ export function getValidatorStakeTokensInstructionDataEncoder(): Encoder<Validat
       ['discriminator', getU8Encoder()],
       ['amount', getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 2 })
+    (value) => ({
+      ...value,
+      discriminator: VALIDATOR_STAKE_TOKENS_DISCRIMINATOR,
+    })
   );
 }
 
@@ -124,17 +151,25 @@ export function getValidatorStakeTokensInstructionDataCodec(): Codec<
 
 export type ValidatorStakeTokensInput<
   TAccountConfig extends string = string,
+  TAccountHolderRewardsPool extends string = string,
+  TAccountHolderRewardsPoolTokenAccount extends string = string,
   TAccountValidatorStake extends string = string,
   TAccountValidatorStakeAuthority extends string = string,
   TAccountSourceTokenAccount extends string = string,
   TAccountSourceTokenAccountAuthority extends string = string,
   TAccountMint extends string = string,
+  TAccountVaultPda extends string = string,
   TAccountVault extends string = string,
   TAccountVaultHolderRewards extends string = string,
   TAccountTokenProgram extends string = string,
+  TAccountRewardsProgram extends string = string,
 > = {
   /** Stake config account */
   config: Address<TAccountConfig>;
+  /** Holder rewards pool account */
+  holderRewardsPool: Address<TAccountHolderRewardsPool>;
+  /** Holder rewards pool account token account */
+  holderRewardsPoolTokenAccount: Address<TAccountHolderRewardsPoolTokenAccount>;
   /** Validator stake account */
   validatorStake: Address<TAccountValidatorStake>;
   /** Validator stake account */
@@ -145,48 +180,64 @@ export type ValidatorStakeTokensInput<
   sourceTokenAccountAuthority: TransactionSigner<TAccountSourceTokenAccountAuthority>;
   /** Stake Token Mint */
   mint: Address<TAccountMint>;
+  /** Stake vault pda */
+  vaultPda: Address<TAccountVaultPda>;
   /** Stake token Vault */
   vault: Address<TAccountVault>;
   /** Holder rewards for the vault account (to facilitate harvest) */
   vaultHolderRewards: Address<TAccountVaultHolderRewards>;
   /** Token program */
   tokenProgram?: Address<TAccountTokenProgram>;
+  /** Paladin rewards program */
+  rewardsProgram: Address<TAccountRewardsProgram>;
   amount: ValidatorStakeTokensInstructionDataArgs['amount'];
 };
 
 export function getValidatorStakeTokensInstruction<
   TAccountConfig extends string,
+  TAccountHolderRewardsPool extends string,
+  TAccountHolderRewardsPoolTokenAccount extends string,
   TAccountValidatorStake extends string,
   TAccountValidatorStakeAuthority extends string,
   TAccountSourceTokenAccount extends string,
   TAccountSourceTokenAccountAuthority extends string,
   TAccountMint extends string,
+  TAccountVaultPda extends string,
   TAccountVault extends string,
   TAccountVaultHolderRewards extends string,
   TAccountTokenProgram extends string,
+  TAccountRewardsProgram extends string,
 >(
   input: ValidatorStakeTokensInput<
     TAccountConfig,
+    TAccountHolderRewardsPool,
+    TAccountHolderRewardsPoolTokenAccount,
     TAccountValidatorStake,
     TAccountValidatorStakeAuthority,
     TAccountSourceTokenAccount,
     TAccountSourceTokenAccountAuthority,
     TAccountMint,
+    TAccountVaultPda,
     TAccountVault,
     TAccountVaultHolderRewards,
-    TAccountTokenProgram
+    TAccountTokenProgram,
+    TAccountRewardsProgram
   >
 ): ValidatorStakeTokensInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
+  TAccountHolderRewardsPool,
+  TAccountHolderRewardsPoolTokenAccount,
   TAccountValidatorStake,
   TAccountValidatorStakeAuthority,
   TAccountSourceTokenAccount,
   TAccountSourceTokenAccountAuthority,
   TAccountMint,
+  TAccountVaultPda,
   TAccountVault,
   TAccountVaultHolderRewards,
-  TAccountTokenProgram
+  TAccountTokenProgram,
+  TAccountRewardsProgram
 > {
   // Program address.
   const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
@@ -194,10 +245,18 @@ export function getValidatorStakeTokensInstruction<
   // Original accounts.
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
+    holderRewardsPool: {
+      value: input.holderRewardsPool ?? null,
+      isWritable: true,
+    },
+    holderRewardsPoolTokenAccount: {
+      value: input.holderRewardsPoolTokenAccount ?? null,
+      isWritable: true,
+    },
     validatorStake: { value: input.validatorStake ?? null, isWritable: true },
     validatorStakeAuthority: {
       value: input.validatorStakeAuthority ?? null,
-      isWritable: true,
+      isWritable: false,
     },
     sourceTokenAccount: {
       value: input.sourceTokenAccount ?? null,
@@ -208,12 +267,14 @@ export function getValidatorStakeTokensInstruction<
       isWritable: false,
     },
     mint: { value: input.mint ?? null, isWritable: false },
+    vaultPda: { value: input.vaultPda ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
     vaultHolderRewards: {
       value: input.vaultHolderRewards ?? null,
       isWritable: true,
     },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    rewardsProgram: { value: input.rewardsProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -226,21 +287,25 @@ export function getValidatorStakeTokensInstruction<
   // Resolve default values.
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
-      'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' as Address<'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'>;
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
       getAccountMeta(accounts.config),
+      getAccountMeta(accounts.holderRewardsPool),
+      getAccountMeta(accounts.holderRewardsPoolTokenAccount),
       getAccountMeta(accounts.validatorStake),
       getAccountMeta(accounts.validatorStakeAuthority),
       getAccountMeta(accounts.sourceTokenAccount),
       getAccountMeta(accounts.sourceTokenAccountAuthority),
       getAccountMeta(accounts.mint),
+      getAccountMeta(accounts.vaultPda),
       getAccountMeta(accounts.vault),
       getAccountMeta(accounts.vaultHolderRewards),
       getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.rewardsProgram),
     ],
     programAddress,
     data: getValidatorStakeTokensInstructionDataEncoder().encode(
@@ -249,14 +314,18 @@ export function getValidatorStakeTokensInstruction<
   } as ValidatorStakeTokensInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
+    TAccountHolderRewardsPool,
+    TAccountHolderRewardsPoolTokenAccount,
     TAccountValidatorStake,
     TAccountValidatorStakeAuthority,
     TAccountSourceTokenAccount,
     TAccountSourceTokenAccountAuthority,
     TAccountMint,
+    TAccountVaultPda,
     TAccountVault,
     TAccountVaultHolderRewards,
-    TAccountTokenProgram
+    TAccountTokenProgram,
+    TAccountRewardsProgram
   >;
 
   return instruction;
@@ -270,22 +339,30 @@ export type ParsedValidatorStakeTokensInstruction<
   accounts: {
     /** Stake config account */
     config: TAccountMetas[0];
+    /** Holder rewards pool account */
+    holderRewardsPool: TAccountMetas[1];
+    /** Holder rewards pool account token account */
+    holderRewardsPoolTokenAccount: TAccountMetas[2];
     /** Validator stake account */
-    validatorStake: TAccountMetas[1];
+    validatorStake: TAccountMetas[3];
     /** Validator stake account */
-    validatorStakeAuthority: TAccountMetas[2];
+    validatorStakeAuthority: TAccountMetas[4];
     /** Token account */
-    sourceTokenAccount: TAccountMetas[3];
+    sourceTokenAccount: TAccountMetas[5];
     /** Owner or delegate of the token account */
-    sourceTokenAccountAuthority: TAccountMetas[4];
+    sourceTokenAccountAuthority: TAccountMetas[6];
     /** Stake Token Mint */
-    mint: TAccountMetas[5];
+    mint: TAccountMetas[7];
+    /** Stake vault pda */
+    vaultPda: TAccountMetas[8];
     /** Stake token Vault */
-    vault: TAccountMetas[6];
+    vault: TAccountMetas[9];
     /** Holder rewards for the vault account (to facilitate harvest) */
-    vaultHolderRewards: TAccountMetas[7];
+    vaultHolderRewards: TAccountMetas[10];
     /** Token program */
-    tokenProgram: TAccountMetas[8];
+    tokenProgram: TAccountMetas[11];
+    /** Paladin rewards program */
+    rewardsProgram: TAccountMetas[12];
   };
   data: ValidatorStakeTokensInstructionData;
 };
@@ -298,7 +375,7 @@ export function parseValidatorStakeTokensInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedValidatorStakeTokensInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 9) {
+  if (instruction.accounts.length < 13) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -312,14 +389,18 @@ export function parseValidatorStakeTokensInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       config: getNextAccount(),
+      holderRewardsPool: getNextAccount(),
+      holderRewardsPoolTokenAccount: getNextAccount(),
       validatorStake: getNextAccount(),
       validatorStakeAuthority: getNextAccount(),
       sourceTokenAccount: getNextAccount(),
       sourceTokenAccountAuthority: getNextAccount(),
       mint: getNextAccount(),
+      vaultPda: getNextAccount(),
       vault: getNextAccount(),
       vaultHolderRewards: getNextAccount(),
       tokenProgram: getNextAccount(),
+      rewardsProgram: getNextAccount(),
     },
     data: getValidatorStakeTokensInstructionDataDecoder().decode(
       instruction.data

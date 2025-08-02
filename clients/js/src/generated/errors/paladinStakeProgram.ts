@@ -6,6 +6,14 @@
  * @see https://github.com/kinobi-so/kinobi
  */
 
+import {
+  isProgramError,
+  type Address,
+  type SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM,
+  type SolanaError,
+} from '@solana/web3.js';
+import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
+
 /** AmountGreaterThanZero: Amount cannot be greater than zero */
 export const PALADIN_STAKE_PROGRAM_ERROR__AMOUNT_GREATER_THAN_ZERO = 0x0; // 0
 /** InvalidTokenOwner: Invalid token owner */
@@ -54,8 +62,10 @@ export const PALADIN_STAKE_PROGRAM_ERROR__INVALID_HOLDER_REWARDS = 0x15; // 21
 export const PALADIN_STAKE_PROGRAM_ERROR__DUNA_DOCUMENT_NOT_INITIALIZED = 0x16; // 22
 /** IncorrectVaultPdaAccount: Incorrect vault PDA account */
 export const PALADIN_STAKE_PROGRAM_ERROR__INCORRECT_VAULT_PDA_ACCOUNT = 0x17; // 23
-/** InvalidVaultPdaOwner: Invalid vault pda  owner */
+/** InvalidVaultPdaOwner: Invalid vault pda owner */
 export const PALADIN_STAKE_PROGRAM_ERROR__INVALID_VAULT_PDA_OWNER = 0x18; // 24
+/** InvalidVaultHolderRewardsSeeds: Invalid vault holder rewards seeds */
+export const PALADIN_STAKE_PROGRAM_ERROR__INVALID_VAULT_HOLDER_REWARDS_SEEDS = 0x19; // 25
 
 export type PaladinStakeProgramError =
   | typeof PALADIN_STAKE_PROGRAM_ERROR__ACTIVE_UNSTAKE_COOLDOWN
@@ -78,6 +88,7 @@ export type PaladinStakeProgramError =
   | typeof PALADIN_STAKE_PROGRAM_ERROR__INVALID_TOKEN_ACCOUNT_EXTENSION
   | typeof PALADIN_STAKE_PROGRAM_ERROR__INVALID_TOKEN_OWNER
   | typeof PALADIN_STAKE_PROGRAM_ERROR__INVALID_TRANSFER_HOOK_PROGRAM_ID
+  | typeof PALADIN_STAKE_PROGRAM_ERROR__INVALID_VAULT_HOLDER_REWARDS_SEEDS
   | typeof PALADIN_STAKE_PROGRAM_ERROR__INVALID_VAULT_PDA_OWNER
   | typeof PALADIN_STAKE_PROGRAM_ERROR__MAXIMUM_DEACTIVATION_AMOUNT_EXCEEDED
   | typeof PALADIN_STAKE_PROGRAM_ERROR__MISSING_TRANSFER_HOOK
@@ -87,7 +98,7 @@ export type PaladinStakeProgramError =
 let paladinStakeProgramErrorMessages:
   | Record<PaladinStakeProgramError, string>
   | undefined;
-if (__DEV__) {
+if (process.env.NODE_ENV !== 'production') {
   paladinStakeProgramErrorMessages = {
     [PALADIN_STAKE_PROGRAM_ERROR__ACTIVE_UNSTAKE_COOLDOWN]: `Active unstake cooldown`,
     [PALADIN_STAKE_PROGRAM_ERROR__AMOUNT_GREATER_THAN_ZERO]: `Amount cannot be greater than zero`,
@@ -109,7 +120,8 @@ if (__DEV__) {
     [PALADIN_STAKE_PROGRAM_ERROR__INVALID_TOKEN_ACCOUNT_EXTENSION]: `Invalid token account extension`,
     [PALADIN_STAKE_PROGRAM_ERROR__INVALID_TOKEN_OWNER]: `Invalid token owner`,
     [PALADIN_STAKE_PROGRAM_ERROR__INVALID_TRANSFER_HOOK_PROGRAM_ID]: `Invalid transfer hook program id`,
-    [PALADIN_STAKE_PROGRAM_ERROR__INVALID_VAULT_PDA_OWNER]: `Invalid vault pda  owner`,
+    [PALADIN_STAKE_PROGRAM_ERROR__INVALID_VAULT_HOLDER_REWARDS_SEEDS]: `Invalid vault holder rewards seeds`,
+    [PALADIN_STAKE_PROGRAM_ERROR__INVALID_VAULT_PDA_OWNER]: `Invalid vault pda owner`,
     [PALADIN_STAKE_PROGRAM_ERROR__MAXIMUM_DEACTIVATION_AMOUNT_EXCEEDED]: `Amount exeeds maximum deactivation amount`,
     [PALADIN_STAKE_PROGRAM_ERROR__MISSING_TRANSFER_HOOK]: `Missing transfer hook`,
     [PALADIN_STAKE_PROGRAM_ERROR__TOTAL_STAKE_AMOUNT_EXCEEDS_SOL_LIMIT]: `Total stake amount exceeds SOL limit`,
@@ -120,7 +132,7 @@ if (__DEV__) {
 export function getPaladinStakeProgramErrorMessage(
   code: PaladinStakeProgramError
 ): string {
-  if (__DEV__) {
+  if (process.env.NODE_ENV !== 'production') {
     return (
       paladinStakeProgramErrorMessages as Record<
         PaladinStakeProgramError,
@@ -129,5 +141,23 @@ export function getPaladinStakeProgramErrorMessage(
     )[code];
   }
 
-  return 'Error message not available in production bundles. Compile with `__DEV__` set to true to see more information.';
+  return 'Error message not available in production bundles.';
+}
+
+export function isPaladinStakeProgramError<
+  TProgramErrorCode extends PaladinStakeProgramError,
+>(
+  error: unknown,
+  transactionMessage: {
+    instructions: Record<number, { programAddress: Address }>;
+  },
+  code?: TProgramErrorCode
+): error is SolanaError<typeof SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM> &
+  Readonly<{ context: Readonly<{ code: TProgramErrorCode }> }> {
+  return isProgramError<TProgramErrorCode>(
+    error,
+    transactionMessage,
+    PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
+    code
+  );
 }

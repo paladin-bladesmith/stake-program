@@ -69,7 +69,7 @@ pub async fn create_holder_rewards_pool(
         ),
         InitializeHolderRewardsPoolBuilder::new()
             .holder_rewards_pool(holder_rewards_pool)
-            .holder_rewards_pool_token_account_info(holder_rewards_pool_token_account)
+            .holder_rewards_pool_token_account(holder_rewards_pool_token_account)
             .mint(*mint)
             .instruction(),
     ];
@@ -106,7 +106,7 @@ pub async fn create_holder_rewards(
         ),
         InitializeHolderRewardsBuilder::new()
             .holder_rewards_pool(*pool)
-            .holder_rewards_pool_token_account_info(holder_rewards_pool_token_account)
+            .holder_rewards_pool_token_account(holder_rewards_pool_token_account)
             .holder_rewards(holder_rewards)
             .mint(*mint)
             .owner(owner.pubkey())

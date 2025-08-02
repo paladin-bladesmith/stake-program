@@ -1,3 +1,4 @@
+use paladin_rewards_program_client::instructions::WithdrawBuilder;
 use solana_program::{
     clock::Clock, entrypoint::ProgramResult, program::invoke_signed, program_error::ProgramError,
     program_pack::Pack, pubkey::Pubkey, sysvar::Sysvar,
@@ -5,14 +6,15 @@ use solana_program::{
 use spl_token::state::Account as TokenAccount;
 use spl_token::{instruction::transfer_checked, state::Mint};
 
+use crate::state::find_vault_pda;
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, UnstakeTokensAccounts},
     processor::{harvest, sync_effective, unpack_initialized_mut, HarvestAccounts},
     require,
     state::{
-        create_vault_pda, find_sol_staker_stake_pda, find_validator_stake_pda,
-        get_vault_pda_signer_seeds, Config, SolStakerStake, ValidatorStake, MAX_BASIS_POINTS,
+        find_sol_staker_stake_pda, find_validator_stake_pda, get_vault_pda_signer_seeds, Config,
+        SolStakerStake, ValidatorStake, MAX_BASIS_POINTS,
     },
 };
 
@@ -48,16 +50,17 @@ pub fn process_unstake_tokens<'info>(
     let vault_borrow = ctx.accounts.vault.try_borrow_data()?;
     let vault = TokenAccount::unpack(&vault_borrow)?;
 
-    // vault authority
-    // - derivation must match
-    let bump = [config.vault_authority_bump];
-    let vault_signer = create_vault_pda(ctx.accounts.config.key, &bump, program_id)?;
+    // Verify vault PDA
+    let (vault_signer, signer_bump) = find_vault_pda(ctx.accounts.config.key, program_id);
+    let signer_bump = [signer_bump];
+    let vault_seeds = get_vault_pda_signer_seeds(ctx.accounts.config.key, &signer_bump);
+
+    // Ensure the provided vault pda address is the correct address
     require!(
-        ctx.accounts.vault_authority.key == &vault_signer,
-        StakeError::InvalidAuthority,
-        "vault authority",
+        ctx.accounts.vault_pda.key == &vault_signer,
+        StakeError::IncorrectVaultPdaAccount,
+        "vault pda"
     );
-    let signer_seeds = get_vault_pda_signer_seeds(ctx.accounts.config.key, &bump);
 
     // stake
     // - owner must be the stake program
@@ -180,13 +183,37 @@ pub fn process_unstake_tokens<'info>(
     drop(mint_borrow);
     drop(vault_borrow);
 
+    // Withdraw the amount from holder rewards
+    invoke_signed(
+        &WithdrawBuilder::new()
+            .holder_rewards_pool(*ctx.accounts.holder_rewards_pool.key)
+            .holder_rewards_pool_token_account(*ctx.accounts.holder_rewards_pool_token_account.key)
+            .owner(*ctx.accounts.vault_pda.key)
+            .token_account(*ctx.accounts.vault.key)
+            .holder_rewards(*ctx.accounts.vault_holder_rewards.key)
+            .mint(*ctx.accounts.mint.key)
+            .token_program(*ctx.accounts.token_program.key)
+            .amount(amount)
+            .instruction(),
+        &[
+            ctx.accounts.holder_rewards_pool.clone(),
+            ctx.accounts.holder_rewards_pool_token_account.clone(),
+            ctx.accounts.vault_holder_rewards.clone(),
+            ctx.accounts.vault.clone(),
+            ctx.accounts.mint.clone(),
+            ctx.accounts.vault_pda.clone(),
+            ctx.accounts.token_program.clone(),
+        ],
+        &[&vault_seeds],
+    )?;
+
     invoke_signed(
         &transfer_checked(
             &spl_token::ID,
             ctx.accounts.vault.key,
             ctx.accounts.mint.key,
             ctx.accounts.destination_token_account.key,
-            ctx.accounts.vault_authority.key,
+            ctx.accounts.vault_pda.key,
             &[],
             amount,
             decimals,
@@ -195,12 +222,11 @@ pub fn process_unstake_tokens<'info>(
             ctx.accounts.vault.clone(),
             ctx.accounts.mint.clone(),
             ctx.accounts.destination_token_account.clone(),
-            ctx.accounts.vault_authority.clone(),
+            ctx.accounts.vault_pda.clone(),
             ctx.accounts.token_program.clone(),
         ],
-        &[&signer_seeds],
+        &[&vault_seeds],
     )?;
 
-    // TODO: Withdraw the amount from holder rewards
     Ok(())
 }

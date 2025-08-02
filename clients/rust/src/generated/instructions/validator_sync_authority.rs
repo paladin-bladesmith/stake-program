@@ -110,7 +110,7 @@ impl ValidatorSyncAuthorityBuilder {
         self.validator_vote = Some(validator_vote);
         self
     }
-    /// Add an aditional account to the instruction.
+    /// Add an additional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
         &mut self,

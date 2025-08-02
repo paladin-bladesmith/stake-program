@@ -1,3 +1,5 @@
+use paladin_rewards_program_client::instructions::DepositBuilder;
+use solana_program::program::invoke_signed;
 use solana_program::{
     entrypoint::ProgramResult, program::invoke, program_error::ProgramError, program_pack::Pack,
     pubkey::Pubkey,
@@ -5,6 +7,7 @@ use solana_program::{
 use spl_token::state::Account as TokenAccount;
 use spl_token::{instruction::transfer_checked, state::Mint};
 
+use crate::state::get_vault_pda_signer_seeds;
 use crate::{
     error::StakeError,
     instruction::accounts::{Context, ValidatorStakeTokensAccounts},
@@ -71,7 +74,7 @@ pub fn process_validator_stake_tokens<'a>(
     );
 
     // Harvest rewards & update last claim tracking.
-    let vault_authority = find_vault_pda(ctx.accounts.config.key, program_id).0;
+    let (vault_signer, signer_bump) = find_vault_pda(ctx.accounts.config.key, program_id);
     harvest(
         HarvestAccounts {
             config: ctx.accounts.config,
@@ -79,10 +82,21 @@ pub fn process_validator_stake_tokens<'a>(
             authority: ctx.accounts.validator_stake_authority,
         },
         config,
-        &vault_authority,
+        &vault_signer,
         &mut stake.delegation,
         None,
     )?;
+
+    // Verify vault PDA
+    let signer_bump = [signer_bump];
+    let vault_seeds = get_vault_pda_signer_seeds(ctx.accounts.config.key, &signer_bump);
+
+    // Ensure the provided vault pda address is the correct address
+    require!(
+        ctx.accounts.vault_pda.key == &vault_signer,
+        StakeError::IncorrectVaultPdaAccount,
+        "vault pda"
+    );
 
     // vault
     // - must be the token account on the stake config account
@@ -145,6 +159,29 @@ pub fn process_validator_stake_tokens<'a>(
         ],
     )?;
 
-    // TODO: Deposit tokens into holder rewards
+    // Deposit tokens into holder rewards
+    invoke_signed(
+        &DepositBuilder::new()
+            .holder_rewards_pool(*ctx.accounts.holder_rewards_pool.key)
+            .holder_rewards_pool_token_account(*ctx.accounts.holder_rewards_pool_token_account.key)
+            .owner(*ctx.accounts.vault_pda.key)
+            .token_account(*ctx.accounts.vault.key)
+            .holder_rewards(*ctx.accounts.vault_holder_rewards.key)
+            .mint(*ctx.accounts.mint.key)
+            .token_program(*ctx.accounts.token_program.key)
+            .amount(amount)
+            .instruction(),
+        &[
+            ctx.accounts.holder_rewards_pool.clone(),
+            ctx.accounts.holder_rewards_pool_token_account.clone(),
+            ctx.accounts.vault_holder_rewards.clone(),
+            ctx.accounts.vault.clone(),
+            ctx.accounts.mint.clone(),
+            ctx.accounts.vault_pda.clone(),
+            ctx.accounts.token_program.clone(),
+        ],
+        &[&vault_seeds],
+    )?;
+
     Ok(())
 }

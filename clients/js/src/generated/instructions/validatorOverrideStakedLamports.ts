@@ -31,6 +31,14 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
+export const VALIDATOR_OVERRIDE_STAKED_LAMPORTS_DISCRIMINATOR = 16;
+
+export function getValidatorOverrideStakedLamportsDiscriminatorBytes() {
+  return getU8Encoder().encode(
+    VALIDATOR_OVERRIDE_STAKED_LAMPORTS_DISCRIMINATOR
+  );
+}
+
 export type ValidatorOverrideStakedLamportsInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
@@ -80,7 +88,10 @@ export function getValidatorOverrideStakedLamportsInstructionDataEncoder(): Enco
       ['discriminator', getU8Encoder()],
       ['amountMin', getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 16 })
+    (value) => ({
+      ...value,
+      discriminator: VALIDATOR_OVERRIDE_STAKED_LAMPORTS_DISCRIMINATOR,
+    })
   );
 }
 

@@ -74,6 +74,17 @@ dependencies = [
 
 [[package]]
 name = "ahash"
+version = "0.7.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "891477e0c6a8957309ee5c45a6368af3ae14bb510732d2684ffa19af310920f9"
+dependencies = [
+ "getrandom 0.2.16",
+ "once_cell",
+ "version_check",
+]
+
+[[package]]
+name = "ahash"
 version = "0.8.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5a15f179cd60c4584b8a8c596927aadc462e27f2ca70c04e0071964a73ba7a75"
@@ -499,7 +510,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "115e54d64eb62cdebad391c19efc9dce4981c690c85a33a12199d99bb9546fee"
 dependencies = [
  "borsh-derive 0.10.4",
- "hashbrown 0.13.2",
+ "hashbrown 0.12.3",
 ]
 
 [[package]]
@@ -1636,6 +1647,9 @@ name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
+dependencies = [
+ "ahash 0.7.8",
+]
 
 [[package]]
 name = "hashbrown"
@@ -1643,7 +1657,7 @@ version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "43a3c133739dddd0d2990f9a4bdf8eb4b21ef50e4851ca85ab661199821d510e"
 dependencies = [
- "ahash",
+ "ahash 0.8.12",
 ]
 
 [[package]]
@@ -2689,7 +2703,7 @@ dependencies = [
 [[package]]
 name = "paladin-rewards-program-client"
 version = "0.0.1"
-source = "git+https://github.com/Art3miX/rewards-program?branch=art3mix/token22-removal#67af82709af27c454d29b94302697c7c9f7e7ae1"
+source = "git+https://github.com/paladin-bladesmith/rewards-program#daf05937fae1073ebcfbca3f173aa5f44309b78f"
 dependencies = [
  "borsh 0.10.4",
  "num-derive 0.3.3",
@@ -3950,7 +3964,7 @@ name = "solana-accounts-db"
 version = "2.1.4"
 source = "git+https://github.com/paladin-bladesmith/agave-patched?rev=45688a23388a06fb54e5982c196d201a25e33e88#45688a23388a06fb54e5982c196d201a25e33e88"
 dependencies = [
- "ahash",
+ "ahash 0.8.12",
  "bincode",
  "blake3",
  "bv",
@@ -4148,7 +4162,7 @@ name = "solana-builtins-default-costs"
 version = "2.1.4"
 source = "git+https://github.com/paladin-bladesmith/agave-patched?rev=45688a23388a06fb54e5982c196d201a25e33e88#45688a23388a06fb54e5982c196d201a25e33e88"
 dependencies = [
- "ahash",
+ "ahash 0.8.12",
  "lazy_static",
  "log",
  "solana-address-lookup-table-program",
@@ -4261,7 +4275,7 @@ name = "solana-cost-model"
 version = "2.1.4"
 source = "git+https://github.com/paladin-bladesmith/agave-patched?rev=45688a23388a06fb54e5982c196d201a25e33e88#45688a23388a06fb54e5982c196d201a25e33e88"
 dependencies = [
- "ahash",
+ "ahash 0.8.12",
  "lazy_static",
  "log",
  "solana-builtins-default-costs",
@@ -4567,7 +4581,7 @@ name = "solana-perf"
 version = "2.1.4"
 source = "git+https://github.com/paladin-bladesmith/agave-patched?rev=45688a23388a06fb54e5982c196d201a25e33e88#45688a23388a06fb54e5982c196d201a25e33e88"
 dependencies = [
- "ahash",
+ "ahash 0.8.12",
  "bincode",
  "bv",
  "caps",
@@ -4952,7 +4966,7 @@ name = "solana-runtime"
 version = "2.1.4"
 source = "git+https://github.com/paladin-bladesmith/agave-patched?rev=45688a23388a06fb54e5982c196d201a25e33e88#45688a23388a06fb54e5982c196d201a25e33e88"
 dependencies = [
- "ahash",
+ "ahash 0.8.12",
  "aquamarine",
  "arrayref",
  "base64 0.22.1",

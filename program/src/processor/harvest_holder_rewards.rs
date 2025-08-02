@@ -74,7 +74,7 @@ pub fn process_harvest_holder_rewards(
     let vault_seeds = get_vault_pda_signer_seeds(ctx.accounts.config.key, &signer_bump);
     let vault_signer = Pubkey::create_program_address(&vault_seeds, program_id)?;
     require!(
-        ctx.accounts.vault_authority.key == &vault_signer,
+        ctx.accounts.vault_pda.key == &vault_signer,
         StakeError::InvalidAuthority,
         "vault authority",
     );
@@ -87,7 +87,7 @@ pub fn process_harvest_holder_rewards(
         ProgramError::InvalidAccountOwner,
         "holder rewards",
     );
-    let (derivation, _) = HolderRewards::find_pda(ctx.accounts.vault_authority.key);
+    let (derivation, _) = HolderRewards::find_pda(ctx.accounts.vault_pda.key);
     require!(
         ctx.accounts.vault_holder_rewards.key == &derivation,
         ProgramError::InvalidSeeds,
@@ -104,13 +104,10 @@ pub fn process_harvest_holder_rewards(
         &paladin_rewards_program_client::instructions::HarvestRewards {
             // NB: Account correctness validated by paladin rewards program.
             holder_rewards_pool: *ctx.accounts.holder_rewards_pool.key,
-            holder_rewards_pool_token_account_info: *ctx
-                .accounts
-                .holder_rewards_pool_token_account
-                .key,
+            holder_rewards_pool_token_account: *ctx.accounts.holder_rewards_pool_token_account.key,
             holder_rewards: *ctx.accounts.vault_holder_rewards.key,
             mint: *ctx.accounts.mint.key,
-            owner: *ctx.accounts.vault_authority.key,
+            owner: *ctx.accounts.vault_pda.key,
         }
         .instruction(),
         &[
@@ -118,13 +115,13 @@ pub fn process_harvest_holder_rewards(
             ctx.accounts.holder_rewards_pool_token_account.clone(),
             ctx.accounts.vault_holder_rewards.clone(),
             ctx.accounts.mint.clone(),
-            ctx.accounts.vault_authority.clone(),
+            ctx.accounts.vault_pda.clone(),
         ],
         &[&vault_seeds],
     )?;
 
     // Withdraw the excess lamports from the vault authority to config.
-    transfer_excess_lamports(ctx.accounts.vault_authority, ctx.accounts.config)?;
+    transfer_excess_lamports(ctx.accounts.vault_pda, ctx.accounts.config)?;
 
     // Update the configs last seen lamports again.
     let mut config = ctx.accounts.config.try_borrow_mut_data()?;

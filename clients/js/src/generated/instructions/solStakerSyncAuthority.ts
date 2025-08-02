@@ -27,6 +27,12 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
+export const SOL_STAKER_SYNC_AUTHORITY_DISCRIMINATOR = 14;
+
+export function getSolStakerSyncAuthorityDiscriminatorBytes() {
+  return getU8Encoder().encode(SOL_STAKER_SYNC_AUTHORITY_DISCRIMINATOR);
+}
+
 export type SolStakerSyncAuthorityInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
@@ -59,7 +65,10 @@ export type SolStakerSyncAuthorityInstructionDataArgs = {};
 export function getSolStakerSyncAuthorityInstructionDataEncoder(): Encoder<SolStakerSyncAuthorityInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', getU8Encoder()]]),
-    (value) => ({ ...value, discriminator: 14 })
+    (value) => ({
+      ...value,
+      discriminator: SOL_STAKER_SYNC_AUTHORITY_DISCRIMINATOR,
+    })
   );
 }
 

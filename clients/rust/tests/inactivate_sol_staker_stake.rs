@@ -6,14 +6,13 @@ use borsh::BorshSerialize;
 use paladin_stake_program_client::{
     accounts::{Config, SolStakerStake, ValidatorStake},
     errors::PaladinStakeProgramError,
-    instructions::UnstakeTokensBuilder,
-    pdas::find_vault_pda,
+    instructions::{SolStakerStakeTokensBuilder, UnstakeTokensBuilder},
 };
 use setup::{
     config::{create_config, ConfigManager},
     setup,
     sol_staker_stake::SolStakerStakeManager,
-    token::{create_associated_token_account, mint_to},
+    token::mint_to,
     validator_stake::ValidatorStakeManager,
 };
 use solana_program_test::{tokio, ProgramTestContext};
@@ -27,7 +26,10 @@ use solana_sdk::{
     sysvar::SysvarId,
     transaction::Transaction,
 };
+use spl_associated_token_account::get_associated_token_address;
 use spl_token::state::Account as TokenAccount;
+
+use crate::setup::config::create_ata;
 
 struct Fixture {
     config_manager: ConfigManager,
@@ -39,22 +41,8 @@ struct Fixture {
 async fn setup_fixture(context: &mut ProgramTestContext, active_cooldown: Option<u64>) -> Fixture {
     // Given a config account (total amount delegated = 100).
     let config_manager = ConfigManager::new(context).await;
-    let mut account = get_account!(context, config_manager.config);
-    let mut config_account = Config::from_bytes(account.data.as_ref()).unwrap();
-    config_account.token_amount_effective = 100;
-    account.data = config_account.try_to_vec().unwrap();
-    context.set_account(&config_manager.config, &account.into());
-
-    // Mint 100 tokens to the config vault.
-    mint_to(
-        context,
-        &config_manager.mint,
-        &config_manager.mint_authority,
-        &config_manager.vault,
-        100,
-    )
-    .await
-    .unwrap();
+    let account = get_account!(context, config_manager.config);
+    let config_account = Config::from_bytes(account.data.as_ref()).unwrap();
 
     // And a validator stake account.
     let validator_stake_manager = ValidatorStakeManager::new(context, &config_manager.config).await;
@@ -68,24 +56,63 @@ async fn setup_fixture(context: &mut ProgramTestContext, active_cooldown: Option
         1_000_000_000,
     )
     .await;
+    // Setup the stake authorities receiving token account.
+    let destination_token_account = get_associated_token_address(
+        &sol_staker_stake_manager.authority.pubkey(),
+        &config_manager.mint,
+    );
+    create_ata(
+        context,
+        &sol_staker_stake_manager.authority.pubkey(),
+        &config_manager.mint,
+    )
+    .await
+    .unwrap();
+
+    // Mint 100 tokens to the config vault.
+    mint_to(
+        context,
+        &config_manager.mint,
+        &config_manager.mint_authority,
+        &destination_token_account,
+        100,
+    )
+    .await
+    .unwrap();
+
+    // Stake
+    let stake_ix = SolStakerStakeTokensBuilder::new()
+        .config(config_manager.config)
+        .holder_rewards_pool(config_manager.rewards_manager.pool)
+        .holder_rewards_pool_token_account(config_manager.rewards_manager.pool_token_account)
+        .sol_staker_stake(sol_staker_stake_manager.stake)
+        .sol_staker_stake_authority(sol_staker_stake_manager.authority.pubkey())
+        .source_token_account(destination_token_account)
+        .source_token_account_authority(sol_staker_stake_manager.authority.pubkey())
+        .mint(config_manager.mint)
+        .vault(config_manager.vault)
+        .vault_pda(config_manager.vault_pda)
+        .vault_holder_rewards(config_manager.vault_holder_rewards)
+        .token_program(spl_token::ID)
+        .rewards_program(paladin_rewards_program_client::ID)
+        .amount(100) // <- stake 100 tokens
+        .instruction();
+    let tx = Transaction::new_signed_with_payer(
+        &[stake_ix],
+        Some(&context.payer.pubkey()),
+        &[&context.payer, &sol_staker_stake_manager.authority],
+        context.last_blockhash,
+    );
+    context.banks_client.process_transaction(tx).await.unwrap();
+
     let mut account = get_account!(context, sol_staker_stake_manager.stake);
     let mut stake_account = SolStakerStake::from_bytes(account.data.as_ref()).unwrap();
-    stake_account.delegation.staked_amount = 100;
-    stake_account.delegation.effective_amount = 100;
     if let Some(cooldown) = active_cooldown {
         let clock: Clock = bincode::deserialize(&get_account!(context, Clock::id()).data).unwrap();
         stake_account.delegation.unstake_cooldown = clock.unix_timestamp as u64 + cooldown;
     }
     account.data = stake_account.try_to_vec().unwrap();
     context.set_account(&sol_staker_stake_manager.stake, &account.into());
-
-    // Setup the stake authorities receiving token account.
-    let destination_token_account = create_associated_token_account(
-        context,
-        &sol_staker_stake_manager.authority.pubkey(),
-        &config_manager.mint,
-    )
-    .await;
 
     Fixture {
         config_manager,
@@ -108,14 +135,17 @@ async fn inactivate_sol_staker_stake_base() {
     // When we move the deactivated amount to inactive (50 tokens).
     let inactivate_ix = UnstakeTokensBuilder::new()
         .config(config_manager.config)
+        .holder_rewards_pool(config_manager.rewards_manager.pool)
+        .holder_rewards_pool_token_account(config_manager.rewards_manager.pool_token_account)
         .stake(sol_staker_stake_manager.stake)
         .stake_authority(sol_staker_stake_manager.authority.pubkey())
         .vault(config_manager.vault)
-        .vault_authority(find_vault_pda(&config_manager.config).0)
+        .vault_pda(config_manager.vault_pda)
         .vault_holder_rewards(config_manager.vault_holder_rewards)
         .mint(config_manager.mint)
         .destination_token_account(destination_token_account)
         .token_program(spl_token::ID)
+        .rewards_program(paladin_rewards_program_client::ID)
         .amount(5)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
@@ -164,14 +194,17 @@ async fn fail_inactivate_sol_staker_stake_with_wrong_config_for_vault() {
     // When we try to inactivate the stake with the wrong config account.
     let inactivate_ix = UnstakeTokensBuilder::new()
         .config(wrong_config) // <- wrong config
+        .holder_rewards_pool(config_manager.rewards_manager.pool)
+        .holder_rewards_pool_token_account(config_manager.rewards_manager.pool_token_account)
         .stake(sol_staker_stake_manager.stake)
         .stake_authority(sol_staker_stake_manager.authority.pubkey())
         .vault(config_manager.vault)
-        .vault_authority(find_vault_pda(&config_manager.config).0)
+        .vault_pda(config_manager.vault_pda)
         .vault_holder_rewards(config_manager.vault_holder_rewards)
         .mint(config_manager.mint)
         .destination_token_account(destination_token_account)
         .token_program(spl_token::ID)
+        .rewards_program(paladin_rewards_program_client::ID)
         .amount(5)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
@@ -205,14 +238,17 @@ async fn fail_inactivate_sol_staker_stake_with_wrong_config_for_stake() {
     // When we try to inactivate the stake with the wrong config account.
     let inactivate_ix = UnstakeTokensBuilder::new()
         .config(wrong_config.config) // <- wrong config
+        .holder_rewards_pool(wrong_config.rewards_manager.pool)
+        .holder_rewards_pool_token_account(wrong_config.rewards_manager.pool_token_account)
         .stake(sol_staker_stake_manager.stake)
         .stake_authority(sol_staker_stake_manager.authority.pubkey())
         .vault(wrong_config.vault)
-        .vault_authority(find_vault_pda(&wrong_config.config).0)
+        .vault_pda(wrong_config.vault_pda)
         .vault_holder_rewards(wrong_config.vault_holder_rewards)
         .mint(wrong_config.mint)
         .destination_token_account(destination_token_account)
         .token_program(spl_token::ID)
+        .rewards_program(paladin_rewards_program_client::ID)
         .amount(5)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
@@ -255,14 +291,17 @@ async fn fail_inactivate_sol_stake_stake_with_uninitialized_stake_account() {
     // When we try to deactivate from an uninitialized stake account.
     let inactivate_ix = UnstakeTokensBuilder::new()
         .config(config_manager.config)
+        .holder_rewards_pool(config_manager.rewards_manager.pool)
+        .holder_rewards_pool_token_account(config_manager.rewards_manager.pool_token_account)
         .stake(sol_staker_stake_manager.stake)
         .stake_authority(sol_staker_stake_manager.authority.pubkey())
         .vault(config_manager.vault)
-        .vault_authority(find_vault_pda(&config_manager.config).0)
+        .vault_pda(config_manager.vault_pda)
         .vault_holder_rewards(config_manager.vault_holder_rewards)
         .mint(config_manager.mint)
         .destination_token_account(destination_token_account)
         .token_program(spl_token::ID)
+        .rewards_program(paladin_rewards_program_client::ID)
         .amount(5)
         .instruction();
     let tx = Transaction::new_signed_with_payer(
@@ -296,14 +335,17 @@ async fn fail_inactivate_sol_staker_stake_with_active_cooldown() {
     // the cooldown period.
     let inactivate_ix = UnstakeTokensBuilder::new()
         .config(config_manager.config)
+        .holder_rewards_pool(config_manager.rewards_manager.pool)
+        .holder_rewards_pool_token_account(config_manager.rewards_manager.pool_token_account)
         .stake(sol_staker_stake_manager.stake)
         .stake_authority(sol_staker_stake_manager.authority.pubkey())
         .vault(config_manager.vault)
-        .vault_authority(find_vault_pda(&config_manager.config).0)
+        .vault_pda(config_manager.vault_pda)
         .vault_holder_rewards(config_manager.vault_holder_rewards)
         .mint(config_manager.mint)
         .destination_token_account(destination_token_account)
         .token_program(spl_token::ID)
+        .rewards_program(paladin_rewards_program_client::ID)
         .amount(5)
         .instruction();
     let tx = Transaction::new_signed_with_payer(

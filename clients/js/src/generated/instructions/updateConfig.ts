@@ -35,6 +35,12 @@ import {
   type ConfigFieldArgs,
 } from '../types';
 
+export const UPDATE_CONFIG_DISCRIMINATOR = 7;
+
+export function getUpdateConfigDiscriminatorBytes() {
+  return getU8Encoder().encode(UPDATE_CONFIG_DISCRIMINATOR);
+}
+
 export type UpdateConfigInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
@@ -68,7 +74,7 @@ export function getUpdateConfigInstructionDataEncoder(): Encoder<UpdateConfigIns
       ['discriminator', getU8Encoder()],
       ['configField', getConfigFieldEncoder()],
     ]),
-    (value) => ({ ...value, discriminator: 7 })
+    (value) => ({ ...value, discriminator: UPDATE_CONFIG_DISCRIMINATOR })
   );
 }
 

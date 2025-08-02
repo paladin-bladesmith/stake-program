@@ -124,7 +124,7 @@ impl SetAuthorityBuilder {
         self.authority_type = Some(authority_type);
         self
     }
-    /// Add an aditional account to the instruction.
+    /// Add an additional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
         &mut self,

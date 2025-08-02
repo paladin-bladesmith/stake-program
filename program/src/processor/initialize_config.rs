@@ -46,7 +46,7 @@ pub fn process_initialize_config(
         "vault pda"
     );
 
-    // Create empty vault PDA account
+    // Confirm vault PDA account is empty
     require!(
         ctx.accounts.vault_pda.data_is_empty(),
         ProgramError::AccountAlreadyInitialized,
@@ -135,10 +135,7 @@ pub fn process_initialize_config(
         &paladin_rewards_program_client::instructions::InitializeHolderRewards {
             // NB: Account correctness validated by paladin rewards program.
             holder_rewards_pool: *ctx.accounts.holder_rewards_pool.key,
-            holder_rewards_pool_token_account_info: *ctx
-                .accounts
-                .holder_rewards_pool_token_account
-                .key,
+            holder_rewards_pool_token_account: *ctx.accounts.holder_rewards_pool_token_account.key,
             owner: *ctx.accounts.vault_pda.key,
             holder_rewards: *ctx.accounts.vault_holder_rewards.key,
             mint: *ctx.accounts.mint.key,
