@@ -163,8 +163,6 @@ export function getHarvestHolderRewardsInstruction<
   TAccountTokenProgram extends string,
   TAccountPaladinRewardsProgram extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends
-    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: HarvestHolderRewardsInput<
     TAccountConfig,
@@ -177,10 +175,9 @@ export function getHarvestHolderRewardsInstruction<
     TAccountTokenProgram,
     TAccountPaladinRewardsProgram,
     TAccountSystemProgram
-  >,
-  config?: { programAddress?: TProgramAddress }
+  >
 ): HarvestHolderRewardsInstruction<
-  TProgramAddress,
+  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountHolderRewardsPool,
   TAccountHolderRewardsPoolTokenAccount,
@@ -193,8 +190,7 @@ export function getHarvestHolderRewardsInstruction<
   TAccountSystemProgram
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -253,7 +249,7 @@ export function getHarvestHolderRewardsInstruction<
     programAddress,
     data: getHarvestHolderRewardsInstructionDataEncoder().encode({}),
   } as HarvestHolderRewardsInstruction<
-    TProgramAddress,
+    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountHolderRewardsPool,
     TAccountHolderRewardsPoolTokenAccount,

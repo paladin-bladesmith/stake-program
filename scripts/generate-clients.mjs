@@ -1,10 +1,10 @@
 #!/usr/bin/env zx
 import "zx/globals";
 import * as k from "kinobi";
-import { rootNodeFromAnchor } from "@kinobi-so/nodes-from-anchor";
-import { renderVisitor as renderJavaScriptVisitor } from "@kinobi-so/renderers-js";
-import { renderVisitor as renderRustVisitor } from "@kinobi-so/renderers-rust";
-import { getAllProgramIdls } from "./utils.mjs";
+import {rootNodeFromAnchor} from "@kinobi-so/nodes-from-anchor";
+import {renderVisitor as renderJavaScriptVisitor} from "@kinobi-so/renderers-js";
+import {renderVisitor as renderRustVisitor} from "@kinobi-so/renderers-rust";
+import {getAllProgramIdls} from "./utils.mjs";
 
 // Instanciate Kinobi.
 const [idl, ...additionalIdls] = getAllProgramIdls().map((idl) =>
@@ -78,7 +78,7 @@ kinobi.update(
         k.assertIsNode(node, "structFieldTypeNode");
         return {
           ...node,
-          type: k.definedTypeLinkNode("nullableAddress", "hooked"),
+          type: k.definedTypeLinkNode("NullableAddress", "crate"),
         };
       },
     },
@@ -89,7 +89,7 @@ kinobi.update(
         k.assertIsNode(node, "structFieldTypeNode");
         return {
           ...node,
-          type: k.definedTypeLinkNode("nullableU64", "hooked"),
+          type: k.definedTypeLinkNode("NullableU64", "crate"),
         };
       },
     },
@@ -147,7 +147,8 @@ kinobi.update(
     },
     {
       // SlashSolStakerStake
-      select: "[instructionNode]slashSolStakerStake.[instructionArgumentNode]args",
+      select:
+        "[instructionNode]slashSolStakerStake.[instructionArgumentNode]args",
       transform: (node) => {
         k.assertIsNode(node, "instructionArgumentNode");
         return {
@@ -158,7 +159,8 @@ kinobi.update(
     },
     {
       // SlashValidatorStake
-      select: "[instructionNode]slashValidatorStake.[instructionArgumentNode]args",
+      select:
+        "[instructionNode]slashValidatorStake.[instructionArgumentNode]args",
       transform: (node) => {
         k.assertIsNode(node, "instructionArgumentNode");
         return {
@@ -169,7 +171,8 @@ kinobi.update(
     },
     {
       // SolStakerStakeTokens
-      select: "[instructionNode]solStakerStakeTokens.[instructionArgumentNode]args",
+      select:
+        "[instructionNode]solStakerStakeTokens.[instructionArgumentNode]args",
       transform: (node) => {
         k.assertIsNode(node, "instructionArgumentNode");
         return {
@@ -180,7 +183,8 @@ kinobi.update(
     },
     {
       // StakeTokens
-      select: "[instructionNode]validatorStakeTokens.[instructionArgumentNode]args",
+      select:
+        "[instructionNode]validatorStakeTokens.[instructionArgumentNode]args",
       transform: (node) => {
         k.assertIsNode(node, "instructionArgumentNode");
         return {
@@ -233,5 +237,9 @@ kinobi.accept(
   renderRustVisitor(path.join(rustClient, "src", "generated"), {
     formatCode: true,
     crateFolder: rustClient,
+    externalTypes: {
+      nullableAddress: "crate::NullableAddress",
+      nullableU64: "crate::NullableU64",
+    }
   })
 );

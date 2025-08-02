@@ -111,26 +111,22 @@ export function getHarvestValidatorRewardsInstruction<
   TAccountVaultHolderRewards extends string,
   TAccountValidatorStake extends string,
   TAccountValidatorStakeAuthority extends string,
-  TProgramAddress extends
-    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: HarvestValidatorRewardsInput<
     TAccountConfig,
     TAccountVaultHolderRewards,
     TAccountValidatorStake,
     TAccountValidatorStakeAuthority
-  >,
-  config?: { programAddress?: TProgramAddress }
+  >
 ): HarvestValidatorRewardsInstruction<
-  TProgramAddress,
+  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountVaultHolderRewards,
   TAccountValidatorStake,
   TAccountValidatorStakeAuthority
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -161,7 +157,7 @@ export function getHarvestValidatorRewardsInstruction<
     programAddress,
     data: getHarvestValidatorRewardsInstructionDataEncoder().encode({}),
   } as HarvestValidatorRewardsInstruction<
-    TProgramAddress,
+    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountVaultHolderRewards,
     TAccountValidatorStake,

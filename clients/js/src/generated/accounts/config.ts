@@ -48,7 +48,7 @@ import {
   getNullableAddressEncoder,
   type NullableAddress,
   type NullableAddressArgs,
-} from '../types';
+} from 'crate';
 
 export type Config = {
   discriminator: Array<number>;

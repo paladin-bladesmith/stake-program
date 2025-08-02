@@ -120,24 +120,20 @@ export function getSetAuthorityInstruction<
   TAccountAccount extends string,
   TAccountAuthority extends string,
   TAccountNewAuthority extends string,
-  TProgramAddress extends
-    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: SetAuthorityInput<
     TAccountAccount,
     TAccountAuthority,
     TAccountNewAuthority
-  >,
-  config?: { programAddress?: TProgramAddress }
+  >
 ): SetAuthorityInstruction<
-  TProgramAddress,
+  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountAccount,
   TAccountAuthority,
   TAccountNewAuthority
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -165,7 +161,7 @@ export function getSetAuthorityInstruction<
       args as SetAuthorityInstructionDataArgs
     ),
   } as SetAuthorityInstruction<
-    TProgramAddress,
+    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountAccount,
     TAccountAuthority,
     TAccountNewAuthority

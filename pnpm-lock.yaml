@@ -7,25 +7,29 @@ settings:
 importers:
 
   .:
+    dependencies:
+      pnpm:
+        specifier: ^10.14.0
+        version: 10.14.0
     devDependencies:
       '@iarna/toml':
         specifier: ^2.2.5
         version: 2.2.5
       '@kinobi-so/nodes-from-anchor':
-        specifier: ^0.22.0
-        version: 0.22.0
+        specifier: 0.21.3
+        version: 0.21.3
       '@kinobi-so/renderers-js':
-        specifier: ^0.22.0
-        version: 0.22.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.4.5)
+        specifier: 0.21.8
+        version: 0.21.8(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.4.5)
       '@kinobi-so/renderers-rust':
-        specifier: ^0.22.0
-        version: 0.22.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.4.5)
+        specifier: 0.21.8
+        version: 0.21.8(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.4.5)
       '@metaplex-foundation/shank-js':
         specifier: ^0.1.7
         version: 0.1.7
       kinobi:
-        specifier: ^0.22.0
-        version: 0.22.0
+        specifier: 0.21.5
+        version: 0.21.5
       typescript:
         specifier: ^5.4.2
         version: 5.4.5
@@ -38,36 +42,58 @@ packages:
   '@iarna/toml@2.2.5':
     resolution: {integrity: sha512-trnsAYxU3xnS1gPHPyU961coFyLkh4gAD/0zQ5mymY4yOZ+CYvsPqUbOFSw0aDM4y0tV7tiFxL/1XfXPNC6IPg==}
 
-  '@kinobi-so/errors@0.22.0':
-    resolution: {integrity: sha512-E78W0dR5X0fqRcEVsYRlI/wICIIIVa3ACzZEf2KLrUgOdnQ7U2xqtfnbKGlildnejR/43RgqKw67nYy8cQwpyA==}
+  '@kinobi-so/errors@0.21.4':
+    resolution: {integrity: sha512-Ffu/l5SGGLbSf451on+hHLWKGm8fpoWocCh6+RTftNSe/OHKnz9K0f2esX7ny83Vckpf77sVub1JXwOMW/hW/w==}
     hasBin: true
 
-  '@kinobi-so/node-types@0.22.0':
-    resolution: {integrity: sha512-vC/0eBV+L+ILTQG0Kyk0QcNZR7Vl2sK+a93/bKFJyjJVQ0rDikOwcquYRFQtfovQD0zOjPJddkGPb2N03JgaNQ==}
+  '@kinobi-so/errors@0.21.5':
+    resolution: {integrity: sha512-IqPMOe0qbmuBI8vux9HU+tvx+SaCVk32g5GnRvYxJh6OmpYOEuJRg02nT2XtYPeYWB2IFKJ1X2AnwTbEz9Vx8Q==}
+    hasBin: true
 
-  '@kinobi-so/nodes-from-anchor@0.22.0':
-    resolution: {integrity: sha512-QNBZ5bxWl24jJQ+DwcAuMulawxW0B0Q2eEMrauFgXIa5ztXw4txIVydkwSaOdTivE2yhQXR06pg5jLIF/zJ3Rw==}
+  '@kinobi-so/node-types@0.21.4':
+    resolution: {integrity: sha512-/6En6kVU21/skBlKbN6EzD5saDFzFoezDYoonbWurtXJcelTIuqz3D1WwR3iNOXvWco64cqpHG6mM7zdF5WsHA==}
 
-  '@kinobi-so/nodes@0.22.0':
-    resolution: {integrity: sha512-wsLr36s0sYS8zQ9x9TOeaxhLW+T/revpbXhpZTTqb/2L+CGINtuvUgxzQWKHPzLpomRje/1yqwOYpj5QXY3CLg==}
+  '@kinobi-so/node-types@0.21.5':
+    resolution: {integrity: sha512-OKpk08+nTsO25xSZBT+PXpjx2FOHfn7jr0CbnQZ+ulfRa+dr3eSf7zSn+0ipKjG+FFWUUGpizgSkgpTQMjAqLA==}
 
-  '@kinobi-so/renderers-core@0.22.0':
-    resolution: {integrity: sha512-m151uCRuCsgzA7mdT+3GYVzpct4h7dEGydda+h6UDbsuk7dcA6aVx4OVXYhF0TY/xKhw4MTBzluvwrcAZzFzMA==}
+  '@kinobi-so/nodes-from-anchor@0.21.2':
+    resolution: {integrity: sha512-c7lDg9MH4LKod5PwNC4Lvsugx3Dj6bqgw5kQFLUYDdIWVRdR2Z8JGK/LhPXceiDvw2bLnjy2Mmroz8zh2/0cuA==}
 
-  '@kinobi-so/renderers-js@0.22.0':
-    resolution: {integrity: sha512-ASgjgXbTmKLf8SWQlTJe5RKqpe/t0Jk0AQ2pN1yWfF1AiT8ogMjHnkV1yYDJ5oqCNiAnwO4R6TS8bzE77AEFjw==}
+  '@kinobi-so/nodes-from-anchor@0.21.3':
+    resolution: {integrity: sha512-mar3UeJNx61k77NhucqYIwUXZvC0b6mhLYFksQY0Wz+gCFTWLr8exxB7KmgSycT+XuFNOydpYnEOeMa5lUywBQ==}
 
-  '@kinobi-so/renderers-rust@0.22.0':
-    resolution: {integrity: sha512-1tgbWWivfXepZefwVTwvYfzlebUILmDGRMI/9t6bYNPDh1G0UqH0aHig2qm8bKUIMBiU0wmnFLOAkCCcmld3Cw==}
+  '@kinobi-so/nodes@0.21.4':
+    resolution: {integrity: sha512-QQbmSsOcfL2GhCMkHP33XihzUDS12jAKMvhNyTzhdpI1QPS40wvMwYfA8UXFtc5B/4aKhneEGUok7QgF4IZXkg==}
 
-  '@kinobi-so/validators@0.22.0':
-    resolution: {integrity: sha512-sx03aFRyvOxfx6pCjPF/W7hpzU4buylkhZXd1/HqRIHJz17DMvWDV4y6uczb3mDroVj4J2Wq+2XWlwGU9H3FBg==}
+  '@kinobi-so/nodes@0.21.5':
+    resolution: {integrity: sha512-6iu9/GXrVs14olVeUAAw73BK2js7RGefVGHBDF6PKcvw6i0DlxhPkZiNOSpzweaeTmZsowHO7xEJKov0446fbQ==}
 
-  '@kinobi-so/visitors-core@0.22.0':
-    resolution: {integrity: sha512-PM9UNzWEAHjctgtR7qZFeGAqQWxVqfidVbYMFcRxUvd411+Yj+i0ByrHBe8J2N7mwlwiqYwcDBJDLE2Yr2ljuw==}
+  '@kinobi-so/renderers-core@0.21.2':
+    resolution: {integrity: sha512-czVR9dfKWwZ5YQB1N83+whsh9g1zCS8rMJZ0t/T3Vd7P0uuKOOGL9ej/WMQZ7qQhCLTDJDEn5Lqf2JInArzqLg==}
 
-  '@kinobi-so/visitors@0.22.0':
-    resolution: {integrity: sha512-BN1CKgSmZ+pLKAao2YDfo2cqS6TLxGaxgqAL7oeItlKSZdOAoJMmieER7EE7pqQODRzLmnLKLeHmnYSc4kg/Fw==}
+  '@kinobi-so/renderers-core@0.21.3':
+    resolution: {integrity: sha512-Ow1x0IaRmUlqQUAFTQZpq56wpkB6YKdnpNmfjM8IS/ssgz2IG5Jw3LREvNLvdXwpp/eyjSYOsux2RDFJkERl0g==}
+
+  '@kinobi-so/renderers-js@0.21.8':
+    resolution: {integrity: sha512-YYyi5ADxwdC0nbIAH9xHtEFbHW6RJiA9w7i+gtSnX6olpp4g+e0ITOuuV3GmeUlRdflbf3hMMbCNWWl+y7uiOg==}
+
+  '@kinobi-so/renderers-rust@0.21.8':
+    resolution: {integrity: sha512-rjWK+hWnniAcfaVAPwgzom3LtXkGj4iZ/LPsm8LpgfSdTbXLT2HihVgyQGQDpSTDdVvGb4PuuX7A01Et3N7iog==}
+
+  '@kinobi-so/validators@0.21.5':
+    resolution: {integrity: sha512-JYZWHgma1TrnjhiUJn5/oYS9XfeirUBhwpuTPDRmRrSiHHv329gjWimzZO2uLAm5S5PgFyhLTz+S6jjxRsdNXg==}
+
+  '@kinobi-so/visitors-core@0.21.4':
+    resolution: {integrity: sha512-xRosguRjUydFX/kdDf56FwW2OQ0dVJQaipG2aceKXGwx8bYorIS7fAWvIOXmLmZbtxKdtggxDW4oSw0DUtWeKQ==}
+
+  '@kinobi-so/visitors-core@0.21.5':
+    resolution: {integrity: sha512-qNq9CcDh1P/A0BRR7zEdRpzeWL6ObAowMNWpkxZTT2BKqejK9oKWSh2/gzg6ehcn2Fn/J5DE8bnKZfAlEww95g==}
+
+  '@kinobi-so/visitors@0.21.4':
+    resolution: {integrity: sha512-bebFAvRncmnY0Hy448XRb65a+2LkHJ4acnJyJi9dvJqWgJl6zbhX6Lj0NBYluzSwB28317DMynn+V7PSqOKBbQ==}
+
+  '@kinobi-so/visitors@0.21.5':
+    resolution: {integrity: sha512-RCJFaN1Q1f/MQW6PP3Oz0fgNXFVmfUEyErMzPM9CjBi1j2BJzTjff7IzEjbTpG7SbDY91eEyTDcl430ygcDBkA==}
 
   '@metaplex-foundation/rustbin@0.3.5':
     resolution: {integrity: sha512-m0wkRBEQB/8krwMwKBvFugufZtYwMXiGHud2cTDAv+aGXK4M90y0Hx67/wpu+AqqoQfdV8VM9YezUOHKD+Z5kA==}
@@ -301,8 +327,8 @@ packages:
   jsonify@0.0.1:
     resolution: {integrity: sha512-2/Ki0GcmuqSrgFyelQq9M05y7PS0mEwuIzrf3f1fPqkVDVRvZrPZtVSMHxdgo8Aq0sxAOb/cr2aqqA3LeWHVPg==}
 
-  kinobi@0.22.0:
-    resolution: {integrity: sha512-qhYuzfWXC7KgORs/jvY9vJE+jmD6xhI5QUiXTnQk8D+VyBt0Geuc1ZbZ1PRI69SOO7CAX9Bc0i0tTrtb09Z/Kg==}
+  kinobi@0.21.5:
+    resolution: {integrity: sha512-1xgN00od8x4tokR1Xuqv5Gbg0Iqo9bzrEvA9o2rm63vXqoW7/C+TN1voPhj1SQE4h2VmpfM3MD1clTUvJK0J2g==}
 
   map-stream@0.1.0:
     resolution: {integrity: sha512-CkYQrPYZfWnu/DAmVCpTSX/xHpKZ80eKh2lAkyA6AJTef6bW+6JpbQZN5rofum7da+SyN1bi5ctTm+lTfcCW3g==}
@@ -353,6 +379,11 @@ packages:
   picomatch@2.3.1:
     resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
     engines: {node: '>=8.6'}
+
+  pnpm@10.14.0:
+    resolution: {integrity: sha512-rSenlkG0nD5IGhaoBbqnGBegS74Go40X5g4urug/ahRsamiBJfV5LkjdW6MOfaUqXNpMOZK5zPMz+c4iOvhHSA==}
+    engines: {node: '>=18.12'}
+    hasBin: true
 
   prettier@3.6.2:
     resolution: {integrity: sha512-I7AIg5boAr5R0FFtJ6rCfD+LFsWHp81dolrFD8S79U9tb8Az2nGrJncnMSnys+bpQJfRUzqs9hnA81OAA3hCuQ==}
@@ -445,39 +476,65 @@ snapshots:
 
   '@iarna/toml@2.2.5': {}
 
-  '@kinobi-so/errors@0.22.0':
+  '@kinobi-so/errors@0.21.4':
     dependencies:
-      '@kinobi-so/node-types': 0.22.0
+      '@kinobi-so/node-types': 0.21.4
       chalk: 5.3.0
       commander: 12.1.0
 
-  '@kinobi-so/node-types@0.22.0': {}
-
-  '@kinobi-so/nodes-from-anchor@0.22.0':
+  '@kinobi-so/errors@0.21.5':
     dependencies:
-      '@kinobi-so/errors': 0.22.0
-      '@kinobi-so/nodes': 0.22.0
-      '@kinobi-so/visitors': 0.22.0
+      '@kinobi-so/node-types': 0.21.5
+      chalk: 5.3.0
+      commander: 12.1.0
+
+  '@kinobi-so/node-types@0.21.4': {}
+
+  '@kinobi-so/node-types@0.21.5': {}
+
+  '@kinobi-so/nodes-from-anchor@0.21.2':
+    dependencies:
+      '@kinobi-so/errors': 0.21.4
+      '@kinobi-so/nodes': 0.21.4
+      '@kinobi-so/visitors': 0.21.4
       '@noble/hashes': 1.8.0
 
-  '@kinobi-so/nodes@0.22.0':
+  '@kinobi-so/nodes-from-anchor@0.21.3':
     dependencies:
-      '@kinobi-so/errors': 0.22.0
-      '@kinobi-so/node-types': 0.22.0
+      '@kinobi-so/errors': 0.21.5
+      '@kinobi-so/nodes': 0.21.5
+      '@kinobi-so/visitors': 0.21.5
+      '@noble/hashes': 1.8.0
 
-  '@kinobi-so/renderers-core@0.22.0':
+  '@kinobi-so/nodes@0.21.4':
     dependencies:
-      '@kinobi-so/errors': 0.22.0
-      '@kinobi-so/nodes': 0.22.0
-      '@kinobi-so/visitors-core': 0.22.0
+      '@kinobi-so/errors': 0.21.4
+      '@kinobi-so/node-types': 0.21.4
 
-  '@kinobi-so/renderers-js@0.22.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.4.5)':
+  '@kinobi-so/nodes@0.21.5':
     dependencies:
-      '@kinobi-so/errors': 0.22.0
-      '@kinobi-so/nodes': 0.22.0
-      '@kinobi-so/nodes-from-anchor': 0.22.0
-      '@kinobi-so/renderers-core': 0.22.0
-      '@kinobi-so/visitors-core': 0.22.0
+      '@kinobi-so/errors': 0.21.5
+      '@kinobi-so/node-types': 0.21.5
+
+  '@kinobi-so/renderers-core@0.21.2':
+    dependencies:
+      '@kinobi-so/errors': 0.21.4
+      '@kinobi-so/nodes': 0.21.4
+      '@kinobi-so/visitors-core': 0.21.4
+
+  '@kinobi-so/renderers-core@0.21.3':
+    dependencies:
+      '@kinobi-so/errors': 0.21.5
+      '@kinobi-so/nodes': 0.21.5
+      '@kinobi-so/visitors-core': 0.21.5
+
+  '@kinobi-so/renderers-js@0.21.8(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.4.5)':
+    dependencies:
+      '@kinobi-so/errors': 0.21.4
+      '@kinobi-so/nodes': 0.21.4
+      '@kinobi-so/nodes-from-anchor': 0.21.2
+      '@kinobi-so/renderers-core': 0.21.2
+      '@kinobi-so/visitors-core': 0.21.4
       '@solana/codecs-strings': 2.0.0-rc.4(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.4.5)
       nunjucks: 3.2.4
       prettier: 3.6.2
@@ -486,12 +543,12 @@ snapshots:
       - fastestsmallesttextencoderdecoder
       - typescript
 
-  '@kinobi-so/renderers-rust@0.22.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.4.5)':
+  '@kinobi-so/renderers-rust@0.21.8(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.4.5)':
     dependencies:
-      '@kinobi-so/errors': 0.22.0
-      '@kinobi-so/nodes': 0.22.0
-      '@kinobi-so/renderers-core': 0.22.0
-      '@kinobi-so/visitors-core': 0.22.0
+      '@kinobi-so/errors': 0.21.5
+      '@kinobi-so/nodes': 0.21.5
+      '@kinobi-so/renderers-core': 0.21.3
+      '@kinobi-so/visitors-core': 0.21.5
       '@solana/codecs-strings': 2.0.0-rc.4(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.4.5)
       nunjucks: 3.2.4
     transitivePeerDependencies:
@@ -499,23 +556,35 @@ snapshots:
       - fastestsmallesttextencoderdecoder
       - typescript
 
-  '@kinobi-so/validators@0.22.0':
+  '@kinobi-so/validators@0.21.5':
     dependencies:
-      '@kinobi-so/errors': 0.22.0
-      '@kinobi-so/nodes': 0.22.0
-      '@kinobi-so/visitors-core': 0.22.0
+      '@kinobi-so/errors': 0.21.5
+      '@kinobi-so/nodes': 0.21.5
+      '@kinobi-so/visitors-core': 0.21.5
 
-  '@kinobi-so/visitors-core@0.22.0':
+  '@kinobi-so/visitors-core@0.21.4':
     dependencies:
-      '@kinobi-so/errors': 0.22.0
-      '@kinobi-so/nodes': 0.22.0
+      '@kinobi-so/errors': 0.21.4
+      '@kinobi-so/nodes': 0.21.4
       json-stable-stringify: 1.1.1
 
-  '@kinobi-so/visitors@0.22.0':
+  '@kinobi-so/visitors-core@0.21.5':
     dependencies:
-      '@kinobi-so/errors': 0.22.0
-      '@kinobi-so/nodes': 0.22.0
-      '@kinobi-so/visitors-core': 0.22.0
+      '@kinobi-so/errors': 0.21.5
+      '@kinobi-so/nodes': 0.21.5
+      json-stable-stringify: 1.1.1
+
+  '@kinobi-so/visitors@0.21.4':
+    dependencies:
+      '@kinobi-so/errors': 0.21.4
+      '@kinobi-so/nodes': 0.21.4
+      '@kinobi-so/visitors-core': 0.21.4
+
+  '@kinobi-so/visitors@0.21.5':
+    dependencies:
+      '@kinobi-so/errors': 0.21.5
+      '@kinobi-so/nodes': 0.21.5
+      '@kinobi-so/visitors-core': 0.21.5
 
   '@metaplex-foundation/rustbin@0.3.5':
     dependencies:
@@ -756,12 +825,12 @@ snapshots:
 
   jsonify@0.0.1: {}
 
-  kinobi@0.22.0:
+  kinobi@0.21.5:
     dependencies:
-      '@kinobi-so/errors': 0.22.0
-      '@kinobi-so/nodes': 0.22.0
-      '@kinobi-so/validators': 0.22.0
-      '@kinobi-so/visitors': 0.22.0
+      '@kinobi-so/errors': 0.21.5
+      '@kinobi-so/nodes': 0.21.5
+      '@kinobi-so/validators': 0.21.5
+      '@kinobi-so/visitors': 0.21.5
 
   map-stream@0.1.0: {}
 
@@ -799,6 +868,8 @@ snapshots:
       through: 2.3.8
 
   picomatch@2.3.1: {}
+
+  pnpm@10.14.0: {}
 
   prettier@3.6.2: {}
 

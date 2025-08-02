@@ -155,8 +155,6 @@ export function getInitializeSolStakerStakeInstruction<
   TAccountSysvarStakeHistory extends string,
   TAccountSystemProgram extends string,
   TAccountSolStakeViewProgram extends string,
-  TProgramAddress extends
-    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: InitializeSolStakerStakeInput<
     TAccountConfig,
@@ -168,10 +166,9 @@ export function getInitializeSolStakerStakeInstruction<
     TAccountSysvarStakeHistory,
     TAccountSystemProgram,
     TAccountSolStakeViewProgram
-  >,
-  config?: { programAddress?: TProgramAddress }
+  >
 ): InitializeSolStakerStakeInstruction<
-  TProgramAddress,
+  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountDunaDocumentPda,
   TAccountSolStakerStake,
@@ -183,8 +180,7 @@ export function getInitializeSolStakerStakeInstruction<
   TAccountSolStakeViewProgram
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -244,7 +240,7 @@ export function getInitializeSolStakerStakeInstruction<
     programAddress,
     data: getInitializeSolStakerStakeInstructionDataEncoder().encode({}),
   } as InitializeSolStakerStakeInstruction<
-    TProgramAddress,
+    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountDunaDocumentPda,
     TAccountSolStakerStake,

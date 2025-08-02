@@ -198,8 +198,6 @@ export function getInitializeConfigInstruction<
   TAccountVaultHolderRewards extends string,
   TAccountSystemProgram extends string,
   TAccountRewardsProgram extends string,
-  TProgramAddress extends
-    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: InitializeConfigInput<
     TAccountConfig,
@@ -211,10 +209,9 @@ export function getInitializeConfigInstruction<
     TAccountVaultHolderRewards,
     TAccountSystemProgram,
     TAccountRewardsProgram
-  >,
-  config?: { programAddress?: TProgramAddress }
+  >
 ): InitializeConfigInstruction<
-  TProgramAddress,
+  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountMint,
   TAccountHolderRewardsPool,
@@ -226,8 +223,7 @@ export function getInitializeConfigInstruction<
   TAccountRewardsProgram
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -282,7 +278,7 @@ export function getInitializeConfigInstruction<
       args as InitializeConfigInstructionDataArgs
     ),
   } as InitializeConfigInstruction<
-    TProgramAddress,
+    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountMint,
     TAccountHolderRewardsPool,

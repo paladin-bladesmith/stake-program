@@ -100,24 +100,20 @@ export function getValidatorSyncAuthorityInstruction<
   TAccountConfig extends string,
   TAccountValidatorStake extends string,
   TAccountValidatorVote extends string,
-  TProgramAddress extends
-    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: ValidatorSyncAuthorityInput<
     TAccountConfig,
     TAccountValidatorStake,
     TAccountValidatorVote
-  >,
-  config?: { programAddress?: TProgramAddress }
+  >
 ): ValidatorSyncAuthorityInstruction<
-  TProgramAddress,
+  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountValidatorStake,
   TAccountValidatorVote
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -140,7 +136,7 @@ export function getValidatorSyncAuthorityInstruction<
     programAddress,
     data: getValidatorSyncAuthorityInstructionDataEncoder().encode({}),
   } as ValidatorSyncAuthorityInstruction<
-    TProgramAddress,
+    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountValidatorStake,
     TAccountValidatorVote

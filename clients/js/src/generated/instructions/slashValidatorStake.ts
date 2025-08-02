@@ -171,8 +171,6 @@ export function getSlashValidatorStakeInstruction<
   TAccountVaultAuthority extends string,
   TAccountMint extends string,
   TAccountTokenProgram extends string,
-  TProgramAddress extends
-    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: SlashValidatorStakeInput<
     TAccountConfig,
@@ -184,10 +182,9 @@ export function getSlashValidatorStakeInstruction<
     TAccountVaultAuthority,
     TAccountMint,
     TAccountTokenProgram
-  >,
-  config?: { programAddress?: TProgramAddress }
+  >
 ): SlashValidatorStakeInstruction<
-  TProgramAddress,
+  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountValidatorStake,
   TAccountValidatorStakeAuthority,
@@ -199,8 +196,7 @@ export function getSlashValidatorStakeInstruction<
   TAccountTokenProgram
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -252,7 +248,7 @@ export function getSlashValidatorStakeInstruction<
       args as SlashValidatorStakeInstructionDataArgs
     ),
   } as SlashValidatorStakeInstruction<
-    TProgramAddress,
+    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountValidatorStake,
     TAccountValidatorStakeAuthority,

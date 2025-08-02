@@ -192,8 +192,6 @@ export function getUnstakeTokensInstruction<
   TAccountDestinationTokenAccount extends string,
   TAccountTokenProgram extends string,
   TAccountRewardsProgram extends string,
-  TProgramAddress extends
-    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: UnstakeTokensInput<
     TAccountConfig,
@@ -208,10 +206,9 @@ export function getUnstakeTokensInstruction<
     TAccountDestinationTokenAccount,
     TAccountTokenProgram,
     TAccountRewardsProgram
-  >,
-  config?: { programAddress?: TProgramAddress }
+  >
 ): UnstakeTokensInstruction<
-  TProgramAddress,
+  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountHolderRewardsPool,
   TAccountHolderRewardsPoolTokenAccount,
@@ -226,8 +223,7 @@ export function getUnstakeTokensInstruction<
   TAccountRewardsProgram
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -291,7 +287,7 @@ export function getUnstakeTokensInstruction<
       args as UnstakeTokensInstructionDataArgs
     ),
   } as UnstakeTokensInstruction<
-    TProgramAddress,
+    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountHolderRewardsPool,
     TAccountHolderRewardsPoolTokenAccount,

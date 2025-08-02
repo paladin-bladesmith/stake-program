@@ -103,24 +103,20 @@ export function getSolStakerSyncAuthorityInstruction<
   TAccountConfig extends string,
   TAccountSolStakerStake extends string,
   TAccountSolStakerAuthorityOverride extends string,
-  TProgramAddress extends
-    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: SolStakerSyncAuthorityInput<
     TAccountConfig,
     TAccountSolStakerStake,
     TAccountSolStakerAuthorityOverride
-  >,
-  config?: { programAddress?: TProgramAddress }
+  >
 ): SolStakerSyncAuthorityInstruction<
-  TProgramAddress,
+  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountSolStakerStake,
   TAccountSolStakerAuthorityOverride
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -146,7 +142,7 @@ export function getSolStakerSyncAuthorityInstruction<
     programAddress,
     data: getSolStakerSyncAuthorityInstructionDataEncoder().encode({}),
   } as SolStakerSyncAuthorityInstruction<
-    TProgramAddress,
+    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountSolStakerStake,
     TAccountSolStakerAuthorityOverride

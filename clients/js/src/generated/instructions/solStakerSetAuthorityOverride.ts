@@ -134,26 +134,22 @@ export function getSolStakerSetAuthorityOverrideInstruction<
   TAccountConfigAuthority extends string,
   TAccountSolStakerAuthorityOverride extends string,
   TAccountSystemProgram extends string,
-  TProgramAddress extends
-    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: SolStakerSetAuthorityOverrideInput<
     TAccountConfig,
     TAccountConfigAuthority,
     TAccountSolStakerAuthorityOverride,
     TAccountSystemProgram
-  >,
-  config?: { programAddress?: TProgramAddress }
+  >
 ): SolStakerSetAuthorityOverrideInstruction<
-  TProgramAddress,
+  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountConfigAuthority,
   TAccountSolStakerAuthorityOverride,
   TAccountSystemProgram
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -189,7 +185,7 @@ export function getSolStakerSetAuthorityOverrideInstruction<
       args as SolStakerSetAuthorityOverrideInstructionDataArgs
     ),
   } as SolStakerSetAuthorityOverrideInstruction<
-    TProgramAddress,
+    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountConfigAuthority,
     TAccountSolStakerAuthorityOverride,

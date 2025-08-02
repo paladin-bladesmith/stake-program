@@ -171,8 +171,6 @@ export function getSlashSolStakerStakeInstruction<
   TAccountVaultHolderRewards extends string,
   TAccountVaultAuthority extends string,
   TAccountTokenProgram extends string,
-  TProgramAddress extends
-    Address = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: SlashSolStakerStakeInput<
     TAccountConfig,
@@ -184,10 +182,9 @@ export function getSlashSolStakerStakeInstruction<
     TAccountVaultHolderRewards,
     TAccountVaultAuthority,
     TAccountTokenProgram
-  >,
-  config?: { programAddress?: TProgramAddress }
+  >
 ): SlashSolStakerStakeInstruction<
-  TProgramAddress,
+  typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountSolStakerStake,
   TAccountSolStakerStakeAuthority,
@@ -199,8 +196,7 @@ export function getSlashSolStakerStakeInstruction<
   TAccountTokenProgram
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -252,7 +248,7 @@ export function getSlashSolStakerStakeInstruction<
       args as SlashSolStakerStakeInstructionDataArgs
     ),
   } as SlashSolStakerStakeInstruction<
-    TProgramAddress,
+    typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountSolStakerStake,
     TAccountSolStakerStakeAuthority,
