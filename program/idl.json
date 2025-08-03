@@ -1138,92 +1138,6 @@
       }
     },
     {
-      "name": "SolStakerSyncAuthority",
-      "accounts": [
-        {
-          "name": "config",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Config"
-          ]
-        },
-        {
-          "name": "solStakerStake",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Sol staker stake"
-          ]
-        },
-        {
-          "name": "solStakerAuthorityOverride",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Sol staker authority override"
-          ]
-        }
-      ],
-      "args": [],
-      "discriminant": {
-        "type": "u8",
-        "value": 14
-      }
-    },
-    {
-      "name": "SolStakerSetAuthorityOverride",
-      "accounts": [
-        {
-          "name": "config",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Config"
-          ]
-        },
-        {
-          "name": "configAuthority",
-          "isMut": false,
-          "isSigner": true,
-          "docs": [
-            "Config authority"
-          ]
-        },
-        {
-          "name": "solStakerAuthorityOverride",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Sol staker authority override"
-          ]
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true,
-          "docs": [
-            "System program"
-          ]
-        }
-      ],
-      "args": [
-        {
-          "name": "authorityOriginal",
-          "type": "publicKey"
-        },
-        {
-          "name": "authorityOverride",
-          "type": "publicKey"
-        }
-      ],
-      "discriminant": {
-        "type": "u8",
-        "value": 15
-      }
-    },
-    {
       "name": "ValidatorOverrideStakedLamports",
       "accounts": [
         {
@@ -1275,7 +1189,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 16
+        "value": 14
       }
     },
     {
@@ -1309,7 +1223,7 @@
       "args": [],
       "discriminant": {
         "type": "u8",
-        "value": 17
+        "value": 15
       }
     }
   ],

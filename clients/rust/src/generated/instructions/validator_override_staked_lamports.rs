@@ -78,7 +78,7 @@ pub struct ValidatorOverrideStakedLamportsInstructionData {
 
 impl ValidatorOverrideStakedLamportsInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 16 }
+        Self { discriminator: 14 }
     }
 }
 

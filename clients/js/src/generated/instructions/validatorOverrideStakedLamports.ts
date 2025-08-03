@@ -31,7 +31,7 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export const VALIDATOR_OVERRIDE_STAKED_LAMPORTS_DISCRIMINATOR = 16;
+export const VALIDATOR_OVERRIDE_STAKED_LAMPORTS_DISCRIMINATOR = 14;
 
 export function getValidatorOverrideStakedLamportsDiscriminatorBytes() {
   return getU8Encoder().encode(
