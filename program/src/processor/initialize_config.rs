@@ -139,6 +139,7 @@ pub fn process_initialize_config(
             owner: *ctx.accounts.vault_pda.key,
             holder_rewards: *ctx.accounts.vault_holder_rewards.key,
             mint: *ctx.accounts.mint.key,
+            duna_document_pda: Pubkey::default(),
             system_program: *ctx.accounts.system_program.key,
         }
         .instruction(),
@@ -148,6 +149,7 @@ pub fn process_initialize_config(
             ctx.accounts.vault_pda.clone(),
             ctx.accounts.vault_holder_rewards.clone(),
             ctx.accounts.mint.clone(),
+            ctx.accounts.rewards_program.clone(), // Not important, as the vault pda should be whitelisted
             ctx.accounts.system_program.clone(),
             ctx.accounts.rewards_program.clone(),
         ],

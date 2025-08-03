@@ -197,7 +197,7 @@ async fn fail_set_config_authority_when_authority_none() {
     let (vault_pda, _) = find_vault_pda(&config.pubkey());
     let vault = get_associated_token_address(&vault_pda, &mint.pubkey());
 
-    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey(), &vault_pda).await;
     let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
 
     // Fund vault pda
@@ -308,7 +308,7 @@ async fn fail_set_slash_authority_when_authority_none() {
     let (vault_pda, _) = find_vault_pda(&config.pubkey());
     let vault = get_associated_token_address(&vault_pda, &mint.pubkey());
 
-    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey(), &vault_pda).await;
     let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
 
     // Fund vault pda

@@ -26,7 +26,7 @@ use solana_sdk::{
 use spl_associated_token_account::get_associated_token_address;
 use spl_token::state::Account as TokenAccount;
 
-use crate::setup::config::create_ata;
+use crate::setup::{config::create_ata, sign_duna_document};
 
 #[tokio::test]
 async fn validator_stake_tokens_simple() {
@@ -130,6 +130,7 @@ async fn fail_validator_stake_tokens_with_wrong_vault_holder_rewards_account() {
 
     // And we create a fake vault token account.
     let wrong_vault_pda = Keypair::new();
+    sign_duna_document(&mut context, &wrong_vault_pda.pubkey());
     let wrong_vault = get_associated_token_address(&wrong_vault_pda.pubkey(), &config_manager.mint);
     let wrong_vault_holder_rewards = HolderRewards::find_pda(&wrong_vault_pda.pubkey()).0;
     create_holder_rewards(

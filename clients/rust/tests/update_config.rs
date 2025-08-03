@@ -50,7 +50,7 @@ async fn update_cooldown_time_config() {
     let (vault_pda, _) = find_vault_pda(&config.pubkey());
     let vault = get_associated_token_address(&vault_pda, &mint.pubkey());
 
-    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey(), &vault_pda).await;
     let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
 
     // Fund vault pda
@@ -156,7 +156,7 @@ async fn update_max_deactivation_basis_points_config() {
     let (vault_pda, _) = find_vault_pda(&config.pubkey());
     let vault = get_associated_token_address(&vault_pda, &mint.pubkey());
 
-    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey(), &vault_pda).await;
     let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
 
     // Fund vault pda
@@ -262,7 +262,7 @@ async fn update_sync_rewards_lamports() {
     let (vault_pda, _) = find_vault_pda(&config.pubkey());
     let vault = get_associated_token_address(&vault_pda, &mint.pubkey());
 
-    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey(), &vault_pda).await;
     let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
 
     // Fund vault pda
@@ -369,7 +369,7 @@ async fn fail_update_max_deactivation_basis_points_config_with_invalid_value() {
     let (vault_pda, _) = find_vault_pda(&config.pubkey());
     let vault = get_associated_token_address(&vault_pda, &mint.pubkey());
 
-    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey(), &vault_pda).await;
     let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
 
     // Fund vault pda
@@ -477,7 +477,7 @@ async fn fail_update_config_with_wrong_authority() {
     let (vault_pda, _) = find_vault_pda(&config.pubkey());
     let vault = get_associated_token_address(&vault_pda, &mint.pubkey());
 
-    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey(), &vault_pda).await;
     let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
 
     // Fund vault pda
@@ -668,7 +668,7 @@ async fn fail_update_config_with_no_authority_set() {
     let (vault_pda, _) = find_vault_pda(&config.pubkey());
     let vault = get_associated_token_address(&vault_pda, &mint.pubkey());
 
-    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey(), &vault_pda).await;
     let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
 
     // Fund vault pda
