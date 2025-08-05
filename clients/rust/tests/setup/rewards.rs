@@ -65,6 +65,7 @@ pub async fn create_holder_rewards_pool(
     create_ata(context, &holder_rewards_pool, &mint)
         .await
         .unwrap();
+    let vault_holder_rewards = HolderRewards::find_pda(vault_pda).0;
 
     // Initialize the holder rewards pool.
     let instructions = vec![
@@ -73,12 +74,18 @@ pub async fn create_holder_rewards_pool(
             &holder_rewards_pool,
             rent.minimum_balance(HolderRewardsPool::LEN),
         ),
+        system_instruction::transfer(
+            &context.payer.pubkey(),
+            &vault_holder_rewards,
+            rent.minimum_balance(HolderRewards::LEN),
+        ),
         InitializeHolderRewardsPoolBuilder::new()
             .holder_rewards_pool(holder_rewards_pool)
             .holder_rewards_pool_token_account(holder_rewards_pool_token_account)
             .mint(*mint)
             .duna_document_hash(get_duna_hash())
-            .stake_program_vault_pda(*vault_pda)
+            .stake_vault_pda(*vault_pda)
+            .vault_holder_rewards(vault_holder_rewards)
             .instruction(),
     ];
 

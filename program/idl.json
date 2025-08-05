@@ -22,22 +22,6 @@
           ]
         },
         {
-          "name": "holderRewardsPool",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "Holder rewards pool account"
-          ]
-        },
-        {
-          "name": "holderRewardsPoolTokenAccount",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "Holder rewards pool account token account"
-          ]
-        },
-        {
           "name": "vaultPda",
           "isMut": true,
           "isSigner": false,

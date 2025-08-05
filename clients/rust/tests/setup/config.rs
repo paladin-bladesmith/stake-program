@@ -115,8 +115,6 @@ impl ConfigManager {
         let initialize_ix = InitializeConfigBuilder::new()
             .config(config.pubkey())
             .mint(mint.pubkey())
-            .holder_rewards_pool(manager.rewards_manager.pool)
-            .holder_rewards_pool_token_account(manager.rewards_manager.pool_token_account)
             .vault(manager.vault)
             .vault_pda(vault_pda)
             .vault_holder_rewards(vault_holder_rewards)

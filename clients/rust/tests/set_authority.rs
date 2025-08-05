@@ -197,7 +197,7 @@ async fn fail_set_config_authority_when_authority_none() {
     let (vault_pda, _) = find_vault_pda(&config.pubkey());
     let vault = get_associated_token_address(&vault_pda, &mint.pubkey());
 
-    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey(), &vault_pda).await;
+    RewardsManager::new(&mut context, &mint.pubkey(), &vault_pda).await;
     let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
 
     // Fund vault pda
@@ -226,8 +226,6 @@ async fn fail_set_config_authority_when_authority_none() {
 
     let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
-        .holder_rewards_pool(rewards_manager.pool)
-        .holder_rewards_pool_token_account(rewards_manager.pool_token_account)
         .mint(mint.pubkey())
         .vault(vault)
         .vault_pda(vault_pda)
@@ -308,7 +306,7 @@ async fn fail_set_slash_authority_when_authority_none() {
     let (vault_pda, _) = find_vault_pda(&config.pubkey());
     let vault = get_associated_token_address(&vault_pda, &mint.pubkey());
 
-    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey(), &vault_pda).await;
+    RewardsManager::new(&mut context, &mint.pubkey(), &vault_pda).await;
     let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
 
     // Fund vault pda
@@ -337,8 +335,6 @@ async fn fail_set_slash_authority_when_authority_none() {
 
     let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
-        .holder_rewards_pool(rewards_manager.pool)
-        .holder_rewards_pool_token_account(rewards_manager.pool_token_account)
         .mint(mint.pubkey())
         .vault(vault)
         .vault_pda(vault_pda)

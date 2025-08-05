@@ -48,10 +48,6 @@ export type InitializeConfigInstruction<
   TProgram extends string = typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
-  TAccountHolderRewardsPool extends string | IAccountMeta<string> = string,
-  TAccountHolderRewardsPoolTokenAccount extends
-    | string
-    | IAccountMeta<string> = string,
   TAccountVaultPda extends string | IAccountMeta<string> = string,
   TAccountVault extends string | IAccountMeta<string> = string,
   TAccountVaultHolderRewards extends string | IAccountMeta<string> = string,
@@ -70,12 +66,6 @@ export type InitializeConfigInstruction<
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
-      TAccountHolderRewardsPool extends string
-        ? WritableAccount<TAccountHolderRewardsPool>
-        : TAccountHolderRewardsPool,
-      TAccountHolderRewardsPoolTokenAccount extends string
-        ? ReadonlyAccount<TAccountHolderRewardsPoolTokenAccount>
-        : TAccountHolderRewardsPoolTokenAccount,
       TAccountVaultPda extends string
         ? WritableAccount<TAccountVaultPda>
         : TAccountVaultPda,
@@ -154,8 +144,6 @@ export function getInitializeConfigInstructionDataCodec(): Codec<
 export type InitializeConfigInput<
   TAccountConfig extends string = string,
   TAccountMint extends string = string,
-  TAccountHolderRewardsPool extends string = string,
-  TAccountHolderRewardsPoolTokenAccount extends string = string,
   TAccountVaultPda extends string = string,
   TAccountVault extends string = string,
   TAccountVaultHolderRewards extends string = string,
@@ -166,10 +154,6 @@ export type InitializeConfigInput<
   config: Address<TAccountConfig>;
   /** Stake token mint */
   mint: Address<TAccountMint>;
-  /** Holder rewards pool account */
-  holderRewardsPool: Address<TAccountHolderRewardsPool>;
-  /** Holder rewards pool account token account */
-  holderRewardsPoolTokenAccount: Address<TAccountHolderRewardsPoolTokenAccount>;
   /** Stake vault pda */
   vaultPda: Address<TAccountVaultPda>;
   /** Stake vault token account */
@@ -191,8 +175,6 @@ export type InitializeConfigInput<
 export function getInitializeConfigInstruction<
   TAccountConfig extends string,
   TAccountMint extends string,
-  TAccountHolderRewardsPool extends string,
-  TAccountHolderRewardsPoolTokenAccount extends string,
   TAccountVaultPda extends string,
   TAccountVault extends string,
   TAccountVaultHolderRewards extends string,
@@ -202,8 +184,6 @@ export function getInitializeConfigInstruction<
   input: InitializeConfigInput<
     TAccountConfig,
     TAccountMint,
-    TAccountHolderRewardsPool,
-    TAccountHolderRewardsPoolTokenAccount,
     TAccountVaultPda,
     TAccountVault,
     TAccountVaultHolderRewards,
@@ -214,8 +194,6 @@ export function getInitializeConfigInstruction<
   typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
   TAccountConfig,
   TAccountMint,
-  TAccountHolderRewardsPool,
-  TAccountHolderRewardsPoolTokenAccount,
   TAccountVaultPda,
   TAccountVault,
   TAccountVaultHolderRewards,
@@ -229,14 +207,6 @@ export function getInitializeConfigInstruction<
   const originalAccounts = {
     config: { value: input.config ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
-    holderRewardsPool: {
-      value: input.holderRewardsPool ?? null,
-      isWritable: true,
-    },
-    holderRewardsPoolTokenAccount: {
-      value: input.holderRewardsPoolTokenAccount ?? null,
-      isWritable: false,
-    },
     vaultPda: { value: input.vaultPda ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: false },
     vaultHolderRewards: {
@@ -265,8 +235,6 @@ export function getInitializeConfigInstruction<
     accounts: [
       getAccountMeta(accounts.config),
       getAccountMeta(accounts.mint),
-      getAccountMeta(accounts.holderRewardsPool),
-      getAccountMeta(accounts.holderRewardsPoolTokenAccount),
       getAccountMeta(accounts.vaultPda),
       getAccountMeta(accounts.vault),
       getAccountMeta(accounts.vaultHolderRewards),
@@ -281,8 +249,6 @@ export function getInitializeConfigInstruction<
     typeof PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS,
     TAccountConfig,
     TAccountMint,
-    TAccountHolderRewardsPool,
-    TAccountHolderRewardsPoolTokenAccount,
     TAccountVaultPda,
     TAccountVault,
     TAccountVaultHolderRewards,
@@ -303,20 +269,16 @@ export type ParsedInitializeConfigInstruction<
     config: TAccountMetas[0];
     /** Stake token mint */
     mint: TAccountMetas[1];
-    /** Holder rewards pool account */
-    holderRewardsPool: TAccountMetas[2];
-    /** Holder rewards pool account token account */
-    holderRewardsPoolTokenAccount: TAccountMetas[3];
     /** Stake vault pda */
-    vaultPda: TAccountMetas[4];
+    vaultPda: TAccountMetas[2];
     /** Stake vault token account */
-    vault: TAccountMetas[5];
+    vault: TAccountMetas[3];
     /** Stake vault holder rewards account */
-    vaultHolderRewards: TAccountMetas[6];
+    vaultHolderRewards: TAccountMetas[4];
     /** System program. */
-    systemProgram: TAccountMetas[7];
+    systemProgram: TAccountMetas[5];
     /** Paladin rewards program */
-    rewardsProgram: TAccountMetas[8];
+    rewardsProgram: TAccountMetas[6];
   };
   data: InitializeConfigInstructionData;
 };
@@ -329,7 +291,7 @@ export function parseInitializeConfigInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedInitializeConfigInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 9) {
+  if (instruction.accounts.length < 7) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -344,8 +306,6 @@ export function parseInitializeConfigInstruction<
     accounts: {
       config: getNextAccount(),
       mint: getNextAccount(),
-      holderRewardsPool: getNextAccount(),
-      holderRewardsPoolTokenAccount: getNextAccount(),
       vaultPda: getNextAccount(),
       vault: getNextAccount(),
       vaultHolderRewards: getNextAccount(),
