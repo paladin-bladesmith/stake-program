@@ -103,8 +103,6 @@ pub fn process_initialize_config(
         "vault"
     );
 
-    // Confirm vault holder rewards is correct
-
     // config
     // - owner must be this program
     // - have the correct length
