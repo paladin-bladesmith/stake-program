@@ -15,10 +15,6 @@ pub struct InitializeConfig {
     pub config: solana_program::pubkey::Pubkey,
     /// Stake token mint
     pub mint: solana_program::pubkey::Pubkey,
-    /// Holder rewards pool account
-    pub holder_rewards_pool: solana_program::pubkey::Pubkey,
-    /// Holder rewards pool account token account
-    pub holder_rewards_pool_token_account: solana_program::pubkey::Pubkey,
     /// Stake vault pda
     pub vault_pda: solana_program::pubkey::Pubkey,
     /// Stake vault token account
@@ -44,21 +40,13 @@ impl InitializeConfig {
         args: InitializeConfigInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.config,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.mint, false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            self.holder_rewards_pool,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.holder_rewards_pool_token_account,
-            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.vault_pda,
@@ -126,19 +114,15 @@ pub struct InitializeConfigInstructionArgs {
 ///
 ///   0. `[writable]` config
 ///   1. `[]` mint
-///   2. `[writable]` holder_rewards_pool
-///   3. `[]` holder_rewards_pool_token_account
-///   4. `[writable]` vault_pda
-///   5. `[]` vault
-///   6. `[writable]` vault_holder_rewards
-///   7. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   8. `[]` rewards_program
+///   2. `[writable]` vault_pda
+///   3. `[]` vault
+///   4. `[writable]` vault_holder_rewards
+///   5. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   6. `[]` rewards_program
 #[derive(Clone, Debug, Default)]
 pub struct InitializeConfigBuilder {
     config: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
-    holder_rewards_pool: Option<solana_program::pubkey::Pubkey>,
-    holder_rewards_pool_token_account: Option<solana_program::pubkey::Pubkey>,
     vault_pda: Option<solana_program::pubkey::Pubkey>,
     vault: Option<solana_program::pubkey::Pubkey>,
     vault_holder_rewards: Option<solana_program::pubkey::Pubkey>,
@@ -167,24 +151,6 @@ impl InitializeConfigBuilder {
     #[inline(always)]
     pub fn mint(&mut self, mint: solana_program::pubkey::Pubkey) -> &mut Self {
         self.mint = Some(mint);
-        self
-    }
-    /// Holder rewards pool account
-    #[inline(always)]
-    pub fn holder_rewards_pool(
-        &mut self,
-        holder_rewards_pool: solana_program::pubkey::Pubkey,
-    ) -> &mut Self {
-        self.holder_rewards_pool = Some(holder_rewards_pool);
-        self
-    }
-    /// Holder rewards pool account token account
-    #[inline(always)]
-    pub fn holder_rewards_pool_token_account(
-        &mut self,
-        holder_rewards_pool_token_account: solana_program::pubkey::Pubkey,
-    ) -> &mut Self {
-        self.holder_rewards_pool_token_account = Some(holder_rewards_pool_token_account);
         self
     }
     /// Stake vault pda
@@ -280,12 +246,6 @@ impl InitializeConfigBuilder {
         let accounts = InitializeConfig {
             config: self.config.expect("config is not set"),
             mint: self.mint.expect("mint is not set"),
-            holder_rewards_pool: self
-                .holder_rewards_pool
-                .expect("holder_rewards_pool is not set"),
-            holder_rewards_pool_token_account: self
-                .holder_rewards_pool_token_account
-                .expect("holder_rewards_pool_token_account is not set"),
             vault_pda: self.vault_pda.expect("vault_pda is not set"),
             vault: self.vault.expect("vault is not set"),
             vault_holder_rewards: self
@@ -333,10 +293,6 @@ pub struct InitializeConfigCpiAccounts<'a, 'b> {
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake token mint
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Holder rewards pool account
-    pub holder_rewards_pool: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Holder rewards pool account token account
-    pub holder_rewards_pool_token_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake vault pda
     pub vault_pda: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake vault token account
@@ -357,10 +313,6 @@ pub struct InitializeConfigCpi<'a, 'b> {
     pub config: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake token mint
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Holder rewards pool account
-    pub holder_rewards_pool: &'b solana_program::account_info::AccountInfo<'a>,
-    /// Holder rewards pool account token account
-    pub holder_rewards_pool_token_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake vault pda
     pub vault_pda: &'b solana_program::account_info::AccountInfo<'a>,
     /// Stake vault token account
@@ -385,8 +337,6 @@ impl<'a, 'b> InitializeConfigCpi<'a, 'b> {
             __program: program,
             config: accounts.config,
             mint: accounts.mint,
-            holder_rewards_pool: accounts.holder_rewards_pool,
-            holder_rewards_pool_token_account: accounts.holder_rewards_pool_token_account,
             vault_pda: accounts.vault_pda,
             vault: accounts.vault,
             vault_holder_rewards: accounts.vault_holder_rewards,
@@ -428,21 +378,13 @@ impl<'a, 'b> InitializeConfigCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.config.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.mint.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.holder_rewards_pool.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.holder_rewards_pool_token_account.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -481,12 +423,10 @@ impl<'a, 'b> InitializeConfigCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(9 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(7 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.config.clone());
         account_infos.push(self.mint.clone());
-        account_infos.push(self.holder_rewards_pool.clone());
-        account_infos.push(self.holder_rewards_pool_token_account.clone());
         account_infos.push(self.vault_pda.clone());
         account_infos.push(self.vault.clone());
         account_infos.push(self.vault_holder_rewards.clone());
@@ -510,13 +450,11 @@ impl<'a, 'b> InitializeConfigCpi<'a, 'b> {
 ///
 ///   0. `[writable]` config
 ///   1. `[]` mint
-///   2. `[writable]` holder_rewards_pool
-///   3. `[]` holder_rewards_pool_token_account
-///   4. `[writable]` vault_pda
-///   5. `[]` vault
-///   6. `[writable]` vault_holder_rewards
-///   7. `[]` system_program
-///   8. `[]` rewards_program
+///   2. `[writable]` vault_pda
+///   3. `[]` vault
+///   4. `[writable]` vault_holder_rewards
+///   5. `[]` system_program
+///   6. `[]` rewards_program
 #[derive(Clone, Debug)]
 pub struct InitializeConfigCpiBuilder<'a, 'b> {
     instruction: Box<InitializeConfigCpiBuilderInstruction<'a, 'b>>,
@@ -528,8 +466,6 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
             __program: program,
             config: None,
             mint: None,
-            holder_rewards_pool: None,
-            holder_rewards_pool_token_account: None,
             vault_pda: None,
             vault: None,
             vault_holder_rewards: None,
@@ -558,25 +494,6 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn mint(&mut self, mint: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.mint = Some(mint);
-        self
-    }
-    /// Holder rewards pool account
-    #[inline(always)]
-    pub fn holder_rewards_pool(
-        &mut self,
-        holder_rewards_pool: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.holder_rewards_pool = Some(holder_rewards_pool);
-        self
-    }
-    /// Holder rewards pool account token account
-    #[inline(always)]
-    pub fn holder_rewards_pool_token_account(
-        &mut self,
-        holder_rewards_pool_token_account: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.holder_rewards_pool_token_account =
-            Some(holder_rewards_pool_token_account);
         self
     }
     /// Stake vault pda
@@ -734,16 +651,6 @@ impl<'a, 'b> InitializeConfigCpiBuilder<'a, 'b> {
 
             mint: self.instruction.mint.expect("mint is not set"),
 
-            holder_rewards_pool: self
-                .instruction
-                .holder_rewards_pool
-                .expect("holder_rewards_pool is not set"),
-
-            holder_rewards_pool_token_account: self
-                .instruction
-                .holder_rewards_pool_token_account
-                .expect("holder_rewards_pool_token_account is not set"),
-
             vault_pda: self.instruction.vault_pda.expect("vault_pda is not set"),
 
             vault: self.instruction.vault.expect("vault is not set"),
@@ -776,8 +683,6 @@ struct InitializeConfigCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    holder_rewards_pool: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    holder_rewards_pool_token_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault_pda: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault_holder_rewards: Option<&'b solana_program::account_info::AccountInfo<'a>>,

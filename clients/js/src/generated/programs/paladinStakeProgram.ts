@@ -23,9 +23,7 @@ import {
   type ParsedSlashSolStakerStakeInstruction,
   type ParsedSlashValidatorStakeInstruction,
   type ParsedSolStakerMoveTokensInstruction,
-  type ParsedSolStakerSetAuthorityOverrideInstruction,
   type ParsedSolStakerStakeTokensInstruction,
-  type ParsedSolStakerSyncAuthorityInstruction,
   type ParsedUnstakeTokensInstruction,
   type ParsedUpdateConfigInstruction,
   type ParsedValidatorOverrideStakedLamportsInstruction,
@@ -57,8 +55,6 @@ export enum PaladinStakeProgramInstruction {
   UnstakeTokens,
   SlashSolStakerStake,
   SolStakerMoveTokens,
-  SolStakerSyncAuthority,
-  SolStakerSetAuthorityOverride,
   ValidatorOverrideStakedLamports,
   ValidatorSyncAuthority,
 }
@@ -110,15 +106,9 @@ export function identifyPaladinStakeProgramInstruction(
     return PaladinStakeProgramInstruction.SolStakerMoveTokens;
   }
   if (containsBytes(data, getU8Encoder().encode(14), 0)) {
-    return PaladinStakeProgramInstruction.SolStakerSyncAuthority;
-  }
-  if (containsBytes(data, getU8Encoder().encode(15), 0)) {
-    return PaladinStakeProgramInstruction.SolStakerSetAuthorityOverride;
-  }
-  if (containsBytes(data, getU8Encoder().encode(16), 0)) {
     return PaladinStakeProgramInstruction.ValidatorOverrideStakedLamports;
   }
-  if (containsBytes(data, getU8Encoder().encode(17), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(15), 0)) {
     return PaladinStakeProgramInstruction.ValidatorSyncAuthority;
   }
   throw new Error(
@@ -171,12 +161,6 @@ export type ParsedPaladinStakeProgramInstruction<
   | ({
       instructionType: PaladinStakeProgramInstruction.SolStakerMoveTokens;
     } & ParsedSolStakerMoveTokensInstruction<TProgram>)
-  | ({
-      instructionType: PaladinStakeProgramInstruction.SolStakerSyncAuthority;
-    } & ParsedSolStakerSyncAuthorityInstruction<TProgram>)
-  | ({
-      instructionType: PaladinStakeProgramInstruction.SolStakerSetAuthorityOverride;
-    } & ParsedSolStakerSetAuthorityOverrideInstruction<TProgram>)
   | ({
       instructionType: PaladinStakeProgramInstruction.ValidatorOverrideStakedLamports;
     } & ParsedValidatorOverrideStakedLamportsInstruction<TProgram>)

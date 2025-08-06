@@ -64,8 +64,9 @@ impl ConfigManager {
         )
         .await
         .unwrap();
+        let (vault_pda, _) = find_vault_pda(&config.pubkey());
 
-        let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+        let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey(), &vault_pda).await;
 
         let mut manager = ConfigManager {
             config: config.pubkey(),
@@ -78,8 +79,7 @@ impl ConfigManager {
             rewards_manager,
         };
 
-        // Create vault DPA
-        let (vault_pda, _) = find_vault_pda(&config.pubkey());
+        // Create vault
         let vault = get_associated_token_address(&vault_pda, &mint.pubkey());
         manager.vault_pda = vault_pda;
         manager.vault = vault;
@@ -115,8 +115,6 @@ impl ConfigManager {
         let initialize_ix = InitializeConfigBuilder::new()
             .config(config.pubkey())
             .mint(mint.pubkey())
-            .holder_rewards_pool(manager.rewards_manager.pool)
-            .holder_rewards_pool_token_account(manager.rewards_manager.pool_token_account)
             .vault(manager.vault)
             .vault_pda(vault_pda)
             .vault_holder_rewards(vault_holder_rewards)

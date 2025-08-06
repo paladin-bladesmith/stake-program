@@ -26,38 +26,27 @@ pub enum StakeInstruction {
     #[account(
         2,
         writable,
-        name = "holder_rewards_pool",
-        desc = "Holder rewards pool account"
-    )]
-    #[account(
-        3,
-        name = "holder_rewards_pool_token_account",
-        desc = "Holder rewards pool account token account"
-    )]
-    #[account(
-        4,
-        writable,
         name = "vault_pda",
         desc = "Stake vault pda"
     )]
     #[account(
-        5,
+        3,
         name = "vault",
         desc = "Stake vault token account"
     )]
     #[account(
-        6,
+        4,
         writable,
         name = "vault_holder_rewards",
         desc = "Stake vault holder rewards account"
     )]
     #[account(
-        7,
+        5,
         name = "system_program",
         desc = "System program.",
     )]
     #[account(
-        8,
+        6,
         name = "rewards_program", 
         desc = "Paladin rewards program",
     )]
@@ -756,52 +745,6 @@ pub enum StakeInstruction {
         desc = "Destination sol staker stake"
     )]
     SolStakerMoveTokens { amount: u64 },
-
-    /// Aligns the authority on the account with the override authority.
-    #[account(
-        0,
-        name = "config",
-        desc = "Config"
-    )]
-    #[account(
-        1,
-        writable,
-        name = "sol_staker_stake",
-        desc = "Sol staker stake"
-    )]
-    #[account(
-        2,
-        name = "sol_staker_authority_override",
-        desc = "Sol staker authority override"
-    )]
-    SolStakerSyncAuthority,
-    /// Globally overrides a given authority (intended for stake pools).
-    ///
-    /// Only callable by governance.
-    #[account(
-        0,
-        name = "config",
-        desc = "Config"
-    )]
-    #[account(
-        1,
-        signer,
-        name = "config_authority",
-        desc = "Config authority"
-    )]
-    #[account(
-        2,
-        writable,
-        name = "sol_staker_authority_override",
-        desc = "Sol staker authority override"
-    )]
-    #[account(
-        3,
-        optional,
-        name = "system_program",
-        desc = "System program"
-    )]
-    SolStakerSetAuthorityOverride { authority_original: Pubkey, authority_override: Pubkey },
     #[account(
         0,
         writable,
@@ -946,24 +889,13 @@ impl StakeInstruction {
                 data.extend_from_slice(&amount.to_le_bytes());
                 data
             }
-            StakeInstruction::SolStakerSyncAuthority => vec![14],
-            StakeInstruction::SolStakerSetAuthorityOverride {
-                authority_original,
-                authority_override,
-            } => {
-                let mut data = Vec::with_capacity(65);
-                data.push(15);
-                data.extend_from_slice(&authority_original.to_bytes());
-                data.extend_from_slice(&authority_override.to_bytes());
-                data
-            }
             StakeInstruction::ValidatorOverrideStakedLamports { amount_min } => {
                 let mut data = Vec::with_capacity(9);
-                data.push(16);
+                data.push(14);
                 data.extend_from_slice(&amount_min.to_le_bytes());
                 data
             }
-            StakeInstruction::ValidatorSyncAuthority => vec![17],
+            StakeInstruction::ValidatorSyncAuthority => vec![15],
         }
     }
 
@@ -1063,26 +995,14 @@ impl StakeInstruction {
 
                 Ok(StakeInstruction::SolStakerMoveTokens { amount })
             }
-            // 14
-            Some((&14, _)) => Ok(StakeInstruction::SolStakerSyncAuthority),
-            // 15 - SolStakerSetAuthorityOverride: Pubkey (32), Pubkey (32)
-            Some((&15, rest)) if rest.len() == 64 => {
-                let authority_original = Pubkey::new_from_array(*array_ref![rest, 0, 32]);
-                let authority_override = Pubkey::new_from_array(*array_ref![rest, 32, 32]);
-
-                Ok(StakeInstruction::SolStakerSetAuthorityOverride {
-                    authority_original,
-                    authority_override,
-                })
-            }
-            // 16 - Validator: Pubkey (32), Pubkey (32)
-            Some((&16, rest)) if rest.len() == 8 => {
+            // 14 - Validator: Pubkey (32), Pubkey (32)
+            Some((&14, rest)) if rest.len() == 8 => {
                 let amount_min = u64::from_le_bytes(*array_ref![rest, 0, 8]);
 
                 Ok(StakeInstruction::ValidatorOverrideStakedLamports { amount_min })
             }
-            // 17
-            Some((&17, _)) => Ok(StakeInstruction::ValidatorSyncAuthority),
+            // 15
+            Some((&15, _)) => Ok(StakeInstruction::ValidatorSyncAuthority),
             _ => Err(ProgramError::InvalidInstructionData),
         }
     }

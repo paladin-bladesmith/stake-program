@@ -51,7 +51,7 @@ async fn initialize_config_with_mint_and_token() {
     let (vault_pda, _) = find_vault_pda(&config.pubkey());
     let vault = get_associated_token_address(&vault_pda, &mint.pubkey());
 
-    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    RewardsManager::new(&mut context, &mint.pubkey(), &vault_pda).await;
     let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
 
     // Fund vault pda
@@ -81,8 +81,6 @@ async fn initialize_config_with_mint_and_token() {
     let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
         .mint(mint.pubkey())
-        .holder_rewards_pool(rewards_manager.pool)
-        .holder_rewards_pool_token_account(rewards_manager.pool_token_account)
         .vault(vault)
         .vault_pda(vault_pda)
         .vault_holder_rewards(vault_holder_rewards)
@@ -135,8 +133,7 @@ async fn fail_initialize_config_with_wrong_vault_pda() {
     let vault = get_associated_token_address(&vault_pda, &mint.pubkey());
 
     let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
-
-    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    RewardsManager::new(&mut context, &mint.pubkey(), &vault_pda).await;
 
     // Fund vault pda
     fund_account(&mut context, &vault_pda, 0).await.unwrap();
@@ -164,8 +161,6 @@ async fn fail_initialize_config_with_wrong_vault_pda() {
 
     let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
-        .holder_rewards_pool(rewards_manager.pool)
-        .holder_rewards_pool_token_account(rewards_manager.pool_token_account)
         .mint(mint.pubkey())
         .vault(vault)
         .vault_pda(vault_pda)
@@ -223,7 +218,7 @@ async fn fail_initialize_config_with_non_empty_token() {
     let vault = get_associated_token_address(&vault_pda, &mint.pubkey());
 
     let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
-    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    RewardsManager::new(&mut context, &mint.pubkey(), &vault_pda).await;
 
     // And we mint a token.
     let mint_to_ix = mint_to_instruction(&mut context, &mint.pubkey(), &authority, &vault, 1)
@@ -256,8 +251,6 @@ async fn fail_initialize_config_with_non_empty_token() {
 
     let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
-        .holder_rewards_pool(rewards_manager.pool)
-        .holder_rewards_pool_token_account(rewards_manager.pool_token_account)
         .mint(mint.pubkey())
         .vault(vault)
         .vault_pda(vault_pda)
@@ -309,7 +302,7 @@ async fn fail_initialize_config_with_unitialized_mint() {
 
     let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
 
-    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    RewardsManager::new(&mut context, &mint.pubkey(), &vault_pda).await;
 
     let random_mint = Keypair::new();
     let create_mint_ix = system_instruction::create_account(
@@ -351,8 +344,6 @@ async fn fail_initialize_config_with_unitialized_mint() {
 
     let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
-        .holder_rewards_pool(rewards_manager.pool)
-        .holder_rewards_pool_token_account(rewards_manager.pool_token_account)
         .mint(random_mint.pubkey())
         .vault(vault)
         .vault_pda(vault_pda)
@@ -412,7 +403,7 @@ async fn fail_initialize_config_with_wrong_account_length() {
 
     let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
 
-    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    RewardsManager::new(&mut context, &mint.pubkey(), &vault_pda).await;
 
     // Fund vault pda
     fund_account(&mut context, &vault_pda, 0).await.unwrap();
@@ -440,8 +431,6 @@ async fn fail_initialize_config_with_wrong_account_length() {
 
     let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
-        .holder_rewards_pool(rewards_manager.pool)
-        .holder_rewards_pool_token_account(rewards_manager.pool_token_account)
         .mint(mint.pubkey())
         .vault(vault)
         .vault_pda(vault_pda)
@@ -494,7 +483,7 @@ async fn fail_initialize_config_with_initialized_account() {
 
     let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
 
-    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    RewardsManager::new(&mut context, &mint.pubkey(), &vault_pda).await;
 
     // Fund vault pda
     fund_account(&mut context, &vault_pda, 0).await.unwrap();
@@ -523,8 +512,6 @@ async fn fail_initialize_config_with_initialized_account() {
     // And we initialize a config.
     let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
-        .holder_rewards_pool(rewards_manager.pool)
-        .holder_rewards_pool_token_account(rewards_manager.pool_token_account)
         .mint(mint.pubkey())
         .vault(vault)
         .vault_pda(vault_pda)
@@ -553,8 +540,6 @@ async fn fail_initialize_config_with_initialized_account() {
 
     let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
-        .holder_rewards_pool(rewards_manager.pool)
-        .holder_rewards_pool_token_account(rewards_manager.pool_token_account)
         .mint(mint.pubkey())
         .vault(vault)
         .vault_pda(vault_pda)
@@ -610,7 +595,7 @@ async fn fail_initialize_config_with_token_delegate() {
 
     let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
 
-    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    RewardsManager::new(&mut context, &mint.pubkey(), &vault_pda).await;
 
     // Fund vault pda
     fund_account(&mut context, &vault_pda, 0).await.unwrap();
@@ -659,8 +644,6 @@ async fn fail_initialize_config_with_token_delegate() {
 
     let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
-        .holder_rewards_pool(rewards_manager.pool)
-        .holder_rewards_pool_token_account(rewards_manager.pool_token_account)
         .mint(mint.pubkey())
         .vault(vault)
         .vault_pda(vault_pda)
@@ -720,7 +703,7 @@ async fn fail_initialize_config_with_token_close_authority() {
 
     let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
 
-    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    RewardsManager::new(&mut context, &mint.pubkey(), &vault_pda).await;
 
     // Fund vault pda
     fund_account(&mut context, &vault_pda, 0).await.unwrap();
@@ -765,8 +748,6 @@ async fn fail_initialize_config_with_token_close_authority() {
 
     let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
-        .holder_rewards_pool(rewards_manager.pool)
-        .holder_rewards_pool_token_account(rewards_manager.pool_token_account)
         .mint(mint.pubkey())
         .vault(vault)
         .vault_pda(vault_pda)
@@ -818,7 +799,7 @@ async fn fail_initialize_config_with_invalid_max_deactivation_basis_points() {
 
     let (vault_holder_rewards, _) = HolderRewards::find_pda(&vault_pda);
 
-    let rewards_manager = RewardsManager::new(&mut context, &mint.pubkey()).await;
+    RewardsManager::new(&mut context, &mint.pubkey(), &vault_pda).await;
 
     // Fund vault pda
     fund_account(&mut context, &vault_pda, 0).await.unwrap();
@@ -846,8 +827,6 @@ async fn fail_initialize_config_with_invalid_max_deactivation_basis_points() {
 
     let initialize_ix = InitializeConfigBuilder::new()
         .config(config.pubkey())
-        .holder_rewards_pool(rewards_manager.pool)
-        .holder_rewards_pool_token_account(rewards_manager.pool_token_account)
         .mint(mint.pubkey())
         .vault(vault)
         .vault_pda(vault_pda)

@@ -26,7 +26,7 @@ import {
 import { PALADIN_STAKE_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export const VALIDATOR_SYNC_AUTHORITY_DISCRIMINATOR = 17;
+export const VALIDATOR_SYNC_AUTHORITY_DISCRIMINATOR = 15;
 
 export function getValidatorSyncAuthorityDiscriminatorBytes() {
   return getU8Encoder().encode(VALIDATOR_SYNC_AUTHORITY_DISCRIMINATOR);

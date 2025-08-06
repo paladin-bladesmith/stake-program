@@ -1,3 +1,4 @@
+use paladin_rewards_program_client::accounts::HolderRewards;
 use solana_program::{
     entrypoint::ProgramResult, program::invoke_signed, program_error::ProgramError,
     program_option::COption, program_pack::Pack, pubkey::Pubkey, rent::Rent, system_instruction,
@@ -58,6 +59,14 @@ pub fn process_initialize_config(
         &[ctx.accounts.vault_pda.clone()],
         &[&vault_seeds],
     )?;
+
+    // Confirm vault holder rewards is correct
+    let vault_holder_rewards = HolderRewards::find_pda(ctx.accounts.vault_pda.key).0;
+    require!(
+        ctx.accounts.vault_holder_rewards.key == &vault_holder_rewards,
+        StakeError::InvalidVaultHolderRewardsSeeds,
+        "vault pda"
+    );
 
     // vault (token account)
     // - must be initialized (checked by unpack)
@@ -129,30 +138,6 @@ pub fn process_initialize_config(
         "basis points exceeds maximum allowed value of {}",
         MAX_BASIS_POINTS
     );
-
-    // Create the vault holder rewards account
-    invoke_signed(
-        &paladin_rewards_program_client::instructions::InitializeHolderRewards {
-            // NB: Account correctness validated by paladin rewards program.
-            holder_rewards_pool: *ctx.accounts.holder_rewards_pool.key,
-            holder_rewards_pool_token_account: *ctx.accounts.holder_rewards_pool_token_account.key,
-            owner: *ctx.accounts.vault_pda.key,
-            holder_rewards: *ctx.accounts.vault_holder_rewards.key,
-            mint: *ctx.accounts.mint.key,
-            system_program: *ctx.accounts.system_program.key,
-        }
-        .instruction(),
-        &[
-            ctx.accounts.holder_rewards_pool.clone(),
-            ctx.accounts.holder_rewards_pool_token_account.clone(),
-            ctx.accounts.vault_pda.clone(),
-            ctx.accounts.vault_holder_rewards.clone(),
-            ctx.accounts.mint.clone(),
-            ctx.accounts.system_program.clone(),
-            ctx.accounts.rewards_program.clone(),
-        ],
-        &[&vault_seeds],
-    )?;
 
     // Initialize the stake config account.
     *config = Config {

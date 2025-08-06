@@ -60,7 +60,7 @@ pub struct ValidatorSyncAuthorityInstructionData {
 
 impl ValidatorSyncAuthorityInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 17 }
+        Self { discriminator: 15 }
     }
 }
 

@@ -16,8 +16,7 @@ use crate::{
             HarvestValidatorRewardsAccounts, InitializeConfigAccounts,
             InitializeSolStakerStakeAccounts, InitializeValidatorStakeAccounts,
             SetAuthorityAccounts, SlashSolStakerStakeAccounts, SlashValidatorStakeAccounts,
-            SolStakerMoveTokensAccounts, SolStakerSetAuthorityOverrideAccounts,
-            SolStakerStakeTokensAccounts, SolStakerSyncAuthorityAccounts, UnstakeTokensAccounts,
+            SolStakerMoveTokensAccounts, SolStakerStakeTokensAccounts, UnstakeTokensAccounts,
             UpdateConfigAccounts, ValidatorOverrideStakedLamportsAccounts,
             ValidatorStakeTokensAccounts, ValidatorSyncAuthorityAccounts,
         },
@@ -40,9 +39,7 @@ mod set_authority;
 mod slash_sol_staker_stake;
 mod slash_validator_stake;
 mod sol_staker_move_tokens;
-mod sol_staker_set_authority_override;
 mod sol_staker_stake_tokens;
-mod sol_staker_sync_authority;
 mod unstake_tokens;
 mod update_config;
 mod validator_override_staked_lamports;
@@ -175,25 +172,6 @@ pub fn process_instruction<'a>(
                 program_id,
                 SolStakerMoveTokensAccounts::context(accounts)?,
                 amount,
-            )
-        }
-        StakeInstruction::SolStakerSyncAuthority => {
-            msg!("Instruction: SolStakerUpdateAuthority");
-            sol_staker_sync_authority::process_sol_staker_sync_authority(
-                program_id,
-                SolStakerSyncAuthorityAccounts::context(accounts)?,
-            )
-        }
-        StakeInstruction::SolStakerSetAuthorityOverride {
-            authority_original,
-            authority_override,
-        } => {
-            msg!("Instruction: SolStakerSetAuthorityOverride");
-            sol_staker_set_authority_override::process_sol_staker_set_authority_override(
-                program_id,
-                SolStakerSetAuthorityOverrideAccounts::context(accounts)?,
-                authority_original,
-                authority_override,
             )
         }
         StakeInstruction::ValidatorOverrideStakedLamports { amount_min } => {
